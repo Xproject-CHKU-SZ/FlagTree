@@ -642,7 +642,7 @@ class SpecPackageHelper:
 def get_spec_packages():
     yield from find_packages(
         where="python",
-        include=["triton", "triton.*"],
+        include=["triton", "triton.*", "flagtree_model_ir", "flagtree_model_ir.*"],
         exclude=SpecPackageHelper.get_excluded_packages(),
     )
 
