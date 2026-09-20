@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "status": "device_correctness_passed",
+  "environment": {
+    "host": "ai-server",
+    "container": "xbench-ppu",
+    "image": "flagtree-ppu-3.6-dev:202608",
+    "torch": "2.10.0",
+    "triton": "3.6.0",
+    "flagtree": "0.6.1+ppu3.6",
+    "device": "PPU-ZW810E",
+    "device_count_visible": 16,
+    "backend": "ppu"
+  },
+  "kernel": {
+    "name": "add_kernel",
+    "operation": "elementwise_add",
+    "elements": 4097,
+    "block_size": 128,
+    "dtype": "float32"
+  },
+  "command": "FLAGTREE_BACKEND=ppu TRITON_CACHE_DIR=/data/ppu-benchmark/flagtree-phase1-cache python3 /home/zrenas/workspace/flagtree-phase1/scripts/phase1_ppu_smoke.py",
+  "result": "passed",
+  "comparison": "torch.testing.assert_close(rtol=0.0, atol=0.0)",
+  "cache_artifacts": [
+    "add_kernel.ttir",
+    "add_kernel.ttgir",
+    "add_kernel.llir",
+    "add_kernel.hgbin",
+    "add_kernel.json"
+  ],
+  "performance": "not_run"
+}

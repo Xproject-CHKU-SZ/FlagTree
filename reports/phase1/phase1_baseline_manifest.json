@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "baseline_commit": "5eda9956b",
+  "samples": [
+    {
+      "id": "ttir_constant_cse",
+      "input": "test/Triton/phase1-normalization.mlir",
+      "pipeline": ["canonicalize", "cse", "triton-combine"],
+      "expected": ["constant_folding", "pure_expression_cse"]
+    },
+    {
+      "id": "ttir_cast_boundary",
+      "input": "test/Triton/phase1-cast-boundary.mlir",
+      "pipeline": ["canonicalize", "cse"],
+      "expected": ["preserve_potentially_lossy_integer_cast_chain"]
+    },
+    {
+      "id": "ttir_combine_dot_add",
+      "input": "test/Triton/combine.mlir",
+      "pipeline": ["canonicalize", "triton-combine"],
+      "expected": ["dot_add_positive_and_negative_cases", "addptr_combination"]
+    },
+    {
+      "id": "ttir_loop_cse",
+      "input": "test/Triton/loop_cse.mlir",
+      "pipeline": ["triton-loop-aware-cse"],
+      "expected": ["loop_body_cse", "loop_carried_value_cleanup"]
+    },
+    {
+      "id": "ttgir_layout_cleanup",
+      "input": "test/TritonGPU/reduce-data-duplication.mlir",
+      "pipeline": ["tritongpu-remove-layout-conversions", "tritongpu-reduce-data-duplication"],
+      "expected": ["preserve_required_layout_conversion", "remove_or_rewrite_eligible_conversion"]
+    },
+    {
+      "id": "ttgir_nested_loop_fusion",
+      "input": "test/TritonGPU/fuse-nested-loops.mlir",
+      "pipeline": ["tritongpu-fuse-nested-loops", "canonicalize", "cse"],
+      "expected": ["fuse_eligible_nested_loops", "preserve_ineligible_loop"]
+    }
+  ],
+  "execution_state": "ir_tests_pending_on_build_environment",
+  "device_state": {
+    "ppu": "not_run_in_windows_workspace",
+    "nvidia": "not_run",
+    "amd": "not_run"
+  }
+}

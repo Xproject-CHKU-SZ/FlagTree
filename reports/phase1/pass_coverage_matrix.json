@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "baseline_commit": "5eda9956b",
+  "branch": "dev/rzh",
+  "scope": "FlagTree native TTIR/TTGIR compiler optimization",
+  "status": "baseline_audit",
+  "backends": {
+    "ppu": {
+      "ttir": {
+        "canonicalizer": "present",
+        "triton_combine": "present",
+        "cse": "present",
+        "symbol_dce": "present",
+        "loop_unroll": "present"
+      },
+      "ttgir": {
+        "remove_layout_conversions": "present",
+        "optimize_thread_locality": "present",
+        "accelerate_matmul": "present",
+        "loop_aware_cse": "present",
+        "fuse_nested_loops": "conditional_on_capability",
+        "licm": "conditional_on_capability",
+        "pipeline": "conditional_on_capability",
+        "prefetch": "present",
+        "reduce_data_duplication": "present",
+        "sccp": "present",
+        "cse": "present"
+      }
+    },
+    "nvidia": {
+      "ttir": "same_shared_triton_pipeline_family",
+      "ttgir": "backend_specific_order_requires_regression"
+    },
+    "amd": {
+      "ttir": "same_shared_triton_pipeline_family",
+      "ttgir": "backend_specific_order_requires_regression"
+    }
+  },
+  "coverage_gaps_to_measure": [
+    "identity_or_dead_casts_after_canonicalization",
+    "redundant_layout_conversions_not_removed_by_existing_pass",
+    "actual_pass_hit_and_structural_delta",
+    "cold_compile_and_hot_cache_time",
+    "device_correctness_and_kernel_latency"
+  ],
+  "not_in_scope": [
+    "pytorch_fx_or_aten_graph_frontend",
+    "generic_cross_kernel_model_graph_fusion",
+    "search_recommendation_subgraph_fusion",
+    "training_backward_and_optimizer_performance"
+  ]
+}
