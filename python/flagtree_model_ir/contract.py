@@ -10,6 +10,7 @@ from .registry import (
     lookup_operator_family,
     semantics_registry_digest,
 )
+from .rule_checks import evaluate_operator_rule_set
 
 
 class ModelIrSemanticError(RuntimeError):
@@ -45,7 +46,9 @@ def classify_tensor_layout(value: Any) -> str:
         return "symbolic_strided" if value.dim() else "scalar"
 
 
-def _walk_tensor_metadata(value: Any, path: str = "") -> Iterable[tuple[str, dict[str, Any]]]:
+def _walk_tensor_metadata(
+    value: Any, path: str = ""
+) -> Iterable[tuple[str, dict[str, Any]]]:
     if isinstance(value, Mapping):
         if value.get("kind") == "tensor":
             yield path or "value", dict(value)
@@ -65,13 +68,17 @@ def _match_core_target(target: str, registry: Mapping[str, Any]) -> str | None:
     return str(family["id"]) if family is not None else None
 
 
-def _match_frontend_op(op_type: str, registry: Mapping[str, Any], framework: str) -> str | None:
+def _match_frontend_op(
+    op_type: str, registry: Mapping[str, Any], framework: str
+) -> str | None:
     del registry
     family = lookup_operator_family(op_type, framework)
     return str(family["id"]) if family is not None else None
 
 
-def _family_rules(family_id: str | None, registry: Mapping[str, Any]) -> dict[str, str | None]:
+def _family_rules(
+    family_id: str | None, registry: Mapping[str, Any]
+) -> dict[str, str | None]:
     if family_id is not None:
         for family in registry["operator_families"]:
             if family["id"] == family_id:
@@ -99,6 +106,98 @@ def _frontend_summary(source: Mapping[str, Any]) -> Mapping[str, Any] | None:
         if isinstance(value, Mapping) and isinstance(value.get("graph"), Mapping):
             return value
     return None
+
+
+def _walk_node_references(value: Any) -> Iterable[str]:
+    if isinstance(value, Mapping):
+        if set(value) == {"node"}:
+            yield str(value["node"])
+            return
+        for item in value.values():
+            yield from _walk_node_references(item)
+    elif isinstance(value, (tuple, list)):
+        for item in value:
+            yield from _walk_node_references(item)
+
+
+def _tensor_observations(
+    value: Any,
+    *,
+    graph_name: str,
+    node_name: str,
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for path, tensor in _walk_tensor_metadata(value):
+        result.append(
+            {
+                "id": f"{graph_name}/{node_name}:{path}",
+                "node": node_name,
+                "dtype": str(tensor.get("dtype", "")),
+                "shape": list(tensor.get("shape", [])),
+                "stride": list(tensor.get("stride", [])),
+                "layout": str(tensor.get("layout", "unknown")),
+            }
+        )
+    return result
+
+
+def _build_operator_instances(
+    manifest: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    instances: list[dict[str, Any]] = []
+    for graph in manifest.get("graphs", []):
+        if not isinstance(graph, Mapping):
+            continue
+        graph_name = str(graph.get("name", "root"))
+        nodes = [item for item in graph.get("nodes", []) if isinstance(item, Mapping)]
+        by_name = {str(item.get("name", "")): item for item in nodes}
+        for node in nodes:
+            if node.get("op") != "call_function":
+                continue
+            target = str(node.get("target", ""))
+            family = _match_core_target(target, registry)
+            inputs: list[dict[str, Any]] = []
+            references = [
+                *_walk_node_references(node.get("args", [])),
+                *_walk_node_references(node.get("kwargs", {})),
+            ]
+            for reference in references:
+                source = by_name.get(reference)
+                if source is None:
+                    continue
+                metadata = source.get("metadata", {})
+                if isinstance(metadata, Mapping):
+                    inputs.extend(
+                        _tensor_observations(
+                            metadata.get("value"),
+                            graph_name=graph_name,
+                            node_name=reference,
+                        )
+                    )
+            metadata = node.get("metadata", {})
+            outputs = (
+                _tensor_observations(
+                    metadata.get("value"),
+                    graph_name=graph_name,
+                    node_name=str(node.get("name", "")),
+                )
+                if isinstance(metadata, Mapping)
+                else []
+            )
+            instance = {
+                "graph": graph_name,
+                "node": str(node.get("name", "")),
+                "target": target,
+                "family": family,
+                "registry_status": "registered" if family else "unregistered",
+                **_family_rules(family, registry),
+                "inputs": inputs,
+                "outputs": outputs,
+            }
+            instance["rule_evaluation"] = evaluate_operator_rule_set(instance)
+            instances.append(instance)
+    return instances
 
 
 def validate_semantic_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
@@ -180,9 +279,10 @@ def validate_semantic_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
                         "message": f"{tensor.get('id', '<tensor>')} has a negative static dimension",
                     }
                 )
-            elif dimension.get("kind") == "symbolic" and not str(
-                dimension.get("value", "")
-            ).strip():
+            elif (
+                dimension.get("kind") == "symbolic"
+                and not str(dimension.get("value", "")).strip()
+            ):
                 errors.append(
                     {
                         "code": "empty_symbolic_dimension",
@@ -206,6 +306,50 @@ def validate_semantic_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
                         "message": f"{operator!r} lacks {', '.join(missing)}",
                     }
                 )
+
+    incomplete_rule_checks = 0
+    insufficient_rule_metadata = 0
+    for instance in contract.get("operator_instances", []):
+        evaluation = instance.get("rule_evaluation", {})
+        checks = evaluation.get("checks", {}) if isinstance(evaluation, Mapping) else {}
+        for kind, check in checks.items():
+            if not isinstance(check, Mapping):
+                continue
+            status = check.get("status")
+            if status == "failed":
+                errors.append(
+                    {
+                        "code": "operator_rule_violation",
+                        "message": (
+                            f"{instance.get('graph', 'root')}/{instance.get('node', '<node>')} "
+                            f"{kind} rule {check.get('rule')!r}: {check.get('message', '')}"
+                        ),
+                    }
+                )
+            elif status == "not_implemented":
+                incomplete_rule_checks += 1
+            elif status == "insufficient_metadata":
+                insufficient_rule_metadata += 1
+    if incomplete_rule_checks:
+        warnings.append(
+            {
+                "code": "executable_rule_checks_incomplete",
+                "message": (
+                    f"{incomplete_rule_checks} registered operator rule checks are descriptive "
+                    "only and have no executable checker yet"
+                ),
+            }
+        )
+    if insufficient_rule_metadata:
+        warnings.append(
+            {
+                "code": "operator_rule_metadata_incomplete",
+                "message": (
+                    f"{insufficient_rule_metadata} executable rule checks could not run because "
+                    "the graph metadata was insufficient"
+                ),
+            }
+        )
 
     expected_namespace = registry["extension_policy"]["namespace"]
     namespace = contract.get("extensions", {}).get("namespace")
@@ -275,7 +419,10 @@ def build_semantic_contract(manifest: Mapping[str, Any]) -> dict[str, Any]:
             for path, value in _walk_tensor_metadata(metadata.get("value")):
                 shape = list(value.get("shape", []))
                 for dimension in shape:
-                    if isinstance(dimension, Mapping) and dimension.get("kind") == "symbolic":
+                    if (
+                        isinstance(dimension, Mapping)
+                        and dimension.get("kind") == "symbolic"
+                    ):
                         symbolic_dimensions.add(str(dimension.get("value", "")))
                 tensors.append(
                     {
@@ -329,6 +476,21 @@ def build_semantic_contract(manifest: Mapping[str, Any]) -> dict[str, Any]:
                 }
             )
 
+    operator_instances = _build_operator_instances(manifest, registry)
+    rule_check_totals = {
+        name: sum(
+            int(item["rule_evaluation"]["summary"][name]) for item in operator_instances
+        )
+        for name in (
+            "total",
+            "executed",
+            "passed",
+            "failed",
+            "not_implemented",
+            "insufficient_metadata",
+        )
+    }
+
     dynamic_dimensions = {
         "symbols_observed_in_tensor_metadata": sorted(symbolic_dimensions),
         "range_constraints": list(manifest.get("range_constraints", [])),
@@ -353,10 +515,9 @@ def build_semantic_contract(manifest: Mapping[str, Any]) -> dict[str, Any]:
             "extension": registry["extension_policy"],
         },
         "operators": operators,
+        "operator_instances": operator_instances,
         "frontend_operators": frontend_operators,
-        "frontend_semantics_framework": (
-            framework if summary is not None else None
-        ),
+        "frontend_semantics_framework": (framework if summary is not None else None),
         "tensors": tensors,
         "dynamic_dimensions": dynamic_dimensions,
         "extensions": {
@@ -376,6 +537,15 @@ def build_semantic_contract(manifest: Mapping[str, Any]) -> dict[str, Any]:
                 if frontend_operators
                 else None
             ),
+            "operator_instance_count": len(operator_instances),
+            "rule_checks": {
+                **rule_check_totals,
+                "execution_ratio": (
+                    rule_check_totals["executed"] / rule_check_totals["total"]
+                    if rule_check_totals["total"]
+                    else None
+                ),
+            },
         },
     }
     contract["validation"] = validate_semantic_contract(contract)

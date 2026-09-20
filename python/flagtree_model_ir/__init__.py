@@ -19,6 +19,7 @@ from .registry import (
     lookup_operator_family,
     semantics_registry_digest,
 )
+from .rule_checks import evaluate_operator_rule_set
 
 __all__ = [
     "ModelIrSemanticError",
@@ -29,5 +30,6 @@ __all__ = [
     "lookup_operator_family",
     "require_valid_semantic_contract",
     "semantics_registry_digest",
+    "evaluate_operator_rule_set",
     "validate_semantic_contract",
 ]

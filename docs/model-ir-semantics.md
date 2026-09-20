@@ -25,6 +25,7 @@ TensorFlow ─ tf2onnx ─┘              │
 
 - `registry.py` 是版本化规范注册表，定义规范数据类型、布局分类、动态维度规则、扩展命名空间和常用算子族。
 - `contract.py` 从 Core ATen manifest 提取张量与算子语义，将 ONNX 前端算子和 Core ATen 算子映射到同一算子族，并执行结构化校验。
+- `rule_checks.py` 对 Core ATen 图中的每个算子实例执行当前已经实现的 dtype、Shape 和 layout 规则检查；尚未实现或缺少元数据的规则会单独计数，不会被计入已验证覆盖率。
 - 每份契约包含注册表版本与 SHA-256，可判断两个产物是否依据同一版规范生成。
 
 TensorFlow 经 tf2onnx 后，语义契约按实际交接图的 ONNX 算子解释，同时保留 `tensorflow_via_onnx` 来源信息。这样不会错误地把 tf2onnx 输出当成 TensorFlow 原生图。
@@ -51,6 +52,17 @@ TensorFlow 经 tf2onnx 后，语义契约按实际交接图的 ONNX 算子解释
 ## 验证
 
 FlagTree 单元测试覆盖注册表不可变副本、稳定哈希、跨框架算子映射、非法类型/布局/维度拒绝以及 PyTorch 内存布局识别。模型接入集成测试验证动态 Shape Core ATen 导出会真实生成并引用 `semantics.json`。独立包不依赖 FlagTree/Triton 的原生扩展，因此也能在只安装模型接入运行时的环境中先完成语义校验；完整 FlagTree 构建会由 `setup_helper.py` 将其一并打包。
+
+### 可执行规则覆盖
+
+`semantics.json` 现在同时记录 Core ATen 的逐节点 `operator_instances`。每个实例的 dtype、Shape 和 layout 检查分别具有以下状态：
+
+- `passed`：检查器已经执行且满足规则；
+- `failed`：检查器已经执行但违反规则，导出会失败；
+- `not_implemented`：注册表中有规则定义，但当前还没有对应的可执行检查器；
+- `insufficient_metadata`：检查器存在，但当前图元数据不足以作出判断。
+
+`coverage.rule_checks` 分开统计总检查数、实际执行数、通过数、失败数、未实现数和元数据不足数。`execution_ratio` 才表示当前真正执行过的规则比例；注册表算子覆盖率不能替代该指标。首批可执行检查覆盖布尔/整数输出、dtype 保持与一致性、静态广播、Shape 保持、静态元素数量保持以及连续输出布局，其他规则继续按上述状态显式暴露。
 
 ### 模型集覆盖审计
 
