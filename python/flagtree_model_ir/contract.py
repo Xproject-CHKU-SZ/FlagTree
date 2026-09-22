@@ -192,6 +192,12 @@ def _build_operator_instances(
                 "family": family,
                 "registry_status": "registered" if family else "unregistered",
                 **_family_rules(family, registry),
+                # Keep the serialized scalar/list arguments alongside tensor
+                # observations.  Shape rules such as transpose, concatenate,
+                # reduction and padding cannot be checked from tensor metadata
+                # alone, but the manifest already carries these constants.
+                "args": node.get("args", []),
+                "kwargs": node.get("kwargs", {}),
                 "inputs": inputs,
                 "outputs": outputs,
             }

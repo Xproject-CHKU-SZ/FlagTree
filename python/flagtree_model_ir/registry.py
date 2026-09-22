@@ -11,7 +11,7 @@ from typing import Any
 
 SEMANTICS_REGISTRY: dict[str, Any] = {
     "schema_version": 1,
-    "registry_version": "2026.09.15",
+    "registry_version": "2026.09.22",
     "canonical_ir": "Core ATen",
     "dtype_policy": {
         "canonical_dtypes": [
@@ -178,7 +178,9 @@ SEMANTICS_REGISTRY: dict[str, Any] = {
         },
         {
             "id": "shape.reshape",
-            "core_aten_patterns": [r"^aten\.(view|reshape|_unsafe_view)\."],
+            "core_aten_patterns": [
+                r"^aten\.(view|reshape|_unsafe_view|flatten|squeeze|unsqueeze)\."
+            ],
             "onnx_ops": ["Reshape", "Flatten", "Squeeze", "Unsqueeze"],
             "tensorflow_ops": ["Reshape", "Squeeze", "ExpandDims"],
             "dtype_rule": "preserve",

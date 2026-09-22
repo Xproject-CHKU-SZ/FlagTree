@@ -62,11 +62,29 @@ FlagTree 单元测试覆盖注册表不可变副本、稳定哈希、跨框架�
 - `not_implemented`：注册表中有规则定义，但当前还没有对应的可执行检查器；
 - `insufficient_metadata`：检查器存在，但当前图元数据不足以作出判断。
 
-`coverage.rule_checks` 分开统计总检查数、实际执行数、通过数、失败数、未实现数和元数据不足数。`execution_ratio` 才表示当前真正执行过的规则比例；注册表算子覆盖率不能替代该指标。首批可执行检查覆盖布尔/整数输出、dtype 保持与一致性、静态广播、Shape 保持、静态元素数量保持以及连续输出布局，其他规则继续按上述状态显式暴露。
+`coverage.rule_checks` 分开统计总检查数、实际执行数、通过数、失败数、未实现数和元数据不足数。`execution_ratio` 才表示当前真正执行过的规则比例；注册表算子覆盖率不能替代该指标。
+
+注册表 `2026.09.22` 的可执行检查已经扩展到：
+
+- 同 dtype 类型提升、浮点/数值保持、显式累加类型、索引整数约束、Where 条件类型、Cast 目标类型和 Dropout mask；
+- 静态及可判定符号广播、矩阵乘、转置/permute、拼接/stack、Expand/Repeat、Slice、Embedding/Gather、归约、Linear、Pad 和张量创建 Shape；
+- 布局保持、广播结果、物化输出、reshape stride、转置 stride、Expand 零 stride 和 view/物化边界。
+
+算子实例会保留序列化的普通参数和关键字参数，因此 `dim`、`keepdim`、padding、permutation 等规则可以按真实调用参数检查，而不是只根据输入输出 Shape 猜测。无法证明的符号关系仍报告为 `insufficient_metadata`，不会为了提高覆盖率而记作通过。
+
+现有 Core ATen PT2 可使用 `model_import_adapters/scripts/audit_core_aten_semantic_rules.py` 独立审计，无需重新执行前端转换。工具会生成 manifest、完整 `semantics.json`、机器报告和 Markdown 摘要。
+
+2026-09-22 的代表性结果：
+
+- 小型 ONNX 动态图：6/6 规则实际执行并通过，XPU `torch.compile(fullgraph=True)` 通过，CPU/XPU 最大绝对误差为 0；
+- `sentence-transformers/all-MiniLM-L6-v2`：1,445/1,641 条规则实际执行并通过，执行比例 88.06%，0 条失败；
+- `BAAI/bge-m3`：4,917/5,679 条规则实际执行并通过，执行比例 86.58%，0 条失败。
+
+剩余主要缺口是符号 reshape 的元素数量等价证明、矩阵逻辑轴布局、运行时 Shape 查询输出元数据，以及少量转换图中无法静态判定的索引和 Slice 关系。
 
 ### 模型集覆盖审计
 
-`flagtree_model_ir.onnx_coverage` 可扫描一个或多个 ONNX 模型目录，递归统计主图和 If/Loop/Scan 子图中的算子，并与当前语义注册表逐项比对。当前注册表版本为 `2026.09.15`。审计会按文件 SHA-256 去重，默认跳过 `.venv`、`python_deps*`、历史 `artifacts` 等依赖缓存或重复产物，输出：
+`flagtree_model_ir.onnx_coverage` 可扫描一个或多个 ONNX 模型目录，递归统计主图和 If/Loop/Scan 子图中的算子，并与当前语义注册表逐项比对。当前注册表版本为 `2026.09.22`。审计会按文件 SHA-256 去重，默认跳过 `.venv`、`python_deps*`、历史 `artifacts` 等依赖缓存或重复产物，输出：
 
 - `onnx_semantic_coverage.json`：逐模型、逐算子及聚合覆盖数据；
 - `onnx_semantic_coverage.md`：面向评审的覆盖率与待补算子清单。

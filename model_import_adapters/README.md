@@ -145,6 +145,24 @@ TensorFlow测试先完成TensorFlow到ONNX的CPU转换及参考比对，再将ON
 
 `--require-torch`使转换后的PyTorch/XPU执行失败时脚本返回非零退出码，避免将仅CPU转换成功误记为XPU测试通过。`--torch-compile`要求转换后的PyTorch模块先进入PyTorch编译接口再执行；该选项验证上游编译入口与XPU环境的衔接，不将PyTorch上游能力表述为FlagTree原创能力。
 
+## 已有 Core ATen 产物的语义规则审计
+
+不重新执行前端转换，也可以直接检查已有 PT2 中每个 Core ATen 算子实例的
+dtype、Shape 和 layout 规则：
+
+```bash
+.venv/bin/python scripts/audit_core_aten_semantic_rules.py \
+  --core-aten artifacts/model.core_aten.pt2 \
+  --output-dir artifacts/semantic-rule-audit \
+  --entry organization/model-name \
+  --source-kind onnx \
+  --dynamic-shapes-requested
+```
+
+输出包括 `manifest.json`、`semantics.json`、`semantic_rule_audit.json` 和
+`semantic_rule_audit.md`。报告把已执行、尚未实现和元数据不足分别计数；只有
+`passed` 与 `failed` 会进入真实执行比例，不能用注册表登记覆盖率替代该指标。
+
 ## 验收结论与能力边界
 
 按《功能拆分表-0811》第一项“将主流框架模型转换为统一中间表示，保留模型结构、
