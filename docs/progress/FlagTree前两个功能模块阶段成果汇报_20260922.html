@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlagTree 前两个功能模块阶段成果汇报｜2026-09-22</title>
+  <style>
+    :root{
+      --bg:#f3f6f9;--paper:#fff;--ink:#10263b;--muted:#5a6d7f;--line:#d7e1e9;
+      --navy:#123d5a;--teal:#087f75;--teal2:#16a394;--teal-soft:#e3f5f1;
+      --blue:#2e67bb;--blue-soft:#e7effb;--amber:#a76400;--amber-soft:#fff2d6;
+      --red:#ae3f47;--red-soft:#fae9eb;--green:#0a7b57;--green-soft:#e4f5ed;
+      --shadow:0 12px 36px rgba(23,52,74,.10);--radius:18px;
+      --sans:"Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC","Segoe UI",sans-serif;
+      --mono:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.72}
+    a{color:var(--teal);text-underline-offset:3px}code{font-family:var(--mono);font-size:.91em;background:#edf2f5;padding:.12em .38em;border-radius:5px}
+    h1,h2,h3,h4{line-height:1.28;letter-spacing:-.018em}h1{font-size:clamp(36px,5vw,64px);margin:14px 0 18px}h2{font-size:clamp(27px,3vw,39px);margin:0 0 17px}h3{font-size:21px;margin:0 0 10px}h4{font-size:16px;margin:0 0 7px}p{margin:0 0 14px}
+    .layout{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:27px 21px;background:#0f2f46;color:#eaf4fa;border-right:1px solid #23465d}.brand{display:flex;gap:12px;align-items:center;margin-bottom:28px}.logo{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#18aa99,#087369);font-weight:800}.brand strong,.brand span{display:block}.brand strong{font-size:15px}.brand span{color:#aac2d1;font-size:12px}.sidebar nav a{display:block;padding:8px 11px;margin:3px 0;color:#b9cdd8;text-decoration:none;border-radius:9px;font-size:13px}.sidebar nav a:hover{background:#1b465f;color:#fff}.side-meta{position:absolute;bottom:23px;left:22px;right:22px;color:#9cb7c7;font-size:11px}.main{min-width:0}.content{width:min(1120px,calc(100% - 56px));margin:0 auto}
+    .hero{position:relative;overflow:hidden;padding:84px 0 58px;color:#fff;background:linear-gradient(132deg,#0f2f46 0%,#12556a 55%,#087f75 100%)}.hero:before{content:"";position:absolute;inset:0;opacity:.15;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(90deg,transparent,#000)}.hero .content{position:relative}.eyebrow{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#82e4d5}.lede{max-width:900px;color:#d6e8ee;font-size:19px}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:25px}.chip{padding:7px 11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);border-radius:999px;font-size:12px}.hero-note{margin-top:28px;padding:20px 22px;border:1px solid rgba(255,255,255,.22);background:rgba(8,29,42,.32);border-radius:15px;max-width:970px}.hero-note strong{display:block;color:#fff;margin-bottom:4px}.hero-note span{color:#cde1e8;font-size:14px}.print{position:absolute;right:26px;top:24px;padding:8px 12px;border:1px solid rgba(255,255,255,.3);border-radius:9px;background:rgba(255,255,255,.10);color:#fff;cursor:pointer}
+    section{padding:62px 0}section+section{border-top:1px solid var(--line)}.section-intro{max-width:880px;color:var(--muted);margin-bottom:26px}.grid{display:grid;gap:17px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.card{padding:21px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.metric .label{font-size:12px;color:var(--muted)}.metric .value{margin:6px 0 3px;font-size:30px;line-height:1.15;font-weight:760;color:var(--navy)}.metric .hint{font-size:12px;color:var(--muted)}.metric.teal{border-top:4px solid var(--teal)}.metric.blue{border-top:4px solid var(--blue)}.metric.amber{border-top:4px solid var(--amber)}.metric.green{border-top:4px solid var(--green)}
+    .callout{padding:17px 19px;border-left:4px solid var(--teal);background:var(--teal-soft);border-radius:0 13px 13px 0}.callout strong{display:block;margin-bottom:3px}.callout.warn{border-left-color:var(--amber);background:var(--amber-soft)}.callout.danger{border-left-color:var(--red);background:var(--red-soft)}.callout.blue{border-left-color:var(--blue);background:var(--blue-soft)}
+    .diagram{padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.diagram svg{display:block;width:100%;height:auto}.diagram text{font-family:var(--sans);fill:var(--ink)}.diagram .box{fill:#f7fafc;stroke:#cbd8e2;stroke-width:1.5}.diagram .m1{fill:var(--blue-soft);stroke:var(--blue);stroke-width:2}.diagram .m2{fill:var(--teal-soft);stroke:var(--teal);stroke-width:2}.diagram .xpu{fill:#ecf3f8;stroke:var(--navy);stroke-width:2}.diagram .warn{fill:var(--amber-soft);stroke:var(--amber);stroke-width:1.6}.diagram .title{font-size:16px;font-weight:730}.diagram .small{font-size:12px;fill:var(--muted)}.diagram .arrow{fill:none;stroke:#668095;stroke-width:2;marker-end:url(#arrow)}.caption{margin:10px 3px 0;color:var(--muted);font-size:12px;text-align:center}
+    .stage-row{display:grid;grid-template-columns:1fr 60px 1fr;gap:15px;align-items:stretch}.stage{padding:24px;border-radius:18px;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow)}.stage.m1{border-top:5px solid var(--blue)}.stage.m2{border-top:5px solid var(--teal)}.stage .badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:700}.stage.m1 .badge{background:var(--blue-soft);color:var(--blue)}.stage.m2 .badge{background:var(--teal-soft);color:var(--teal)}.join{display:grid;place-items:center;color:var(--teal);font-size:34px}.plain{margin:10px 0 0;padding-left:20px}.plain li+li{margin-top:6px}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:15px;background:var(--paper)}table{border-collapse:collapse;width:100%}th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);font-size:13px}th{background:#eef3f6;color:#52687a;font-weight:680}tr:last-child td{border-bottom:0}.pass{color:var(--green);font-weight:720}.partial{color:var(--amber);font-weight:720}.mono{font-family:var(--mono);font-size:12px}
+    .flow{display:flex;gap:7px;align-items:stretch;overflow-x:auto;padding:5px 0 12px}.flow .node{flex:1 0 135px;padding:14px 12px;text-align:center;background:var(--paper);border:1px solid var(--line);border-radius:12px}.flow .node b,.flow .node span{display:block}.flow .node b{font-size:14px}.flow .node span{font-size:11px;color:var(--muted);margin-top:4px}.flow .arrow-mini{display:grid;place-items:center;color:var(--teal);font-size:20px}.step-list{counter-reset:step;display:grid;gap:10px}.step{position:relative;padding:16px 17px 16px 57px;background:var(--paper);border:1px solid var(--line);border-radius:13px}.step:before{counter-increment:step;content:counter(step);position:absolute;left:16px;top:15px;width:29px;height:29px;display:grid;place-items:center;border-radius:50%;background:var(--teal);color:#fff;font-weight:750}.step b,.step span{display:block}.step span{color:var(--muted);font-size:13px}
+    .status-stack{display:grid;gap:11px}.status-line{display:grid;grid-template-columns:205px 1fr 92px;gap:12px;align-items:center}.status-line .name{font-size:13px}.track{height:13px;background:#e7edf1;border-radius:99px;overflow:hidden}.bar{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--teal),var(--teal2))}.bar.blue{background:linear-gradient(90deg,#2e67bb,#5c8bd0)}.status-line .num{text-align:right;font:12px var(--mono)}
+    .venn-note{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.venn-note div{padding:13px 12px;border:1px solid var(--line);border-radius:11px;background:var(--paper)}.venn-note b,.venn-note span{display:block}.venn-note b{font-size:13px}.venn-note span{font-size:11px;color:var(--muted);margin-top:3px}
+    .compare{display:grid;grid-template-columns:1fr 44px 1fr;gap:11px;align-items:stretch}.compare .side{padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:15px}.compare .side.before{border-top:4px solid var(--amber)}.compare .side.after{border-top:4px solid var(--green)}.compare .mid{display:grid;place-items:center;color:var(--teal);font-size:28px}.fake-code{font:12px/1.65 var(--mono);padding:14px;background:#edf2f5;border-radius:10px;white-space:pre-wrap;color:#274358}
+    .model-card{display:grid;grid-template-columns:88px 1fr;gap:15px;align-items:start}.model-icon{width:76px;height:76px;border-radius:17px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:21px;background:linear-gradient(145deg,var(--navy),var(--teal))}.model-card p{font-size:13px;color:var(--muted)}.mini-kpis{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.mini-kpis span{padding:5px 8px;background:#eef4f6;border-radius:7px;font:11px var(--mono);color:#315064}
+    .roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.road{position:relative;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:15px}.road:before{content:attr(data-step);display:inline-grid;place-items:center;width:29px;height:29px;border-radius:9px;background:var(--navy);color:#fff;font-size:12px;font-weight:750;margin-bottom:12px}.road p{font-size:13px;color:var(--muted);margin:0}.road.priority{border-top:4px solid var(--teal)}
+    .scope{display:grid;grid-template-columns:1fr 1fr;gap:16px}.scope .done{border-top:4px solid var(--green)}.scope .todo{border-top:4px solid var(--amber)}.scope ul{margin:8px 0 0;padding-left:20px}.scope li+li{margin-top:6px}.quote{font-size:19px;font-weight:680;line-height:1.55;color:var(--navy)}.footer{padding:30px 0 48px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.page-break{display:none}
+    @media(max-width:960px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;padding:16px 20px}.sidebar nav{display:flex;overflow:auto}.sidebar nav a{flex:0 0 auto}.side-meta{display:none}.g4{grid-template-columns:repeat(2,1fr)}.roadmap{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:700px){.content{width:min(100% - 30px,1120px)}.hero{padding:72px 0 46px}.print{right:15px;top:15px}.g2,.g3,.stage-row,.scope,.compare{grid-template-columns:1fr}.join,.compare .mid{transform:rotate(90deg);min-height:35px}.g4,.roadmap,.venn-note{grid-template-columns:1fr}.status-line{grid-template-columns:1fr;gap:6px}.status-line .num{text-align:left}}
+    @media print{
+      @page{size:A4;margin:13mm 12mm 14mm}body{background:#fff;font-size:10.4pt;line-height:1.52;-webkit-print-color-adjust:exact;print-color-adjust:exact}.layout{display:block}.sidebar,.print{display:none}.content{width:100%;max-width:none}.hero{padding:22mm 0 16mm;margin:-13mm -12mm 0;padding-left:12mm;padding-right:12mm}.hero h1{font-size:31pt}.lede{font-size:13pt}.hero-note{break-inside:avoid}section{padding:12mm 0}.card,.diagram,.stage,.road,.table-wrap,.callout,.model-card{box-shadow:none;break-inside:avoid}.page-break{display:block;break-before:page}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.roadmap{grid-template-columns:repeat(4,1fr)}h2{font-size:22pt}h3{font-size:14pt}.metric .value{font-size:22pt}th,td{padding:7px 8px;font-size:8.6pt}.footer{padding-bottom:0}.flow .node{min-width:0}.chips{gap:6px}.chip{font-size:9pt}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">FT</div><div><strong>FlagTree × XPU</strong><span>阶段成果汇报</span></div></div>
+      <nav>
+        <a href="#summary">01 结论摘要</a><a href="#picture">02 Big picture</a><a href="#module1">03 功能模块一</a><a href="#module2">04 功能模块二</a><a href="#evidence">05 验证证据</a><a href="#boundary">06 边界与风险</a><a href="#next">07 下一步</a><a href="#appendix">08 代码与复验</a>
+      </nav>
+      <div class="side-meta">报告日期：2026-09-22<br>分支：dev/hx<br>最新提交：ccd65da33</div>
+    </aside>
+
+    <main class="main">
+      <header class="hero">
+        <button class="print" onclick="window.print()">打印 / 导出 PDF</button>
+        <div class="content">
+          <div class="eyebrow">FlagTree Compiler Optimization · Progress Briefing</div>
+          <h1>多框架模型接入与<br>统一 IR 语义规范</h1>
+          <p class="lede">从 PyTorch / TensorFlow / ONNX 模型接入，到 Core ATen 统一表示、可执行语义契约，再到 FlagTree XPU 阶段性验证的完整进展。</p>
+          <div class="chips"><span class="chip">三种模型入口</span><span class="chip">Core ATen 统一图</span><span class="chip">动态 Shape</span><span class="chip">结构化控制流</span><span class="chip">逐算子语义规则</span><span class="chip">XPU 实机证据</span></div>
+          <div class="hero-note"><strong>汇报口径</strong><span>功能模块一已完成代表性端到端闭环；功能模块二已形成可运行原型并进入规模化验证。两者均不能被解释为“全部模型、全部算子、全部 Shape、全部后端已经 100% 支持”。</span></div>
+        </div>
+      </header>
+
+      <section id="summary">
+        <div class="content">
+          <h2>一页看懂：本阶段交付了什么</h2>
+          <p class="section-intro">核心变化不是“又支持了一个模型”，而是建立了一条可复用的工程链路：先把不同框架收敛为统一模型图，再用机器可执行的规则确认转换前后的语义没有悄悄改变。</p>
+          <div class="grid g4">
+            <article class="card metric blue"><div class="label">模型入口</div><div class="value">3 类</div><div class="hint">PyTorch · ONNX · TensorFlow</div></article>
+            <article class="card metric teal"><div class="label">现有样本语义登记</div><div class="value">39 / 39</div><div class="hint">当前 22 个去重 ONNX 模型</div></article>
+            <article class="card metric green"><div class="label">真实模型规则执行</div><div class="value">86%+</div><div class="hint">两模型均 0 条规则失败</div></article>
+            <article class="card metric amber"><div class="label">当前阶段</div><div class="value">验证中</div><div class="hint">远未等同整体 100%</div></article>
+          </div>
+          <div class="stage-row" style="margin-top:22px">
+            <article class="stage m1"><span class="badge">功能模块一</span><h3 style="margin-top:12px">模型接入与统一表示</h3><p>解决“不同框架的模型怎样进入同一条编译链”。三种入口汇入可保存、可回读的 ExportedProgram / Core ATen，并保留结构、类型、Shape 和控制流信息。</p><ul class="plain"><li>中型动态 Shape 与结构化控制流已经有 XPU 证据。</li><li>代表性模型闭环完成，模型规模化兼容仍需继续扩展。</li></ul></article>
+            <div class="join">→</div>
+            <article class="stage m2"><span class="badge">功能模块二</span><h3 style="margin-top:12px">统一 IR 语义规范</h3><p>解决“图虽然统一了，但算子、dtype、Shape 和 layout 的含义是否一致”。引入版本化注册表、语义契约和逐算子可执行规则。</p><ul class="plain"><li>小图 6/6 规则执行通过，两类真实模型执行比例达到 86% 以上。</li><li>尚需补齐符号 reshape、矩阵布局和运行时 Shape 元数据。</li></ul></article>
+          </div>
+          <div class="callout warn" style="margin-top:20px"><strong>最重要的管理结论</strong>当前已经从“单点脚本验证”推进到“统一产物 + 自动语义检查 + XPU 复验”的可复用链路；下一阶段的重点应从继续堆演示样例，转向 250/500 模型的分层统计、缺口聚类与规则补齐。</div>
+        </div>
+      </section>
+
+      <section id="picture">
+        <div class="content">
+          <h2>Big picture：两个模块怎样首尾衔接</h2>
+          <p class="section-intro">模块一负责“把模型送进来并统一形态”，模块二负责“把统一后的含义说清楚并检查出来”。模块二直接消费模块一生成的 Core ATen 与 manifest，因此两者是前后相接，而不是两套独立工作。</p>
+          <figure class="diagram">
+            <svg viewBox="0 0 1100 510" role="img" aria-labelledby="arch-title arch-desc">
+              <title id="arch-title">PyTorch、ONNX、TensorFlow 接入 Core ATen、语义契约和 FlagTree XPU 的总体架构</title>
+              <desc id="arch-desc">TensorFlow 先经过 tf2onnx 变成 ONNX，再经过 onnx2torch；ONNX 直接经过 onnx2torch；两者经过动态 Shape 兼容和 torch export 形成 Core ATen。PyTorch 直接由 torch export 形成 Core ATen。统一图进入语义契约后交给 FlagTree XPU。</desc>
+              <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#668095"/></marker></defs>
+              <text x="24" y="28" class="small">模型来源</text><text x="255" y="28" class="small">解析与转换</text><text x="510" y="28" class="small">模块一：统一模型表示</text><text x="760" y="28" class="small">模块二：统一语义</text><text x="940" y="28" class="small">后端执行</text>
+              <rect class="box" x="25" y="55" width="175" height="65" rx="13"/><text class="title" x="112" y="83" text-anchor="middle">PyTorch</text><text class="small" x="112" y="104" text-anchor="middle">原生模型 / torch.nn</text>
+              <rect class="box" x="25" y="175" width="175" height="65" rx="13"/><text class="title" x="112" y="203" text-anchor="middle">ONNX</text><text class="small" x="112" y="224" text-anchor="middle">Checker · Shape 推断</text>
+              <rect class="box" x="25" y="330" width="175" height="65" rx="13"/><text class="title" x="112" y="358" text-anchor="middle">TensorFlow</text><text class="small" x="112" y="379" text-anchor="middle">SavedModel / tf.function</text>
+              <rect class="box" x="255" y="330" width="175" height="65" rx="13"/><text class="title" x="342" y="358" text-anchor="middle">tf2onnx</text><text class="small" x="342" y="379" text-anchor="middle">先形成 ONNX 图</text>
+              <rect class="box" x="255" y="175" width="175" height="65" rx="13"/><text class="title" x="342" y="203" text-anchor="middle">onnx2torch</text><text class="small" x="342" y="224" text-anchor="middle">FX GraphModule</text>
+              <rect class="m1" x="490" y="155" width="220" height="105" rx="15"/><text class="title" x="600" y="188" text-anchor="middle">动态 Shape 兼容</text><text class="small" x="600" y="213" text-anchor="middle">Shape Tensor → SymInt</text><text class="small" x="600" y="236" text-anchor="middle">受控改写 + 等价性核对</text>
+              <rect class="m1" x="490" y="315" width="220" height="105" rx="15"/><text class="title" x="600" y="348" text-anchor="middle">torch.export</text><text class="small" x="600" y="373" text-anchor="middle">ExportedProgram / Core ATen</text><text class="small" x="600" y="396" text-anchor="middle">PT2 + manifest + validation</text>
+              <rect class="m2" x="760" y="155" width="190" height="265" rx="15"/><text class="title" x="855" y="190" text-anchor="middle">语义契约</text><text class="small" x="855" y="220" text-anchor="middle">39 个算子族</text><text class="small" x="855" y="247" text-anchor="middle">dtype 规则</text><text class="small" x="855" y="274" text-anchor="middle">Shape 规则</text><text class="small" x="855" y="301" text-anchor="middle">layout / stride 规则</text><text class="small" x="855" y="328" text-anchor="middle">static / symbolic</text><text class="small" x="855" y="355" text-anchor="middle">passed / failed /</text><text class="small" x="855" y="377" text-anchor="middle">not implemented / metadata</text><text class="small" x="855" y="402" text-anchor="middle">→ semantics.json</text>
+              <rect class="xpu" x="990" y="208" width="90" height="145" rx="14"/><text class="title" x="1035" y="250" text-anchor="middle">FlagTree</text><text class="small" x="1035" y="278" text-anchor="middle">Inductor</text><text class="small" x="1035" y="300" text-anchor="middle">Triton</text><text class="title" x="1035" y="330" text-anchor="middle">XPU</text>
+              <path class="arrow" d="M200 87 C370 87 420 310 490 345"/><path class="arrow" d="M200 207 L255 207"/><path class="arrow" d="M430 207 L490 207"/><path class="arrow" d="M200 362 L255 362"/><path class="arrow" d="M342 330 L342 240"/><path class="arrow" d="M600 260 L600 315"/><path class="arrow" d="M710 367 C742 367 736 287 760 287"/><path class="arrow" d="M950 287 L990 287"/>
+              <rect class="warn" x="255" y="445" width="695" height="45" rx="11"/><text class="small" x="602" y="473" text-anchor="middle">正确顺序：TensorFlow → tf2onnx → ONNX → onnx2torch → 动态 Shape 兼容 → Core ATen → 语义契约 → FlagTree XPU</text>
+            </svg>
+            <figcaption class="caption">图 1：前两个功能模块在完整编译链中的位置与数据流</figcaption>
+          </figure>
+          <div class="callout blue" style="margin-top:18px"><strong>职责边界</strong>Core ATen 是模型级统一表示；FlagTree / Triton 仍负责后续 Kernel 级 Lowering、优化和设备代码生成。语义注册或 XPU 跑通，不等于所有算子都已生成 FlagTree 自有 Kernel。</div>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+      <section id="module1">
+        <div class="content">
+          <h2>功能模块一：多框架接入与统一 Core ATen</h2>
+          <p class="section-intro">目标是将 PyTorch、ONNX、TensorFlow 的模型结构、类型、Shape 与控制流信息，汇入同一种可保存、可回读、可核对的模型级中间表示。</p>
+          <div class="flow" aria-label="三个入口的统一转换流程">
+            <div class="node"><b>模型输入</b><span>PyTorch / ONNX / TF</span></div><div class="arrow-mini">→</div>
+            <div class="node"><b>前端转换</b><span>tf2onnx / onnx2torch</span></div><div class="arrow-mini">→</div>
+            <div class="node"><b>兼容改写</b><span>Shape / Slice / Gather</span></div><div class="arrow-mini">→</div>
+            <div class="node"><b>统一导出</b><span>ExportedProgram / Core ATen</span></div><div class="arrow-mini">→</div>
+            <div class="node"><b>产物落盘</b><span>PT2 / manifest / inputs</span></div><div class="arrow-mini">→</div>
+            <div class="node"><b>双端验证</b><span>CPU 参考 / XPU</span></div>
+          </div>
+          <div class="grid g3" style="margin-top:14px">
+            <article class="card"><h3>动态 Shape</h3><p>把 ONNX 转换图中的 Shape Tensor 改写为 tuple / SymInt 运算；同一 PT2 覆盖多组 batch 与 sequence，不再为每组输入尺寸分别导出。</p></article>
+            <article class="card"><h3>结构化控制流</h3><p>ONNX <code>If</code>、<code>Loop</code>、<code>Scan</code> 分别映射到 <code>torch.cond</code>、<code>torch.while_loop</code> 与函数式缓冲区；支持嵌套和真实迭代长度。</p></article>
+            <article class="card"><h3>可追溯产物</h3><p>每次导出保存 PT2、manifest、可读图、样例输入和验证报告，确保后续 XPU 复验使用的是同一张图，而不是口头描述。</p></article>
+          </div>
+          <h3 style="margin-top:28px">为什么中型模型此前会卡住</h3>
+          <div class="compare">
+            <article class="side before"><h3>转换器原始表达</h3><div class="fake-code">Shape(x) → Tensor([B, S])
+Gather(shape, 0) → Tensor(B)
+Concat(...) → Tensor([B,S,H])
+Reshape(x, shape_tensor)</div><p style="margin-top:12px;color:var(--muted);font-size:13px">FakeTensor 阶段没有真实数据，<code>.item()</code> 或列表化会破坏符号 Shape 传播。</p></article>
+            <div class="mid">→</div>
+            <article class="side after"><h3>本次兼容改写</h3><div class="fake-code">x.shape → (SymInt B, SymInt S)
+getitem(shape, 0) → B
+tuple concat → (B,S,H)
+reshape(x, symbolic_tuple)</div><p style="margin-top:12px;color:var(--muted);font-size:13px">Shape 回到尺寸语义，符号范围随 ExportedProgram 保存并用于多 Shape 运行。</p></article>
+          </div>
+          <div class="table-wrap" style="margin-top:24px">
+            <table><thead><tr><th>代表性闭环</th><th>统一产物</th><th>XPU 方式</th><th>结果</th></tr></thead><tbody>
+              <tr><td>ONNX DistilBERT</td><td>单一动态 PT2，batch / sequence 符号范围</td><td><code>torch.compile(fullgraph=True)</code>，复用一个 callable</td><td class="pass">1×2、2×4、3×7 通过</td></tr>
+              <tr><td>TensorFlow DistilBERT</td><td>tf2onnx 后进入同一 ONNX/Core ATen 路径</td><td>同一 PT2 跨三组 Shape</td><td class="pass">最大误差约 1.53e-5</td></tr>
+              <tr><td>ONNX If / Loop / Scan</td><td>结构化高阶算子与控制流契约</td><td>8 组代表性图 fullgraph</td><td class="pass">CPU/XPU 最大误差 0</td></tr>
+              <tr><td>EmbeddingGemma-300M</td><td>动态 Core ATen/PT2</td><td>STS12 共 3,108 对文本</td><td class="pass">主分数相对差 0.00007697%</td></tr>
+            </tbody></table>
+          </div>
+          <div class="callout warn" style="margin-top:18px"><strong>阶段判断</strong>模块一的代表性功能闭环已经建立，但“任意第三方模型兼容率”“全部 ONNX 算子”“长序列和复杂生成模型”“规模化性能”仍是后续工作，不使用整体 100% 的表述。</div>
+        </div>
+      </section>
+
+      <section id="module2">
+        <div class="content">
+          <h2>功能模块二：把“图能转换”升级为“语义可证明”</h2>
+          <p class="section-intro">仅仅看到算子名称并不足以证明转换正确。比如同样叫 reshape，是否保持元素总数；同样叫 reduce，dim 与 keepdim 是否正确；同样叫 expand，stride 是否体现广播，这些都需要机器可执行的规则。</p>
+          <figure class="diagram">
+            <svg viewBox="0 0 1090 430" role="img" aria-labelledby="sem-title sem-desc">
+              <title id="sem-title">语义契约生成和执行流程</title><desc id="sem-desc">Core ATen 和 manifest 进入契约提取器，结合版本化注册表形成 operator instances，逐个执行 dtype、shape、layout 规则，结果进入 semantics json 并决定是否允许导出和 XPU 验收。</desc>
+              <defs><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#668095"/></marker></defs>
+              <rect class="box" x="25" y="65" width="180" height="72" rx="13"/><text class="title" x="115" y="95" text-anchor="middle">Core ATen 图</text><text class="small" x="115" y="118" text-anchor="middle">节点 · 参数 · kwargs</text>
+              <rect class="box" x="25" y="250" width="180" height="72" rx="13"/><text class="title" x="115" y="280" text-anchor="middle">manifest.json</text><text class="small" x="115" y="303" text-anchor="middle">dtype · Shape · stride</text>
+              <rect class="m2" x="260" y="145" width="190" height="100" rx="15"/><text class="title" x="355" y="177" text-anchor="middle">契约提取器</text><text class="small" x="355" y="203" text-anchor="middle">跨框架映射</text><text class="small" x="355" y="225" text-anchor="middle">operator_instances</text>
+              <rect class="box" x="260" y="300" width="190" height="85" rx="15"/><text class="title" x="355" y="330" text-anchor="middle">版本化注册表</text><text class="small" x="355" y="353" text-anchor="middle">39 个算子族</text><text class="small" x="355" y="373" text-anchor="middle">版本 + SHA-256</text>
+              <rect class="m2" x="510" y="90" width="250" height="220" rx="15"/><text class="title" x="635" y="125" text-anchor="middle">逐算子规则引擎</text><text class="small" x="635" y="158" text-anchor="middle">① dtype / 类型提升 / 索引类型</text><text class="small" x="635" y="190" text-anchor="middle">② 广播 / matmul / reduction</text><text class="small" x="635" y="222" text-anchor="middle">③ layout / stride / 物化边界</text><text class="small" x="635" y="254" text-anchor="middle">④ dynamic / symbolic 可证明关系</text><text class="small" x="635" y="286" text-anchor="middle">真实 dim · keepdim · padding</text>
+              <rect class="box" x="820" y="52" width="235" height="70" rx="13"/><text class="title" x="937" y="82" text-anchor="middle">passed</text><text class="small" x="937" y="104" text-anchor="middle">执行并满足规则</text>
+              <rect class="warn" x="820" y="143" width="235" height="70" rx="13"/><text class="title" x="937" y="173" text-anchor="middle">insufficient metadata</text><text class="small" x="937" y="195" text-anchor="middle">现有信息不足，不冒充通过</text>
+              <rect class="box" x="820" y="234" width="235" height="70" rx="13"/><text class="title" x="937" y="264" text-anchor="middle">not implemented</text><text class="small" x="937" y="286" text-anchor="middle">规则已登记，检查器待补齐</text>
+              <rect class="warn" x="820" y="325" width="235" height="70" rx="13"/><text class="title" x="937" y="355" text-anchor="middle">failed → 阻断导出</text><text class="small" x="937" y="377" text-anchor="middle">不允许错误语义进入 XPU</text>
+              <path d="M205 101 C230 101 230 168 260 178" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M205 286 C230 286 230 222 260 212" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M450 342 C480 342 470 250 510 250" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M450 195 L510 195" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M760 137 L820 87" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M760 180 L820 178" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M760 225 L820 269" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/><path d="M760 268 L820 360" fill="none" stroke="#668095" stroke-width="2" marker-end="url(#arrow2)"/>
+            </svg>
+            <figcaption class="caption">图 2：语义契约不是静态说明文档，而是随每个 Core ATen 产物执行的质量门</figcaption>
+          </figure>
+          <div class="grid g3" style="margin-top:20px">
+            <article class="card"><h3>注册表</h3><p>版本 <code>2026.09.22</code>，内容哈希固定；定义算子族、dtype、Shape、layout 和扩展命名空间，便于判断两个产物是否依据同一套规范。</p></article>
+            <article class="card"><h3>精确参数</h3><p><code>operator_instances</code> 保存普通参数和 kwargs，因此检查器能看到真实的 <code>dim</code>、<code>keepdim</code>、permutation、padding 和 slice bounds。</p></article>
+            <article class="card"><h3>诚实覆盖率</h3><p>把已执行、失败、尚未实现、元数据不足分开统计。只有真正运行过检查器的规则才进入执行比例，避免用“登记覆盖率”代替完成度。</p></article>
+          </div>
+          <h3 style="margin-top:28px">本轮新增规则覆盖面</h3>
+          <div class="table-wrap"><table><thead><tr><th>类别</th><th>已经能够执行的代表性检查</th><th>典型问题</th></tr></thead><tbody>
+            <tr><td><strong>dtype</strong></td><td>同类型提升、除法浮点路径、累加类型、Where 条件、索引整数、Cast 目标类型、Dropout mask</td><td>防止静默窄化、错误索引类型和转换目标丢失</td></tr>
+            <tr><td><strong>Shape</strong></td><td>符号广播、matmul、transpose、concat/stack、expand/repeat、slice、embedding/gather、reduction、linear、pad、creation</td><td>防止轴、广播、收缩维和动态范围被误改</td></tr>
+            <tr><td><strong>layout</strong></td><td>保持或广播、物化输出、reshape stride、transpose stride、expand 零 stride、view/物化边界</td><td>防止只看 Shape 一样，却忽略存储布局语义</td></tr>
+          </tbody></table></div>
+          <div class="callout" style="margin-top:18px"><strong>一个具体例子</strong><code>aten.mean.dim</code> 的 <code>keepdim=True</code> 实际位于 kwargs。旧做法只根据输入输出 Shape 猜测，容易误判；现在审计器读取真实调用参数，再按 dim 和 keepdim 推导期望 Shape。动态 slice 的 end 如果来自运行时 SymInt，则明确记录为“元数据不足”，而不是为了提高覆盖率强行判为通过。</div>
+        </div>
+      </section>
+
+      <section id="evidence">
+        <div class="content">
+          <h2>证据：测试覆盖、真实模型与 XPU 结果</h2>
+          <p class="section-intro">这里同时给出三类数字：注册表是否认识算子、规则检查器是否真正执行、模型是否经过 XPU。三类指标互相补充，但不能互相替代。</p>
+          <div class="grid g2">
+            <article class="card"><h3>规则真实执行比例</h3><div class="status-stack" style="margin-top:15px">
+              <div class="status-line"><div class="name">小型 ONNX Add + Relu</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="num">6 / 6</div></div>
+              <div class="status-line"><div class="name">PyTorch 结构化控制流</div><div class="track"><div class="bar blue" style="width:83.33%"></div></div><div class="num">83.33%</div></div>
+              <div class="status-line"><div class="name">all-MiniLM-L6-v2</div><div class="track"><div class="bar" style="width:88.06%"></div></div><div class="num">88.06%</div></div>
+              <div class="status-line"><div class="name">bge-m3</div><div class="track"><div class="bar" style="width:86.58%"></div></div><div class="num">86.58%</div></div>
+            </div><p style="margin-top:16px;color:var(--muted);font-size:12px">图中比例只统计实际执行的规则；未实现或元数据不足不会被算作通过。</p></article>
+            <article class="card"><h3>自动回归</h3><div class="grid g2" style="margin-top:13px"><div class="metric"><div class="label">模型接入完整回归</div><div class="value" style="color:var(--green)">24 passed</div><div class="hint">PyTorch / ONNX / TF / 控制流</div></div><div class="metric"><div class="label">FlagTree 语义专项</div><div class="value" style="color:var(--green)">15 passed</div><div class="hint">注册表 / 契约 / 规则审计</div></div></div><div class="callout blue" style="margin-top:17px"><strong>XPU 小图验收</strong>6/6 规则通过，<code>torch.compile(fullgraph=True)</code> 通过，CPU/XPU 最大绝对误差为 0。</div></article>
+          </div>
+          <div class="grid g2" style="margin-top:18px">
+            <article class="card model-card"><div class="model-icon">Mini</div><div><h3>all-MiniLM-L6-v2</h3><p>547 个 Core ATen 算子实例，1,641 条规则检查；1,445 条实际执行并通过，0 条失败。单一动态 PT2 已跨三组 Shape 在 XPU 复用。</p><div class="mini-kpis"><span>执行 1,445</span><span>失败 0</span><span>比例 88.06%</span><span>XPU 误差 ≤ 5.72e-6</span></div></div></article>
+            <article class="card model-card"><div class="model-icon">BGE</div><div><h3>BAAI/bge-m3</h3><p>1,893 个 Core ATen 算子实例，5,679 条规则检查；4,917 条实际执行并通过，0 条失败。约 2.27 GB 动态 PT2 全图编译通过。</p><div class="mini-kpis"><span>执行 4,917</span><span>失败 0</span><span>比例 86.58%</span><span>sentence 误差 ≤ 5.50e-5</span></div></div></article>
+          </div>
+          <div class="table-wrap" style="margin-top:20px"><table><thead><tr><th>验证层级</th><th>当前证据</th><th>能证明什么</th><th>不能证明什么</th></tr></thead><tbody>
+            <tr><td>语义注册覆盖</td><td>22 个去重模型、20,659 节点、39/39 种 ONNX 算子已登记</td><td>当前样本中的算子能映射到已定义语义族</td><td>不等于转换、Lowering 或 Kernel 已实现</td></tr>
+            <tr><td>可执行规则覆盖</td><td>真实模型 86.58%–88.06%，0 failed</td><td>大部分逐节点 dtype/Shape/layout 检查已真实运行</td><td>剩余规则仍需实现或补充元数据</td></tr>
+            <tr><td>XPU 模型执行</td><td>DistilBERT、MiniLM、bge-m3、EmbeddingGemma 与控制流代表图</td><td>指定图和指定 Shape 能在现有 XPU 环境运行并与参考对齐</td><td>不等于 250/500 模型全量通过或性能达标</td></tr>
+          </tbody></table></div>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+      <section id="boundary">
+        <div class="content">
+          <h2>边界与风险：为什么现在不能说 100%</h2>
+          <p class="section-intro">本阶段的价值在于把缺口变成可测量、可定位的工程问题，而不是用少量跑通案例覆盖所有未知范围。</p>
+          <div class="scope">
+            <article class="card done"><h3>已经有证据的能力</h3><ul><li>三种入口汇入同一 Core ATen/PT2 产物。</li><li>动态 batch / sequence 与结构化 If/Loop/Scan 有代表性 XPU 结果。</li><li>语义契约随产物落盘，错误规则能够阻断导出。</li><li>39 个算子族覆盖当前 22 个去重模型的语义登记。</li><li>两类真实模型可执行规则比例达到 86% 以上且无失败。</li><li>代码已提交并推送到 <code>origin/dev/hx</code>。</li></ul></article>
+            <article class="card todo"><h3>仍需继续完成的能力</h3><ul><li>尚未取得并扫描全部 250/500 模型。</li><li>符号 reshape 元素数量等价证明仍是最大元数据缺口。</li><li>矩阵逻辑轴 layout、运行时 Shape 查询规则尚待实现。</li><li>CNN、检测、生成式模型和长序列动态范围覆盖不足。</li><li>PyTorch 2.5 与 2.9 的 PT2 序列化兼容尚未统一。</li><li>语义覆盖、转换覆盖、Core ATen 导出和 XPU 执行需要分别统计。</li></ul></article>
+          </div>
+          <div class="callout danger" style="margin-top:20px"><strong>禁止混用的三个概念</strong>“注册表认识这个算子” ≠ “onnx2torch 能正确转换” ≠ “FlagTree/XPU 已有稳定高性能 Kernel”。汇报时必须分别说明语义层、转换层和后端执行层的证据。</div>
+          <div class="venn-note">
+            <div><b>语义覆盖</b><span>算子规则是否定义</span></div><div><b>转换覆盖</b><span>前端能否变成 Core ATen</span></div><div><b>导出覆盖</b><span>动态图能否保存回读</span></div><div><b>执行覆盖</b><span>XPU 是否正确、稳定、够快</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="next">
+        <div class="content">
+          <h2>下一步建议：从单模型成功走向规模化可交付</h2>
+          <p class="section-intro">下一阶段不建议继续只用“又跑通一个模型”衡量进展，而应建立分层漏斗：每个模型在哪一层失败、失败原因是什么、修复能覆盖多少同类模型。</p>
+          <div class="roadmap">
+            <article class="road priority" data-step="P0"><h3>补齐高频规则</h3><p>优先实现符号 reshape 元素数量证明、矩阵逻辑轴 layout、运行时 Shape 查询元数据。它们覆盖当前大多数未判定项。</p></article>
+            <article class="road priority" data-step="P0"><h3>批量审计 250/500</h3><p>直接复用现有 PT2 审计工具，形成语义、转换、导出、XPU 四张独立清单，不再把一个百分比混作全部完成度。</p></article>
+            <article class="road" data-step="P1"><h3>扩展模型类型</h3><p>从 BERT 类扩展到 CNN、检测、生成式模型；补充复杂 Slice/Range、多输出 Shape 与更长 sequence 边界。</p></article>
+            <article class="road" data-step="P1"><h3>性能与版本工程</h3><p>定位 20 分钟级编译慢点，建立 PT2 版本策略；CI 暂缓，但保留脚本化复验入口，后续再自动化。</p></article>
+          </div>
+          <div style="break-inside:avoid">
+            <h3 style="margin-top:28px">推荐汇报指标</h3>
+            <div class="table-wrap"><table><thead><tr><th>指标</th><th>建议分母</th><th>当前示例</th><th>下一阶段目标方式</th></tr></thead><tbody>
+              <tr><td>语义注册覆盖率</td><td>模型集中出现的唯一 ONNX 算子</td><td>当前样本 39/39</td><td>扩展到完整模型清单后重新统计</td></tr>
+              <tr><td>规则执行比例</td><td>Core ATen 算子实例 × 三类规则</td><td>MiniLM 88.06%；bge-m3 86.58%</td><td>按缺口类型逐轮提升，不掩盖 metadata</td></tr>
+              <tr><td>转换成功率</td><td>进入 onnx2torch/tf2onnx 的模型数</td><td>单独记录</td><td>按失败算子族聚类</td></tr>
+              <tr><td>XPU 正确执行率</td><td>成功导出 Core ATen 的模型数</td><td>单独记录</td><td>同时记录精度、运行时间和编译时间</td></tr>
+            </tbody></table></div>
+          </div>
+          <div class="callout" style="margin-top:20px"><strong>建议的一句话总结</strong><span class="quote">“我们已经打通三框架到 Core ATen、再到语义契约和 XPU 的代表性闭环；当前重点是把这条链路规模化到完整模型集，并用分层指标逐步补齐真实缺口。”</span></div>
+        </div>
+      </section>
+
+      <section id="appendix">
+        <div class="content">
+          <h2>代码、产物与复验入口</h2>
+          <div class="grid g2">
+            <article class="card"><h3>GitHub 留存</h3><p>仓库：<code>Xproject-CHKU-SZ/FlagTree</code><br>分支：<code>dev/hx</code><br>最新提交：<code>ccd65da3314d82788f66093b0fe83d550134dc26</code><br>提交说明：<code>Expand executable model IR semantic validation</code></p><p style="color:var(--muted);font-size:12px">该提交包含规则引擎扩展、契约参数保留、注册表更新、PT2 审计工具、单元测试和说明文档。</p></article>
+            <article class="card"><h3>核心源码</h3><p class="mono">python/flagtree_model_ir/registry.py<br>python/flagtree_model_ir/contract.py<br>python/flagtree_model_ir/rule_checks.py<br>model_import_adapters/scripts/audit_core_aten_semantic_rules.py<br>python/test/unit/tools/test_model_ir_rule_checks.py<br>docs/model-ir-semantics.md</p></article>
+            <article class="card"><h3>每个模型的标准产物</h3><p class="mono">model.core_aten.pt2<br>manifest.json<br>semantics.json<br>validation.json<br>graph.readable.txt<br>graph_module.py<br>example_inputs.npz</p></article>
+            <article class="card"><h3>服务器主要证据目录</h3><p class="mono">artifacts/module2_executable_rules_20260922/<br>server_test_results/top500_all_minilm_l6_v2_20260915/<br>server_test_results/top500_bge_m3_20260915/<br>artifacts/control_flow_xpu/<br>server_test_results/embeddinggemma_300m_onnx_20260911/</p></article>
+          </div>
+          <div class="callout warn" style="margin-top:20px"><strong>复验注意</strong>PyTorch 2.5 生成的旧 PT2 不能保证被 PyTorch 2.9 直接加载；XPU 复验应使用与产物匹配的运行时，或在目标版本重新导出。连接凭据不进入报告和 Git 仓库。</div>
+        </div>
+      </section>
+
+      <footer class="footer"><div class="content">FlagTree 编译优化层阶段成果汇报 · 2026-09-22 · 数据以 dev/hx 最新提交与服务器正式验收产物为准</div></footer>
+    </main>
+  </div>
+</body>
+</html>
