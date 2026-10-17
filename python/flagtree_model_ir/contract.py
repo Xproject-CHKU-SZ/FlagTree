@@ -504,6 +504,8 @@ def build_semantic_contract(manifest: Mapping[str, Any]) -> dict[str, Any]:
             manifest.get("export_mode", {}).get("dynamic_shapes_requested", False)
         ),
     }
+    if "shape_constraints" in manifest:
+        dynamic_dimensions["input_axis_constraints"] = manifest["shape_constraints"]
     registered = sum(item["registry_status"] == "registered" for item in operators)
     registered_frontend = sum(
         item["registry_status"] == "registered" for item in frontend_operators

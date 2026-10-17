@@ -500,6 +500,13 @@ def export_core_aten(
         "schema": input_schema,
         "sha256": sha256_file(inputs_path),
     }
+    from .shape_constraints import build_input_shape_constraints
+
+    shape_constraints = build_input_shape_constraints(core_aten, input_schema)
+    restored_shape_constraints = build_input_shape_constraints(loaded, input_schema)
+    if shape_constraints != restored_shape_constraints:
+        raise UnifiedIrError("统一图保存回读后的输入 Shape 约束发生变化")
+    manifest["shape_constraints"] = shape_constraints
     manifest["artifact"] = {
         "path": str(exported_path),
         "size_bytes": exported_path.stat().st_size,
@@ -545,6 +552,13 @@ def export_core_aten(
     validation = {
         "status": "passed",
         "saved_and_loaded": True,
+        "shape_constraints": {
+            "saved_and_loaded_equal": True,
+            "sha256": hashlib.sha256(
+                json.dumps(shape_constraints, sort_keys=True, ensure_ascii=False).encode("utf-8")
+            ).hexdigest(),
+            "runtime_range_coverage": "see_per_shape_execution_reports",
+        },
         "outputs": output_comparison,
         "semantic_contract": semantics["validation"],
         "semantic_contract_sha256": manifest["semantics_artifact"]["sha256"],

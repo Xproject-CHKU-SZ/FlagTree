@@ -12,6 +12,8 @@ from collections.abc import Callable, Mapping, Sequence
 from math import prod
 from typing import Any
 
+from .shape_reasoning import concatenate_shape_check, normalize_axis
+
 
 CheckResult = dict[str, str]
 RuleChecker = Callable[
@@ -142,6 +144,28 @@ def _check_numeric_input_integer_output(
     if input_dtype not in _NUMERIC_DTYPES:
         return _result("failed", f"expected numeric input, observed {input_dtype!r}")
     return _check_output_integer(inputs, outputs, instance)
+
+
+def _check_extrema_value_index(
+    inputs: Sequence[Mapping[str, Any]],
+    outputs: Sequence[Mapping[str, Any]],
+    instance: Mapping[str, Any],
+) -> CheckResult:
+    del instance
+    missing = _require_io(inputs, outputs)
+    if missing:
+        return missing
+    if len(outputs) != 2:
+        return _result("failed", "extrema dim requires ordered value and index outputs")
+    source = str(inputs[0].get("dtype", ""))
+    value, index = (str(item.get("dtype", "")) for item in outputs)
+    if not source or not value or not index:
+        return _result("insufficient_metadata", "extrema dtype metadata is incomplete")
+    if source not in (_INTEGER_DTYPES | _FLOAT_DTYPES | {"bool"}):
+        return _result("failed", f"extrema input is not an ordered real dtype: {source!r}")
+    if value != source or index != "int64":
+        return _result("failed", f"expected ({source}, int64), observed ({value}, {index})")
+    return _result("passed", "extrema value preserves input dtype and index is int64")
 
 
 def _check_dtype_promote(
@@ -322,7 +346,6 @@ def _check_floating_with_explicit_accumulator(
     outputs: Sequence[Mapping[str, Any]],
     instance: Mapping[str, Any],
 ) -> CheckResult:
-    del instance
     missing = _require_io(inputs, outputs)
     if missing:
         return missing
@@ -335,7 +358,19 @@ def _check_floating_with_explicit_accumulator(
             "failed",
             f"primary output must preserve {input_dtype!r}, observed {output_dtypes!r}",
         )
-    if not set(output_dtypes) <= _FLOAT_OR_COMPLEX_DTYPES:
+    # Efficient SDPA returns (output, logsumexp, philox_seed, philox_offset).
+    # Validate all four declared outputs; integer Philox state is not a
+    # normalization result, and arbitrary auxiliary dtypes remain invalid.
+    target = str(instance.get("target", ""))
+    efficient_sdpa = target == "aten._scaled_dot_product_efficient_attention.default"
+    if efficient_sdpa:
+        if len(output_dtypes) != 4:
+            return _result("failed", "efficient SDPA requires four tensor outputs")
+        if output_dtypes[1] not in _FLOAT_DTYPES or output_dtypes[2:] != ["int64", "int64"]:
+            return _result("failed", f"invalid efficient SDPA auxiliary dtypes: {output_dtypes!r}")
+        return _result("passed", "efficient SDPA preserves primary dtype and declares integer Philox state")
+    invalid_dtypes = set(output_dtypes) - _FLOAT_OR_COMPLEX_DTYPES
+    if invalid_dtypes:
         return _result(
             "failed", f"normalization outputs must be floating: {output_dtypes!r}"
         )
@@ -603,10 +638,7 @@ def _integer_list_value(value: Any) -> list[int] | None:
 
 
 def _normalize_axis(axis: int, rank: int, *, allow_endpoint: bool = False) -> int | None:
-    upper = rank + int(allow_endpoint)
-    if axis < 0:
-        axis += upper
-    return axis if 0 <= axis < upper else None
+    return normalize_axis(axis, rank, allow_endpoint=allow_endpoint)
 
 
 def _primary_dtypes(
@@ -951,41 +983,13 @@ def _check_concatenate_shape(
     missing = _require_io(inputs, outputs)
     if missing:
         return missing
-    shapes = [_static_shape(item) for item in inputs]
-    actual = _static_shape(outputs[0])
-    if any(item is None for item in shapes) or actual is None:
-        return _result(
-            "insufficient_metadata", "static shapes are required for concatenate validation"
-        )
-    concrete = [item for item in shapes if item is not None]
-    rank = len(concrete[0])
     target = str(instance.get("target", ""))
-    is_stack = "aten.stack." in target
-    axis = _integer_argument(instance, 1, 0)
-    axis = _normalize_axis(axis or 0, rank, allow_endpoint=is_stack)
-    if axis is None:
-        return _result("failed", "concatenate axis is outside the tensor rank")
-    if is_stack:
-        if any(item != concrete[0] for item in concrete[1:]):
-            return _result("failed", f"stack input shapes differ: {concrete!r}")
-        expected_list = list(concrete[0])
-        expected_list.insert(axis, len(concrete))
-    else:
-        if any(len(item) != rank for item in concrete):
-            return _result("failed", f"concatenate input ranks differ: {concrete!r}")
-        expected_list = list(concrete[0])
-        for dimension in range(rank):
-            if dimension == axis:
-                expected_list[dimension] = sum(item[dimension] for item in concrete)
-            elif any(item[dimension] != expected_list[dimension] for item in concrete[1:]):
-                return _result(
-                    "failed", f"non-concatenated dimension {dimension} differs"
-                )
-    expected = tuple(expected_list)
-    if actual == expected:
-        return _result("passed", f"concatenated output shape is {expected!r}")
-    return _result(
-        "failed", f"expected concatenated shape {expected!r}, observed {actual!r}"
+    axis = _argument(instance, 1, _keyword(instance, "dim", 0))
+    if type(axis) is not int:
+        return _result("insufficient_metadata", "concatenate axis is not a known integer")
+    return concatenate_shape_check(
+        [_shape_key(item) for item in inputs], _shape_key(outputs[0]), axis,
+        stack="aten.stack." in target,
     )
 
 
@@ -1358,7 +1362,9 @@ def _check_layout_preserve_or_broadcast(
         and input_shapes
         and all(item == output_shape for item in input_shapes)
     ):
-        return _check_layout_preserve(inputs, outputs, instance)
+        # Out-of-place elementwise operations can materialize a contiguous
+        # result even when both operands have identical Shape and strides.
+        return _check_layout_preserve_or_materialize(inputs, outputs, instance)
     observed = str(outputs[0].get("layout", "unknown"))
     if observed == "unknown":
         return _result("insufficient_metadata", "broadcast result layout is unknown")
@@ -1578,6 +1584,7 @@ _DTYPE_CHECKERS: dict[str, RuleChecker] = {
     "operator_specific_preserve": _check_numeric_preserve_or_explicit,
     "data_update_compatible_indices_integer": _check_data_update_indices_integer,
     "input_numeric_output_integer": _check_numeric_input_integer_output,
+    "extrema_value_preserve_index_int64": _check_extrema_value_index,
     "floating_preserve_mask_bool": _check_dropout_dtype,
     "explicit_or_inferred_dtype": _check_creation_dtype,
 }

@@ -11,7 +11,7 @@ from typing import Any
 
 SEMANTICS_REGISTRY: dict[str, Any] = {
     "schema_version": 1,
-    "registry_version": "2026.09.22",
+    "registry_version": "2026.10.14.1",
     "canonical_ir": "Core ATen",
     "dtype_policy": {
         "canonical_dtypes": [
@@ -147,7 +147,7 @@ SEMANTICS_REGISTRY: dict[str, Any] = {
             "tensorflow_ops": ["Relu", "Gelu", "Sigmoid", "Tanh", "Swish"],
             "dtype_rule": "floating_preserve",
             "shape_rule": "preserve",
-            "layout_rule": "preserve",
+            "layout_rule": "preserve_or_materialize",
         },
         {
             "id": "elementwise.clip",
@@ -308,7 +308,7 @@ SEMANTICS_REGISTRY: dict[str, Any] = {
             ],
             "dtype_rule": "operator_specific_floating_or_numeric_preserve",
             "shape_rule": "preserve",
-            "layout_rule": "preserve",
+            "layout_rule": "preserve_or_materialize",
         },
         {
             "id": "logical",
@@ -384,10 +384,28 @@ SEMANTICS_REGISTRY: dict[str, Any] = {
         },
         {
             "id": "reduction.index",
-            "core_aten_patterns": [r"^aten\.(argmax|argmin|max|min)\."],
+            "core_aten_patterns": [r"^aten\.(argmax|argmin)\."],
             "onnx_ops": ["ArgMax", "ArgMin"],
             "tensorflow_ops": ["ArgMax", "ArgMin"],
             "dtype_rule": "input_numeric_output_integer",
+            "shape_rule": "reduce_axes_keepdim_explicit",
+            "layout_rule": "materialized",
+        },
+        {
+            "id": "reduction.extrema_dim",
+            "core_aten_patterns": [r"^aten\.(max|min)\.(dim|dim_max|dim_min)$"],
+            "onnx_ops": [],
+            "tensorflow_ops": [],
+            "dtype_rule": "extrema_value_preserve_index_int64",
+            "shape_rule": "reduce_axes_keepdim_explicit",
+            "layout_rule": "materialized",
+        },
+        {
+            "id": "reduction.extrema_all",
+            "core_aten_patterns": [r"^aten\.(max|min)\.(default|unary_out)$"],
+            "onnx_ops": [],
+            "tensorflow_ops": [],
+            "dtype_rule": "preserve",
             "shape_rule": "reduce_axes_keepdim_explicit",
             "layout_rule": "materialized",
         },

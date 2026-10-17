@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -11,6 +12,29 @@ from typing import Any
 
 from flagtree_model_ir import build_semantic_contract
 from model_import_adapters.unified_ir import load_core_aten, summarize_exported_program
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def verified_artifact_manifest(core_aten_path: Path, contract_path: Path, entry: str) -> dict:
+    """Bind a weight-free audit to the saved, roundtrip-validated artifact."""
+    manifest_path = contract_path.parent / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    validation = json.loads((contract_path.parent / "validation.json").read_text(encoding="utf-8"))
+    if (validation.get("status") != "passed" or validation.get("saved_and_loaded") is not True
+            or manifest.get("source", {}).get("model_id") != entry
+            or validation.get("manifest_sha256") != _sha256(manifest_path)
+            or validation.get("semantic_contract_sha256") != _sha256(contract_path)
+            or manifest.get("artifact", {}).get("sha256") != _sha256(core_aten_path)
+            or validation.get("exported_program_sha256") != manifest["artifact"]["sha256"]):
+        raise ValueError("Artifact provenance/roundtrip verification failed")
+    return manifest
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -94,23 +118,30 @@ def main() -> int:
     parser.add_argument("--entry", required=True)
     parser.add_argument("--source-kind", default="unspecified")
     parser.add_argument("--dynamic-shapes-requested", action="store_true")
+    parser.add_argument("--semantic-contract-json", type=Path)
     args = parser.parse_args()
 
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     core_aten_path = args.core_aten.resolve()
-    exported_program = load_core_aten(core_aten_path)
-    manifest = summarize_exported_program(
-        exported_program,
-        source={"kind": args.source_kind, "entry": args.entry},
-        export_mode={
-            "dynamic_shapes_requested": args.dynamic_shapes_requested,
-            "audit_existing_artifact": True,
-        },
-    )
-    contract = build_semantic_contract(manifest)
+    if args.semantic_contract_json:
+        contract_path = args.semantic_contract_json.resolve()
+        manifest = verified_artifact_manifest(core_aten_path, contract_path, args.entry)
+        contract = build_semantic_contract(manifest)
+    else:
+        exported_program = load_core_aten(core_aten_path)
+        manifest = summarize_exported_program(
+            exported_program,
+            source={"kind": args.source_kind, "entry": args.entry},
+            export_mode={
+                "dynamic_shapes_requested": args.dynamic_shapes_requested,
+                "audit_existing_artifact": True,
+            },
+        )
+        contract = build_semantic_contract(manifest)
     coverage = contract["coverage"]["rule_checks"]
     report = {
+        "audit_mode": "verified_saved_manifest_rules" if args.semantic_contract_json else "reload_pt2_rules",
         "status": contract["validation"]["status"],
         "entry": args.entry,
         "core_aten_path": str(core_aten_path),

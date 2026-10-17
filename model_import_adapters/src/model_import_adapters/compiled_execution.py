@@ -21,8 +21,28 @@ def _retarget_factory_devices(module: Any, device: str) -> int:
         if not isinstance(child, GraphModule):
             continue
         changed = False
+        relocated_nodes: set[Any] = set()
         for node in child.graph.nodes:
-            if node.op != "call_function" or "device" not in node.kwargs:
+            if node.op != "call_function":
+                continue
+            # This operator checks its input; it does not allocate a tensor.
+            # Retargeting it breaks valid CPU scalar constants used alongside
+            # device tensors (for example DeBERTa attention scale factors).
+            if node.target == torch.ops.aten._assert_tensor_metadata.default:
+                # A check may follow a CPU factory which we just relocated.
+                # Update only that dataflow; unrelated CPU scalar checks stay
+                # on CPU. Do not remove dtype/layout/shape assertions.
+                if node.args and node.args[0] in relocated_nodes:
+                    kwargs = dict(node.kwargs)
+                    if kwargs.get("device") is not None and torch.device(kwargs["device"]).type == "cpu":
+                        kwargs["device"] = target_device
+                        node.kwargs = kwargs
+                        changed = True
+                        changed_count += 1
+                continue
+            if any(parent in relocated_nodes for parent in node.all_input_nodes):
+                relocated_nodes.add(node)
+            if "device" not in node.kwargs:
                 continue
             kwargs = dict(node.kwargs)
             source_device = kwargs.get("device")
@@ -30,6 +50,7 @@ def _retarget_factory_devices(module: Any, device: str) -> int:
                 continue
             kwargs["device"] = target_device
             node.kwargs = kwargs
+            relocated_nodes.add(node)
             changed = True
             changed_count += 1
         if changed:
