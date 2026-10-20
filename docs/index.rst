@@ -25,6 +25,9 @@ Python API
 - :doc:`triton <python-api/triton>`
 - :doc:`triton.language <python-api/triton.language>`
 - :doc:`triton.testing <python-api/triton.testing>`
+- :doc:`Operator graph fusion with Inductor <python-api/operator-fusion>`
+- :doc:`Intermediate global-memory elimination <python-api/intermediate-memory-elimination>`
+- :doc:`Experimental model graph fusion <python-api/graph-fusion>`
 - :doc:`Triton semantics <python-api/triton-semantics>`
 - :doc:`triton.language.extra.cuda <python-api/triton.language.extra.cuda>`
 
@@ -37,6 +40,9 @@ Python API
    python-api/triton
    python-api/triton.language
    python-api/triton.testing
+   python-api/operator-fusion
+   python-api/intermediate-memory-elimination
+   python-api/graph-fusion
    python-api/triton-semantics
 
 

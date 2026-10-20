@@ -976,6 +976,28 @@ class XPULauncher(object):
         mod = compile_module_from_src(src, "__triton_launcher_xpu", metadata.xpu_arch)
         self.launch = mod.launch
 
+    def get_flat_runner(self):
+        """Bind constexpr filtering for a fixed pointer/scalar kernel ABI.
+
+        Descriptor signatures retain the general expansion path. The nine
+        launch-control arguments, including metadata and hooks, are forwarded
+        unchanged. Kernel tensor values and addresses are never captured.
+        """
+        from operator import itemgetter
+        scalar_types = {"i1", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64",
+                        "fp16", "bf16", "fp32", "fp64", "constexpr"}
+        types = tuple(self._signature.values())
+        if not all(isinstance(ty, str) and (ty.startswith("*") or ty in scalar_types)
+                   for ty in types):
+            return None
+        select = itemgetter(*(tuple(range(9)) + tuple(9 + i for i, ty in enumerate(types)
+                                                      if ty != "constexpr")))
+        def run(*args):
+            if _PRINT_TRITON_FUNC:
+                return self(*args)
+            return self.launch(*select(args))
+        return run
+
     def __call__(self, *args):
         if _PRINT_TRITON_FUNC:
             _print_triton_launcher_info(self._fn_name, self._signature, self._constants, args)

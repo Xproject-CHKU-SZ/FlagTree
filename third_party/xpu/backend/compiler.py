@@ -99,6 +99,44 @@ def file_hash(path):
 _LLC_EXTRA = ("-O2", )
 
 
+# Opt-in vendor LLVM 19 optimization.  The external `opt` runs on the LLVM 19
+# text produced by the existing 22 -> 19 downgrade, so its identity is folded
+# into XPUOptions.hash() rather than the backend's global hash.
+_LLVM19_OPT_PROTOCOL = "xpu-llvm19-vendor-opt-v1"
+_LLVM19_OPT_LEVELS = ("O1", "O2", "O3")
+
+
+def _validate_llvm19_opt(path: str, level: str) -> None:
+    if not os.path.isabs(path):
+        raise ValueError(f"llvm19_opt_path must be absolute, got {path!r}")
+    if not os.path.isfile(path) or not os.access(path, os.X_OK):
+        raise ValueError(f"llvm19_opt_path is not an existing executable: {path!r}")
+    if level not in _LLVM19_OPT_LEVELS:
+        raise ValueError(f"llvm19_opt_level must be one of {_LLVM19_OPT_LEVELS}, got {level!r}")
+
+
+def _run_llvm19_opt(ir_text: str, opt, triple: str, cpu: str) -> str:
+    _validate_llvm19_opt(opt.llvm19_opt_path, opt.llvm19_opt_level)
+    if not ir_text.strip():
+        raise RuntimeError("vendor LLVM 19 opt input IR is empty after downgrade and raw payload merge")
+    cmd = [opt.llvm19_opt_path, "-S", f"-{opt.llvm19_opt_level}", f"-mtriple={triple}", f"-mcpu={cpu}"]
+    try:
+        result = subprocess.run(cmd, input=ir_text, text=True, capture_output=True, timeout=120,
+                                env=llvm19_toolchain.llvm19_env("xpu"))
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(f"vendor LLVM 19 opt timed out after 120s: {' '.join(cmd)}") from e
+    except OSError as e:
+        raise RuntimeError(f"failed to execute vendor LLVM 19 opt {' '.join(cmd)}: {e}") from e
+    if result.returncode != 0:
+        raise RuntimeError(f"vendor LLVM 19 opt failed ({result.returncode}): {' '.join(cmd)}\n"
+                           f"stderr: {result.stderr}")
+    if not result.stdout.strip():
+        raise RuntimeError(f"vendor LLVM 19 opt produced empty IR: {' '.join(cmd)}")
+    if result.stderr.strip():
+        logging.warning("vendor LLVM 19 opt wrote to stderr: %s\nstderr: %s", ' '.join(cmd), result.stderr)
+    return result.stdout
+
+
 @functools.lru_cache(maxsize=None)
 def _xtdk_lld_version(tool_dir: str) -> str:
     """`ld.lld --version` of the linker this backend's elfconv step drives.
@@ -226,7 +264,15 @@ class XPUOptions:
     use_int4_w4a8: bool = False
     load_tile_size: int = 131072
 
+    # Explicit per-kernel vendor LLVM 19 optimization (empty = existing public
+    # LLVM 22 in-process route).  Both fields are plain strings so options
+    # serialize normally; the binary identity is added by hash() below.
+    llvm19_opt_path: str = ""
+    llvm19_opt_level: str = "O3"
+
     def __post_init__(self):
+        if self.llvm19_opt_path:
+            _validate_llvm19_opt(self.llvm19_opt_path, self.llvm19_opt_level)
         default_libdir = Path(__file__).parent / f"xpu{self.arch}"
         extern_libs = {} if self.extern_libs is None else dict(self.extern_libs)
         if not extern_libs.get("libdevice", None):
@@ -262,6 +308,17 @@ class XPUOptions:
     def hash(self):
         hash_dict = dict(self.__dict__)
         hash_dict["extern_libs"] = tuple((k, file_hash(v)) for k, v in sorted(hash_dict["extern_libs"]))
+        if self.llvm19_opt_path:
+            _validate_llvm19_opt(self.llvm19_opt_path, self.llvm19_opt_level)
+            st = os.stat(self.llvm19_opt_path)
+            # Read uncached on purpose: the path-keyed file_hash() lru above
+            # would miss a replacement binary at the same path.  The stat
+            # fields also make that replacement part of the option key.
+            with open(self.llvm19_opt_path, "rb") as f:
+                digest = hashlib.sha256(f.read()).hexdigest()
+            hash_dict["llvm19_opt_identity"] = (
+                f"{_LLVM19_OPT_PROTOCOL}:{self.llvm19_opt_level}:{digest}:"
+                f"{st.st_ino}:{st.st_size}:{st.st_mtime_ns}:{st.st_ctime_ns}")
         key = "_".join([f"{name}-{val}" for name, val in sorted(hash_dict.items())])
         return hashlib.sha256(key.encode("utf-8")).hexdigest()
 
@@ -765,7 +822,10 @@ class XPUBackend(BaseBackend):
         # `to_module`, after that pass had already run.
         llvm19_toolchain.stamp_llvm_ir(llvm_mod)
         llvm19_toolchain.dump_pre_o3(llvm_mod, metadata)
-        llvm.optimize_module(llvm_mod, llvm.OPTIMIZE_O3, f"xpu{opt.arch}")
+        # The explicit vendor LLVM 19 opt runs on the downgraded text in
+        # make_elf; only the empty path uses the existing public 22 stage.
+        if not opt.llvm19_opt_path:
+            llvm.optimize_module(llvm_mod, llvm.OPTIMIZE_O3, f"xpu{opt.arch}")
         xpu.llvm.amend_func(llvm_mod, mod, context, opt.arch, metadata["is_sdnn"])
 
         del context
@@ -800,6 +860,8 @@ class XPUBackend(BaseBackend):
                 raise RuntimeError(f"{e}\n  tle.raw payload kernels need the LLVM 19 `llvm-link`, which "
                                    f"this toolchain package does not ship.") from e
             raise
+        if opt.llvm19_opt_path:
+            ir_text = _run_llvm19_opt(ir_text, opt, triple, proc)
         llc_extra = llvm19_toolchain.llc_flags(_LLC_EXTRA, metadata)
         ret_asm = llvm19_toolchain.llir_to_asm(ir_text, "xpu", triple, proc, extra_args=llc_extra)
         # The llc only emits the XPU_KERNEL_PARAM_SIZE_<name> object when it
