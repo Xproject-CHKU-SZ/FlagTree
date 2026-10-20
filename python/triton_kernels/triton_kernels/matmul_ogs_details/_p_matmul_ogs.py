@@ -36,6 +36,7 @@ from triton_kernels.numerics_details.flexpoint import (
 )
 from triton_kernels.numerics_details.mxfp_details._downcast_to_mxfp import MXFP_BLOCK_SIZE
 from ._common import (
+    dot_with_precision,
     _load_tile_attrs,
     get_scaled_dot_format_string,
     make_matmul_repr,
@@ -131,6 +132,7 @@ def _p_matmul_ogs(
              ScatterShardIndx=None,
              reduce_rank=0,
              n_reduce_shards: tl.constexpr = 1,
+             INPUT_PRECISION: tl.constexpr = None,
              ):
     # tl.static_assert(SWIZZLE_MX_VALUE is None, "NYI. Value swizzling")
 
@@ -358,9 +360,9 @@ def _p_matmul_ogs(
                     XMxScalePtrs += (MX_SCALE_BLOCK_K * SPLIT_K) * stride_x_mx_k
             else:
                 if SWAP_XW:
-                    acc = tl.dot(w.T, x.T, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC, allow_tf32=ALLOW_TF32)
+                    acc = dot_with_precision(w.T, x.T, acc, MAX_NUM_IMPRECISE_ACC, ALLOW_TF32, INPUT_PRECISION)
                 else:
-                    acc = tl.dot(x, w, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC, allow_tf32=ALLOW_TF32)
+                    acc = dot_with_precision(x, w, acc, MAX_NUM_IMPRECISE_ACC, ALLOW_TF32, INPUT_PRECISION)
 
         if INDEPENDENT_EPILOGUE:
             tile_id1 += NUM_SMS

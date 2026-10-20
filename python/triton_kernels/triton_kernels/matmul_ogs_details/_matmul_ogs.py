@@ -31,6 +31,7 @@ from triton_kernels.tensor_details.layout_details.cdna4_scale import unswizzle_m
 from triton_kernels.numerics_details.flexpoint import float_to_flex, load_scale
 from triton_kernels.numerics_details.mxfp_details._downcast_to_mxfp import MXFP_BLOCK_SIZE
 from ._common import (
+    dot_with_precision,
     _load_tile_attrs,
     get_scaled_dot_format_string,
     make_matmul_repr,
@@ -122,6 +123,7 @@ def _matmul_ogs(
              ScatterShardIndx=None,
              reduce_rank = 0,
              n_reduce_shards: tl.constexpr = 1,
+             INPUT_PRECISION: tl.constexpr = None,
              ):
     tl.assume(stride_y_k >= 0)
     tl.assume(stride_y_z >= 0)
@@ -385,7 +387,7 @@ def _matmul_ogs(
                 acc = acc.trans()
                 x = x.trans()
                 # w = w.trans()
-                acc = tl.dot(w, x, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC, allow_tf32=ALLOW_TF32)
+                acc = dot_with_precision(w, x, acc, MAX_NUM_IMPRECISE_ACC, ALLOW_TF32, INPUT_PRECISION)
                 acc = acc.trans()
             else:
                 rhs_k_pack: tl.constexpr = W_TRANSPOSE or not is_w_microscaled or W_K_DIVISOR != 2
@@ -399,7 +401,7 @@ def _matmul_ogs(
         else:
             # if w.dtype.is_fp8() and not x.dtype.is_fp8():
             #     w = w.to(x.dtype)
-            acc = tl.dot(x, w, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC, allow_tf32=ALLOW_TF32)
+            acc = dot_with_precision(x, w, acc, MAX_NUM_IMPRECISE_ACC, ALLOW_TF32, INPUT_PRECISION)
         XPtrs += (BLOCK_K * SPLIT_K) * stride_x_k
         WPtrs += (PACKED_BLOCK_K_W * SPLIT_K) * stride_w_k
     # bias + scale

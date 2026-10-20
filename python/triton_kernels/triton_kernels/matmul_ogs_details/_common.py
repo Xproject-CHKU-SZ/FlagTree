@@ -28,6 +28,19 @@ import triton.language as tl
 # -----------------------------------------------------------------------------
 
 
+@triton.jit
+def dot_with_precision(a, b, acc, MAX_NUM_IMPRECISE_ACC: tl.constexpr,
+                       ALLOW_TF32: tl.constexpr, INPUT_PRECISION: tl.constexpr):
+    # Keep the original API for the default path: allow_tf32 semantics can be
+    # backend-dependent. Never pass both precision controls to tl.dot.
+    if INPUT_PRECISION is None:
+        return tl.dot(a, b, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC,
+                      allow_tf32=ALLOW_TF32)
+    else:
+        return tl.dot(a, b, acc, max_num_imprecise_acc=MAX_NUM_IMPRECISE_ACC,
+                      input_precision=INPUT_PRECISION)
+
+
 @triton.constexpr_function
 def get_scaled_dot_format_string(dtype: tl.dtype):
     mapping = {

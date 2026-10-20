@@ -230,6 +230,14 @@ class PrecisionConfig:
     out_scale: Tensor | None = None
     out_dtype: torch.dtype = None
     enforce_bitwise_invariance: bool = False
+    # None preserves the legacy allow_tf32 path on every backend. Explicit
+    # precision controls FP32 dot lowering (for example tf32x3 on PPU).
+    # Append the field to retain positional-constructor compatibility.
+    input_precision: str | None = None
+
+    def __post_init__(self):
+        if self.input_precision is not None and self.input_precision not in ("ieee", "tf32", "tf32x3", "bf16x3", "bf16x6"):
+            raise ValueError("input_precision must be None, 'ieee', 'tf32', 'tf32x3', 'bf16x3', or 'bf16x6'")
 
 
 # TODO: merge in opt_flags
@@ -631,6 +639,7 @@ def matmul_ogs(x, w, bias,
                    opt_flags.block_n,
                    opt_flags.block_k,
                    opt_flags.group_m,
+                   INPUT_PRECISION=precision_config.input_precision,
                    INIT_OUTPUT_TO_ZERO=routing_data.n_expts_act == 1,
                    XCD_SWIZZLE=opt_flags.xcd_swizzle,
                    SWIZZLE_MX_VALUE=w.storage.layout.name,
