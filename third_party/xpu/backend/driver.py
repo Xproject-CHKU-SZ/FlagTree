@@ -12,6 +12,8 @@ from triton.runtime.cache import get_cache_manager
 from triton.backends.compiler import GPUTarget
 from triton.backends.driver import GPUDriver
 
+from .launch_config import DEFAULT_LAUNCH, get_xpu_spec, resolve_launch_config
+
 dirname = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -38,22 +40,10 @@ def get_xpu_library_dirs(arch: int = -1):
     return include_dir, [libdevice_dir, library_dir], libraries
 
 
-def get_xpu_spec(xpu_arch, is_sdnn=False):
-    """
-    `is_sdnn=False`: return a tuple represents (num_clusters, num_cores)
-
-    `is_sdnn=True`: return a tuple represents (num_sdnns, num_cores)
-    """
-    if xpu_arch == 2:
-        return (8, 8) if is_sdnn else (8, 64)
-    elif xpu_arch == 3:
-        return (12, 8) if is_sdnn else (12, 64)
-    elif xpu_arch == 4:
-        return (6, 8) if is_sdnn else (12, 64)
-    else:
-        raise RuntimeError(f"Unknown XPU architecture: {xpu_arch}")
-
-
+# Launch topology lives in launch_config.py so host-only tests and the
+# compiler can validate it without importing this runtime module.  Keep the
+# get_xpu_spec re-export: inductor heuristics and existing callers import it
+# from xpu.backend.driver.
 def compile_module_from_src(src, name, arch: int = -1):
     _print_startup_banner_once()
     # Ensure a GLIBCXX_3.4.30-capable libstdc++ is loaded before the launcher .so
@@ -548,6 +538,14 @@ def make_launcher(constants, signature, ids, metadata):
     ewtable = metadata.ewtable
     tensor_args = metadata.tensor_args
     kernel_name = metadata.name
+    # Baked into the generated C below, so the launcher cache key (which hashes
+    # the generated source) changes whenever a launch knob changes.  Resolve
+    # here as well as in the compiler metadata path so a cached metadata JSON
+    # or a hand-built metadata object still gets a validated pair.
+    launch_clusters, launch_cores = resolve_launch_config(
+        xpu_arch, is_sdnn,
+        getattr(metadata, "launch_clusters", DEFAULT_LAUNCH),
+        getattr(metadata, "launch_cores", DEFAULT_LAUNCH))
 
     # Triton 3.6 keeps constexpr parameters in the signature dict; they are not
     # runtime arguments to the kernel ABI. The XPU LLVM kernel takes only the
@@ -752,8 +750,8 @@ int xpuLaunchKernel(const char *kernel_name, void *func, int gridX, int gridY, i
 static void _launch(int gridX, int gridY, int gridZ, int clusterDimX, int clusterDimY, int clusterDimZ, XPUStream stream, XPUFunc function{", " + arg_decls if len(arg_decls) > 0 else ""}) {{
   if (gridX*gridY*gridZ > 0) {{
     // printf("gridX: %d, gridY: %d, gridZ: %d\\n", gridX, gridY, gridZ);
-    int nclusters = {get_xpu_spec(xpu_arch, is_sdnn)[0]};
-    int ncores = {get_xpu_spec(xpu_arch, is_sdnn)[1]};
+    int nclusters = {launch_clusters};
+    int ncores = {launch_cores};
     int64_t kernel_params[][5] = {generate_kernel_params(signature, constants)};
     int64_t kernel_consts[][3] = {generate_const_params(constants)};
     void *extra_data[] = {{ {"&ewtable[0]" if ewtable else "nullptr"} }};

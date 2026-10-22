@@ -16,6 +16,8 @@ from typing import Tuple, Optional
 import hashlib
 from pathlib import Path
 
+from .launch_config import DEFAULT_LAUNCH, resolve_launch_config
+
 # The desensitized LLVM 19 package ships no `opt`; the read-in step is
 # `opt`-only, so disable it when the staged toolchain lacks it.  An explicit
 # TRITON_LLVM19_READIN from the environment wins over this default.
@@ -184,6 +186,14 @@ class XPUOptions:
 
     cluster_num: int = 12 if arch == 3 else 8
     core_num: int = 64
+    # Physical launch topology, distinct from the compile-time tiling knobs
+    # above (cluster_num/core_num feed the XPU passes and must not be reused
+    # here).  -1 keeps the historical per-arch/per-mode default:
+    #   cluster (num_clusters, num_cores); SDNN (num_sdnns, num_cores).
+    # An explicit value is passed as the launch-time ncluster/ncores pair and
+    # is validated/resolved by launch_config.resolve_launch_config().
+    launch_clusters: int = DEFAULT_LAUNCH
+    launch_cores: int = DEFAULT_LAUNCH
     buffer_size_limit: int = int(os.environ.get("TRITONXPU_BUFFER_SIZE", 512))
     groups_per_cluster: int = int(os.environ.get("TRITONXPU_GROUPS_PER_CLUSTER", 1))
     unroll_num: int = int(os.environ.get("TRITONXPU_UNROLL_NUM", 2))
@@ -273,6 +283,23 @@ class XPUOptions:
     def __post_init__(self):
         if self.llvm19_opt_path:
             _validate_llvm19_opt(self.llvm19_opt_path, self.llvm19_opt_level)
+        # Fail before cache lookup/compilation.  Keep the -1 sentinel in the
+        # options object: a later parse may discover is_sdnn=True from the AST
+        # and must then validate against the SDNN cap, not a frozen cluster
+        # default.  Launcher generation resolves and embeds the effective pair.
+        resolve_launch_config(self.arch, self.is_sdnn,
+                              self.launch_clusters, self.launch_cores)
+        # The cluster lowering still tiles work for core_num cores (64 by
+        # default); changing only the physical ncores can therefore create a
+        # compile-time/runtime participant mismatch.  Do not silently imply
+        # that a downscaled launch is equivalent: record it loudly, and let
+        # the benchmark pair core_num with launch_cores for cluster kernels.
+        if (not self.is_sdnn and self.launch_cores != DEFAULT_LAUNCH
+                and self.launch_cores != self.core_num):
+            warnings.warn(
+                f"launch_cores={self.launch_cores} differs from compile-time "
+                f"core_num={self.core_num}; generate/benchmark a paired core_num "
+                f"and verify device correctness", UserWarning, stacklevel=2)
         default_libdir = Path(__file__).parent / f"xpu{self.arch}"
         extern_libs = {} if self.extern_libs is None else dict(self.extern_libs)
         if not extern_libs.get("libdevice", None):
@@ -321,6 +348,23 @@ class XPUOptions:
                 f"{st.st_ino}:{st.st_size}:{st.st_mtime_ns}:{st.st_ctime_ns}")
         key = "_".join([f"{name}-{val}" for name, val in sorted(hash_dict.items())])
         return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+def _record_effective_launch(metadata, opt):
+    """Store the validated launch pair after ``is_sdnn`` is final.
+
+    The options keep -1 until here so a TTIR pass can reclassify a kernel as
+    SDNN without carrying a cluster-sized default into the SDNN validation
+    cap.  The compiled metadata (and JSON cache record) then shows the actual
+    ncluster/ncores pair used by the generated launcher.
+    """
+    if "is_sdnn" not in metadata:
+        return
+    clusters, cores = resolve_launch_config(
+        opt.arch, bool(metadata["is_sdnn"]),
+        opt.launch_clusters, opt.launch_cores)
+    metadata["launch_clusters"] = clusters
+    metadata["launch_cores"] = cores
 
 
 class XPUBackend(BaseBackend):
@@ -374,6 +418,7 @@ class XPUBackend(BaseBackend):
         metadata["xpu_arch"] = opt.arch
         metadata["is_tle"] = XPUBackend.is_tle_kernel(mod)
         metadata["is_sdnn"] = opt.is_sdnn or xpu.is_sdnn_kernel(mod)
+        _record_effective_launch(metadata, opt)
         # tensor_args drives the launch-time scaled-buffer quantization (findmax +
         # cast_te) in device/xpu3/launch.cpp, which replaces the input pointer with
         # a fresh quantized buffer and APPENDS a scale param. That is only correct
@@ -707,6 +752,9 @@ class XPUBackend(BaseBackend):
     @staticmethod
     def make_llir(mod, metadata, opt):
         XPUBackend.make_ewtable(mod, metadata, opt)
+        # Also covers IR-entry pipelines that skip make_ttxir; idempotent when
+        # make_ttxir already recorded the pair.
+        _record_effective_launch(metadata, opt)
         # The emitters below (createIntrinsicCallByName / createCallIntrinsic)
         # need this process's table before they run, or the fact is not born on
         # the instruction -- landing B and B' can only patch up.  See
