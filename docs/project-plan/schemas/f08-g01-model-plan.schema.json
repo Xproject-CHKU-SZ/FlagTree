@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flagtree.dev/schemas/f08-g01-model-plan.schema.json",
+  "title": "F08-G01 model-level tensor lifetime plan",
+  "description": "Input contract for model-level tensor and storage lifetime analysis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "schema_version",
+    "model_id",
+    "tasks",
+    "tensors",
+    "storages"
+  ],
+  "properties": {
+    "plan_id": {
+      "$ref": "#/$defs/id"
+    },
+    "schema_version": {
+      "const": "f08-g01-model-plan/0.1"
+    },
+    "model_id": {
+      "$ref": "#/$defs/id"
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    },
+    "tensors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/tensor"
+      }
+    },
+    "storages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/storage"
+      }
+    },
+    "regions": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/region"
+      }
+    },
+    "shape_bindings": {
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/shapeBinding"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:/-]+$"
+    },
+    "idList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "shapeDimension": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "$ref": "#/$defs/id"
+            },
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "shapeBinding": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "kernel_id",
+        "predecessors",
+        "inputs",
+        "outputs",
+        "source_node",
+        "device"
+      ],
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kernel_id": {
+          "$ref": "#/$defs/id"
+        },
+        "predecessors": {
+          "$ref": "#/$defs/idList"
+        },
+        "inputs": {
+          "$ref": "#/$defs/idList"
+        },
+        "outputs": {
+          "$ref": "#/$defs/idList"
+        },
+        "source_node": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "device": {
+          "$ref": "#/$defs/id"
+        },
+        "stream": {
+          "$ref": "#/$defs/nullableId"
+        }
+      }
+    },
+    "tensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tensor_id",
+        "storage_id",
+        "producer",
+        "consumers",
+        "dtype",
+        "shape",
+        "storage_offset_bytes",
+        "source_value",
+        "is_graph_output",
+        "is_persistent",
+        "is_mutated"
+      ],
+      "properties": {
+        "tensor_id": {
+          "$ref": "#/$defs/id"
+        },
+        "storage_id": {
+          "$ref": "#/$defs/id"
+        },
+        "producer": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "consumers": {
+          "$ref": "#/$defs/idList"
+        },
+        "dtype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shape": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/shapeDimension"
+          }
+        },
+        "storage_offset_bytes": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_graph_output": {
+          "type": "boolean"
+        },
+        "is_persistent": {
+          "type": "boolean"
+        },
+        "is_mutated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storage_id",
+        "alignment",
+        "device",
+        "allocation_kind",
+        "source"
+      ],
+      "properties": {
+        "storage_id": {
+          "$ref": "#/$defs/id"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "size_expression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "size_upper_bound": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alignment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "device": {
+          "$ref": "#/$defs/id"
+        },
+        "allocation_kind": {
+          "enum": [
+            "input",
+            "parameter",
+            "temporary",
+            "output",
+            "cache"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "size_bytes"
+          ]
+        },
+        {
+          "required": [
+            "size_expression"
+          ]
+        }
+      ]
+    },
+    "taskPair": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "region_id",
+        "kind",
+        "members"
+      ],
+      "properties": {
+        "region_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "branch",
+            "loop",
+            "async"
+          ]
+        },
+        "parent_region": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "members": {
+          "$ref": "#/$defs/idList"
+        },
+        "exclusive_groups": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        "loop_carried_tensors": {
+          "$ref": "#/$defs/idList"
+        },
+        "happens_before": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/taskPair"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "loop"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "loop_carried_tensors"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

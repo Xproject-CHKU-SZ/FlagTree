@@ -1,0 +1,210 @@
+{
+  "plan_id": "demo.linear-alias",
+  "schema_version": "f08-g01-model-plan/0.1",
+  "model_id": "demo.retrieval-head",
+  "tasks": [
+    {
+      "task_id": "task.embed",
+      "kernel_id": "kernel.embedding",
+      "predecessors": [],
+      "inputs": [
+        "tensor.input_ids",
+        "tensor.embedding_weight"
+      ],
+      "outputs": [
+        "tensor.hidden"
+      ],
+      "source_node": "model.embedding",
+      "region_id": null,
+      "device": "xpu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.norm",
+      "kernel_id": "kernel.layer_norm",
+      "predecessors": [
+        "task.embed"
+      ],
+      "inputs": [
+        "tensor.hidden"
+      ],
+      "outputs": [
+        "tensor.normalized",
+        "tensor.normalized_view"
+      ],
+      "source_node": "model.layer_norm",
+      "region_id": null,
+      "device": "xpu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.head",
+      "kernel_id": "kernel.retrieval_head",
+      "predecessors": [
+        "task.norm"
+      ],
+      "inputs": [
+        "tensor.normalized_view"
+      ],
+      "outputs": [
+        "tensor.logits"
+      ],
+      "source_node": "model.retrieval_head",
+      "region_id": null,
+      "device": "xpu:0",
+      "stream": "stream:0"
+    }
+  ],
+  "tensors": [
+    {
+      "tensor_id": "tensor.input_ids",
+      "storage_id": "storage.input_ids",
+      "producer": null,
+      "consumers": [
+        "task.embed"
+      ],
+      "dtype": "int32",
+      "shape": [
+        1,
+        8
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.input_ids",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.embedding_weight",
+      "storage_id": "storage.embedding_weight",
+      "producer": null,
+      "consumers": [
+        "task.embed"
+      ],
+      "dtype": "float16",
+      "shape": [
+        128,
+        16
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.embedding.weight",
+      "is_graph_output": false,
+      "is_persistent": true,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.hidden",
+      "storage_id": "storage.hidden",
+      "producer": "task.embed",
+      "consumers": [
+        "task.norm"
+      ],
+      "dtype": "float16",
+      "shape": [
+        1,
+        8,
+        16
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.embedding.output",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.normalized",
+      "storage_id": "storage.normalized",
+      "producer": "task.norm",
+      "consumers": [],
+      "dtype": "float16",
+      "shape": [
+        1,
+        8,
+        16
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.layer_norm.output",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.normalized_view",
+      "storage_id": "storage.normalized",
+      "producer": "task.norm",
+      "consumers": [
+        "task.head"
+      ],
+      "dtype": "float16",
+      "shape": [
+        8,
+        16
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.layer_norm.output.view",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.logits",
+      "storage_id": "storage.logits",
+      "producer": "task.head",
+      "consumers": [],
+      "dtype": "float32",
+      "shape": [
+        1,
+        4
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "model.retrieval_head.output",
+      "is_graph_output": true,
+      "is_persistent": false,
+      "is_mutated": false
+    }
+  ],
+  "storages": [
+    {
+      "storage_id": "storage.input_ids",
+      "size_bytes": 32,
+      "alignment": 4,
+      "device": "xpu:0",
+      "allocation_kind": "input",
+      "source": "input_ids shape and int32 element width"
+    },
+    {
+      "storage_id": "storage.embedding_weight",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "xpu:0",
+      "allocation_kind": "parameter",
+      "source": "embedding weight shape and float16 element width"
+    },
+    {
+      "storage_id": "storage.hidden",
+      "size_bytes": 256,
+      "alignment": 64,
+      "device": "xpu:0",
+      "allocation_kind": "temporary",
+      "source": "embedding output shape and float16 element width"
+    },
+    {
+      "storage_id": "storage.normalized",
+      "size_bytes": 256,
+      "alignment": 64,
+      "device": "xpu:0",
+      "allocation_kind": "temporary",
+      "source": "layer_norm output shape and float16 element width"
+    },
+    {
+      "storage_id": "storage.logits",
+      "size_bytes": 16,
+      "alignment": 16,
+      "device": "xpu:0",
+      "allocation_kind": "output",
+      "source": "retrieval head output shape and float32 element width"
+    }
+  ],
+  "regions": [],
+  "shape_bindings": {}
+}
