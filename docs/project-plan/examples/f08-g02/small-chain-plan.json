@@ -1,0 +1,262 @@
+{
+  "plan_id": "g02.small-chain.5mul",
+  "schema_version": "f08-g01-model-plan/0.1",
+  "model_id": "g02.synthetic.chain",
+  "tasks": [
+    {
+      "task_id": "task.mul1",
+      "kernel_id": "aten.mul.Scalar_out",
+      "predecessors": [],
+      "inputs": [
+        "tensor.x"
+      ],
+      "outputs": [
+        "tensor.y1"
+      ],
+      "source_node": "g02.synthetic.mul1",
+      "region_id": null,
+      "device": "ppu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.mul2",
+      "kernel_id": "aten.mul.Scalar_out",
+      "predecessors": [
+        "task.mul1"
+      ],
+      "inputs": [
+        "tensor.y1"
+      ],
+      "outputs": [
+        "tensor.y2"
+      ],
+      "source_node": "g02.synthetic.mul2",
+      "region_id": null,
+      "device": "ppu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.mul3",
+      "kernel_id": "aten.mul.Scalar_out",
+      "predecessors": [
+        "task.mul2"
+      ],
+      "inputs": [
+        "tensor.y2"
+      ],
+      "outputs": [
+        "tensor.y3"
+      ],
+      "source_node": "g02.synthetic.mul3",
+      "region_id": null,
+      "device": "ppu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.mul4",
+      "kernel_id": "aten.mul.Scalar_out",
+      "predecessors": [
+        "task.mul3"
+      ],
+      "inputs": [
+        "tensor.y3"
+      ],
+      "outputs": [
+        "tensor.y4"
+      ],
+      "source_node": "g02.synthetic.mul4",
+      "region_id": null,
+      "device": "ppu:0",
+      "stream": "stream:0"
+    },
+    {
+      "task_id": "task.mul5",
+      "kernel_id": "aten.mul.Scalar_out",
+      "predecessors": [
+        "task.mul4"
+      ],
+      "inputs": [
+        "tensor.y4",
+        "tensor.out_buf"
+      ],
+      "outputs": [
+        "tensor.y5"
+      ],
+      "source_node": "g02.synthetic.mul5",
+      "region_id": null,
+      "device": "ppu:0",
+      "stream": "stream:0"
+    }
+  ],
+  "tensors": [
+    {
+      "tensor_id": "tensor.x",
+      "storage_id": "storage.x",
+      "producer": null,
+      "consumers": [
+        "task.mul1"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "caller-owned input",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.out_buf",
+      "storage_id": "storage.out",
+      "producer": null,
+      "consumers": [
+        "task.mul5"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "caller-owned preallocated output buffer; modeled as a graph input so its storage is live from plan start",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.y1",
+      "storage_id": "storage.y1",
+      "producer": "task.mul1",
+      "consumers": [
+        "task.mul2"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "pooled temporary mul1",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.y2",
+      "storage_id": "storage.y2",
+      "producer": "task.mul2",
+      "consumers": [
+        "task.mul3"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "pooled temporary mul2",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.y3",
+      "storage_id": "storage.y3",
+      "producer": "task.mul3",
+      "consumers": [
+        "task.mul4"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "pooled temporary mul3",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.y4",
+      "storage_id": "storage.y4",
+      "producer": "task.mul4",
+      "consumers": [
+        "task.mul5"
+      ],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "pooled temporary mul4",
+      "is_graph_output": false,
+      "is_persistent": false,
+      "is_mutated": false
+    },
+    {
+      "tensor_id": "tensor.y5",
+      "storage_id": "storage.out",
+      "producer": "task.mul5",
+      "consumers": [],
+      "dtype": "float32",
+      "shape": [
+        1024
+      ],
+      "storage_offset_bytes": 0,
+      "source_value": "final result alias of the caller-owned output buffer",
+      "is_graph_output": true,
+      "is_persistent": false,
+      "is_mutated": false
+    }
+  ],
+  "storages": [
+    {
+      "storage_id": "storage.x",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "input",
+      "source": "caller-owned input buffer, 1024 float32"
+    },
+    {
+      "storage_id": "storage.out",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "input",
+      "source": "caller-owned preallocated output buffer; modeled as input so lifetime starts at plan start and ends at plan end (member tensor.y5 is a graph output)"
+    },
+    {
+      "storage_id": "storage.y1",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "temporary",
+      "source": "pooled temporary, 1024 float32"
+    },
+    {
+      "storage_id": "storage.y2",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "temporary",
+      "source": "pooled temporary, 1024 float32"
+    },
+    {
+      "storage_id": "storage.y3",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "temporary",
+      "source": "pooled temporary, 1024 float32"
+    },
+    {
+      "storage_id": "storage.y4",
+      "size_bytes": 4096,
+      "alignment": 64,
+      "device": "ppu:0",
+      "allocation_kind": "temporary",
+      "source": "pooled temporary, 1024 float32"
+    }
+  ],
+  "regions": [],
+  "shape_bindings": {}
+}

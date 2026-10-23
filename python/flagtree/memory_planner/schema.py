@@ -489,6 +489,15 @@ def _check_references(
         region_id = task.get("region_id")
         if _is_id(region_id) and region_id not in region_by_id:
             _add(issues, f"{path}.region_id", "unknown_region_reference", f"region '{region_id}' does not exist")
+        elif _is_id(region_id) and _is_id(task_id):
+            members = region_by_id[region_id].get("members")
+            if isinstance(members, list) and task_id not in members:
+                _add(
+                    issues,
+                    f"{path}.region_id",
+                    "region_membership_mismatch",
+                    f"task '{task_id}' is not listed in region '{region_id}'",
+                )
 
         if not _is_id(task_id):
             continue
@@ -576,6 +585,15 @@ def _check_references(
                     "region_membership_mismatch",
                     f"task '{member}' does not name region '{region_id}'",
                 )
+        member_touched_tensors: set[str] = set()
+        for member in region.get("members", []) if isinstance(region.get("members"), list) else []:
+            member_task = task_by_id.get(member)
+            if member_task is None:
+                continue
+            for task_key in ("inputs", "outputs"):
+                task_values = member_task.get(task_key)
+                if isinstance(task_values, list):
+                    member_touched_tensors.update(value for value in task_values if _is_id(value))
         for tensor_index, tensor_id in enumerate(region.get("loop_carried_tensors", [])) if isinstance(region.get("loop_carried_tensors"), list) else []:
             if tensor_id not in tensor_by_id:
                 _add(
@@ -583,6 +601,13 @@ def _check_references(
                     f"{path}.loop_carried_tensors[{tensor_index}]",
                     "unknown_tensor_reference",
                     f"tensor '{tensor_id}' does not exist",
+                )
+            elif tensor_id not in member_touched_tensors:
+                _add(
+                    issues,
+                    f"{path}.loop_carried_tensors[{tensor_index}]",
+                    "loop_carried_tensor_not_in_region",
+                    f"tensor '{tensor_id}' is not used by any task in region '{region_id}'",
                 )
         for group_index, group in enumerate(region.get("exclusive_groups", [])) if isinstance(region.get("exclusive_groups"), list) else []:
             if not isinstance(group, list):
@@ -594,6 +619,13 @@ def _check_references(
                         f"{path}.exclusive_groups[{group_index}][{member_index}]",
                         "unknown_task_reference",
                         f"task '{member}' does not exist",
+                    )
+                elif _is_id(region_id) and task_by_id[member].get("region_id") != region_id:
+                    _add(
+                        issues,
+                        f"{path}.exclusive_groups[{group_index}][{member_index}]",
+                        "region_membership_mismatch",
+                        f"task '{member}' does not name region '{region_id}'",
                     )
         for pair_index, pair in enumerate(region.get("happens_before", [])) if isinstance(region.get("happens_before"), list) else []:
             if not isinstance(pair, list) or len(pair) != 2:
@@ -607,11 +639,25 @@ def _check_references(
                         f"task '{member}' does not exist",
                     )
 
-    edges = {
-        task_id: [pred for pred in task.get("predecessors", []) if pred in task_by_id]
-        for task_id, task in task_by_id.items()
-        if isinstance(task.get("predecessors"), list)
-    }
+    extra_predecessors: dict[str, list[str]] = {}
+    for region in regions:
+        pairs = region.get("happens_before")
+        if not isinstance(pairs, list):
+            continue
+        for pair in pairs:
+            if (
+                isinstance(pair, list)
+                and len(pair) == 2
+                and pair[0] in task_by_id
+                and pair[1] in task_by_id
+            ):
+                extra_predecessors.setdefault(pair[1], []).append(pair[0])
+
+    edges: dict[str, list[str]] = {}
+    for task_id, task in task_by_id.items():
+        predecessors = task.get("predecessors")
+        edges[task_id] = [pred for pred in predecessors if pred in task_by_id] if isinstance(predecessors, list) else []
+        edges[task_id].extend(extra_predecessors.get(task_id, []))
     cycle = _find_cycle(edges)
     if cycle:
         cycle_regions = {task_by_id[task_id].get("region_id") for task_id in cycle[:-1]}

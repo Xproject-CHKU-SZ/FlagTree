@@ -172,6 +172,67 @@ def _event_id_for_task(task_id: str) -> str:
     return f"event:task:{task_id}:complete"
 
 
+def _loop_carried_coverage(
+    document: Mapping[str, Any], task_event_index: Mapping[str, int]
+) -> tuple[dict[str, int], bool]:
+    """Return loop-carried tensor coverage and whether any loop region exists.
+
+    Loop fixed-point analysis is not implemented yet.  A declared loop-carried
+    tensor must stay alive across the complete loop region, so its lifetime end
+    is conservatively extended to the last completion event of every loop region
+    that declares it.
+    """
+
+    coverage: dict[str, int] = {}
+    has_loop_region = False
+    for region in document.get("regions") or []:
+        if not isinstance(region, Mapping) or region.get("kind") != "loop":
+            continue
+        has_loop_region = True
+        members = region.get("members")
+        if not isinstance(members, list):
+            continue
+        member_events = [task_event_index[member] for member in members if member in task_event_index]
+        if not member_events:
+            continue
+        region_end = max(member_events)
+        carried = region.get("loop_carried_tensors")
+        if isinstance(carried, list):
+            for tensor_id in carried:
+                if isinstance(tensor_id, str):
+                    coverage[tensor_id] = max(coverage.get(tensor_id, 0), region_end)
+    return coverage, has_loop_region
+
+
+def _control_flow_diagnostics(document: Mapping[str, Any]) -> set[str]:
+    """Return report-level diagnostics for declared branch regions.
+
+    An exclusive branch group is a recorded proof that its members cannot run
+    concurrently.  The current implementation keeps the numeric peak
+    conservative even when such a proof is present, so the proof is reported
+    instead of silently ignored.
+    """
+
+    diagnostics: set[str] = set()
+    for region in document.get("regions") or []:
+        if not isinstance(region, Mapping) or region.get("kind") != "branch":
+            continue
+        members = region.get("members")
+        if not isinstance(members, list) or not members:
+            continue
+        groups = region.get("exclusive_groups")
+        covered: set[str] = set()
+        if isinstance(groups, list):
+            for group in groups:
+                if isinstance(group, list):
+                    covered.update(member for member in group if isinstance(member, str))
+        if isinstance(groups, list) and groups and all(member in covered for member in members):
+            diagnostics.add("exclusive_branch_groups_not_used_in_peak")
+        else:
+            diagnostics.add("branch_exclusivity_not_proven")
+    return diagnostics
+
+
 def _storage_size(storage: StorageLifetime) -> tuple[int | None, str]:
     if storage.size_bytes is not None:
         return storage.size_bytes, "static"
@@ -266,6 +327,7 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
     task_order, has_incomparable_tasks = _stable_task_order(document)
     task_event_index = {task_id: index + 1 for index, task_id in enumerate(task_order)}
     plan_end = len(task_order) + 1
+    loop_coverage, has_loop_region = _loop_carried_coverage(document, task_event_index)
 
     events: list[EventRecord] = [EventRecord(0, "event:plan-start", "plan_start", None)]
     events.extend(
@@ -289,6 +351,11 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
         else:
             end = start
             diagnostics.append("unused_tensor")
+
+        loop_end = loop_coverage.get(tensor["tensor_id"])
+        if loop_end is not None and end < loop_end:
+            end = loop_end
+            diagnostics.append("loop_carried_lifetime_extended_to_region")
 
         if tensor["storage_offset_bytes"] is None:
             diagnostics.append("unknown_storage_offset")
@@ -322,6 +389,9 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
     report_diagnostics: set[str] = set()
     if has_incomparable_tasks:
         report_diagnostics.add("incomplete_happens_before")
+    if has_loop_region:
+        report_diagnostics.add("loop_region_fixed_point_not_analyzed")
+    report_diagnostics.update(_control_flow_diagnostics(document))
     for storage in sorted(document["storages"], key=lambda item: item["storage_id"]):
         members = sorted(tensors_by_storage[storage["storage_id"]], key=lambda item: item.tensor_id)
         if not members:
@@ -335,6 +405,8 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
             report_diagnostics.add("numeric_peak_will_be_incomplete")
         if any(member.is_mutated for member in members):
             reasons.add("mutated_alias_group")
+        if any(member.tensor_id in loop_coverage for member in members):
+            reasons.add("loop_carried_region_coverage")
         if any(tensor_source[member.tensor_id]["storage_offset_bytes"] is None for member in members):
             reasons.add("unknown_storage_offset")
 
