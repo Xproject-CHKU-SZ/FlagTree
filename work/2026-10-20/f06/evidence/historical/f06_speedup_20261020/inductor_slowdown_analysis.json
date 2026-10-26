@@ -1,0 +1,153 @@
+{
+  "topic": "P800 上原始包 Inductor 基线相对 PyTorch eager 单算子链偏慢的证据分析",
+  "scope": {
+    "benchmark": "最新 117-case P800 双轮实测，逻辑算子链而非大模型端到端",
+    "overall_original_vs_eager_geomean": 0.4607,
+    "overall_original_vs_eager_interpretation": "原始包速度约为 eager 的 0.4607 倍，即有效样本上平均慢约 2.17 倍",
+    "f06_vs_original_geomean_default_tuned": [
+      3.011,
+      3.196
+    ],
+    "valid_cases_original_vs_eager": 94,
+    "current_f06_correct": "117/117",
+    "excluded_original_numeric_failures": 23,
+    "timing_limits": "同步 host wall time，包含 Python 与内存分配，不含冷编译和调优；未拆分 CPU 与设备时间",
+    "original_package": "1,194 个文件校验；仅接口兼容 shim；assert_indirect_indexing=False；未修改 fusion/scheduler/lowering"
+  },
+  "sources_read": [
+    "per_case.csv",
+    "evidence/p800/results/003-original-a/evidence/000-generated-0.py",
+    "evidence/p800/results/003-original-a/evidence/099-generated-0.py",
+    "evidence/p800/results/003-original-a/evidence/100-generated-0.py",
+    "evidence/p800/results/003-original-a/evidence/101-generated-0.py"
+  ],
+  "observable_facts": {
+    "timing_examples": [
+      {
+        "kind": "matmul_bias",
+        "dtype": "FP32",
+        "shape_mn": "16x128",
+        "K": 64,
+        "eager_us": 30.97585,
+        "original_us": 90.3734875,
+        "original_over_eager": 2.9175466532798935,
+        "f06_default_us": 14.6414375,
+        "f06_default_speedup_over_original": 6.1724,
+        "generated_source": "000-generated-0.py",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      },
+      {
+        "kind": "mul_sum",
+        "dtype": "FP32",
+        "shape_mn": "16x128",
+        "K": 64,
+        "eager_us": 20.711199999999998,
+        "original_us": 38.3756,
+        "original_over_eager": 1.8528911893082007,
+        "f06_default_us": 14.522825,
+        "f06_default_speedup_over_original": 2.6424,
+        "generated_source": "099-generated-0.py",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      },
+      {
+        "kind": "mul_sum",
+        "dtype": "FP32",
+        "shape_mn": "32x256",
+        "K": 64,
+        "eager_us": 21.934800000000003,
+        "original_us": 382.6506125,
+        "original_over_eager": 17.44491002881266,
+        "f06_default_us": 14.548575,
+        "f06_default_speedup_over_original": 26.3016,
+        "generated_source": "100-generated-0.py",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      },
+      {
+        "kind": "mul_sum",
+        "dtype": "FP32",
+        "shape_mn": "64x1024",
+        "K": 64,
+        "eager_us": 22.1636625,
+        "original_us": 763.7407625,
+        "original_over_eager": 34.45914060909383,
+        "f06_default_us": 14.9670625,
+        "f06_default_speedup_over_original": 51.0281,
+        "generated_source": "101-generated-0.py",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      },
+      {
+        "kind": "mul_sum",
+        "dtype": "FP16",
+        "shape_mn": "32x256",
+        "K": 64,
+        "eager_us": 21.4646875,
+        "original_us": 382.659125,
+        "original_over_eager": 17.82737927118669,
+        "f06_default_us": 14.567325,
+        "f06_default_speedup_over_original": 26.2683,
+        "generated_source": "Timing only; this dtype generated kernel was not inspected in this analysis.",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      },
+      {
+        "kind": "add_softmax",
+        "dtype": "BF16",
+        "shape_mn": "16x128",
+        "K": 64,
+        "eager_us": 21.1435625,
+        "original_us": 37.963225,
+        "original_over_eager": 1.7954980387056343,
+        "f06_default_us": 16.578025,
+        "f06_default_speedup_over_original": 2.29,
+        "generated_source": "本次读取的四个 generated 文件未覆盖 add_softmax，不能据此归因具体 kernel",
+        "eager_reference": "paired eager from original baseline processes, two-run median"
+      }
+    ],
+    "generated_source_observations": {
+      "000-generated-0.py": "torch.compile fullgraph 代码仅分配输出并调用一次 extern_kernels.addmm(arg2_1,arg0_1,arg1_1,alpha=1,beta=1,out=buf0)；没有 Triton 融合 kernel。说明原始包在 matmul_bias 上选择的是原生库调用。",
+      "099-generated-0.py": "mul+sum 被融合成单个 Triton persistent_reduction：size_hints=[16,128]，RBLOCK=128，grid=grid(16)，XBLOCK 为运行期参数，no_x_dim=False；只物化形状 (16,) 的输出。",
+      "100-generated-0.py": "mul+sum 融合为单个 Triton persistent_reduction：size_hints=[32,256]，XBLOCK=1，RBLOCK=256，grid=grid(32)，no_x_dim=True；每行一个 program。",
+      "101-generated-0.py": "mul+sum 融合为单个 Triton persistent_reduction：size_hints=[64,1024]，XBLOCK=1，RBLOCK=1024，grid=grid(64)，no_x_dim=True；每行一个 program。",
+      "device_strings": "所有生成代码使用 torch.cuda._DeviceGuard、empty_strided_cuda、get_raw_stream、device_str='cuda'；triton_meta 的 DeviceProperties 为 type='cuda', cc=86, multi_processor_count=8, max_threads_per_multi_processor=2048。",
+      "fusion_scope": "099/100/101 均显示 aten.mul 与 aten.sum.dim_IntList 已进入同一 Triton kernel，未物化完整中间张量；但 32x256 和 64x1024 仍为 382.65us 和 763.74us。"
+    },
+    "shape_dtype_patterns": {
+      "mul_sum_fp32_growth": "original_us 从 16x128 的 38.38us 跳到 32x256 的 382.65us，再到 64x1024 的 763.74us；不是随元素数平滑增长。",
+      "fp16_fp32_similarity": "MulSum 32x256 的 FP16 original 为 382.659us，FP32 为 382.651us，几乎相同；这不支持“单纯由 dtype 数学成本解释”。",
+      "add_softmax": "原始包 add_softmax 在三种 dtype、多个形状上约 37.5-38.5us，eager 约 20.2-20.9us；当前读取的 generated 文件不包含该模板，不能从本次证据判断其 kernel 选择。"
+    },
+    "runtime_backend_verification": {
+      "driver": "triton.backends.xpu.driver",
+      "actual_target": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+      "original_requested_target": "GPUTarget(backend='cuda', arch=86, warp_size=32)",
+      "native_outputs": "xpubin and ELF present in verified original cache",
+      "meaning": "The CUDA facade is translated to the actual XPU target. CUDA strings alone are not evidence of running NVIDIA code."
+    }
+  },
+  "explanation": [
+    "原始包并非在所有路径上都做了更深的算子融合：matmul_bias 的生成代码是一次 extern addmm 原生调用。它的慢不能归因于“融合 kernel 设计差”，更可能来自编译包装、调用路径或实际后端调度；但当前计时未拆分 CPU 与设备，不能仅凭 host wall 断定。",
+    "MulSum 确实将 mul 与 sum 融合成单个 Triton persistent-reduction kernel，仅写行归约结果；32×256 与 64×1024 相对其原始进程配对 eager 分别慢 17.44 倍和 34.46 倍。减少 kernel 数量并不保证实际运行更快。",
+    "这些大慢点的形态是每行一个 program（100/101 的 XBLOCK=1，grid 分别 32/64；RBLOCK 256/1024），而生成时记录的 multi_processor_count=8。可能是归约占用/并行度或后端执行效率问题，但没有 device event 或 profiler 证据，不能断言根因。",
+    "FP16 与 FP32 在 MulSum 32x256 上几乎相同的 382.66us，提示问题更偏向同一执行/调度路径，而不是 dtype 特有的算力成本；仍需 CPU/设备拆分验证。",
+    "生成时的上层设备属性仍为 CUDA facade，实际 compiler 记录为 arch=3、warp_size=1，driver 是 XPU，且保留 xpubin。实际 XPU 执行路径已核验；上层 CUDA 启发式与 P800 的性能适配是否足够，仍需受控配置和设备计时验证。",
+    "冷编译已被排除，调优也不在计时内；因此“编译慢”或“尚未 warmup”不是这些差异的解释。",
+    "同步 host wall 包含 Python 和内存分配，既可能包含 CPU 包装/启动开销，也可能包含真实设备慢；目前无法判断 382.65us/763.74us 中 CPU 与设备各占多少。",
+    "这是逻辑算子链基准，不是完整模型端到端，不能外推为所有真实模型上 Inductor 都同等慢。"
+  ],
+  "uncertainties": [
+    "没有 CPU profile，无法量化 Python wrapper、guard/assert、内存分配与 kernel launch 的占比。",
+    "没有设备 event/nsys/torch profiler 数据，无法确认 MulSum 的 382.65us/763.74us 主要是设备 kernel 时间还是排队/启动开销。",
+    "未读取 add_softmax 的 generated 源码，不能对其较慢原因作 kernel 级归因。",
+    "单看一个 extern addmm 调用不能解释 matmul_bias 为何比 eager 慢；需要对比两者实际调用的库 kernel、流与同步行为。",
+    "RBLOCK=1024、grid=64 与 8 个多处理器只是配置层面的相关证据，尚不足以证明占用率或归约布局是根因。",
+    "已确认 XPU 后端和目标映射；未知的是上层归约配置对 P800 的性能适配程度，不能把 CUDA facade 字符串本身当作错误后端证据。"
+  ],
+  "next_checks": [
+    "对 382.65us 和 763.74us 的 MulSum 用例同时采集 CPU profile（py-spy/perf）与厂商设备事件或性能工具计时，先拆分 host 与 device。",
+    "记录调用栈与实际库 kernel，拆分 extern addmm 和 compiled-wrapper 的成本；XPU 编译目标已核验，无需将 CUDA facade 本身视为错误。",
+    "对 MulSum 做受控 launch/tile 扫描：多行/多 program、XBLOCK、RBLOCK、num_warps 与分割归约，比较设备时间而不仅是 host wall。",
+    "分别 A/B 测试 extern addmm、eager matmul+bias、Triton matmul+epilogue，隔离编译包装开销与库 kernel 差异。",
+    "补充 add_softmax 的 generated 源码与 kernel 配置检查，再判断其约 38us 是否与同一调度路径有关。",
+    "在相同协议下复测更大形状/真实模型片段，验证这些慢点是否只在当前小 shape 的归约配置上出现。"
+  ],
+  "review": "Reviewed against original generated files and runtime compile records. Corrected eager reference to paired original-process measurements and removed unsupported wrong-backend inference."
+}

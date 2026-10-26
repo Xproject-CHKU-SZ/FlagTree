@@ -1,0 +1,1182 @@
+{
+  "route": "inductor",
+  "repeat_index": 0,
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "triton_file": "/home/f/flagtree/python/triton/__init__.py",
+  "device": "NVIDIA GeForce RTX 4090",
+  "driver": "triton.backends.nvidia.driver",
+  "target": "GPUTarget(backend='cuda', arch=89, warp_size=32)",
+  "affinity": [
+    0
+  ],
+  "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+  "script_sha256": "30b90e9474995d67db1c0028db9781d41e393b0d44b3973525acb5b67b26425c",
+  "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+  "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+  "compiler_policy": {
+    "DISABLE_LLVM_OPT": null,
+    "FLAGTREE_XPU_LLVM19_OPT": null,
+    "inductor_mode": "default"
+  },
+  "compatibility": null,
+  "runtime_verified_files": null,
+  "protocol": {
+    "warmup_calls": 8,
+    "rounds": 7,
+    "calls_per_round": 40,
+    "cpu_preheat_seconds": 0.5,
+    "timing": "synchronized host wall including Python and fresh output allocation",
+    "compile_and_tune_excluded": true,
+    "tune_warmup_ms": 5,
+    "tune_measurement_ms": 15,
+    "tf32": false,
+    "reduced_precision_reductions": false,
+    "threads": 1,
+    "seed": 61
+  },
+  "source_sha256": {},
+  "cases": [
+    {
+      "kind": "matmul_bias",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.5258658629999786
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 0,
+          "extern_mm": false,
+          "extern_addmm": true
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "000-generated-0.py",
+          "sha256": "aeed9bb1462c078200e7428107d5582d7d4c791c8c5f06ee5ed95ffb6db61263"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.6372,
+          8.273675,
+          8.1375,
+          8.1388,
+          8.203175,
+          8.070675,
+          8.066275
+        ],
+        "inductor": [
+          26.02295,
+          24.7646,
+          24.5451,
+          24.254525,
+          24.48945,
+          24.45145,
+          24.2459
+        ]
+      },
+      "median_us": {
+        "eager": 8.1388,
+        "inductor": 24.48945
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.3323390276220985
+      }
+    },
+    {
+      "kind": "matmul_bias_relu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.24568543200001614
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": true,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "001-generated-0.py",
+          "sha256": "101dd1bf907b9579e11bbe22cf550758ada66dfc2b12d0ddfd36a163866ada39"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.49735,
+          10.8597,
+          10.794675,
+          10.95525,
+          10.799775,
+          10.849775,
+          10.964825
+        ],
+        "inductor": [
+          32.6876,
+          30.0814,
+          29.5622,
+          29.810175,
+          29.9053,
+          29.76665,
+          29.89695
+        ]
+      },
+      "median_us": {
+        "eager": 10.8597,
+        "inductor": 29.89695
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.36323772157360534
+      }
+    },
+    {
+      "kind": "add_softmax",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.23527826800000184
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "002-generated-0.py",
+          "sha256": "9591e18119183eb210eace2b33d57b698743f3022e427a80888942aa0cded967"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 1.4901161193847656e-08,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.614125,
+          7.032775,
+          6.6333,
+          6.68825,
+          6.7621,
+          6.69505,
+          6.75515
+        ],
+        "inductor": [
+          28.473625,
+          24.7059,
+          24.804775,
+          24.312725,
+          24.6102,
+          24.832875,
+          24.407725
+        ]
+      },
+      "median_us": {
+        "eager": 6.75515,
+        "inductor": 24.7059
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.2734225427934218
+      }
+    },
+    {
+      "kind": "matmul_bias_gelu_exact",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.16762941700000056
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": true,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "003-generated-0.py",
+          "sha256": "23b8f8fafe8297eb7c0f4849ce2ae00e45498121e5b850755bc6ef8d9e56f350"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          11.34865,
+          10.83345,
+          10.766825,
+          11.117975,
+          10.5802,
+          10.760775,
+          10.702775
+        ],
+        "inductor": [
+          31.3162,
+          29.11555,
+          29.556825,
+          29.6304,
+          29.5547,
+          29.920725,
+          29.499125
+        ]
+      },
+      "median_us": {
+        "eager": 10.766825,
+        "inductor": 29.556825
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.36427542538821406
+      }
+    },
+    {
+      "kind": "matmul_bias_gelu_tanh",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.17587648099998887
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": true,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "004-generated-0.py",
+          "sha256": "c568b3b6fae8893cd2122e690890b1f5fab1553c007b9d040c07ad082391f7b8"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.34625,
+          10.9668,
+          10.74245,
+          10.783775,
+          10.70475,
+          10.66825,
+          10.863
+        ],
+        "inductor": [
+          33.749175,
+          30.6625,
+          29.94985,
+          29.2493,
+          29.846625,
+          30.0466,
+          30.057775
+        ]
+      },
+      "median_us": {
+        "eager": 10.783775,
+        "inductor": 30.0466
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.3589016727350183
+      }
+    },
+    {
+      "kind": "matmul_bias_silu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.1537154600000008
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": true,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "005-generated-0.py",
+          "sha256": "4967a7b0a0a456a2b77d8f66f61bbb27ba7669cdb989bb69a21f35f5b0db4e68"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 9.5367431640625e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          13.480275,
+          10.962,
+          10.829725,
+          10.90915,
+          10.663875,
+          10.855675,
+          10.72675
+        ],
+        "inductor": [
+          34.486775,
+          29.7582,
+          29.9306,
+          29.225,
+          29.6617,
+          29.58165,
+          29.334975
+        ]
+      },
+      "median_us": {
+        "eager": 10.855675,
+        "inductor": 29.6617
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.3659829005080626
+      }
+    },
+    {
+      "kind": "add_gelu_exact",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.15310271300000977
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "006-generated-0.py",
+          "sha256": "189cc186ad4068c85bfee72e42c3a5615b774938362ce22dffa81a5347e96454"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.165875,
+          6.7659,
+          6.736675,
+          6.696225,
+          6.595725,
+          6.73865,
+          6.64285
+        ],
+        "inductor": [
+          25.499125,
+          25.092225,
+          24.9281,
+          24.16845,
+          24.1437,
+          24.35205,
+          24.4103
+        ]
+      },
+      "median_us": {
+        "eager": 6.736675,
+        "inductor": 24.4103
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.2759767393272512
+      }
+    },
+    {
+      "kind": "add_gelu_tanh",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.159110682000005
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "007-generated-0.py",
+          "sha256": "632e0e8588f0c219f4f970e659e20a476b7860857691619e630b4269b792f3e4"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.02395,
+          6.77105,
+          6.5548,
+          6.545375,
+          6.64285,
+          6.5035,
+          6.46285
+        ],
+        "inductor": [
+          27.936975,
+          25.0333,
+          24.9212,
+          25.086375,
+          24.5994,
+          24.693925,
+          24.828275
+        ]
+      },
+      "median_us": {
+        "eager": 6.5548,
+        "inductor": 24.9212
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.26302104232540974
+      }
+    },
+    {
+      "kind": "add_silu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.14868486199998188
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "008-generated-0.py",
+          "sha256": "b4312748bc000fa1d516c97acc044d464a28bb69567103a99edc77e88333da8e"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.691425,
+          6.910475,
+          6.7331,
+          6.7707,
+          6.577375,
+          6.5274,
+          6.677175
+        ],
+        "inductor": [
+          29.317925,
+          24.77925,
+          25.17255,
+          24.446975,
+          24.284875,
+          24.307475,
+          24.79165
+        ]
+      },
+      "median_us": {
+        "eager": 6.7331,
+        "inductor": 24.77925
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.2717233168881221
+      }
+    },
+    {
+      "kind": "add_layernorm",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.2050261229999819
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "009-generated-0.py",
+          "sha256": "bbdd460127adeb610363c08171a759297eff4d6bf11dba6f9fd547683607f012"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 3.5762786865234375e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.919325,
+          8.7569,
+          8.594625,
+          8.52955,
+          8.62855,
+          8.632275,
+          8.5124
+        ],
+        "inductor": [
+          25.2255,
+          24.667525,
+          24.34595,
+          23.998275,
+          24.4112,
+          23.8718,
+          24.15795
+        ]
+      },
+      "median_us": {
+        "eager": 8.62855,
+        "inductor": 24.34595
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.3544141838786328
+      }
+    },
+    {
+      "kind": "add_layernorm_affine",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {
+        "weight": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951",
+        "bias": "b8407fa753512dbfb98fabea58135fdc66f95ca13b71ec4074bc571906288c4e"
+      },
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.21399015500003316
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "010-generated-0.py",
+          "sha256": "691c68f4d5bd85380271477d9ffa07aca2fb69af59c2f8bfd1aa7c65fcc9be4c"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 7.152557373046875e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          10.7509,
+          9.4004,
+          9.20055,
+          9.18685,
+          9.03895,
+          9.1956,
+          9.169875
+        ],
+        "inductor": [
+          30.243875,
+          26.17915,
+          26.27525,
+          25.58585,
+          25.627575,
+          25.4755,
+          25.44435
+        ]
+      },
+      "median_us": {
+        "eager": 9.1956,
+        "inductor": 25.627575
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.3588166262317055
+      }
+    },
+    {
+      "kind": "mul_sum",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.15623540199999297
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "011-generated-0.py",
+          "sha256": "3f5eefcefdf4877919066cdc1e82c3258a38e395714fd7d3d9de118afdfd3191"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          9.161925,
+          7.3486,
+          7.1719,
+          7.008775,
+          7.225275,
+          7.0708,
+          7.08795
+        ],
+        "inductor": [
+          28.5015,
+          24.356475,
+          24.198625,
+          24.3049,
+          23.899875,
+          23.93065,
+          23.82665
+        ]
+      },
+      "median_us": {
+        "eager": 7.1719,
+        "inductor": 24.198625
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.2963763436972142
+      }
+    },
+    {
+      "kind": "mul_sum_keepdim",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "inductor_first_call": 0.08012653899999123
+      },
+      "execution": {
+        "inductor": {
+          "triton_kernels": 1,
+          "extern_mm": false,
+          "extern_addmm": false
+        }
+      },
+      "generated_sources": [
+        {
+          "file": "012-generated-0.py",
+          "sha256": "4c11393ebe932e7a666070ff87867110e0694bfddc596eeea2592d25c66a2771"
+        }
+      ],
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "inductor": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.152725,
+          6.929075,
+          6.9131,
+          6.985475,
+          6.956675,
+          6.873475,
+          6.864725
+        ],
+        "inductor": [
+          24.99435,
+          24.02435,
+          24.198925,
+          23.67055,
+          24.00995,
+          23.4438,
+          23.66895
+        ]
+      },
+      "median_us": {
+        "eager": 6.929075,
+        "inductor": 24.00995
+      },
+      "speedup_vs_eager": {
+        "inductor": 0.2885918129775364
+      }
+    }
+  ],
+  "fusion_logic_sha256": {
+    "_inductor/scheduler.py": "904a90ee27cb641f7f6f0ecacdb38599d0f63bd5e37dd230f0e541edbd5dccb7",
+    "_inductor/lowering.py": "0b1e1ac3585aa5e8916ad05c8426d05f9bb1ea758899a3f661c9bc0d47cdebb6",
+    "_inductor/codegen/triton.py": "e54e0e0bd28299a84f6d3625ebd7776f8c8f2233541a3d30a7df8f89b489d222",
+    "_inductor/fx_passes/post_grad.py": "a1bc4ef86d9f8bda79c6f9bc2f14f07d0c725f5ff7aa9dcf2284a3032c6cd33e",
+    "_inductor/fx_passes/joint_graph.py": "e21f3f4eca819cb7ec517f9f68b834d16d129abdf86179f30b8e0f9217ffb197",
+    "_inductor/pattern_matcher.py": "c2f7ad9a952c26f7c2afe609144ad45ffa1aaaa659369df30d3d2ae2eea58e0b"
+  },
+  "passed": 13,
+  "failed": 0,
+  "status": "completed"
+}

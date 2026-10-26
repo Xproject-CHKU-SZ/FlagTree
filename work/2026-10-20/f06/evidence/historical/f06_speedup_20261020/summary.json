@@ -1,0 +1,778 @@
+{
+  "aggregation": "median of per-run medians; geometric mean of per-case ratios; >1 is faster",
+  "devices": {
+    "p800": {
+      "candidate_runs": [
+        "evidence/p800/results/004-candidate-a/evidence/results.json",
+        "evidence/p800/results/005-candidate-b/evidence/results.json"
+      ],
+      "counts": [
+        {
+          "passed": 117,
+          "failed": 0
+        },
+        {
+          "passed": 117,
+          "failed": 0
+        }
+      ],
+      "valid_cases": 117,
+      "metrics": {
+        "default": {
+          "geomean_vs_eager": 1.383093812752787,
+          "wins": 111,
+          "min": 0.31804899743563053,
+          "max": 2.375378307653733
+        },
+        "tuned": {
+          "geomean_vs_eager": 1.466136379276435,
+          "wins": 113,
+          "min": 0.3182007524477272,
+          "max": 2.397347936729704
+        }
+      },
+      "per_kind": {
+        "add_gelu_exact": {
+          "default": 1.065523425928859,
+          "tuned": 1.2780692384823147
+        },
+        "add_gelu_tanh": {
+          "default": 1.4343488054820193,
+          "tuned": 1.450360583747706
+        },
+        "add_layernorm": {
+          "default": 1.3407473639991443,
+          "tuned": 1.7360122491489158
+        },
+        "add_layernorm_affine": {
+          "default": 1.178731525575266,
+          "tuned": 1.4658322482576733
+        },
+        "add_silu": {
+          "default": 1.5027961198171769,
+          "tuned": 1.5212555937106782
+        },
+        "add_softmax": {
+          "default": 1.1582082704514463,
+          "tuned": 1.1588297438185835
+        },
+        "matmul_bias": {
+          "default": 1.581416053306682,
+          "tuned": 1.5887407531483617
+        },
+        "matmul_bias_gelu_exact": {
+          "default": 1.3321779426687448,
+          "tuned": 1.373165492246662
+        },
+        "matmul_bias_gelu_tanh": {
+          "default": 1.5629592527388572,
+          "tuned": 1.5831349821920624
+        },
+        "matmul_bias_relu": {
+          "default": 1.7021500492160164,
+          "tuned": 1.707797157919196
+        },
+        "matmul_bias_silu": {
+          "default": 1.569604420304307,
+          "tuned": 1.5980713530738828
+        },
+        "mul_sum": {
+          "default": 1.3624611321071554,
+          "tuned": 1.3682194656829354
+        },
+        "mul_sum_keepdim": {
+          "default": 1.3450447406534203,
+          "tuned": 1.348638274269985
+        }
+      },
+      "failures": [
+        [],
+        []
+      ],
+      "run_geomeans": [
+        {
+          "default": 1.3788890323038605,
+          "tuned": 1.4656858784173308
+        },
+        {
+          "default": 1.3873708400087237,
+          "tuned": 1.466674894983313
+        }
+      ],
+      "new_90_metrics": {
+        "default": 1.3605799458158898,
+        "tuned": 1.46647878788924
+      },
+      "tune_seconds": {
+        "median": 0.763431673985906,
+        "sum_both_runs": 134.62227762676775,
+        "max": 1.9312962810508907
+      },
+      "non_wins": [
+        {
+          "kind": "add_gelu_exact",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            64,
+            1024
+          ],
+          "median_us": {
+            "eager": 21.0069375,
+            "default": 66.049375,
+            "tuned": 66.017875
+          },
+          "speedups": {
+            "default": 0.31804899743563053,
+            "tuned": 0.3182007524477272
+          }
+        },
+        {
+          "kind": "add_gelu_exact",
+          "dtype": "torch.float16",
+          "shape": [
+            64,
+            1024
+          ],
+          "median_us": {
+            "eager": 21.22955,
+            "default": 64.069425,
+            "tuned": 13.9015875
+          },
+          "speedups": {
+            "default": 0.3313522791877717,
+            "tuned": 1.5271313438123524
+          }
+        },
+        {
+          "kind": "add_layernorm_affine",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            32,
+            256
+          ],
+          "median_us": {
+            "eager": 28.978275,
+            "default": 32.736562500000005,
+            "tuned": 18.098875
+          },
+          "speedups": {
+            "default": 0.8851960250866289,
+            "tuned": 1.6011091849631538
+          }
+        },
+        {
+          "kind": "add_softmax",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            64,
+            1024
+          ],
+          "median_us": {
+            "eager": 20.87945,
+            "default": 25.642699999999998,
+            "tuned": 25.4528375
+          },
+          "speedups": {
+            "default": 0.8142453797767006,
+            "tuned": 0.8203191490929056
+          }
+        },
+        {
+          "kind": "matmul_bias_gelu_exact",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            32,
+            256
+          ],
+          "median_us": {
+            "eager": 46.526275,
+            "default": 46.76715,
+            "tuned": 46.700649999999996
+          },
+          "speedups": {
+            "default": 0.9948494830238747,
+            "tuned": 0.9962661119277784
+          }
+        },
+        {
+          "kind": "matmul_bias_gelu_exact",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            64,
+            1024
+          ],
+          "median_us": {
+            "eager": 46.8796375,
+            "default": 87.6872875,
+            "tuned": 87.673175
+          },
+          "speedups": {
+            "default": 0.534622963448379,
+            "tuned": 0.5347090201763538
+          }
+        }
+      ],
+      "original": {
+        "runs": [
+          "evidence/p800/results/003-original-a/evidence/results.json",
+          "evidence/p800/results/006-original-b/evidence/results.json"
+        ],
+        "counts": [
+          {
+            "passed": 94,
+            "failed": 23
+          },
+          {
+            "passed": 94,
+            "failed": 23
+          }
+        ],
+        "valid_cases": 94,
+        "common_cases": 94,
+        "geomean_vs_eager": 0.46069686010911154,
+        "paired_eager_ratio_gm": 1.00067406860896,
+        "comparisons": {
+          "default": {
+            "raw_geomean": 3.011216729627415,
+            "eager_normalized_geomean": 3.009188330235554,
+            "wins": 93
+          },
+          "tuned": {
+            "raw_geomean": 3.196152494901955,
+            "eager_normalized_geomean": 3.19399952008843,
+            "wins": 93
+          }
+        },
+        "failures": [
+          [
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 868 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7190 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 868 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7192 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 866 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7198 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 5 / 2048 (0.2%)\nGreatest absolute difference: 0.0625 at index (6, 15) (up to 0.03 allowed)\nGreatest relative difference: 0.00762939453125 at index (6, 43) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 27 / 8192 (0.3%)\nGreatest absolute difference: 0.0625 at index (0, 203) (up to 0.03 allowed)\nGreatest relative difference: 0.0076904296875 at index (6, 38) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 181 / 65536 (0.3%)\nGreatest absolute difference: 0.125 at index (4, 570) (up to 0.03 allowed)\nGreatest relative difference: 0.00775146484375 at index (30, 244) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 2 / 2048 (0.1%)\nGreatest absolute difference: 0.0625 at index (2, 107) (up to 0.03 allowed)\nGreatest relative difference: 0.007293701171875 at index (2, 107) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 4 / 8192 (0.0%)\nGreatest absolute difference: 0.0625 at index (2, 107) (up to 0.03 allowed)\nGreatest relative difference: 0.00775146484375 at index (21, 209) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 13 / 65536 (0.0%)\nGreatest absolute difference: 0.0625 at index (4, 992) (up to 0.03 allowed)\nGreatest relative difference: 0.0078125 at index (7, 318) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 64 (1.6%)\nGreatest absolute difference: 0.012939453125 at index (22,) (up to 0.003 allowed)\nGreatest relative difference: 0.1231689453125 at index (22,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 3 / 16 (18.8%)\nGreatest absolute difference: 0.0625 at index (3,) (up to 0.03 allowed)\nGreatest relative difference: 0.01544189453125 at index (12,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 6 / 32 (18.8%)\nGreatest absolute difference: 0.125 at index (26,) (up to 0.03 allowed)\nGreatest relative difference: 0.034423828125 at index (15,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 25 / 64 (39.1%)\nGreatest absolute difference: 0.25 at index (6,) (up to 0.03 allowed)\nGreatest relative difference: 1.609375 at index (22,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 64 (1.6%)\nGreatest absolute difference: 0.012939453125 at index (22, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.1231689453125 at index (22, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 3 / 16 (18.8%)\nGreatest absolute difference: 0.0625 at index (3, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.01544189453125 at index (12, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 6 / 32 (18.8%)\nGreatest absolute difference: 0.125 at index (26, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.034423828125 at index (15, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 25 / 64 (39.1%)\nGreatest absolute difference: 0.25 at index (6, 0) (up to 0.03 allowed)\nGreatest relative difference: 1.609375 at index (22, 0) (up to 0.003 allowed)"
+            }
+          ],
+          [
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 868 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float32",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7190 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.0003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 868 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7192 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 243 / 2048 (11.9%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 866 / 8192 (10.6%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_gelu_tanh",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 7198 / 65536 (11.0%)\nGreatest absolute difference: 0.0 at index (0, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.0 at index (0, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 5 / 2048 (0.2%)\nGreatest absolute difference: 0.0625 at index (6, 15) (up to 0.03 allowed)\nGreatest relative difference: 0.00762939453125 at index (6, 43) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 27 / 8192 (0.3%)\nGreatest absolute difference: 0.0625 at index (0, 203) (up to 0.03 allowed)\nGreatest relative difference: 0.0076904296875 at index (6, 38) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "matmul_bias_silu",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 181 / 65536 (0.3%)\nGreatest absolute difference: 0.125 at index (4, 570) (up to 0.03 allowed)\nGreatest relative difference: 0.00775146484375 at index (30, 244) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 2 / 2048 (0.1%)\nGreatest absolute difference: 0.0625 at index (2, 107) (up to 0.03 allowed)\nGreatest relative difference: 0.007293701171875 at index (2, 107) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 4 / 8192 (0.0%)\nGreatest absolute difference: 0.0625 at index (2, 107) (up to 0.03 allowed)\nGreatest relative difference: 0.00775146484375 at index (21, 209) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "add_layernorm_affine",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 13 / 65536 (0.0%)\nGreatest absolute difference: 0.0625 at index (4, 992) (up to 0.03 allowed)\nGreatest relative difference: 0.0078125 at index (7, 318) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 64 (1.6%)\nGreatest absolute difference: 0.012939453125 at index (22,) (up to 0.003 allowed)\nGreatest relative difference: 0.1231689453125 at index (22,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 3 / 16 (18.8%)\nGreatest absolute difference: 0.0625 at index (3,) (up to 0.03 allowed)\nGreatest relative difference: 0.01544189453125 at index (12,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 6 / 32 (18.8%)\nGreatest absolute difference: 0.125 at index (26,) (up to 0.03 allowed)\nGreatest relative difference: 0.034423828125 at index (15,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 25 / 64 (39.1%)\nGreatest absolute difference: 0.25 at index (6,) (up to 0.03 allowed)\nGreatest relative difference: 1.609375 at index (22,) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.float16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 64 (1.6%)\nGreatest absolute difference: 0.012939453125 at index (22, 0) (up to 0.003 allowed)\nGreatest relative difference: 0.1231689453125 at index (22, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                16,
+                128
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 3 / 16 (18.8%)\nGreatest absolute difference: 0.0625 at index (3, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.01544189453125 at index (12, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                32,
+                256
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 6 / 32 (18.8%)\nGreatest absolute difference: 0.125 at index (26, 0) (up to 0.03 allowed)\nGreatest relative difference: 0.034423828125 at index (15, 0) (up to 0.003 allowed)"
+            },
+            {
+              "kind": "mul_sum_keepdim",
+              "dtype": "torch.bfloat16",
+              "shape": [
+                64,
+                1024
+              ],
+              "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 25 / 64 (39.1%)\nGreatest absolute difference: 0.25 at index (6, 0) (up to 0.03 allowed)\nGreatest relative difference: 1.609375 at index (22, 0) (up to 0.003 allowed)"
+            }
+          ]
+        ]
+      }
+    },
+    "rtx4090": {
+      "candidate_runs": [
+        "evidence/rtx4090/results/003-candidate-a/evidence/results.json",
+        "evidence/rtx4090/results/004-candidate-b/evidence/results.json"
+      ],
+      "counts": [
+        {
+          "passed": 117,
+          "failed": 0
+        },
+        {
+          "passed": 117,
+          "failed": 0
+        }
+      ],
+      "valid_cases": 117,
+      "metrics": {
+        "default": {
+          "geomean_vs_eager": 1.421800280887758,
+          "wins": 117,
+          "min": 1.0652104093607861,
+          "max": 1.9571754281573475
+        },
+        "tuned": {
+          "geomean_vs_eager": 1.4266982842651772,
+          "wins": 117,
+          "min": 1.06757808931826,
+          "max": 1.960999480544012
+        }
+      },
+      "per_kind": {
+        "add_gelu_exact": {
+          "default": 1.2427034778060397,
+          "tuned": 1.251998654412916
+        },
+        "add_gelu_tanh": {
+          "default": 1.2501283847551772,
+          "tuned": 1.2547401341043616
+        },
+        "add_layernorm": {
+          "default": 1.5762488687736207,
+          "tuned": 1.586809644758091
+        },
+        "add_layernorm_affine": {
+          "default": 1.3135588019729094,
+          "tuned": 1.3201794018166846
+        },
+        "add_silu": {
+          "default": 1.2642356883383412,
+          "tuned": 1.2641765546239359
+        },
+        "add_softmax": {
+          "default": 1.0920675318604247,
+          "tuned": 1.0985063248571751
+        },
+        "matmul_bias": {
+          "default": 1.3759416231336628,
+          "tuned": 1.3764683298855007
+        },
+        "matmul_bias_gelu_exact": {
+          "default": 1.8104563062974026,
+          "tuned": 1.8241227415672092
+        },
+        "matmul_bias_gelu_tanh": {
+          "default": 1.8266557474880631,
+          "tuned": 1.8340223950174457
+        },
+        "matmul_bias_relu": {
+          "default": 1.7794851207053353,
+          "tuned": 1.776486965808316
+        },
+        "matmul_bias_silu": {
+          "default": 1.8414989293445179,
+          "tuned": 1.8451316224903744
+        },
+        "mul_sum": {
+          "default": 1.2239852967368443,
+          "tuned": 1.2293984529094595
+        },
+        "mul_sum_keepdim": {
+          "default": 1.1971290488507476,
+          "tuned": 1.1964240161112216
+        }
+      },
+      "failures": [
+        [],
+        []
+      ],
+      "run_geomeans": [
+        {
+          "default": 1.4387843724384928,
+          "tuned": 1.4425282842129385
+        },
+        {
+          "default": 1.4048084712965083,
+          "tuned": 1.41079503484118
+        }
+      ],
+      "new_90_metrics": {
+        "default": 1.4321080564633522,
+        "tuned": 1.4378669440643956
+      },
+      "tune_seconds": {
+        "median": 0.14812810250441544,
+        "sum_both_runs": 30.244390630163252,
+        "max": 0.2842729399999371
+      },
+      "non_wins": []
+    }
+  }
+}

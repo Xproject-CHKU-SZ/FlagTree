@@ -1,0 +1,3790 @@
+{
+  "route": "candidate",
+  "repeat_index": 0,
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "triton_file": "/home/f/flagtree/python/triton/__init__.py",
+  "device": "NVIDIA GeForce RTX 4090",
+  "driver": "triton.backends.nvidia.driver",
+  "target": "GPUTarget(backend='cuda', arch=89, warp_size=32)",
+  "affinity": [
+    0
+  ],
+  "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+  "script_sha256": "c82c698a35b879a39e9278e313d0c26f432ddaaffeff1d372e1ceb50fbd84000",
+  "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+  "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+  "compatibility": null,
+  "original_verified_files": null,
+  "protocol": {
+    "warmup_calls": 8,
+    "rounds": 7,
+    "calls_per_round": 40,
+    "cpu_preheat_seconds": 0.5,
+    "timing": "synchronized host wall including Python and fresh output allocation",
+    "compile_and_tune_excluded": true,
+    "tune_warmup_ms": 5,
+    "tune_measurement_ms": 15,
+    "tf32": false,
+    "reduced_precision_reductions": false,
+    "threads": 1,
+    "seed": 61
+  },
+  "source_sha256": {
+    "python/triton/experimental/graph_fusion/_xpu_matmul.py": "3993d860a65fe5a44bde7b1951965084f6802673f4d874777da63b7103862658",
+    "python/triton/experimental/graph_fusion/_xpu_lowp.py": "488db432db811d16260f576e62c0856ba95d345a15e5165f13bbff9c71e6486d",
+    "python/triton/experimental/graph_fusion/_tuning.py": "dc263d80bba7f7ecfdf96a1c3d695ec4f4fce79a8dc2f6ddad223daebe2cbdd6",
+    "python/triton/experimental/graph_fusion/_runtime.py": "7fa4d30e17874f5be9d8377848102a0c56bc1f7ced16c2910f87091454b7681d",
+    "python/triton/experimental/graph_fusion/_patterns.py": "3b9ee14d7a1edf18bd468c60c0ffbeeb04aa49ec0ff88870a946873ea0c57807",
+    "python/triton/experimental/graph_fusion/_kernels_f06.py": "e1c3d5c5c05a082ef48da4d65f8f20bc04f1b4c79e25c54689075813154e2973",
+    "python/triton/experimental/graph_fusion/_kernels.py": "0638ff410c94cf0958d1dd5320a7c189b739d2aec7be2a5c61d38cf18bd33387",
+    "python/triton/experimental/graph_fusion/_cross_call.py": "8eead5c63a4f13428188bf7e11f64624db1fb42d8e8c89eabc948eb291efd216",
+    "python/triton/experimental/graph_fusion/_backend.py": "f598e4a34da50a2e2a752bc1823999d8413e29c55a7d1c54df389e8d9937220a",
+    "python/triton/experimental/graph_fusion/__init__.py": "b2dc90c0fd09fb3768a06f35a181ca6fe44f1e6248a386f99362a47b29d87689"
+  },
+  "cases": [
+    {
+      "kind": "matmul_bias",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.44629469499997754,
+        "tune": 0.00011114600002315456,
+        "tuned_first_call": 0.000795492000008835
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias",
+              "version": 1,
+              "output": "add",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias.v2",
+              "kernel_name": "_matmul"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias",
+              "version": 1,
+              "output": "add",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias.v2",
+              "kernel_name": "_matmul"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {},
+        "evidence": {
+          "('matmul_bias', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "template": "matmul_bias",
+            "kind": "matmul_bias",
+            "semantic_version": 1,
+            "calls": [
+              "matmul",
+              "add"
+            ],
+            "options": {},
+            "domain": [],
+            "selected": null,
+            "source": "retained_qualified_policy",
+            "reason": "template_keeps_existing_fixed_policy"
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          10.362425,
+          8.1429,
+          8.12625,
+          8.11855,
+          7.7938,
+          7.805275,
+          7.8615
+        ],
+        "default": [
+          7.67825,
+          6.42985,
+          6.3585,
+          6.118975,
+          6.33305,
+          6.136925,
+          6.350575
+        ],
+        "tuned": [
+          6.276125,
+          6.320075,
+          6.168,
+          6.2889,
+          6.2163,
+          6.204925,
+          6.152225
+        ]
+      },
+      "median_us": {
+        "eager": 8.11855,
+        "default": 6.350575,
+        "tuned": 6.2163
+      },
+      "speedup_vs_eager": {
+        "default": 1.2783960507513101,
+        "tuned": 1.3060100059520938
+      }
+    },
+    {
+      "kind": "matmul_bias_relu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.08064176300001691,
+        "tune": 0.00010161800000219046,
+        "tuned_first_call": 0.0007063479999942501
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_relu",
+              "version": 1,
+              "output": "relu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "relu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias_relu.v2",
+              "kernel_name": "_matmul"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_relu",
+              "version": 1,
+              "output": "relu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "relu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias_relu.v2",
+              "kernel_name": "_matmul"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {},
+        "evidence": {
+          "('matmul_bias_relu', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "template": "matmul_bias_relu",
+            "kind": "matmul_bias_relu",
+            "semantic_version": 1,
+            "calls": [
+              "matmul",
+              "add",
+              "relu"
+            ],
+            "options": {},
+            "domain": [],
+            "selected": null,
+            "source": "retained_qualified_policy",
+            "reason": "template_keeps_existing_fixed_policy"
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.104775,
+          10.627525,
+          10.744825,
+          10.66135,
+          10.60185,
+          10.797025,
+          10.532875
+        ],
+        "default": [
+          7.151275,
+          6.12,
+          6.35125,
+          6.149425,
+          6.228775,
+          6.288625,
+          6.353525
+        ],
+        "tuned": [
+          6.25525,
+          6.227775,
+          6.21785,
+          6.12185,
+          6.285275,
+          6.323825,
+          6.224425
+        ]
+      },
+      "median_us": {
+        "eager": 10.66135,
+        "default": 6.288625,
+        "tuned": 6.227775
+      },
+      "speedup_vs_eager": {
+        "default": 1.6953388061778212,
+        "tuned": 1.7119035289489424
+      }
+    },
+    {
+      "kind": "add_softmax",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.12103654000000574,
+        "tune": 0.00010188499999230771,
+        "tuned_first_call": 0.0007411889999957566
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_softmax",
+              "version": 1,
+              "output": "softmax",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "softmax"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.add_softmax.v2",
+              "kernel_name": "_softmax"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_softmax",
+              "version": 1,
+              "output": "softmax",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [],
+              "fusion_scope": null,
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "softmax"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.add_softmax.v2",
+              "kernel_name": "_softmax"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {},
+        "evidence": {
+          "('add_softmax', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "add_softmax",
+            "kind": "add_softmax",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "softmax"
+            ],
+            "options": {},
+            "domain": [],
+            "selected": null,
+            "source": "retained_qualified_policy",
+            "reason": "template_keeps_existing_fixed_policy"
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 1.4901161193847656e-08,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 1.4901161193847656e-08,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.94065,
+          6.3729,
+          6.285125,
+          6.235825,
+          6.2362,
+          6.268475,
+          6.251275
+        ],
+        "default": [
+          6.74095,
+          5.793125,
+          5.795525,
+          5.775825,
+          5.81625,
+          5.80455,
+          5.7737
+        ],
+        "tuned": [
+          5.954575,
+          5.954125,
+          5.69975,
+          5.784625,
+          5.62235,
+          5.76955,
+          5.81915
+        ]
+      },
+      "median_us": {
+        "eager": 6.268475,
+        "default": 5.795525,
+        "tuned": 5.784625
+      },
+      "speedup_vs_eager": {
+        "default": 1.0816060667497767,
+        "tuned": 1.0836441428787518
+      }
+    },
+    {
+      "kind": "matmul_bias_gelu_exact",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.20471377100000154,
+        "tune": 0.28513964999999075,
+        "tuned_first_call": 0.0007934569999861196
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias_gelu_exact.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              "implementation": "nvidia.matmul_bias_gelu_exact.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('matmul_bias_gelu_exact', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "bm": 16,
+            "bn": 32,
+            "bk": 32,
+            "num_warps": 4,
+            "num_stages": 2,
+            "epi_block": 4096
+          }
+        },
+        "evidence": {
+          "('matmul_bias_gelu_exact', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "template": "matmul_bias_gelu",
+            "kind": "matmul_bias_gelu_exact",
+            "semantic_version": 1,
+            "calls": [
+              "matmul",
+              "add",
+              "gelu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 16,
+                  "bk": 16,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005151999881491065,
+                "samples": [
+                  0.005151999881491065
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 32,
+                  "bk": 32,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 4096
+                },
+                "latency_ms": 0.005024000070989132,
+                "samples": [
+                  0.005024000070989132
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 64,
+                  "bk": 64,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005119999870657921,
+                "samples": [
+                  0.005119999870657921
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "bm": 16,
+              "bn": 32,
+              "bk": 32,
+              "num_warps": 4,
+              "num_stages": 2,
+              "epi_block": 4096
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.005024000070989132,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.383525,
+          10.535875,
+          10.446425,
+          10.490725,
+          10.310175,
+          10.47095,
+          10.560925
+        ],
+        "default": [
+          7.736025,
+          6.31195,
+          6.439925,
+          6.30715,
+          6.3943,
+          6.4384,
+          6.6112
+        ],
+        "tuned": [
+          6.4626,
+          6.43625,
+          6.32835,
+          6.532175,
+          6.31205,
+          6.384725,
+          6.4853
+        ]
+      },
+      "median_us": {
+        "eager": 10.490725,
+        "default": 6.4384,
+        "tuned": 6.43625
+      },
+      "speedup_vs_eager": {
+        "default": 1.6293993849403579,
+        "tuned": 1.629943678384152
+      }
+    },
+    {
+      "kind": "matmul_bias_gelu_tanh",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.11002263900002163,
+        "tune": 0.25129519399999367,
+        "tuned_first_call": 0.000832293999991407
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias_gelu_tanh.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              "implementation": "nvidia.matmul_bias_gelu_tanh.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('matmul_bias_gelu_tanh', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "bm": 16,
+            "bn": 16,
+            "bk": 16,
+            "num_warps": 4,
+            "num_stages": 2,
+            "epi_block": 2048
+          }
+        },
+        "evidence": {
+          "('matmul_bias_gelu_tanh', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "template": "matmul_bias_gelu",
+            "kind": "matmul_bias_gelu_tanh",
+            "semantic_version": 1,
+            "calls": [
+              "matmul",
+              "add",
+              "gelu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 16,
+                  "bk": 16,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005119999870657921,
+                "samples": [
+                  0.005119999870657921
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 32,
+                  "bk": 32,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 4096
+                },
+                "latency_ms": 0.005119999870657921,
+                "samples": [
+                  0.005119999870657921
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 64,
+                  "bk": 64,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005119999870657921,
+                "samples": [
+                  0.005119999870657921
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "bm": 16,
+              "bn": 16,
+              "bk": 16,
+              "num_warps": 4,
+              "num_stages": 2,
+              "epi_block": 2048
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.005119999870657921,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.718025,
+          10.598925,
+          10.5027,
+          10.6037,
+          10.52265,
+          10.596925,
+          10.5693
+        ],
+        "default": [
+          7.58545,
+          6.36805,
+          6.338325,
+          6.09405,
+          6.3976,
+          6.347625,
+          6.30755
+        ],
+        "tuned": [
+          6.3348,
+          6.5035,
+          6.302925,
+          6.3226,
+          6.209125,
+          6.308925,
+          6.408525
+        ]
+      },
+      "median_us": {
+        "eager": 10.596925,
+        "default": 6.347625,
+        "tuned": 6.3226
+      },
+      "speedup_vs_eager": {
+        "default": 1.669431480278057,
+        "tuned": 1.6760391294720527
+      }
+    },
+    {
+      "kind": "matmul_bias_silu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            64
+          ],
+          "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+        },
+        {
+          "shape": [
+            64,
+            128
+          ],
+          "sha256": "9431265d85bde9151a7bdadf7768a9d436629695da51fe8ff2e2b31b9b9fc276"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.08325734100000659,
+        "tune": 0.24352527899998222,
+        "tuned_first_call": 0.0008262559999820951
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_silu",
+              "version": 1,
+              "output": "silu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "silu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.matmul_bias_silu.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "matmul_bias_silu",
+              "version": 1,
+              "output": "silu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_matmul_act"
+              ],
+              "fusion_scope": "matmul_bias_activation",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "matmul",
+                "add",
+                "silu"
+              ],
+              "cross_call": true,
+              "config": {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              "implementation": "nvidia.matmul_bias_silu.v3",
+              "kernel_name": "_matmul_act"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('matmul_bias_silu', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "bm": 16,
+            "bn": 32,
+            "bk": 32,
+            "num_warps": 4,
+            "num_stages": 2,
+            "epi_block": 4096
+          }
+        },
+        "evidence": {
+          "('matmul_bias_silu', 'cuda:0', 'torch.float32', ((16, 64), (64, 128), (128,)), ((64, 1), (128, 1), (1,)), ())": {
+            "template": "matmul_bias_silu",
+            "kind": "matmul_bias_silu",
+            "semantic_version": 1,
+            "calls": [
+              "matmul",
+              "add",
+              "silu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "bm": 16,
+                "bn": 16,
+                "bk": 16,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              },
+              {
+                "bm": 16,
+                "bn": 32,
+                "bk": 32,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 4096
+              },
+              {
+                "bm": 16,
+                "bn": 64,
+                "bk": 64,
+                "num_warps": 4,
+                "num_stages": 2,
+                "epi_block": 2048
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 16,
+                  "bk": 16,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005200000014156103,
+                "samples": [
+                  0.005200000014156103
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 32,
+                  "bk": 32,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 4096
+                },
+                "latency_ms": 0.005007999949157238,
+                "samples": [
+                  0.005007999949157238
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "bm": 16,
+                  "bn": 64,
+                  "bk": 64,
+                  "num_warps": 4,
+                  "num_stages": 2,
+                  "epi_block": 2048
+                },
+                "latency_ms": 0.005119999870657921,
+                "samples": [
+                  0.005119999870657921
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "bm": 16,
+              "bn": 32,
+              "bk": 32,
+              "num_warps": 4,
+              "num_stages": 2,
+              "epi_block": 4096
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.005007999949157238,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 7.62939453125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          12.2735,
+          10.516575,
+          10.5559,
+          10.625875,
+          10.34895,
+          10.450525,
+          10.490075
+        ],
+        "default": [
+          7.09625,
+          6.469225,
+          6.31415,
+          6.122275,
+          6.27535,
+          6.332475,
+          6.33385
+        ],
+        "tuned": [
+          6.389875,
+          6.402875,
+          6.1762,
+          6.248625,
+          6.290975,
+          6.24295,
+          6.321375
+        ]
+      },
+      "median_us": {
+        "eager": 10.516575,
+        "default": 6.332475,
+        "tuned": 6.290975
+      },
+      "speedup_vs_eager": {
+        "default": 1.6607369156609384,
+        "tuned": 1.671692384725738
+      }
+    },
+    {
+      "kind": "add_gelu_exact",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.14296700099998816,
+        "tune": 0.18825051700000017,
+        "tuned_first_call": 0.0007504570000094191
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_gelu_exact_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.add_gelu_exact.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_gelu_exact_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": {
+                "block": 256,
+                "num_warps": 4
+              },
+              "implementation": "nvidia.add_gelu_exact.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('add_gelu_exact', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "block": 256,
+            "num_warps": 4
+          }
+        },
+        "evidence": {
+          "('add_gelu_exact', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "add_gelu",
+            "kind": "add_gelu_exact",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "gelu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "block": 256,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.0030720001086592674,
+                "samples": [
+                  0.0030720001086592674
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 512,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.003120000008493662,
+                "samples": [
+                  0.003120000008493662
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 8
+                },
+                "latency_ms": 0.004064000211656094,
+                "samples": [
+                  0.004064000211656094
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "block": 256,
+              "num_warps": 4
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.0030720001086592674,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.00995,
+          6.30235,
+          6.296975,
+          6.256375,
+          6.183975,
+          6.203875,
+          6.1966
+        ],
+        "default": [
+          5.768675,
+          5.1955,
+          5.26505,
+          5.191125,
+          5.2003,
+          5.2376,
+          5.249425
+        ],
+        "tuned": [
+          5.343675,
+          5.226475,
+          5.166825,
+          5.1428,
+          5.1479,
+          5.188475,
+          5.271325
+        ]
+      },
+      "median_us": {
+        "eager": 6.256375,
+        "default": 5.2376,
+        "tuned": 5.188475
+      },
+      "speedup_vs_eager": {
+        "default": 1.1945117992973882,
+        "tuned": 1.2058215564303576
+      }
+    },
+    {
+      "kind": "add_gelu_tanh",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.030325841000006903,
+        "tune": 0.16134977199999412,
+        "tuned_first_call": 0.0006879420000132086
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_gelu_tanh_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.add_gelu_tanh.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_gelu",
+              "version": 1,
+              "output": "gelu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_gelu_tanh_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "gelu"
+              ],
+              "cross_call": true,
+              "config": {
+                "block": 1024,
+                "num_warps": 8
+              },
+              "implementation": "nvidia.add_gelu_tanh.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('add_gelu_tanh', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "block": 1024,
+            "num_warps": 8
+          }
+        },
+        "evidence": {
+          "('add_gelu_tanh', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "add_gelu",
+            "kind": "add_gelu_tanh",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "gelu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "block": 256,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.003984000068157911,
+                "samples": [
+                  0.003984000068157911
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 512,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.0033919999841600657,
+                "samples": [
+                  0.0033919999841600657
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.004064000211656094,
+                "samples": [
+                  0.004064000211656094
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 8
+                },
+                "latency_ms": 0.0031839999137446284,
+                "samples": [
+                  0.0031839999137446284
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "block": 1024,
+              "num_warps": 8
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.0031839999137446284,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 3.1350646167993546e-07,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 3.1350646167993546e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.979375,
+          6.1603,
+          6.186375,
+          6.153375,
+          6.138225,
+          6.1196,
+          6.20445
+        ],
+        "default": [
+          6.3526,
+          5.0751,
+          5.15735,
+          5.081875,
+          5.14545,
+          5.109775,
+          5.1878
+        ],
+        "tuned": [
+          5.1905,
+          5.24795,
+          5.058525,
+          5.114225,
+          5.19715,
+          5.12805,
+          5.10825
+        ]
+      },
+      "median_us": {
+        "eager": 6.1603,
+        "default": 5.14545,
+        "tuned": 5.12805
+      },
+      "speedup_vs_eager": {
+        "default": 1.1972325063891398,
+        "tuned": 1.201294839168885
+      }
+    },
+    {
+      "kind": "add_silu",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.02854295500000603,
+        "tune": 0.13688823999999045,
+        "tuned_first_call": 0.000700491000003467
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_silu",
+              "version": 1,
+              "output": "silu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_silu_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "silu"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.add_silu.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_silu",
+              "version": 1,
+              "output": "silu",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_act_flat"
+              ],
+              "fusion_scope": "add_silu_flat",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "silu"
+              ],
+              "cross_call": true,
+              "config": {
+                "block": 256,
+                "num_warps": 4
+              },
+              "implementation": "nvidia.add_silu.v3",
+              "kernel_name": "_add_act_flat"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('add_silu', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "block": 256,
+            "num_warps": 4
+          }
+        },
+        "evidence": {
+          "('add_silu', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "add_silu",
+            "kind": "add_silu",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "silu"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "block": 256,
+                "num_warps": 4
+              },
+              {
+                "block": 512,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 4
+              },
+              {
+                "block": 1024,
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "block": 256,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.0030720001086592674,
+                "samples": [
+                  0.0030720001086592674
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 512,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.003792000003159046,
+                "samples": [
+                  0.003792000003159046
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 4
+                },
+                "latency_ms": 0.0033919999841600657,
+                "samples": [
+                  0.0033919999841600657
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "block": 1024,
+                  "num_warps": 8
+                },
+                "latency_ms": 0.003775999997742474,
+                "samples": [
+                  0.003775999997742474
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "block": 256,
+              "num_warps": 4
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.0030720001086592674,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.91195,
+          6.442675,
+          6.41645,
+          6.2592,
+          6.36415,
+          6.165275,
+          6.112525
+        ],
+        "default": [
+          6.262075,
+          5.29005,
+          5.134025,
+          5.1702,
+          5.123575,
+          5.222425,
+          5.238825
+        ],
+        "tuned": [
+          5.413525,
+          5.286975,
+          5.10585,
+          5.153525,
+          5.153975,
+          5.20945,
+          5.0908
+        ]
+      },
+      "median_us": {
+        "eager": 6.36415,
+        "default": 5.222425,
+        "tuned": 5.153975
+      },
+      "speedup_vs_eager": {
+        "default": 1.2186197025328271,
+        "tuned": 1.2348042045217527
+      }
+    },
+    {
+      "kind": "add_layernorm",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.14183282700000177,
+        "tune": 0.1332572179999829,
+        "tuned_first_call": 0.0007722279999882176
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_layernorm",
+              "version": 1,
+              "output": "layer_norm",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_layernorm"
+              ],
+              "fusion_scope": "add_layernorm_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "layer_norm"
+              ],
+              "cross_call": true,
+              "config": {
+                "eps": 0.001,
+                "normalized_shape": [
+                  128
+                ]
+              },
+              "implementation": "nvidia.add_layernorm.v3",
+              "kernel_name": "_add_layernorm"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_layernorm",
+              "version": 1,
+              "output": "layer_norm",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_layernorm"
+              ],
+              "fusion_scope": "add_layernorm_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "layer_norm"
+              ],
+              "cross_call": true,
+              "config": {
+                "num_warps": 1,
+                "eps": 0.001,
+                "normalized_shape": [
+                  128
+                ]
+              },
+              "implementation": "nvidia.add_layernorm.v3",
+              "kernel_name": "_add_layernorm"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('add_layernorm', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), (('eps', 0.001), ('normalized_shape', (128,))))": {
+            "num_warps": 1
+          }
+        },
+        "evidence": {
+          "('add_layernorm', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), (('eps', 0.001), ('normalized_shape', (128,))))": {
+            "template": "add_layernorm",
+            "kind": "add_layernorm",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "layer_norm"
+            ],
+            "options": {
+              "eps": 0.001,
+              "normalized_shape": [
+                128
+              ]
+            },
+            "domain": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "num_warps": 1
+                },
+                "latency_ms": 0.0040160000789910555,
+                "samples": [
+                  0.0040160000789910555
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 4
+                },
+                "latency_ms": 0.0040480000898242,
+                "samples": [
+                  0.0040480000898242
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 8
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "num_warps": 1
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.0040160000789910555,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 2.384185791015625e-07,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 2.384185791015625e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          9.3094,
+          8.381875,
+          8.296475,
+          8.3487,
+          8.250775,
+          8.258025,
+          8.216225
+        ],
+        "default": [
+          6.001,
+          5.3983,
+          5.471925,
+          5.363875,
+          5.45265,
+          5.497325,
+          5.413325
+        ],
+        "tuned": [
+          5.4227,
+          5.5633,
+          5.39905,
+          5.39785,
+          5.3473,
+          5.4091,
+          5.33695
+        ]
+      },
+      "median_us": {
+        "eager": 8.296475,
+        "default": 5.45265,
+        "tuned": 5.39905
+      },
+      "speedup_vs_eager": {
+        "default": 1.5215491549980282,
+        "tuned": 1.5366545966420018
+      }
+    },
+    {
+      "kind": "add_layernorm_affine",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {
+        "weight": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951",
+        "bias": "b8407fa753512dbfb98fabea58135fdc66f95ca13b71ec4074bc571906288c4e"
+      },
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.04490023600001791,
+        "tune": 0.13842891799998824,
+        "tuned_first_call": 0.0008661109999934524
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_layernorm",
+              "version": 1,
+              "output": "layer_norm",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_layernorm"
+              ],
+              "fusion_scope": "add_layernorm_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "layer_norm"
+              ],
+              "cross_call": true,
+              "config": {
+                "eps": 0.001,
+                "normalized_shape": [
+                  128
+                ]
+              },
+              "implementation": "nvidia.add_layernorm_affine.v3",
+              "kernel_name": "_add_layernorm"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "add_layernorm",
+              "version": 1,
+              "output": "layer_norm",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_add_layernorm"
+              ],
+              "fusion_scope": "add_layernorm_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "add",
+                "layer_norm"
+              ],
+              "cross_call": true,
+              "config": {
+                "num_warps": 1,
+                "eps": 0.001,
+                "normalized_shape": [
+                  128
+                ]
+              },
+              "implementation": "nvidia.add_layernorm_affine.v3",
+              "kernel_name": "_add_layernorm"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('add_layernorm_affine', 'cuda:0', 'torch.float32', ((16, 128), (128,), (128,), (128,)), ((128, 1), (1,), (1,), (1,)), (('eps', 0.001), ('normalized_shape', (128,))))": {
+            "num_warps": 1
+          }
+        },
+        "evidence": {
+          "('add_layernorm_affine', 'cuda:0', 'torch.float32', ((16, 128), (128,), (128,), (128,)), ((128, 1), (1,), (1,), (1,)), (('eps', 0.001), ('normalized_shape', (128,))))": {
+            "template": "add_layernorm",
+            "kind": "add_layernorm_affine",
+            "semantic_version": 1,
+            "calls": [
+              "add",
+              "layer_norm"
+            ],
+            "options": {
+              "eps": 0.001,
+              "normalized_shape": [
+                128
+              ]
+            },
+            "domain": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "num_warps": 1
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 4
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 8
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "num_warps": 1
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.004095999989658594,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 4.76837158203125e-07,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          9.809625,
+          8.682425,
+          8.619475,
+          8.56295,
+          8.582675,
+          8.481625,
+          8.475625
+        ],
+        "default": [
+          7.387625,
+          6.55995,
+          6.703275,
+          6.514225,
+          6.709225,
+          6.75185,
+          6.69865
+        ],
+        "tuned": [
+          6.72615,
+          6.773425,
+          6.66455,
+          6.65435,
+          6.6695,
+          6.832825,
+          6.6921
+        ]
+      },
+      "median_us": {
+        "eager": 8.582675,
+        "default": 6.703275,
+        "tuned": 6.6921
+      },
+      "speedup_vs_eager": {
+        "default": 1.280370415953396,
+        "tuned": 1.2825084801482345
+      }
+    },
+    {
+      "kind": "mul_sum",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.02422505300000921,
+        "tune": 0.13787655999999515,
+        "tuned_first_call": 0.0006826709999927516
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "mul_sum",
+              "version": 1,
+              "output": "sum_1",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_mul_sum"
+              ],
+              "fusion_scope": "mul_sum_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "mul",
+                "sum_1"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.mul_sum.v3",
+              "kernel_name": "_mul_sum"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "mul_sum",
+              "version": 1,
+              "output": "sum_1",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_mul_sum"
+              ],
+              "fusion_scope": "mul_sum_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "mul",
+                "sum_1"
+              ],
+              "cross_call": true,
+              "config": {
+                "num_warps": 2
+              },
+              "implementation": "nvidia.mul_sum.v3",
+              "kernel_name": "_mul_sum"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('mul_sum', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "num_warps": 2
+          }
+        },
+        "evidence": {
+          "('mul_sum', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "mul_sum",
+            "kind": "mul_sum",
+            "semantic_version": 1,
+            "calls": [
+              "mul",
+              "sum_1"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 2
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 2
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "num_warps": 1
+                },
+                "latency_ms": 0.004000000189989805,
+                "samples": [
+                  0.004000000189989805
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 2
+                },
+                "latency_ms": 0.0030720001086592674,
+                "samples": [
+                  0.0030720001086592674
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 4
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 8
+                },
+                "latency_ms": 0.00342399999499321,
+                "samples": [
+                  0.00342399999499321
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "num_warps": 2
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.0030720001086592674,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          8.9693,
+          7.04525,
+          7.0195,
+          6.9248,
+          6.95805,
+          6.962575,
+          7.06925
+        ],
+        "default": [
+          7.210125,
+          5.78755,
+          5.859875,
+          5.7963,
+          5.893725,
+          5.8432,
+          5.770575
+        ],
+        "tuned": [
+          5.95195,
+          5.91285,
+          5.773325,
+          5.84515,
+          5.7798,
+          5.85855,
+          5.752175
+        ]
+      },
+      "median_us": {
+        "eager": 7.0195,
+        "default": 5.8432,
+        "tuned": 5.84515
+      },
+      "speedup_vs_eager": {
+        "default": 1.2013109255202628,
+        "tuned": 1.2009101562834144
+      }
+    },
+    {
+      "kind": "mul_sum_keepdim",
+      "dtype": "torch.float32",
+      "shape": [
+        16,
+        128
+      ],
+      "K": 64,
+      "status": "passed",
+      "inputs": [
+        {
+          "shape": [
+            16,
+            128
+          ],
+          "sha256": "fc46f28d682a814a7abf3669907fb3d002a0c5d2652d10bbb6fab59a9f2b4780"
+        },
+        {
+          "shape": [
+            128
+          ],
+          "sha256": "a0a30d50f4e1603eef1acbf0494b153f38f7974271527b403aa46700f41f3951"
+        }
+      ],
+      "parameters": {},
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "setup_seconds": {
+        "default_first_call": 0.023954548999995495,
+        "tune": 0.13439385899999934,
+        "tuned_first_call": 0.000667624000016076
+      },
+      "execution": {
+        "default": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "mul_sum",
+              "version": 1,
+              "output": "sum_1",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_mul_sum"
+              ],
+              "fusion_scope": "mul_sum_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "mul",
+                "sum_1"
+              ],
+              "cross_call": true,
+              "config": null,
+              "implementation": "nvidia.mul_sum_keepdim.v3",
+              "kernel_name": "_mul_sum"
+            }
+          ]
+        },
+        "tuned": {
+          "mode": "fused",
+          "reason": "completed",
+          "regions": [
+            {
+              "template": "mul_sum",
+              "version": 1,
+              "output": "sum_1",
+              "backend": "nvidia",
+              "mode": "fused",
+              "reason": "supported_template",
+              "kernel_launches": 1,
+              "kernel_names": [
+                "_mul_sum"
+              ],
+              "fusion_scope": "mul_sum_last_axis",
+              "native_operator_calls": 0,
+              "native_operators": [],
+              "calls": [
+                "mul",
+                "sum_1"
+              ],
+              "cross_call": true,
+              "config": {
+                "num_warps": 4
+              },
+              "implementation": "nvidia.mul_sum_keepdim.v3",
+              "kernel_name": "_mul_sum"
+            }
+          ]
+        }
+      },
+      "tuning": {
+        "semantic_version": 1,
+        "configs": {
+          "('mul_sum_keepdim', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "num_warps": 4
+          }
+        },
+        "evidence": {
+          "('mul_sum_keepdim', 'cuda:0', 'torch.float32', ((16, 128), (128,)), ((128, 1), (1,)), ())": {
+            "template": "mul_sum",
+            "kind": "mul_sum_keepdim",
+            "semantic_version": 1,
+            "calls": [
+              "mul",
+              "sum_1"
+            ],
+            "options": {},
+            "domain": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 2
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "backend": "nvidia",
+            "proposer": {
+              "mode": "bounded_fallback",
+              "reason": "no_proposer_supplied"
+            },
+            "proposer_rejected": [],
+            "candidates": [
+              {
+                "num_warps": 1
+              },
+              {
+                "num_warps": 2
+              },
+              {
+                "num_warps": 4
+              },
+              {
+                "num_warps": 8
+              }
+            ],
+            "evaluations": [
+              {
+                "config": {
+                  "num_warps": 1
+                },
+                "latency_ms": 0.003311999957077205,
+                "samples": [
+                  0.003311999957077205
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 2
+                },
+                "latency_ms": 0.003984000068157911,
+                "samples": [
+                  0.003984000068157911
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 4
+                },
+                "latency_ms": 0.003135999897494912,
+                "samples": [
+                  0.003135999897494912
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              },
+              {
+                "config": {
+                  "num_warps": 8
+                },
+                "latency_ms": 0.004095999989658594,
+                "samples": [
+                  0.004095999989658594
+                ],
+                "protocol": {
+                  "requested_mode": "event",
+                  "resolved_mode": "event",
+                  "implementation": "triton_do_bench",
+                  "cache_policy": "cold_l2",
+                  "warmup_ms": 5,
+                  "measurement_ms": 15,
+                  "n_retries": 1,
+                  "per_replay_ms": null,
+                  "fallback_reason": null
+                },
+                "correct": true
+              }
+            ],
+            "selected": {
+              "num_warps": 4
+            },
+            "source": "bounded_fallback",
+            "reason": "lowest_finite_latency_after_correctness",
+            "correctness": "passed",
+            "latency_ms": 0.003135999897494912,
+            "protocol": {
+              "requested_mode": "event",
+              "resolved_mode": "event",
+              "implementation": "triton_do_bench",
+              "cache_policy": "cold_l2",
+              "warmup_ms": 5,
+              "measurement_ms": 15,
+              "n_retries": 1,
+              "per_replay_ms": null,
+              "fallback_reason": null
+            }
+          }
+        }
+      },
+      "correctness": {
+        "eager": {
+          "max_abs_error": 0.0,
+          "fresh_retained_outputs": true
+        },
+        "default": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        },
+        "tuned": {
+          "max_abs_error": 1.9073486328125e-06,
+          "fresh_retained_outputs": true
+        }
+      },
+      "inputs_unchanged": true,
+      "wall_us": {
+        "eager": [
+          7.177875,
+          6.861675,
+          6.768125,
+          6.690825,
+          6.829425,
+          6.665975,
+          6.71015
+        ],
+        "default": [
+          6.266275,
+          5.8399,
+          5.93705,
+          5.9346,
+          5.870825,
+          5.93065,
+          5.955725
+        ],
+        "tuned": [
+          5.913675,
+          5.88435,
+          5.93575,
+          5.89205,
+          5.826225,
+          5.834,
+          5.7453
+        ]
+      },
+      "median_us": {
+        "eager": 6.768125,
+        "default": 5.9346,
+        "tuned": 5.88435
+      },
+      "speedup_vs_eager": {
+        "default": 1.1404517574899742,
+        "tuned": 1.1501907602368995
+      }
+    }
+  ],
+  "passed": 13,
+  "failed": 0,
+  "status": "completed"
+}
