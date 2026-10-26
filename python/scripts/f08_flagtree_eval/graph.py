@@ -53,6 +53,8 @@ def facts(tensor):
 
 
 def make_plan(graph, records, kinds, model_id, stream):
+    # 【G1 接入】把模型图映射到 task/tensor/storage；不是 Triton 内核内部的 shared-memory 分析。
+    # records 来自中间量保活的执行取证，同地址才作为当次物理别名依据；不跨进程比裸地址。
     tensors, storages, tasks = {}, {}, []
     aliases, node_tasks = {}, {}
     mutated = set()
@@ -78,6 +80,7 @@ def make_plan(graph, records, kinds, model_id, stream):
             if f["numel"] == 0 or not f["pointer"]:
                 raise ValueError("zero-sized storage is outside this execution bridge")
             sid = aliases.setdefault(key, "storage." + node.name)
+            # 按底层 storage 容量记账，不用最大的 view/expand 的逻辑 numel 推断分配量。
             kind = "input" if kinds.get(node.name) == "USER_INPUT" else (
                 "parameter" if node.op == "placeholder" else "temporary")
             if sid in storages and storages[sid]["size_bytes"] != f["nbytes"]:
@@ -151,6 +154,8 @@ def execute_node(node, env, counts, calls, inplace, records):
     kwargs = map_arg(node.kwargs, lambda n: env[n.name])
     if node.name in calls:
         x = args[0]
+        # 【GELU 收益开关】同一 FlagTree kernel：out 申请输出，inplace 直接写回合法输入。
+        # 此函数假设 calls 已经过上游筛选与正确性门禁，不自行对任意节点授权原地计算。
         dest = x if inplace else torch.empty_like(x)
         result = calls[node.name](x, dest)
         if records is not None:
@@ -159,12 +164,15 @@ def execute_node(node, env, counts, calls, inplace, records):
             if result.data_ptr() != dest.data_ptr() or result.untyped_storage().data_ptr() != dest.untyped_storage().data_ptr():
                 raise ValueError("compiled call did not return the bound storage")
     else:
+        # 未接入 FlagTree 的算子保持原调用，不能据此宣称整个模型已由 FlagTree 编译。
         result = node.target(*args, **kwargs)
     env[node.name] = result
     if records is not None and isinstance(result, torch.Tensor):
         records[node.name] = digest(result)
     for source in node.all_input_nodes:
         counts[source.name] -= 1
+        # 使用计数归零后只移除本执行器持有的引用；其他 view/tuple/调用者仍可延长 storage 寿命。
+        # 局部 args/result/dest 随函数退出释放，避免在下个节点额外保活导致测量失真。
         if counts[source.name] == 0 and source.op != "placeholder":
             env.pop(source.name, None)
     if counts[node.name] == 0:
@@ -172,6 +180,7 @@ def execute_node(node, env, counts, calls, inplace, records):
 
 
 def run_graph(module, values, calls, inplace=False, records=None):
+    # 正常路径保留图顺序与默认异步提交；不引入逐节点全局同步或完整中间量保活。
     from torch.fx.node import map_arg
     nodes = list(module.graph.nodes)
     placeholders = [n for n in nodes if n.op == "placeholder"]

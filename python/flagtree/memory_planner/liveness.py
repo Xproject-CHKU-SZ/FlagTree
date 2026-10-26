@@ -251,6 +251,8 @@ def _scan_memory_events(
     uses_upper_bound = False
 
     for event in events:
+        # 【静态峰值】在每个完成事件累加仍活着的 storage，一组 view/别名只记一次容量。
+        # 这只覆盖计划中的对象，不含图外/内核暂态；不等同于设备 allocated/reserved。
         live = [
             storage
             for storage in storages
@@ -320,6 +322,8 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
     deliberate conservative choice for later peak accounting.
     """
 
+    # 【G1 主入口】先验证引用、producer/consumer 与依赖，再计算定义点和最后使用点。
+    # 未知顺序/控制流需要保守诊断，不能把拓扑排序当成实际设备完成顺序的证明。
     issues = validate_model_plan(document)
     if issues:
         raise InvalidModelPlanError(issues)
@@ -344,6 +348,8 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
         last_use_events = tuple(_event_id_for_task(task_id) for task_id in consumer_tasks)
 
         diagnostics: list[str] = []
+        # 输入从计划开始计入；普通临时量延续到最后消费者，持久量/图输出延续到计划末端。
+        # 这里给出计划层可释放边界，不执行 Python del，也不操作设备分配器。
         if tensor["is_persistent"] or tensor["is_graph_output"]:
             end = plan_end
         elif consumer_tasks:
@@ -410,6 +416,8 @@ def analyze_model_lifetimes(document: Mapping[str, Any]) -> LifetimeReport:
         if any(tensor_source[member.tensor_id]["storage_offset_bytes"] is None for member in members):
             reasons.add("unknown_storage_offset")
 
+        # 一个 tensor 用完不代表底层缓冲可复用：必须等该 storage 所有别名成员都结束。
+        # 因此聚合时取所有成员最早开始、最晚结束，供 G2 干涉检查使用。
         storage_lifetimes.append(
             StorageLifetime(
                 storage_id=storage["storage_id"],

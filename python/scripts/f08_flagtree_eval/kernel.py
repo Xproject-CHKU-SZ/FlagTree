@@ -12,10 +12,14 @@ import triton.language as tl
 from contracts import file_hash
 
 
+# 【BGE/MiniLM 的真实 FlagTree GELU】既有已验证收益来自输出与输入合法同址，
+# 不是改 GELU 公式，也不是新 MLIR Pass；两臂共用下面同一个 compiled kernel。
 @triton.jit
 def _gelu(X, Y, N: tl.constexpr, BLOCK: tl.constexpr, APPROXIMATE: tl.constexpr):
     index = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     x = tl.load(X + index, index < N, other=0).to(tl.float32)
+    # 每个 lane 先读自己位置的 X，再写同一位置的 Y；无跨 lane 的输入依赖。
+    # 只支持已审计的 dense fp32 完全同址，不据此放行错位重叠切片。
     y = 0.5 * x * (1.0 + tl.math.erf(x * 0.7071067811865476))
     tl.store(Y + index, y, index < N)
 
@@ -30,6 +34,7 @@ def compile_call(x, approximate, directory):
     if approximate != "none" or not x.numel():
         raise ValueError("unsupported GELU attributes/empty tensor")
     target = driver.active.get_current_target()
+    # 核对实际编译 backend 与二进制格式，不将“torch.cuda 能运行”当作 FlagTree 证据。
     backend = get_backend(target).compiler(target)
     if backend.binary_ext != "hgbin" or ".ppu." not in type(backend).__module__:
         raise ValueError("active compiler is not FlagTree PPU/hgbin")
@@ -38,6 +43,7 @@ def compile_call(x, approximate, directory):
     grid = (triton.cdiv(numel, block), 1, 1)
     compiled = _gelu.warmup(x, dest, numel, BLOCK=block, APPROXIMATE=approximate,
                            grid=grid, num_warps=4, enable_fp_fusion=False)
+    # 四阶段 IR/二进制用于追溯编译来源；后续真实启动用于证明不止生成了文件。
     stages = {}
     directory.mkdir(parents=True, exist_ok=False)
     for name in ("ttir", "ttgir", "llir", "hgbin"):
@@ -62,6 +68,8 @@ def compile_call(x, approximate, directory):
     expected_shape = tuple(x.shape)
     # Binding only compiled code/grid. No tensor is retained by this callable.
     def call(source_tensor, destination_tensor):
+        # 目标缓冲由图级执行器选择：独立输出或 G03 允许覆盖的输入。
+        # 这里没有 torch GELU/ATen out= 回退，也没有先计算再复制到目标缓冲。
         # Runtime shape/layout guards are part of the real execution cost.
         # A compiled N must never be launched against a shorter/different view.
         for tensor in (source_tensor, destination_tensor):

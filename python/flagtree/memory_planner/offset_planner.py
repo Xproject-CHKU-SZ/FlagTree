@@ -389,6 +389,9 @@ def _build_arena_plan(
     order_origin: str,
     pool_storage_ids: set[str] | None = None,
 ) -> tuple[ArenaPlan, LifetimeReport]:
+    # 【G2 跨 kernel 规划】在声明的顺序副本上重算 G1 生命周期，再选可入池 storage。
+    # 与 G03“当前算子覆盖自己的输入”不同，这里让不同时段的逻辑输出共用 arena 区间。
+    # 此函数只出离线 assignment；创建 arena/绑定真实 FlagTree destination 属于运行时层。
     _validate_serial_schedule(plan, task_order)
     ordered_plan = _impose_serial_order(plan, task_order)
     report = analyze_model_lifetimes(ordered_plan)
@@ -411,6 +414,9 @@ def _build_arena_plan(
         aligned_size = _align_up(size, alignment)
         offset = 0
         while True:
+            # 只有“生命周期闭区间相交”且“地址区间相交”才冲突。
+            # 一个在事件 k 结束、另一个在 k 开始，仍视为同时活着，不能据此复用。
+            # first-fit 找安全偏移，并非全局最优；每块 storage 都按自身 alignment 放置。
             conflicts = [
                 block
                 for block in blocks
@@ -481,6 +487,8 @@ def _build_arena_plan(
     if unresolved:
         blockers.append("tensor_storage_offsets_unresolved")
 
+    # 这些是所选静态对象的容量指标，不是 PyTorch baseline，也不保证总峰值收益。
+    # 常驻 arena、未入池节点和 allocator 行为仍必须在正常模型执行中实测。
     no_reuse = 0
     for storage in ordered_candidates:
         no_reuse = _align_up(no_reuse, storage.alignment) + (storage.size_bytes or 0)
@@ -634,6 +642,8 @@ def verify_safe(arena: ArenaPlan, plan: Mapping[str, Any]) -> list[str]:
     first-fit capacity is *not* treated as a minimum for all safe layouts.
     """
 
+    # 独立验证覆盖、边界、对齐、生命周期冲突及合同；不把 first-fit 结果当唯一安全布局。
+    # verify_matches 另行要求与确定性规划结果一致，两个验证目标不能混为一谈。
     problems: list[str] = []
     if not isinstance(arena, ArenaPlan):
         return ["invalid_arena_plan_object"]

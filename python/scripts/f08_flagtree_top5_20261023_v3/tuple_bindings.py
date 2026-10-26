@@ -74,6 +74,7 @@ def record_tuple(node,result,records):
     require(isinstance(result,tuple) and len(result)==2 and
             all(isinstance(x,torch.Tensor) for x in result),'max.dim must return exactly two tensor leaves')
     for name,tensor in zip(output_names(node),result):
+        # values/indices 是两个真实 Tensor，各自记录 storage；tuple 本身没有虚构的显存块。
         require(name not in records,'tuple output identity collision: '+name)
         records[name]=facts(tensor)
     validate_layouts(node,records)
@@ -104,11 +105,13 @@ def make_plan(graph,records,kinds,model_id,stream):
         require(node.name not in records,'tuple container must not have a tensor storage')
         for user in users:
             projected=records.get(user['node'])
+            # getitem 不重新算 max，也不复制分量；必须与对应叶子的执行期布局完全一致。
             require(projected==records[names[user['index']]],
                     'getitem is not the observed max.dim component alias: '+user['node'])
         leaf_ids=[]
         for name in names:
             f=records[name];key=(f['device'],f['pointer'])
+            # 复用已有 getitem 对应的 storage ID，避免叶子和投影各算一份容量。
             sid=aliases.setdefault(key,'storage.'+name)
             if sid not in storage_by_id:
                 storage={'storage_id':sid,'size_bytes':f['nbytes'],'alignment':1,
@@ -127,6 +130,8 @@ def make_plan(graph,records,kinds,model_id,stream):
         for user in users:
             # Both leaves remain held by the tuple until its final getitem use.
             # These are ownership edges, not a claim getitem numerically reads both.
+            # Python tuple 在最后一次投影前还持有两个分量；因此两个叶子都延寿。
+            # 投影后的 view/别名若还有消费者，G1 还会把其底层 storage 延长到更晚。
             target=tasks[user['node']]
             target['inputs']=list(dict.fromkeys(target['inputs']+leaf_ids))
             # str(operator.getitem) contains spaces/angle brackets and is not a

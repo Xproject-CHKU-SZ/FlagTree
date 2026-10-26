@@ -59,20 +59,27 @@ def require_layout(fact, shape):
 
 def mul_candidate(node, records, legal_inputs):
     """Only SiLU -> same-shape Mul, never generic mask/broadcast multiplication."""
+    # 【选哪些节点优化】这里只接受“SiLU 输出 × 另一等形状 Tensor”。
+    # 不将广播、mask 乘法或任意 Mul 自动视为可原地执行，也没有融合 SiLU。
     require(str(node.target) == 'aten.mul.Tensor', 'not Tensor Mul')
     require(len(node.args) == 2 and not node.kwargs, 'unexpected Mul signature')
     require(all(hasattr(x, 'name') for x in node.args), 'Mul must have two tensor node arguments')
     silu = [i for i,x in enumerate(node.args) if str(x.target) == 'aten.silu.default']
     require(len(silu) == 1, 'requires exactly one direct SiLU producer')
     index = silu[0]
+    # legal_inputs 是 G03 对完整 storage/全部别名与消费者检查后的白名单；
+    # 单凭图上 SiLU→Mul 相邻，或某个 tensor 最后使用，都不能跳过该条件。
     require('tensor.'+node.args[index].name in legal_inputs, 'G03 rejected selected SiLU storage')
     names = [x.name for x in node.args] + [node.name]
     require(all(n in records for n in names), 'missing runtime layout evidence')
     shape = records[node.name]['shape']
     for n in names:
+        # 当前桥接只覆盖同形状、dense fp32、offset=0、占满 storage 的布局。
+        # 不在这里自动 contiguous()/cast/copy，以免悄悄改变数值或计时口径。
         require_layout(records[n], shape)
     require(len({records[n]['pointer'] for n in names}) == 3,
             'native inputs/output alias unexpectedly; explicit adapter required')
+    # 把“可以覆盖哪一侧”显式交给执行器，而不是执行时随便挑一个空闲地址。
     return {'shape': shape, 'destination_arg': index,
             'input_nodes': [x.name for x in node.args], 'operation': 'aten.mul.Tensor',
             'pattern': 'SiLU output multiplied by same-shape second operand; SiLU itself remains native'}

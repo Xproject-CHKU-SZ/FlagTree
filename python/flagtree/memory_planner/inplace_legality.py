@@ -225,6 +225,8 @@ def _numel(tensor) -> int | None:
 
 def _record(task_id, input_tensor_id, output_tensor_id, storage_id, problems, facts,
             runtime_evidence=None) -> dict:
+    # allowed 仅是当前合同下的分析结果；static_reused_storage_bytes 不是实测峰值下降。
+    # 即使提供 PPU 绑定证据，报告也不替执行器授权/执行，runtime_release 保持分析边界。
     allowed = not problems
     storage_size = facts.get("storage_size_bytes")
     reused = int(storage_size) if allowed and isinstance(storage_size, int) else 0
@@ -285,6 +287,8 @@ def evaluate_candidate(plan, task_order, *, task_id: str, input_tensor_id: str,
         return _record(task_id, input_tensor_id, outputs[0] if outputs else None,
                        storage_id, problems + ["missing_storage"], {})
 
+    # 【G03 核心】检查整块 storage 的所有别名，而不是仅检查想覆盖的那个 Tensor。
+    # view/切片的另一个消费者若还需要旧数据，即便候选 Tensor 最后使用也必须拒绝。
     members = sorted(
         (tensor for tensor in tensors.values() if tensor.get("storage_id") == storage_id),
         key=lambda tensor: tensor.get("tensor_id"),
@@ -341,6 +345,7 @@ def evaluate_candidate(plan, task_order, *, task_id: str, input_tensor_id: str,
             problems.append("output_shape_dtype_mismatch")
 
     involved_tasks = [task]
+    # 先把全别名组相关的 producer/consumer 纳入 device、stream 与引用一致性检查。
     for member in members:
         producer = member.get("producer")
         if producer is not None:
@@ -400,6 +405,8 @@ def evaluate_candidate(plan, task_order, *, task_id: str, input_tensor_id: str,
         elif size_bytes is not None and output_numel * output_size > size_bytes:
             problems.append("storage_too_small")
 
+    # 再逐成员保护图输入、参数/持久量、图输出、已有突变，并核对形状/容量/偏移证据。
+    # 这些限制是当前可执行子集，不能把“未支持”解释成一般原地计算都不合法。
     for member in members:
         detail = {
             "tensor_id": member.get("tensor_id"),
@@ -512,6 +519,8 @@ def evaluate_candidate(plan, task_order, *, task_id: str, input_tensor_id: str,
         elif offset != 0:
             problems.append("nonzero_storage_offset")
 
+        # 写点之后任何别名还有消费者，就可能读到被覆盖的新值，必须 fail-closed。
+        # 只把本候选算子的读后写作为允许边界；算子本身还需独立验证完全同址安全。
         last_read = None
         for consumer in member.get("consumers") or []:
             consumer_task = tasks.get(consumer)
@@ -576,6 +585,8 @@ def analyze_op_candidates(plan, task_order, *, kernel_ids=("aten.gelu.default",)
                           expected_graph_fingerprint=None,
                           expected_physical_card=None,
                           plan_identity=None) -> dict:
+    # 外部调用入口：先验证计划身份与显式顺序，再逐候选输入执行上面的安全判据。
+    # 不凭算子名自动启用 inplace，不改变模型图，也不发起编译或设备执行。
     validation = validate_plan_and_order(plan, task_order)
     plan_canonical = plan_fingerprint(plan)
     identity_problem = None

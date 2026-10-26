@@ -82,6 +82,8 @@ def trace(module, values):
     from torch.fx import Interpreter
     from graph import facts
     class Recorder(Interpreter):
+        # G1 取证阶段刻意保活中间量，防止 allocator 重用地址造成“假别名”。
+        # 样本 clone 仅服务 kernel 探针；此 trace 绝不能拿来当推理峰值/性能测量。
         def __init__(self):super().__init__(module);self.keep=[];self.records={};self.samples={}
         def run_node(self,node):
             if str(node.target) == 'aten.mul.Tensor' and len(node.args) == 2 and any(
@@ -122,6 +124,8 @@ def gate(bridge,args,case):
     save(args.output_dir/'graph-structure.json',[{'name':n.name,'op':n.op,'target':str(n.target),
           'args':str(n.args),'kwargs':str(n.kwargs)} for n in module.graph.nodes])
     records,samples=trace(module,values[0])
+    # 先把真实执行得到的 Tensor/storage/tuple 关系变成 G1 计划，再检查 G03。
+    # 计划层 ID 是逻辑身份，执行地址只在当次取证内使用，不拿跨进程裸指针对齐。
     plan,tuple_report=make_plan(module.graph,records,kinds,case['model_id'],
                               f'stream:{torch.cuda.current_stream().cuda_stream}')
     save(args.output_dir/'tuple-bindings.json',tuple_report)
@@ -140,6 +144,8 @@ def gate(bridge,args,case):
     require(not analysis['plan_validation']['plan_issue_codes'] and
             not analysis['plan_validation']['order_problems'],'Qwen G1/G03 plan/order rejected')
     allowed={}
+    # 只有完整合法性检查 allowed 且提供本次 PPU 证据的输入进入候选白名单。
+    # 分析结果本身不等于已执行；后面仍要做真实 kernel 和全图正确性门禁。
     for c in analysis['candidates']:
         if c['decision']=='allowed' and c['ppu_runtime_evidence']=='provided':
             allowed.setdefault(c['task_id'],set()).add(c['input_tensor_id'])
@@ -151,6 +157,7 @@ def gate(bridge,args,case):
     save(args.output_dir/'lowering.json',{'selected':selected,'excluded':excluded})
     require(bool(selected),'no legal SiLU->Mul exact-shape candidate; do not use GELU or native success as substitute')
     micro={}
+    # 先覆盖不整除 BLOCK 的边界，再用真实中间量验证。0/0 不由实测误差反推放宽。
     for n in (1,255,257):
         left=torch.linspace(-3,3,n,dtype=torch.float32).to('cuda:0')
         right=torch.linspace(.13,2.13,n,dtype=torch.float32).to('cuda:0')
@@ -184,6 +191,8 @@ def gate(bridge,args,case):
                       'destination_pointer':dest.data_ptr(),'actual_launch_synchronized':True}
     save(args.output_dir/'kernel-probes.json',probes)
     comparisons=[]
+    # 同一完整模型/输入对比 native、FlagTree 独立输出、FlagTree 同址输出。
+    # 这是固定输入正确性证据，不是 STS/A100 任务精度或显存收益证明。
     for batch,user in zip(values,users):
         native=run_mul(module,batch,{},{});a,b={},{}
         separate=run_mul(module,batch,calls,selected,records=a)
