@@ -75,6 +75,76 @@ python -m unittest discover -s . -p test_prepare.py
 
 回退使用一个新进程的 `--mode original` 即可；修复只在显式进程内加载，安装目录从未改变。输出目录和修复副本可保留审计，不必改动系统环境或删除缓存。
 
+## TTXIR 动态形状 / BF16 诊断实验
+
+`diagnostic` profile 仅用于定位后续 XPU 实验，不是已验收的修复 profile：
+
+```bash
+python prepare.py --source "$SDK_COMPILER" \
+  --profile diagnostic --output /tmp/xpu-compiler-copy-diagnostic.py
+
+# 在容器内对 FlagGems 的最小 GEMM 测试运行诊断 profile
+python run_pytest.py --profile diagnostic \
+  --output /tmp/xpu-compiler-copy-diagnostic.py \
+  tests/test_blas_ops.py::test_accuracy_mm
+```
+
+该 profile 在 intrinsic 兼容补丁基础上增加 `03-sdnn-ttxir-diagnostics.patch`：
+
+- `XPU_SDNN_PRESERVE_TTXIR_ERRORS=1` 时保留 `make_ttxir` 原始异常，避免把动态形状或
+  bufferization 类型错误继续包装成 `OutOfResources: uni_sram`；
+- `XPU_SDNN_SKIP_EARLY_COMBINE=1` 时跳过第一次 `TritonSDNNCombineBefore`，用于单因素
+  Pass 变体对照；默认值为 `0`，不改变原 Pipeline。
+
+这两个开关不能单独证明动态形状或 BF16 已修复。真实 P800 运行需要在与
+`BASELINE` SHA、`libtriton.so`、FlagTree/FlagGems 版本一致的容器中，对照记录
+`default`、`XPU_SDNN_PRESERVE_TTXIR_ERRORS=1` 和 `XPU_SDNN_SKIP_EARLY_COMBINE=1` 的
+TTIR/TTXIR、失败 Pass、数值结果和退出状态。当前仓库不包含 TritonSDNN/StructuredToMemref
+实现源码；如果 Pass 变体仍失败，应由 SDK/厂商提供对应源码或重建的共享 Pass archive，
+再实现真正的动态类型合同和 BF16 element-type 修复。
+
+### 已验证的 FlagGems 侧兼容补丁
+
+在 P800 标准镜像中，`04-flaggems-mm-block-pointer.patch` 将 Kunlunxin
+`mm_kernel` 的普通指针加法改为 Triton block pointer，并使用边界检查读取/写回。
+配合以下运行参数：
+
+```bash
+export PYTHONPATH=/env/FlagGems/src
+export KLX_USE_AUTOTUNE=0
+export XMLIR_MATMUL_FAST_MODE=1
+```
+
+已在独立实验容器中验证 FlagGems `test_accuracy_mm` 的 18 组测试：
+
+```text
+18 passed, 30 warnings
+```
+
+验证命令由 `run_acceptance.sh` 固化。脚本会先备份容器内 FlagGems 的 `mm.py`，
+应用补丁，运行测试，并在退出时恢复原文件。该结果证明当前验收矩阵通过，
+但 `XMLIR_MATMUL_FAST_MODE=1` 的严格 FP64 参考误差仍需按模型实际精度标准单独评估。
+
+### MM/BMM/ADDMM 扩展验收
+
+为覆盖验收方提出的 `mm/bmm/addmm` 矩阵算子集合，新增：
+
+- `05-flaggems-bmm-block-pointer.patch`：将 Kunlunxin BMM 的 A/B/O 访问改为 block pointer，
+  并在写回前转换为输出 dtype；在 `KLX_USE_AUTOTUNE=0` 下使用稳定的单一 tile 配置，
+  避免 XPU3 autotuner 对大形状返回零耗时。
+- `05-flaggems-addmm-block-pointer.patch`：将 Kunlunxin ADDMM 的 A/B/C 访问改为
+  block pointer，将 bias 以 FP32 传入并按输出指针 dtype 写回；兼容模式固定
+  `BLOCK_SIZE_M/N/K=32`，避免 XPU3 autotuner 对大形状返回零耗时。
+- `06-flaggems-addmm-composition.patch`：ADDMM 使用 FP32 输入的 FlagGems MM，
+  在 FP32 中完成 alpha/beta 与 bias 组合，最后转换回输入 dtype。这样保留 FlagGems
+  路径并避免当前 SDK 对 ADDMM masked bias load 的类型合同错误；该路径不是 CPU/native fallback。
+
+三项测试由 `run_blas_all_acceptance.sh` 固化；直接 ADDMM block-pointer 路径由
+`run_blas_acceptance.sh` 单独固化。旧版直接 ADDMM 变体曾在 bias load 上报告
+`element types do not match`/`other matches ptr type`，并在大形状触发 autotuner 零耗时。
+当前 `05-flaggems-addmm-block-pointer.patch` 已加入 FP32 bias、固定 tile 和默认
+Pipeline 验证，独立 ADDMM 72 组及三算子 99 组均已通过。
+
 ## 集成边界
 
 本目录是旧 SDK 的文本级 IR bridge 兼容包，不是同版本 C++ SDNN 编译器的重建修复。正式进入新版 compiler 默认路径前，维护方需核对源代码/预编译对象版本、已有 intrinsic 和 ReLU Pass 的处理并单独回归。接收方如需在真实模型中应用，可参考 `reproduce.py` 的进程内加载方式，但须对自身输入合同补测；仅 cherry-pick 并不会自动修复所有已安装 Python 进程。
