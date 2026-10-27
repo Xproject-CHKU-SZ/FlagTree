@@ -10,6 +10,8 @@ EXPECTED = {
     # Canonical LF; historical experimental copies had CRLF/mixed newlines.
     'gemm': '6091230312bd05ff97a29bc10c09146c57818ea1c5f668958332b59b3a008f1d',
     'epilogue': 'dbb2852ac6a9632c6d4d47b8aa958edad44066400489a89003698bab09394099',
+    # Diagnostic/pass-control experiment, based on the intrinsic profile.
+    'diagnostic': 'ba58858fa8f86023ff6c6c61a44142b833545163424fb97485236c6e9614e8d3',
 }
 
 
@@ -55,6 +57,8 @@ def prepare(source, profile):
     patches = ['01-sdnn-index-intrinsics.patch']
     if profile == 'epilogue':
         patches.append('02-sdnn-scalar-relu-legacy.patch')
+    elif profile == 'diagnostic':
+        patches.append('03-sdnn-ttxir-diagnostics.patch')
     for name in patches:
         text = apply_exact(text, (ROOT / name).read_text(encoding='utf-8'))
     result = text.encode('utf-8')

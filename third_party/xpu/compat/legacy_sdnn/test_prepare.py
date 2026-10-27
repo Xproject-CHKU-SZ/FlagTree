@@ -1,5 +1,6 @@
 """Host-only tests: python -m unittest discover -s <this directory>."""
 import unittest
+from pathlib import Path
 from prepare import apply_exact, prepare
 
 
@@ -20,6 +21,12 @@ class ExactPatchTests(unittest.TestCase):
     def test_reject_wrong_hunk_count(self):
         with self.assertRaisesRegex(ValueError, 'size mismatch'):
             apply_exact('old\n', '--- a/f\n+++ b/f\n@@ -1,2 +1 @@\n-old\n+new\n')
+
+    def test_diagnostic_profile_is_explicit(self):
+        patch = (Path(__file__).with_name('03-sdnn-ttxir-diagnostics.patch')
+                 .read_text(encoding='utf-8'))
+        self.assertIn('XPU_SDNN_SKIP_EARLY_COMBINE', patch)
+        self.assertIn('XPU_SDNN_PRESERVE_TTXIR_ERRORS', patch)
 
 
 if __name__ == '__main__':
