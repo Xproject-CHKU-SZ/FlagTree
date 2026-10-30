@@ -20,6 +20,8 @@ add_triton_library(TritonXPUTransforms
   TileDecidePass.cpp
   VectorizabilityAnalysisPass.cpp
   Normalize.cpp
+  PreserveBF16Rounding.cpp
+  Rank1Wrap.cpp
   Vectorize.cpp
   MemoryAsync.cpp
   UnrollControl.cpp

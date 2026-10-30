@@ -510,6 +510,18 @@ void init_triton_xpu(py::module &&m) {
   init_triton_xpu_passes_transform(passes.def_submodule("ttxpuir"));
   init_triton_sdnn_passes_conversion(passes.def_submodule("ttsdnnir"));
   init_triton_sdnn_passes_transform(passes.def_submodule("ttsdnnir"));
+  passes.def_submodule("ttsdnnir").def(
+      "add_preserve_bf16_rounding_pass", [](mlir::PassManager &pm) {
+        pm.addPass(mlir::triton::xpu::createPreserveBF16RoundingPass());
+      });
+  passes.def_submodule("ttsdnnir").def(
+      "add_capture_rank1_wrap_pass", [](mlir::PassManager &pm) {
+        pm.addPass(mlir::triton::xpu::createCaptureRank1WrapPass());
+      });
+  passes.def_submodule("ttsdnnir").def(
+      "add_repair_rank1_wrap_pass", [](mlir::PassManager &pm) {
+        pm.addPass(mlir::triton::xpu::createRepairRank1WrapPass());
+      });
   init_llvm_xpu_passes_transform(passes.def_submodule("llvmxpuir"));
   init_triton_xpu_llvm(m.def_submodule("llvm"));
 

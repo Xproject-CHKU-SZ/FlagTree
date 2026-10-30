@@ -1,0 +1,111 @@
+diff --git a/src/flag_gems/runtime/backend/_kunlunxin/ops/bmm.py b/src/flag_gems/runtime/backend/_kunlunxin/ops/bmm.py
+--- a/src/flag_gems/runtime/backend/_kunlunxin/ops/bmm.py
++++ b/src/flag_gems/runtime/backend/_kunlunxin/ops/bmm.py
+@@ -64,6 +64,9 @@
+     M,
+     N,
+     K,
++    stride_ab, stride_am, stride_ak,
++    stride_bb, stride_bk, stride_bn,
++    stride_ob, stride_om, stride_on,
+     TILE_M: tl.constexpr,
+     TILE_N: tl.constexpr,
+     TILE_K: tl.constexpr,
+@@ -73,9 +76,9 @@
+     DIVISIBLE_K: tl.constexpr,
+ ):
+     pid_b = tle.program_id(2)
+-    A = A + pid_b * M * K
+-    B = B + pid_b * K * N
+-    O = O + pid_b * M * N
++    A = A + pid_b * stride_ab
++    B = B + pid_b * stride_bb
++    O = O + pid_b * stride_ob
+ 
+     pidx = tle.program_id(0)
+     pidy = tle.program_id(1)
+@@ -102,7 +105,7 @@
+         a_block = tl.make_block_ptr(
+             base=A,
+             shape=(M, K),
+-            strides=(K, 1),
++            strides=(stride_am, stride_ak),
+             offsets=(m_offset, k_offset),
+             block_shape=(TILE_M, TILE_K),
+             order=(1, 0),
+@@ -110,7 +113,7 @@
+         b_block = tl.make_block_ptr(
+             base=B,
+             shape=(K, N),
+-            strides=(N, 1),
++            strides=(stride_bk, stride_bn),
+             offsets=(k_offset, n_offset),
+             block_shape=(TILE_K, TILE_N),
+             order=(1, 0),
+@@ -122,7 +125,7 @@
+     o_block = tl.make_block_ptr(
+         base=O,
+         shape=(M, N),
+-        strides=(N, 1),
++        strides=(stride_om, stride_on),
+         offsets=(m_offset, n_offset),
+         block_shape=(TILE_M, TILE_N),
+         order=(1, 0),
+@@ -135,8 +138,8 @@
+     logger.debug("GEMS BMM")
+     batch, M, K = A.shape
+     _, _, N = B.shape
+-    A = A.contiguous()
+-    B = B.contiguous()
++    # The block-pointer kernel consumes actual strides; do not route
++    # transposed inputs through the legacy native copy_ redispatch.
+     out = torch.empty((batch, M, N), dtype=A.dtype, device=A.device)
+ 
+     grid_fn = lambda meta: (
+@@ -145,7 +148,10 @@
+         batch,
+     )
+     with torch_device_fn.device(A.device):
+-        bmm_kernel[grid_fn](A, B, out, M, N, K)
++        bmm_kernel[grid_fn](
++            A, B, out, M, N, K,
++            *A.stride(), *B.stride(), *out.stride(),
++        )
+     return out
+ 
+ 
+@@ -162,5 +168,8 @@
+         batch,
+     )
+     with torch_device_fn.device(A.device):
+-        bmm_kernel[grid_fn](A, B, out, M, N, K)
++        bmm_kernel[grid_fn](
++            A, B, out, M, N, K,
++            *A.stride(), *B.stride(), *out.stride(),
++        )
+     return out
+diff --git a/src/flag_gems/runtime/backend/_kunlunxin/ops/addmm.py b/src/flag_gems/runtime/backend/_kunlunxin/ops/addmm.py
+--- a/src/flag_gems/runtime/backend/_kunlunxin/ops/addmm.py
++++ b/src/flag_gems/runtime/backend/_kunlunxin/ops/addmm.py
+@@ -112,7 +112,9 @@
+     M, K = mat1.shape
+     _, N = mat2.shape
+ 
+-    mat1 = mat1.contiguous()
++    # Preserve row/column-major inputs: the kernel already receives strides.
++    if mat1.stride(0) > 1 and mat1.stride(1) > 1:
++        mat1 = mat1.contiguous()
+     # mat2 = mat2.contiguous()
+     out = torch.empty((M, N), device=mat1.device, dtype=mat1.dtype)
+     # The legacy SDNN epilogue consumes FP32 bias alongside its accumulator.
+@@ -159,7 +161,9 @@
+     else:
+         assert out.shape == (M, N), "Incompatible output shape"
+ 
+-    mat1 = mat1.contiguous()
++    # Preserve row/column-major inputs: the kernel already receives strides.
++    if mat1.stride(0) > 1 and mat1.stride(1) > 1:
++        mat1 = mat1.contiguous()
+     # The legacy SDNN epilogue consumes FP32 bias alongside its accumulator.
+     # Preserve broadcast strides; materializing this view is unnecessary.
+     bias = bias.float().broadcast_to(out.shape)

@@ -16,6 +16,10 @@ namespace xpu {
 constexpr llvm::StringLiteral kBF16ToFP32VecOptOffAttrName =
     "triton_xpu.bf16_to_fp32_vec_opt_off";
 
+std::unique_ptr<mlir::Pass> createPreserveBF16RoundingPass();
+std::unique_ptr<mlir::Pass> createCaptureRank1WrapPass();
+std::unique_ptr<mlir::Pass> createRepairRank1WrapPass();
+
 // Generate the pass class declarations.
 #define GEN_PASS_DECL
 #include "triton/Dialect/TritonXPU/Transforms/Passes.h.inc"

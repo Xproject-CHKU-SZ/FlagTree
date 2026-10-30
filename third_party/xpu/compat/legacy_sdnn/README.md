@@ -145,6 +145,25 @@ export XMLIR_MATMUL_FAST_MODE=1
 当前 `05-flaggems-addmm-block-pointer.patch` 已加入 FP32 bias、固定 tile 和默认
 Pipeline 验证，独立 ADDMM 72 组及三算子 99 组均已通过。
 
+### 非连续输入的 stride 合同补充（独立算子适配补丁）
+
+`07-flaggems-blas-stride-contract.patch` 在既有 `05` block-pointer 补丁之后应用，
+目标仍是本目录锁定的 FlagGems Kunlunxin 算子版本，不是编译器 Pass：
+
+- BMM 的 A/B/out 均传入实际 batch/矩阵 stride，不再在 `bmm_out` 中把转置输入
+  按连续布局解释。普通 BMM 也不再为已能由 block pointer 表达的布局调用 `contiguous()`。
+- ADDMM 对行/列主序输入保留现有 stride；只对双轴 stride 均大于1的其他布局保留旧复制逻辑。
+  这避免转置 A 在 FlagGems 启用时进入当前环境报错的 `copy_` redispatch。
+
+该补丁在冻结 main `84c3ce789b8eea0884d399a24697eac0ba873351` 的独立 P800
+编译环境中实测：64³的 A 转置、B 转置和二者转置，各3 dtype×6 BLAS/out路径，
+共54项通过，且记录了真实输入 stride 和直接kernel调用次数。单独的 B 转置
+`bmm_out` 对照为3项失败→注入本补丁3项通过→撤销后3项再次失败。
+
+这里修复的是算子调用/布局合同，不能用它宣称 BF16 舍入 Pass 或旧 FP32 同步问题已修复。
+新版 main 不使用 `prepare.py` 注入旧编译器补丁；其原始SDK hash校验保持不变。
+本轮未验证负 stride、重叠存储或任意非连续布局，不能把上述54项外推为全部布局支持。
+
 ## 集成边界
 
 本目录是旧 SDK 的文本级 IR bridge 兼容包，不是同版本 C++ SDNN 编译器的重建修复。正式进入新版 compiler 默认路径前，维护方需核对源代码/预编译对象版本、已有 intrinsic 和 ReLU Pass 的处理并单独回归。接收方如需在真实模型中应用，可参考 `reproduce.py` 的进程内加载方式，但须对自身输入合同补测；仅 cherry-pick 并不会自动修复所有已安装 Python 进程。

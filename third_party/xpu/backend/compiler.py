@@ -431,11 +431,15 @@ class XPUBackend(BaseBackend):
             passes.common.add_symbol_dce(pm)
         elif metadata["is_sdnn"]:
             xpu.passes.ttsdnnir.add_tritonsdnn_strip_all_ops_pass(pm, opt.arch)
+            if opt.arch == 3:
+                xpu.passes.ttsdnnir.add_preserve_bf16_rounding_pass(pm)
             if opt.arch < 4:
                 if metadata["use_int4_w4a8"]:
                     xpu.passes.ttsdnnir.add_triton_convert_type_pass(pm, opt.arch, 2)
                 else:
                     xpu.passes.ttsdnnir.add_triton_convert_type_pass(pm, opt.arch, TTSDNN_F_MATMUL_FAST_MODE)
+            if opt.arch == 3:
+                xpu.passes.ttsdnnir.add_capture_rank1_wrap_pass(pm)
             xpu.passes.ttsdnnir.add_convert_triton_to_tritonsdnn_pass(pm, opt.arch, opt.load_tile_size)
             passes.ttir.add_loop_aware_cse(pm)
             xpu.passes.ttsdnnir.add_linalg_to_tritonsdnn_pass(pm, opt.arch)
@@ -474,6 +478,8 @@ class XPUBackend(BaseBackend):
                 xpu.passes.ttsdnnir.add_tritonsdnn_ew_act_table_pass(pm, res)
             else:
                 xpu.passes.ttsdnnir.add_tritonsdnn_ew_act_table_pass(pm, None)
+            if opt.arch == 3:
+                xpu.passes.ttsdnnir.add_repair_rank1_wrap_pass(pm)
             xpu.passes.ttsdnnir.add_tritonsdnn_loop_grid_pass(pm)
             xpu.passes.ttsdnnir.add_tritonsdnn_hoist_loop_invariant_dma_pass(pm, opt.arch)
             # FlagTree: defer_event_coloring (arch5-only wiring) needs the
