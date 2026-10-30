@@ -1,0 +1,20 @@
+services:
+  fixed:
+    image: flagtree-xpu-numerics:20261030-v3
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        RUNTIME_IMAGE: ${RUNTIME_IMAGE:-flagtree-xpu-numerics-runtime:20261030-v3}
+    ipc: host
+    shm_size: 4gb
+    devices:
+      - ${XPU_DEVICE:-/dev/xpu4}:${XPU_DEVICE:-/dev/xpu4}
+      - /dev/xpuctrl:/dev/xpuctrl
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
+      XPU_VISIBLE_DEVICES: "0"
+    volumes:
+      - ${REPLAY_DIR:?set REPLAY_DIR to a NEW absolute directory}:/research
+      - /usr/local/xpu:/usr/local/xpu:ro
+    command: ["sleep", "infinity"]

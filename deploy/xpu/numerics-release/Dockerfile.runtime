@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=flagtree-xpu3.6-py310-torch2.9.0-flaggems-main-dev:202608
+FROM ${BASE_IMAGE}
+LABEL org.flagtree.numerics.source="5b175f6ab17a72a8ed583fc12db4b81169ef587d"
+LABEL org.flagtree.numerics.main="84c3ce789b8eea0884d399a24697eac0ba873351"
+COPY . /release
+RUN sh /release/install.sh
+ENV PYTHONPATH=/opt/xpu-fix/runtime:/opt/xpu-fix/flaggems/src:/opt/xpu-fix/flaggems
+ENV FLAGTREE_BACKEND=xpu KLX_USE_AUTOTUNE=0 XMLIR_MATMUL_FAST_MODE=1
+WORKDIR /research
+CMD ["sleep", "infinity"]
