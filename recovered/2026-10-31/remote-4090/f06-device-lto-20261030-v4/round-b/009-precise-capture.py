@@ -1,0 +1,32 @@
+import triton
+import triton.language as tl
+from torch._inductor.runtime import triton_helpers, triton_heuristics
+from torch._inductor.runtime.triton_helpers import libdevice, math as tl_math
+from torch._inductor.runtime.hints import AutotuneHint, ReductionHint, TileHint, DeviceProperties
+
+@triton.jit
+def capture_tanh_argument(in_ptr0, in_ptr1, out_ptr0, xnumel, XBLOCK: tl.constexpr, capture_t):
+    xnumel = 2048
+    xoffset = tl.program_id(0) * XBLOCK
+    xindex = xoffset + tl.arange(0, XBLOCK)[:]
+    xmask = xindex < xnumel
+    x2 = xindex
+    x0 = xindex % 128
+    tmp0 = tl.load(in_ptr0 + x2, xmask)
+    tmp1 = tl.load(in_ptr1 + x0, xmask, eviction_policy='evict_last')
+    tmp2 = tmp0 + tmp1
+    tmp3 = tl.full([1], 0.5, tl.float32)
+    tmp4 = tmp2 * tmp3
+    tmp5 = tmp2 * tmp2
+    tmp6 = tmp5 * tmp2
+    tmp7 = tl.full([1], 0.044715, tl.float32)
+    tmp8 = tmp6 * tmp7
+    tmp9 = tmp2 + tmp8
+    tmp10 = tl.full([1], 0.7978845608028654, tl.float32)
+    tmp11 = tmp9 * tmp10
+    tmp12 = tl.inline_asm_elementwise('{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }', constraints='=f,f', args=[tmp11.to(tl.float32)], dtype=tl.float32, is_pure=True, pack=1)
+    tmp13 = tl.full([1], 1.0, tl.float32)
+    tmp14 = tmp12 + tmp13
+    tmp15 = tmp4 * tmp14
+    tl.store(out_ptr0 + x2, tmp15, xmask)
+    tl.store(capture_t + x2, tmp11.to(tl.float32), xmask)

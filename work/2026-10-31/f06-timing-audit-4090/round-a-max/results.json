@@ -1,0 +1,4567 @@
+{
+  "status": "completed",
+  "route": "max",
+  "repeat": 0,
+  "started_at": 1793457875.6797435,
+  "identity": {
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+    "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+    "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+    "fusion_logic_sha256": {
+      "_inductor/scheduler.py": "904a90ee27cb641f7f6f0ecacdb38599d0f63bd5e37dd230f0e541edbd5dccb7",
+      "_inductor/lowering.py": "0b1e1ac3585aa5e8916ad05c8426d05f9bb1ea758899a3f661c9bc0d47cdebb6",
+      "_inductor/codegen/triton.py": "e54e0e0bd28299a84f6d3625ebd7776f8c8f2233541a3d30a7df8f89b489d222",
+      "_inductor/fx_passes/post_grad.py": "a1bc4ef86d9f8bda79c6f9bc2f14f07d0c725f5ff7aa9dcf2284a3032c6cd33e",
+      "_inductor/fx_passes/joint_graph.py": "e21f3f4eca819cb7ec517f9f68b834d16d129abdf86179f30b8e0f9217ffb197",
+      "_inductor/pattern_matcher.py": "c2f7ad9a952c26f7c2afe609144ad45ffa1aaaa659369df30d3d2ae2eea58e0b"
+    }
+  },
+  "device": "NVIDIA GeForce RTX 4090",
+  "cases": [
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float32:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.21324986399849877,
+      "before_validation_host40": {
+        "median_us": 38.243,
+        "samples_us": [
+          38.678675,
+          38.243,
+          37.660250000000005
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 37.743075,
+        "samples_us": [
+          39.2461,
+          37.88075,
+          37.80335,
+          37.4948,
+          37.0649,
+          37.743075,
+          37.316649999999996
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "generated_module_cache_hit": 18,
+          "fxgraph_cache_hit": 1,
+          "cudagraph_recorded_non_static_inputs": 3
+        }
+      },
+      "host40": {
+        "median_us": 37.146699999999996,
+        "samples_us": [
+          38.502425,
+          37.665075,
+          37.146699999999996,
+          37.265675,
+          37.13,
+          37.104924999999994,
+          37.048625
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 36.6025075,
+        "samples_us": [
+          36.703165,
+          36.462692499999996,
+          36.521237500000005,
+          36.6025075,
+          36.6730375,
+          36.759544999999996,
+          36.4891225
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "generated_module_cache_hit": 18,
+          "fxgraph_cache_hit": 1,
+          "cudagraph_recorded_non_static_inputs": 3
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 36.869120597839355,
+        "samples_us": [
+          37.057600021362305,
+          36.869120597839355,
+          36.975040435791016,
+          36.817920207977295,
+          36.735999584198
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 2.11200000000008
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.464000000000169
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 2.1119999999998527
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.0160000000000764
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.918999999999869
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.0160000000000764
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.9519999999999982
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.0160000000000764
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.9200000000000728
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.048000000000002
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 23.91100000000023,
+          "cpu_us": 23.91100000000023
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 81.31700000000001,
+          "cpu_us": 1291.3899999999999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.02500000000019,
+          "cpu_us": 7.02500000000019
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.141999999999598,
+          "cpu_us": 14.141999999999598
+        },
+        {
+          "name": "## Call CompiledFxGraph f6thut6b3jl2ge2zwqah4j74venaeghghqd2pdxg6yqsyy53bjva ##",
+          "count": 5,
+          "self_cpu_us": 163.04300000000012,
+          "cpu_us": 1188.9060000000002
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 26.196000000000254,
+          "cpu_us": 1003.5380000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 948.32,
+          "cpu_us": 948.32
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 29.021999999999935,
+          "cpu_us": 29.021999999999935
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.9210000000000491,
+          "cpu_us": 1.9210000000000491
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 20.40399999999977,
+          "cpu_us": 20.40399999999977
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 8.58900000000017,
+          "cpu_us": 8.58900000000017
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.419675,
+        "samples_us": [
+          41.95545,
+          40.917075,
+          40.926225,
+          40.419675,
+          39.86735,
+          40.286275,
+          40.176125
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_small_matmul_single_kernel",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              64
+            ],
+            "stride": [
+              64,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              64,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "prepared_launch": "enabled",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_compiler_options": {
+          "max_autotune": true,
+          "max_autotune_gemm_backends": "TRITON",
+          "epilogue_fusion": true,
+          "benchmark_epilogue_fusion": false,
+          "pattern_matcher": false,
+          "emulate_precision_casts": true,
+          "use_static_cuda_launcher": false,
+          "size_asserts": false,
+          "triton.cudagraphs": false
+        },
+        "kernel_provider": "native_inductor_codegen",
+        "shape": [
+          16,
+          128,
+          64
+        ],
+        "activation": "gelu_exact",
+        "rounding_boundaries": [
+          "matmul_output_dtype",
+          "add_output_dtype"
+        ],
+        "kernel_name": "triton_tem_fused_0",
+        "kernel_count": 1
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float32:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.1913831650163047,
+      "before_validation_host40": {
+        "median_us": 356.0576,
+        "samples_us": [
+          355.0698,
+          356.0576,
+          372.401025
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 356.858925,
+        "samples_us": [
+          355.29975,
+          355.658,
+          355.962425,
+          356.858925,
+          357.06127499999997,
+          357.8977,
+          369.320725
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 9,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 7,
+          "async_compile_cache_hit": 3,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 3,
+          "cudagraph_recorded_non_static_inputs": 9,
+          "fxgraph_cache_bypass": 1,
+          "generated_module_cache_miss": 38,
+          "extern_calls": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 6,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 6,
+          "coordesc_tuning_bench": 6
+        }
+      },
+      "host40": {
+        "median_us": 366.660275,
+        "samples_us": [
+          355.1017,
+          355.541975,
+          355.52965,
+          366.660275,
+          372.505025,
+          372.25055000000003,
+          372.54607500000003
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 368.09048,
+        "samples_us": [
+          369.61062749999996,
+          366.4128925,
+          366.41680249999996,
+          367.21211750000003,
+          368.09048,
+          376.74939,
+          378.4361
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 9,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 7,
+          "async_compile_cache_hit": 3,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 3,
+          "cudagraph_recorded_non_static_inputs": 9,
+          "fxgraph_cache_bypass": 1,
+          "generated_module_cache_miss": 38,
+          "extern_calls": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 6,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 6,
+          "coordesc_tuning_bench": 6
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 378.2014465332031,
+        "samples_us": [
+          378.2360076904297,
+          378.42864990234375,
+          378.2014465332031,
+          374.0081787109375,
+          371.94847106933594
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 41.75999999999999
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4159999999999968
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 317.698
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 9.408000000000015
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 41.024
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.7999999999999545
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 316.5469999999999
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 9.375999999999976
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 40.51200000000017
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 316.29099999999994
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 9.440000000000055
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 40.51299999999992
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 315.586
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 9.40800000000013
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 40.86400000000003
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 316.4500000000003
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 9.376999999999953
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.898999999999987,
+          "cpu_us": 19.898999999999987
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 71.93999999999994,
+          "cpu_us": 525.998
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.7949999999999875,
+          "cpu_us": 6.7949999999999875
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.68600000000005,
+          "cpu_us": 12.68600000000005
+        },
+        {
+          "name": "## Call CompiledFxGraph f3gfwxargydbnlfffrxocag43lix6xvjsjydmydxg43izlaxlywt ##",
+          "count": 5,
+          "self_cpu_us": 152.50700000000018,
+          "cpu_us": 434.577
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 24.03399999999985,
+          "cpu_us": 253.3639999999998
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 201.85600000000002,
+          "cpu_us": 201.85600000000002
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 27.473999999999933,
+          "cpu_us": 27.473999999999933
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.3999999999999204,
+          "cpu_us": 1.3999999999999204
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 27.306000000000097,
+          "cpu_us": 27.306000000000097
+        },
+        {
+          "name": "Memset (Unknown)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 1528.0390000000004,
+          "cpu_us": 1528.0390000000004
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 360.41545,
+        "samples_us": [
+          358.90895,
+          359.54215,
+          360.015375,
+          360.41545,
+          360.748375,
+          375.83265,
+          376.397275
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_softmax:float32:16x128",
+      "kind": "add_softmax",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.12525731400819495,
+      "before_validation_host40": {
+        "median_us": 40.475125000000006,
+        "samples_us": [
+          43.2682,
+          40.475125000000006,
+          40.218275
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.3055,
+        "samples_us": [
+          41.12245,
+          40.645725,
+          40.3055,
+          40.247025,
+          40.09305,
+          40.176275,
+          40.59875
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 5,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 5,
+          "cudagraph_recorded_non_static_inputs": 14,
+          "fxgraph_cache_bypass": 2,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 17,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 17,
+          "coordesc_tuning_bench": 17,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "host40": {
+        "median_us": 40.109899999999996,
+        "samples_us": [
+          40.9797,
+          40.013675,
+          40.033924999999996,
+          40.109899999999996,
+          39.782575,
+          40.328175,
+          40.137625
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 39.616237500000004,
+        "samples_us": [
+          39.640325,
+          39.679195,
+          39.457735,
+          39.7062625,
+          39.534565,
+          39.616237500000004,
+          39.602615
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 5,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 5,
+          "cudagraph_recorded_non_static_inputs": 14,
+          "fxgraph_cache_bypass": 2,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 17,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 17,
+          "coordesc_tuning_bench": 17,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 39.91168022155762,
+        "samples_us": [
+          39.93168115615845,
+          40.035037994384766,
+          39.741759300231934,
+          39.607839584350586,
+          39.91168022155762
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.2480000000000473
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.5040000000001328
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1199999999998909
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.3759999999999764
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.3769999999999527
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1189999999999145
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.3759999999999764
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 16.915000000000248,
+          "cpu_us": 16.915000000000248
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 70.6350000000001,
+          "cpu_us": 1185.5919999999996
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.782000000000025,
+          "cpu_us": 6.782000000000025
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.752999999999645,
+          "cpu_us": 12.752999999999645
+        },
+        {
+          "name": "## Call CompiledFxGraph f6he7do2vocj6awxsifziodlv7pj67g4mv2ddethgzw2mj3jzr7z ##",
+          "count": 5,
+          "self_cpu_us": 147.68700000000047,
+          "cpu_us": 1095.422
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 30.059999999999604,
+          "cpu_us": 928.8059999999997
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 873.356,
+          "cpu_us": 873.356
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 25.3900000000001,
+          "cpu_us": 25.3900000000001
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.4470000000001164,
+          "cpu_us": 1.4470000000001164
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 17.481999999999744,
+          "cpu_us": 17.481999999999744
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.3840000000000146,
+          "cpu_us": 6.3840000000000146
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.762175,
+        "samples_us": [
+          42.615050000000004,
+          40.4655,
+          40.32905,
+          40.762175,
+          40.094075,
+          41.14895,
+          40.842725
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_softmax",
+        "match_kind": "add_softmax",
+        "calls": [
+          "add",
+          "softmax"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_softmax:float32:2048x2048",
+      "kind": "add_softmax",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 3.060427427000832,
+      "before_validation_host40": {
+        "median_us": 41.962575,
+        "samples_us": [
+          43.357925,
+          41.726325,
+          41.962575
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 41.6877,
+        "samples_us": [
+          43.238749999999996,
+          42.006,
+          41.812124999999995,
+          41.6877,
+          41.664550000000006,
+          41.42305,
+          41.577075
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 17,
+          "async_compile_cache_hit": 7,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 7,
+          "cudagraph_recorded_non_static_inputs": 18,
+          "fxgraph_cache_bypass": 3,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 39,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 39,
+          "coordesc_tuning_bench": 35,
+          "pattern_matcher_count": 4,
+          "pattern_matcher_nodes": 16
+        }
+      },
+      "host40": {
+        "median_us": 41.101299999999995,
+        "samples_us": [
+          42.039725,
+          41.2316,
+          41.15715,
+          40.52445,
+          41.101299999999995,
+          40.821600000000004,
+          40.922475
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 40.118915,
+        "samples_us": [
+          40.207805,
+          40.360862499999996,
+          40.278665000000004,
+          40.118915,
+          40.0075,
+          39.7359775,
+          39.87737
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 17,
+          "async_compile_cache_hit": 7,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 7,
+          "cudagraph_recorded_non_static_inputs": 18,
+          "fxgraph_cache_bypass": 3,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 39,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 39,
+          "coordesc_tuning_bench": 35,
+          "pattern_matcher_count": 4,
+          "pattern_matcher_nodes": 16
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 40.296640396118164,
+        "samples_us": [
+          40.524001121520996,
+          40.268797874450684,
+          40.53936004638672,
+          40.296640396118164,
+          40.27935981750488
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.759999999999991
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 16.608999999999924
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.631999999999948
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 16.44799999999998
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.759999999999991
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 16.3839999999999
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.663999999999987
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 16.480000000000018
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.567999999999984
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 16.479999999999905
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 17.937999999999903,
+          "cpu_us": 17.937999999999903
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 72.81200000000018,
+          "cpu_us": 708.4710000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.791999999999902,
+          "cpu_us": 6.791999999999902
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.592999999999975,
+          "cpu_us": 12.592999999999975
+        },
+        {
+          "name": "## Call CompiledFxGraph f3x3soxedllkpr64w3ucrtf7lycrjdead5prvdjiumwxetcudsdd ##",
+          "count": 5,
+          "self_cpu_us": 151.61099999999993,
+          "cpu_us": 616.2740000000001
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.824000000000296,
+          "cpu_us": 444.6010000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 163.45200000000003,
+          "cpu_us": 163.45200000000003
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 249.32499999999976,
+          "cpu_us": 249.32499999999976
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.6230000000000473,
+          "cpu_us": 1.6230000000000473
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 18.438999999999965,
+          "cpu_us": 18.438999999999965
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.208000000000084,
+          "cpu_us": 6.208000000000084
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.205725,
+        "samples_us": [
+          42.036950000000004,
+          40.40405,
+          39.979875,
+          40.262,
+          40.0139,
+          40.205725,
+          39.57495
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_softmax",
+        "match_kind": "add_softmax",
+        "calls": [
+          "add",
+          "softmax"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm:float32:16x128",
+      "kind": "add_layernorm",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.10499528102809563,
+      "before_validation_host40": {
+        "median_us": 41.727025,
+        "samples_us": [
+          43.211425000000006,
+          41.727025,
+          40.686775
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.953199999999995,
+        "samples_us": [
+          42.1148,
+          41.095825000000005,
+          40.953199999999995,
+          40.65435,
+          40.777300000000004,
+          40.968,
+          40.891000000000005
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 22,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 9,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 9,
+          "cudagraph_recorded_non_static_inputs": 22,
+          "fxgraph_cache_bypass": 4,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 46,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 46,
+          "coordesc_tuning_bench": 40,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 40.271825,
+        "samples_us": [
+          41.4379,
+          40.271825,
+          39.914,
+          40.576625,
+          40.193925,
+          40.363350000000004,
+          40.204975000000005
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 40.0527,
+        "samples_us": [
+          40.02206,
+          40.2162475,
+          39.9442025,
+          40.016729999999995,
+          40.0527,
+          40.054520000000004,
+          40.0547575
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 22,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 9,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 9,
+          "cudagraph_recorded_non_static_inputs": 22,
+          "fxgraph_cache_bypass": 4,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 46,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 46,
+          "coordesc_tuning_bench": 40,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 40.306878089904785,
+        "samples_us": [
+          40.63007831573486,
+          40.325279235839844,
+          40.11119842529297,
+          40.306878089904785,
+          39.95680093765259
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.5679999999999836
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2800000000000864
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.6319999999999482
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.183999999999969
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.4399999999999409
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.183999999999969
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.4720000000000937
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.183999999999969
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.183999999999969
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.28799999999987,
+          "cpu_us": 18.28799999999987
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 77.64099999999996,
+          "cpu_us": 846.3290000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.01400000000001,
+          "cpu_us": 7.01400000000001
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.734999999999985,
+          "cpu_us": 12.734999999999985
+        },
+        {
+          "name": "## Call CompiledFxGraph fp7mcgvrcdpow6avitj5zpvajve73jdv3xdxu63r2dcljkfemidi ##",
+          "count": 5,
+          "self_cpu_us": 151.07600000000002,
+          "cpu_us": 748.9390000000001
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.081000000000017,
+          "cpu_us": 577.955
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 296.63599999999997,
+          "cpu_us": 296.63599999999997
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 250.23800000000006,
+          "cpu_us": 250.23800000000006
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.6100000000000136,
+          "cpu_us": 1.6100000000000136
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 18.298000000000002,
+          "cpu_us": 18.298000000000002
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.8900000000001,
+          "cpu_us": 5.8900000000001
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 41.05545,
+        "samples_us": [
+          43.354924999999994,
+          41.9533,
+          41.400725,
+          41.05545,
+          40.68475,
+          40.735225,
+          40.9379
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm:float32:2048x2048",
+      "kind": "add_layernorm",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.037975107959937304,
+      "before_validation_host40": {
+        "median_us": 40.513425,
+        "samples_us": [
+          42.093450000000004,
+          40.316025,
+          40.513425
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.021550000000005,
+        "samples_us": [
+          41.091025,
+          40.3095,
+          40.017475000000005,
+          40.0302,
+          40.021550000000005,
+          39.7142,
+          39.701724999999996
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 27,
+          "async_compile_cache_hit": 11,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 11,
+          "cudagraph_recorded_non_static_inputs": 26,
+          "fxgraph_cache_bypass": 5,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 51,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 51,
+          "coordesc_tuning_bench": 45,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 40.347325,
+        "samples_us": [
+          41.556425000000004,
+          40.755825,
+          40.347325,
+          40.0714,
+          40.367775,
+          40.24195,
+          39.999175
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 39.766205,
+        "samples_us": [
+          39.798375,
+          39.6714475,
+          39.556275,
+          39.850705,
+          39.766205,
+          39.921237500000004,
+          39.6079925
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 27,
+          "async_compile_cache_hit": 11,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 11,
+          "cudagraph_recorded_non_static_inputs": 26,
+          "fxgraph_cache_bypass": 5,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 51,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 51,
+          "coordesc_tuning_bench": 45,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 39.924800395965576,
+        "samples_us": [
+          40.08512020111084,
+          39.882240295410156,
+          39.725120067596436,
+          39.924800395965576,
+          39.99023914337158
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.791999999999916
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 10.079999999999927
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.600000000000023
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.888000000000034
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.47199999999998
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.88799999999992
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.504000000000019
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.951999999999998
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.408000000000015
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.888000000000034
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.84200000000007,
+          "cpu_us": 18.84200000000007
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 70.69600000000037,
+          "cpu_us": 737.2210000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.384999999999891,
+          "cpu_us": 6.384999999999891
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.25099999999992,
+          "cpu_us": 12.25099999999992
+        },
+        {
+          "name": "## Call CompiledFxGraph ffh57x6v2fj2ktn3alzsacdstetwap4qgwzdphtryk5kf7koj4ed ##",
+          "count": 5,
+          "self_cpu_us": 154.0429999999999,
+          "cpu_us": 647.8889999999999
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 32.00000000000034,
+          "cpu_us": 468.3340000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 191.422,
+          "cpu_us": 191.422
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 244.9119999999998,
+          "cpu_us": 244.9119999999998
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.7699999999999818,
+          "cpu_us": 1.7699999999999818
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 23.741999999999848,
+          "cpu_us": 23.741999999999848
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.893000000000029,
+          "cpu_us": 5.893000000000029
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.608175,
+        "samples_us": [
+          42.80845,
+          40.608175,
+          41.17375,
+          40.502375,
+          40.622725,
+          40.314550000000004,
+          40.174075
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:mul_sum:float32:16x128",
+      "kind": "mul_sum",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.11415512202074751,
+      "before_validation_host40": {
+        "median_us": 41.581625,
+        "samples_us": [
+          45.1137,
+          41.581625,
+          41.178250000000006
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.846025,
+        "samples_us": [
+          41.8096,
+          41.0493,
+          40.846025,
+          41.04115,
+          40.486599999999996,
+          40.476225,
+          40.3425
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 30,
+          "unique_graphs": 13
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 13,
+          "async_compile_cache_miss": 32,
+          "async_compile_cache_hit": 13,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 13,
+          "cudagraph_recorded_non_static_inputs": 30,
+          "fxgraph_cache_bypass": 6,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 57,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 57,
+          "coordesc_tuning_bench": 51,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 40.285425,
+        "samples_us": [
+          42.561,
+          40.285425,
+          40.620475,
+          40.291425,
+          40.082049999999995,
+          40.229425,
+          40.0892
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 39.9836075,
+        "samples_us": [
+          39.9969875,
+          39.894045,
+          40.087134999999996,
+          39.815194999999996,
+          39.9992175,
+          39.9836075,
+          39.8615475
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 30,
+          "unique_graphs": 13
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 13,
+          "async_compile_cache_miss": 32,
+          "async_compile_cache_hit": 13,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 13,
+          "cudagraph_recorded_non_static_inputs": 30,
+          "fxgraph_cache_bypass": 6,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 57,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 57,
+          "coordesc_tuning_bench": 51,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 39.913599491119385,
+        "samples_us": [
+          40.1420783996582,
+          39.98975992202759,
+          39.85392093658447,
+          39.86000061035156,
+          39.913599491119385
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.5359999999999445
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.2479999999999336
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.599999999999909
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.05499999999995
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.4729999999999563
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 1.4399999999999409
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0880000000000791
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 17.197999999999993,
+          "cpu_us": 17.197999999999993
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 69.20200000000011,
+          "cpu_us": 743.4560000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.4070000000000675,
+          "cpu_us": 6.4070000000000675
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 11.966000000000022,
+          "cpu_us": 11.966000000000022
+        },
+        {
+          "name": "## Call CompiledFxGraph fe2awidotth7b5lgizs3o3tcr3vfqfhf73hpd6twwzb56jyw53zs ##",
+          "count": 5,
+          "self_cpu_us": 148.77599999999984,
+          "cpu_us": 655.881
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 32.63999999999993,
+          "cpu_us": 487.5770000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 204.28500000000003,
+          "cpu_us": 204.28500000000003
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 250.65200000000016,
+          "cpu_us": 250.65200000000016
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.5439999999999827,
+          "cpu_us": 1.5439999999999827
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 17.984000000000037,
+          "cpu_us": 17.984000000000037
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.813000000000102,
+          "cpu_us": 5.813000000000102
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.795225,
+        "samples_us": [
+          43.67495,
+          41.198325,
+          40.795225,
+          41.085625,
+          40.6987,
+          40.63355,
+          40.693275
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "mul_sum",
+        "match_kind": "mul_sum",
+        "calls": [
+          "mul",
+          "sum_1"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:mul_sum:float32:2048x2048",
+      "kind": "mul_sum",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03359329799422994,
+      "before_validation_host40": {
+        "median_us": 40.1962,
+        "samples_us": [
+          41.18465,
+          40.055324999999996,
+          40.1962
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.16465,
+        "samples_us": [
+          41.3445,
+          40.466924999999996,
+          40.16465,
+          40.482549999999996,
+          39.880700000000004,
+          40.05795,
+          40.10295
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 34,
+          "unique_graphs": 15
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 15,
+          "async_compile_cache_miss": 37,
+          "async_compile_cache_hit": 15,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 15,
+          "cudagraph_recorded_non_static_inputs": 34,
+          "fxgraph_cache_bypass": 7,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 39.99315,
+        "samples_us": [
+          41.375225,
+          40.2344,
+          39.9522,
+          40.294375,
+          39.956725,
+          39.99315,
+          39.759924999999996
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 39.65054,
+        "samples_us": [
+          39.548015,
+          39.683585,
+          39.65054,
+          39.71348,
+          39.653445000000005,
+          39.502555,
+          39.55598
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 34,
+          "unique_graphs": 15
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 15,
+          "async_compile_cache_miss": 37,
+          "async_compile_cache_hit": 15,
+          "generated_module_cache_hit": 36,
+          "fxgraph_cache_hit": 15,
+          "cudagraph_recorded_non_static_inputs": 34,
+          "fxgraph_cache_bypass": 7,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 39.671199321746826,
+        "samples_us": [
+          40.030717849731445,
+          39.71247911453247,
+          39.671199321746826,
+          39.567201137542725,
+          39.61040019989014
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.88799999999992
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 5.152000000000044
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.888000000000034
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 5.087999999999965
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.631999999999948
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 5.087000000000103
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.696000000000026
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 5.05600000000004
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "us": 9.631999999999948
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 5.088000000000079
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.46000000000005,
+          "cpu_us": 18.46000000000005
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 72.16699999999992,
+          "cpu_us": 745.0360000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.36700000000009,
+          "cpu_us": 6.36700000000009
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.07400000000007,
+          "cpu_us": 13.07400000000007
+        },
+        {
+          "name": "## Call CompiledFxGraph fngy4t3bnt6x4qsogcqdu7njpkq5pqyeypn6pzuz7263emohusax ##",
+          "count": 5,
+          "self_cpu_us": 151.05700000000002,
+          "cpu_us": 653.428
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.62599999999992,
+          "cpu_us": 481.08399999999995
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 198.26299999999998,
+          "cpu_us": 198.26299999999998
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 251.19500000000005,
+          "cpu_us": 251.19500000000005
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Copy<float, float>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.669999999999959,
+          "cpu_us": 1.669999999999959
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 19.617000000000075,
+          "cpu_us": 19.617000000000075
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.909999999999968,
+          "cpu_us": 5.909999999999968
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 40.5232,
+        "samples_us": [
+          42.169650000000004,
+          40.778475,
+          40.426375,
+          40.202025,
+          39.735625,
+          40.5232,
+          40.6862
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "mul_sum",
+        "match_kind": "mul_sum",
+        "calls": [
+          "mul",
+          "sum_1"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float16:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03290404501603916,
+      "before_validation_host40": {
+        "median_us": 40.70985,
+        "samples_us": [
+          41.642725,
+          40.70985,
+          40.43575
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 40.6068,
+        "samples_us": [
+          42.581175,
+          40.6068,
+          40.350225,
+          40.345225,
+          40.28085,
+          40.893425,
+          40.667
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 39,
+          "unique_graphs": 17
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 17,
+          "async_compile_cache_miss": 42,
+          "async_compile_cache_hit": 17,
+          "generated_module_cache_hit": 54,
+          "fxgraph_cache_hit": 17,
+          "cudagraph_recorded_non_static_inputs": 39,
+          "fxgraph_cache_bypass": 8,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 40.5926,
+        "samples_us": [
+          42.185775,
+          41.166399999999996,
+          40.5912,
+          40.173075,
+          40.730450000000005,
+          40.5926,
+          40.359875
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 40.0737125,
+        "samples_us": [
+          40.00466,
+          40.155390000000004,
+          40.080279999999995,
+          40.0611225,
+          40.110585,
+          40.0737125,
+          39.8950775
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 39,
+          "unique_graphs": 17
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 17,
+          "async_compile_cache_miss": 42,
+          "async_compile_cache_hit": 17,
+          "generated_module_cache_hit": 54,
+          "fxgraph_cache_hit": 17,
+          "cudagraph_recorded_non_static_inputs": 39,
+          "fxgraph_cache_bypass": 8,
+          "generated_module_cache_miss": 58,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 40.18735885620117,
+        "samples_us": [
+          40.44735908508301,
+          40.301761627197266,
+          40.17600059509277,
+          40.18735885620117,
+          40.063838958740234
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.8880000000001473
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.5040000000001328
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.9200000000000728
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4400000000000546
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.88799999999992
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.5039999999999054
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.88799999999992
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4710000000000036
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.88799999999992
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.5049999999998818
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.75499999999991,
+          "cpu_us": 18.75499999999991
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 71.19500000000016,
+          "cpu_us": 1412.2169999999999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.949999999999946,
+          "cpu_us": 6.949999999999946
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.660000000000096,
+          "cpu_us": 12.660000000000096
+        },
+        {
+          "name": "## Call CompiledFxGraph fqbcmrlq67j3tzcspkty3hw6rkynfyck2bvltg2i6zjdg5c2jv3b ##",
+          "count": 5,
+          "self_cpu_us": 152.27199999999948,
+          "cpu_us": 1321.4119999999996
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.956999999999653,
+          "cpu_us": 1149.1079999999997
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 870.771,
+          "cpu_us": 870.771
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 246.3800000000001,
+          "cpu_us": 246.3800000000001
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.5330000000001291,
+          "cpu_us": 1.5330000000001291
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 18.49900000000025,
+          "cpu_us": 18.49900000000025
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.904000000000224,
+          "cpu_us": 5.904000000000224
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 41.147325,
+        "samples_us": [
+          43.7952,
+          41.147325,
+          40.695475,
+          41.2804,
+          41.1292,
+          40.978925,
+          41.217325
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_small_matmul_single_kernel",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              64
+            ],
+            "stride": [
+              64,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              64,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "prepared_launch": "enabled",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_compiler_options": {
+          "max_autotune": true,
+          "max_autotune_gemm_backends": "TRITON",
+          "epilogue_fusion": true,
+          "benchmark_epilogue_fusion": false,
+          "pattern_matcher": false,
+          "emulate_precision_casts": true,
+          "use_static_cuda_launcher": false,
+          "size_asserts": false,
+          "triton.cudagraphs": false
+        },
+        "kernel_provider": "native_inductor_codegen",
+        "shape": [
+          16,
+          128,
+          64
+        ],
+        "activation": "gelu_exact",
+        "rounding_boundaries": [
+          "matmul_output_dtype",
+          "add_output_dtype"
+        ],
+        "kernel_name": "triton_tem_fused_0",
+        "kernel_count": 1
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float16:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.032322338956873864,
+      "before_validation_host40": {
+        "median_us": 121.60037500000001,
+        "samples_us": [
+          122.185125,
+          121.60037500000001,
+          121.28472500000001
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 121.286725,
+        "samples_us": [
+          121.75062499999999,
+          121.286725,
+          121.262775,
+          121.435825,
+          121.29525000000001,
+          121.254425,
+          121.22004999999999
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 45,
+          "unique_graphs": 19
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 19,
+          "async_compile_cache_miss": 47,
+          "async_compile_cache_hit": 19,
+          "generated_module_cache_hit": 92,
+          "fxgraph_cache_hit": 19,
+          "cudagraph_recorded_non_static_inputs": 45,
+          "fxgraph_cache_bypass": 9,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 121.2807,
+        "samples_us": [
+          121.7286,
+          121.174225,
+          121.2807,
+          121.38900000000001,
+          121.30935,
+          121.1885,
+          121.22737500000001
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 118.588625,
+        "samples_us": [
+          120.44756,
+          120.02563249999999,
+          119.835005,
+          118.588625,
+          114.6315,
+          114.6193475,
+          114.60026750000002
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 45,
+          "unique_graphs": 19
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 19,
+          "async_compile_cache_miss": 47,
+          "async_compile_cache_hit": 19,
+          "generated_module_cache_hit": 92,
+          "fxgraph_cache_hit": 19,
+          "cudagraph_recorded_non_static_inputs": 45,
+          "fxgraph_cache_bypass": 9,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 63,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 63,
+          "coordesc_tuning_bench": 57,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 114.73888397216797,
+        "samples_us": [
+          114.71887588500977,
+          114.73888397216797,
+          114.73808288574219,
+          114.84496116638184,
+          114.87119674682617
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 9.536000000000058
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.697
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 9.568000000000097
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 103.97000000000003
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 9.216000000000008
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 104.00100000000009
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 9.504000000000133
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 104.16100000000006
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 9.47199999999998
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 104.1289999999999
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 25.94500000000002,
+          "cpu_us": 25.94500000000002
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 78.11199999999997,
+          "cpu_us": 823.0929999999998
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.75799999999991,
+          "cpu_us": 6.75799999999991
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.474999999999767,
+          "cpu_us": 14.474999999999767
+        },
+        {
+          "name": "## Call CompiledFxGraph fz7x76zvw2xn2ikmlj7pdsgj6qfsg4shso6v7bkosuqjsbiool4l ##",
+          "count": 5,
+          "self_cpu_us": 171.39300000000026,
+          "cpu_us": 723.7480000000002
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 43.579000000000065,
+          "cpu_us": 529.899
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 227.63899999999998,
+          "cpu_us": 227.63899999999998
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 258.681,
+          "cpu_us": 258.681
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.8579999999999472,
+          "cpu_us": 1.8579999999999472
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 20.597999999999956,
+          "cpu_us": 20.597999999999956
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 247.03500000000008,
+          "cpu_us": 247.03500000000008
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 113.49047499999999,
+        "samples_us": [
+          113.917975,
+          113.376225,
+          113.374125,
+          113.49047499999999,
+          113.495675,
+          113.51505,
+          113.415825
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm_affine:float16:16x128",
+      "kind": "add_layernorm_affine",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.12660483899526298,
+      "before_validation_host40": {
+        "median_us": 41.269099999999995,
+        "samples_us": [
+          42.941575,
+          41.269099999999995,
+          41.268299999999996
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 41.195075,
+        "samples_us": [
+          42.629374999999996,
+          41.312400000000004,
+          41.195075,
+          41.175824999999996,
+          40.818925,
+          41.1398,
+          41.640375
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 50,
+          "unique_graphs": 21
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 21,
+          "async_compile_cache_miss": 52,
+          "async_compile_cache_hit": 21,
+          "generated_module_cache_hit": 112,
+          "fxgraph_cache_hit": 21,
+          "cudagraph_recorded_non_static_inputs": 50,
+          "fxgraph_cache_bypass": 10,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 68,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 68,
+          "coordesc_tuning_bench": 62,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 41.08825,
+        "samples_us": [
+          42.980025,
+          41.073,
+          41.08825,
+          41.22455,
+          40.897725,
+          40.981725,
+          41.5801
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 40.5971025,
+        "samples_us": [
+          40.5971025,
+          40.6622675,
+          40.4269875,
+          40.451025,
+          40.3955075,
+          40.627095,
+          40.6432025
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 50,
+          "unique_graphs": 21
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 21,
+          "async_compile_cache_miss": 52,
+          "async_compile_cache_hit": 21,
+          "generated_module_cache_hit": 112,
+          "fxgraph_cache_hit": 21,
+          "cudagraph_recorded_non_static_inputs": 50,
+          "fxgraph_cache_bypass": 10,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 68,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 68,
+          "coordesc_tuning_bench": 62,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 40.69744110107422,
+        "samples_us": [
+          40.72703838348389,
+          40.53328037261963,
+          40.70271968841553,
+          40.552000999450684,
+          40.69744110107422
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.3759999999999764
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2150000000000318
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.4080000000000155
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.2799999999999727
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.2799999999999727
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 1.2799999999999727
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1200000000000045
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.39100000000002,
+          "cpu_us": 19.39100000000002
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 71.12500000000006,
+          "cpu_us": 729.999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.2109999999999275,
+          "cpu_us": 7.2109999999999275
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.968999999999951,
+          "cpu_us": 12.968999999999951
+        },
+        {
+          "name": "## Call CompiledFxGraph fbgwsqmr5zhxs7hgvxu76p2blc3bn5436xofy24w5cfuyyk4h54x ##",
+          "count": 5,
+          "self_cpu_us": 154.3270000000001,
+          "cpu_us": 638.6940000000001
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.772000000000162,
+          "cpu_us": 458.41600000000017
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 183.874,
+          "cpu_us": 183.874
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 242.76999999999998,
+          "cpu_us": 242.76999999999998
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.740999999999758,
+          "cpu_us": 1.740999999999758
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 24.210000000000036,
+          "cpu_us": 24.210000000000036
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.782000000000039,
+          "cpu_us": 5.782000000000039
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 41.73585,
+        "samples_us": [
+          44.32885,
+          42.341525000000004,
+          41.727525,
+          42.142399999999995,
+          41.344825,
+          41.5905,
+          41.73585
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm_affine",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [
+          "weight",
+          "bias"
+        ],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 2,
+        "traced_placeholders": 4,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm_affine:float16:2048x2048",
+      "kind": "add_layernorm_affine",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03954836598131806,
+      "before_validation_host40": {
+        "median_us": 41.347474999999996,
+        "samples_us": [
+          42.867000000000004,
+          41.347474999999996,
+          41.253075
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 41.41825,
+        "samples_us": [
+          43.239850000000004,
+          42.2201,
+          41.8038,
+          41.41825,
+          41.2918,
+          40.98855,
+          41.08215
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 54,
+          "unique_graphs": 23
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 23,
+          "async_compile_cache_miss": 57,
+          "async_compile_cache_hit": 23,
+          "generated_module_cache_hit": 112,
+          "fxgraph_cache_hit": 23,
+          "cudagraph_recorded_non_static_inputs": 54,
+          "fxgraph_cache_bypass": 11,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 74,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 74,
+          "coordesc_tuning_bench": 68,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "host40": {
+        "median_us": 41.021175,
+        "samples_us": [
+          43.167025,
+          41.26825,
+          41.242025,
+          41.021175,
+          40.979475,
+          40.6999,
+          40.954075
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 40.6075875,
+        "samples_us": [
+          40.54023,
+          40.6075875,
+          40.594274999999996,
+          40.8932925,
+          40.618195,
+          40.5932825,
+          40.6222
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 54,
+          "unique_graphs": 23
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 23,
+          "async_compile_cache_miss": 57,
+          "async_compile_cache_hit": 23,
+          "generated_module_cache_hit": 112,
+          "fxgraph_cache_hit": 23,
+          "cudagraph_recorded_non_static_inputs": 54,
+          "fxgraph_cache_bypass": 11,
+          "generated_module_cache_miss": 76,
+          "extern_calls": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 74,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 74,
+          "coordesc_tuning_bench": 68,
+          "pattern_matcher_count": 6,
+          "pattern_matcher_nodes": 24
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 40.86944103240967,
+        "samples_us": [
+          40.86944103240967,
+          40.75183868408203,
+          40.82335948944092,
+          40.930237770080566,
+          40.937438011169434
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 6.175999999999931
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.871999999999957
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 6.20799999999997
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.648000000000025
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 6.177000000000021
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.6159999999999854
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 6.048000000000002
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.519999999999982
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "us": 6.11200000000008
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.488000000000056
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.332000000000235,
+          "cpu_us": 19.332000000000235
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 72.01700000000017,
+          "cpu_us": 716.7850000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.333000000000041,
+          "cpu_us": 7.333000000000041
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.473999999999961,
+          "cpu_us": 12.473999999999961
+        },
+        {
+          "name": "## Call CompiledFxGraph fklf2oxgcclk27j4kpfq3rt6sx3avbvko2so4vstuqjcjwpkvab7 ##",
+          "count": 5,
+          "self_cpu_us": 148.51999999999987,
+          "cpu_us": 624.9609999999999
+        },
+        {
+          "name": "aten::_foreach_copy_",
+          "count": 5,
+          "self_cpu_us": 31.342000000000212,
+          "cpu_us": 456.20500000000015
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 181.99800000000002,
+          "cpu_us": 181.99800000000002
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 242.8649999999999,
+          "cpu_us": 242.8649999999999
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<c10::Half, 2, 1, 1>, at::native::Copy<c10::Half, c10::Half>)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 1.5519999999997935,
+          "cpu_us": 1.5519999999997935
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 18.684000000000083,
+          "cpu_us": 18.684000000000083
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.654999999999973,
+          "cpu_us": 5.654999999999973
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "after_reset_and_f06_host40": {
+        "median_us": 41.310950000000005,
+        "samples_us": [
+          43.8095,
+          42.4159,
+          42.11995,
+          40.909375,
+          41.09445,
+          41.224599999999995,
+          41.310950000000005
+        ],
+        "calls": 40
+      },
+      "post_reset_execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm_affine",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [
+          "weight",
+          "bias"
+        ],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 2,
+        "traced_placeholders": 4,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      },
+      "execution": null
+    }
+  ],
+  "ended_at": 1793457897.9722486
+}

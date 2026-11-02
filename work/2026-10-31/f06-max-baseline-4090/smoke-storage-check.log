@@ -1,0 +1,58 @@
+/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py:322: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+  warnings.warn(
+/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/profiler/profiler.py:224: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+{"ordinal": 0, "case_id": "report117:matmul_bias:float32:16x128:64", "routes": {"eager": {"status": "passed", "us": 7.9758}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 8.44465}}}
+{"ordinal": 10, "case_id": "report117:matmul_bias_relu:float32:32x256:64", "routes": {"eager": {"status": "passed", "us": 16.551225}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 9.953225}}}
+{"ordinal": 134, "case_id": "supplement:add_layernorm_bias:bfloat16:64x1024", "routes": {"eager": {"status": "passed", "us": 12.772675}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 11.833725}}}
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Exception No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 131072 Hardware limit:101376 Reducing block sizes or `num_stages` may help. for benchmark choice TritonTemplateCaller(/tmp/f06-max-autotune-4090-20261031/cache/inductor/qs/cqsamxgmc2kfbiz6mt5d5vp6zrei7ijw7mwkd4w4jxbhngi5vkza.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4)
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Traceback (most recent call last):
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     result = self.fn(*self.args, **self.kwargs)
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 3464, in precompile_with_captured_stdout
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     choice.precompile()
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 2388, in precompile
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self.bmreq.precompile()
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/autotune_process.py", line 714, in precompile
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     getattr(mod, self.kernel_name).precompile()
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 503, in precompile
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self._make_launchers()
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 664, in _make_launchers
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     raise RuntimeError(f"No valid triton configs. {type(exc).__name__}: {exc}")
+E1031 14:00:19.657000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] RuntimeError: No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 131072 Hardware limit:101376 Reducing block sizes or `num_stages` may help.
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Exception No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 262144 Hardware limit:101376 Reducing block sizes or `num_stages` may help. for benchmark choice TritonTemplateCaller(/tmp/f06-max-autotune-4090-20261031/cache/inductor/6i/c6iry4wfyisvidjmzvc62zmgeb6mqo2hepb3se3xbbozq6uu2sq7.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8)
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Traceback (most recent call last):
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     result = self.fn(*self.args, **self.kwargs)
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 3464, in precompile_with_captured_stdout
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     choice.precompile()
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 2388, in precompile
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self.bmreq.precompile()
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/autotune_process.py", line 714, in precompile
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     getattr(mod, self.kernel_name).precompile()
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 503, in precompile
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self._make_launchers()
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 664, in _make_launchers
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     raise RuntimeError(f"No valid triton configs. {type(exc).__name__}: {exc}")
+E1031 14:00:19.660000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] RuntimeError: No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 262144 Hardware limit:101376 Reducing block sizes or `num_stages` may help.
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Exception No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 131072 Hardware limit:101376 Reducing block sizes or `num_stages` may help. for benchmark choice TritonTemplateCaller(/tmp/f06-max-autotune-4090-20261031/cache/inductor/yk/cykyum4eg3oi2zrqyutdyhe7tnrxxbra64ojplv7uhrqzh7ak5vj.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=128, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8)
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] Traceback (most recent call last):
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     result = self.fn(*self.args, **self.kwargs)
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 3464, in precompile_with_captured_stdout
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     choice.precompile()
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/select_algorithm.py", line 2388, in precompile
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self.bmreq.precompile()
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/autotune_process.py", line 714, in precompile
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     getattr(mod, self.kernel_name).precompile()
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 503, in precompile
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     self._make_launchers()
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]   File "/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 664, in _make_launchers
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0]     raise RuntimeError(f"No valid triton configs. {type(exc).__name__}: {exc}")
+E1031 14:00:19.662000 163361 site-packages/torch/_inductor/select_algorithm.py:3541] [0/0] RuntimeError: No valid triton configs. OutOfMemoryError: out of resource: triton_mm Required: 131072 Hardware limit:101376 Reducing block sizes or `num_stages` may help.
+{"ordinal": 135, "case_id": "large:matmul_bias:float32:128x1024x128", "routes": {"eager": {"status": "passed", "us": 11.15635}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 13.6392}}}
+{"ordinal": 146, "case_id": "large:matmul_bias_relu:float32:2048x2048x2048", "routes": {"eager": {"status": "passed", "us": 338.516475}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 328.961175}}}
+{"ordinal": 161, "case_id": "large:matmul_bias_gelu_exact:bfloat16:2048x2048x2048", "routes": {"eager": {"status": "passed", "us": 112.660425}, "inductor": {"status": "numerical_failure", "us": null}, "current_static": {"status": "passed", "us": 105.73965}}}

@@ -1,0 +1,12 @@
+Primary baseline replaced, not an additional default comparison:
+  inductor = torch.compile(graph, backend='inductor', fullgraph=True, dynamic=False, mode='max-autotune')
+  eager = original FX graph
+  current_static = unchanged F06 graph_fusion.compile(...static_inference=True, avoid_bias_materialization=True...)
+Actual mode options are saved in each result. Complete preset includes max_autotune=True, coordinate_descent_tuning=True, triton.cudagraphs=True.
+No generic -O3 exists here; use this named preset, not a claim of a globally optimal schedule or exhaustive backend search.
+Main speedup = new inductor baseline time / current F06 time. Eager remains a second baseline.
+Native CUDA Graph replay may reuse output storage. Numerical checks snapshot each output with clone OUTSIDE timing for all routes; output storage independence is not required. Input mutation/aliasing, perturbed inputs, original tolerances checked. Output reuse recorded explicitly. Initial smoke-storage-check directory preserves incompatible old test assertion failures; not part of performance results.
+No external graph wrapping or external CUDA Graph device benchmark. Normal call profiler records kernels and cudaGraphLaunch events outside timing. Host timing includes native replay wrapper/guards and each route's normal allocation behavior; no output clones timed.
+Same 180 cases, fixed inputs, two fresh processes, CPU0, one thread, TF32/reduced-precision reduction off, no_grad. Eight warmups, 0.5-second CPU preheat, 7 alternating batches of 40 calls, sync before/after each batch. Compile/capture preparation excluded.
+Shared compiler caches from the preceding max-autotune experiment reused. Setup time is not cold compile cost.
+Source snapshot unchanged. No changes to project implementation or global compiler defaults.

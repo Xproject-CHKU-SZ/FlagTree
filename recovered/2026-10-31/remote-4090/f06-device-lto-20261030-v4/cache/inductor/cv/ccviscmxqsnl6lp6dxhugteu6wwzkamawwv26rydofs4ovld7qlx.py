@@ -1,0 +1,51 @@
+
+import triton
+import triton.language as tl
+
+from torch._inductor.runtime import triton_helpers, triton_heuristics
+from torch._inductor.runtime.triton_helpers import libdevice, math as tl_math
+from torch._inductor.runtime.hints import AutotuneHint, ReductionHint, TileHint, DeviceProperties
+triton_helpers.set_driver_to_gpu()
+
+@triton_heuristics.pointwise(
+    size_hints={'x': 2048}, 
+    filename=__file__,
+    triton_meta={'signature': {'in_ptr0': '*bf16', 'in_ptr1': '*bf16', 'out_ptr0': '*bf16', 'xnumel': 'i32', 'XBLOCK': 'constexpr'}, 'device': DeviceProperties(type='cuda', index=0, multi_processor_count=128, cc=89, major=8, regs_per_multiprocessor=65536, max_threads_per_multi_processor=1536, max_threads_per_block=1024, warp_size=32), 'constants': {}, 'native_matmul': False, 'enable_fp_fusion': False, 'launch_pdl': False, 'disable_ftz': False, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]], (3,): [['tt.divisibility', 16]]}]},
+    inductor_meta={'grid_type': 'Grid1D', 'autotune_hints': set(), 'kernel_name': 'triton_poi_fused_0', 'mutated_arg_names': [], 'optimize_mem': True, 'no_x_dim': False, 'atomic_add_found': False, 'num_load': 2, 'num_store': 1, 'num_reduction': 0, 'backend_hash': 'C198525FBBC2EF1226C6B1BF2C4E1516014B9E465CB53F78CB2FA9689692B1C6', 'assert_indirect_indexing': True, 'autotune_local_cache': True, 'autotune_pointwise': True, 'autotune_remote_cache': None, 'force_disable_caches': False, 'dynamic_scale_rblock': True, 'max_autotune': False, 'max_autotune_pointwise': False, 'min_split_scan_rblock': 256, 'spill_threshold': 16, 'store_cubin': False, 'deterministic': False, 'force_filter_reduction_configs': False, 'mix_order_reduction_allow_multi_stages': False, 'are_deterministic_algorithms_enabled': False, 'tiling_scores': {'x': 12544}},
+    min_elem_per_thread=0
+)
+@triton.jit
+def triton_poi_fused_0(in_ptr0, in_ptr1, out_ptr0, xnumel, XBLOCK : tl.constexpr):
+    xnumel = 2048
+    xoffset = tl.program_id(0) * XBLOCK
+    xindex = xoffset + tl.arange(0, XBLOCK)[:]
+    xmask = xindex < xnumel
+    x2 = xindex
+    x0 = (xindex % 128)
+    tmp0 = tl.load(in_ptr0 + (x2), xmask).to(tl.float32)
+    tmp3 = tl.load(in_ptr1 + (x0), xmask, eviction_policy='evict_last').to(tl.float32)
+    tmp1 = tmp0.to(tl.bfloat16)
+    tmp2 = tmp1.to(tl.float32)
+    tmp4 = tmp3.to(tl.bfloat16)
+    tmp5 = tmp4.to(tl.float32)
+    tmp6 = tmp2 + tmp5
+    tmp7 = tmp6.to(tl.bfloat16)
+    tmp8 = tmp7.to(tl.float32)
+    tmp9 = tmp8.to(tl.float32)
+    tmp10 = tl.full([1], 0.5, tl.float32)
+    tmp11 = tmp9 * tmp10
+    tmp12 = tmp9 * tmp9
+    tmp13 = tmp12 * tmp9
+    tmp14 = tl.full([1], 0.044715, tl.float32)
+    tmp15 = tmp13 * tmp14
+    tmp16 = tmp9 + tmp15
+    tmp17 = tl.full([1], 0.7978845608028654, tl.float32)
+    tmp18 = tmp16 * tmp17
+    tmp19 = tl.inline_asm_elementwise('{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }', constraints='=f,f', args=[(tmp18).to(tl.float32)], dtype=tl.float32, is_pure=True, pack=1)
+    tmp20 = tl.full([1], 1.0, tl.float32)
+    tmp21 = tmp19 + tmp20
+    tmp22 = tmp11 * tmp21
+    tmp23 = tmp22.to(tl.float32)
+    tmp24 = tmp23.to(tl.bfloat16)
+    tmp25 = tmp24.to(tl.float32)
+    tl.store(out_ptr0 + (x2), tmp25, xmask)

@@ -1,0 +1,12 @@
+Scope: F06 G01-G05 from 功能拆分表12项功能子模块拆分与周计划.xlsx.
+This is NVIDIA performance evidence, not XPU acceptance or full dynamic-shape/legality coverage.
+180 fixed-shape cases: 45 bounded small GEMM, 90 pointwise/norm/softmax/reduce, 45 larger GEMM.
+Five GEMM epilogues, three dtypes, three shapes in each size group.
+Current route: graph_fusion.compile(static_inference=True, avoid_bias_materialization=True, fullgraph=True, dynamic=False).
+Native baseline: torch.compile(backend='inductor', fullgraph=True, dynamic=False), default mode/options.
+Eager baseline: unchanged FX graph.
+Host protocol: synchronize before/after 40 calls, 7 alternating rounds, 8 warmups, 0.5s CPU preheat, one CPU thread pinned to CPU0. Median of seven per-call batch means; median across two processes. Compilation excluded. No CUDA Graph in host timing.
+GPU diagnostic: five alternating CUDA Graph replay trials per valid route, 20 ms each. Not a host latency measurement.
+One normal call per valid route profiled outside measured intervals for actual kernel counts/names.
+Correctness uses original report tolerances, retains outputs, perturbs inputs, checks input/parameter immutability and output storage independence. Numerically failed routes excluded from timing comparisons; not silently relaxed.
+Initial run stopped at first large case due to an inherited small-only test assertion applied to all matmuls. Preserve aborted-* evidence; corrected only assertion bounds and rerun both complete processes. Compiler caches reused, so setup_seconds is not cold compile time.

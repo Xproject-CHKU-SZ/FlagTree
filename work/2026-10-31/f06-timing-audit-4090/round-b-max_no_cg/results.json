@@ -1,0 +1,2687 @@
+{
+  "status": "completed",
+  "route": "max_no_cg",
+  "repeat": 1,
+  "started_at": 1793458021.3270414,
+  "identity": {
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+    "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+    "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+    "fusion_logic_sha256": {
+      "_inductor/scheduler.py": "904a90ee27cb641f7f6f0ecacdb38599d0f63bd5e37dd230f0e541edbd5dccb7",
+      "_inductor/lowering.py": "0b1e1ac3585aa5e8916ad05c8426d05f9bb1ea758899a3f661c9bc0d47cdebb6",
+      "_inductor/codegen/triton.py": "e54e0e0bd28299a84f6d3625ebd7776f8c8f2233541a3d30a7df8f89b489d222",
+      "_inductor/fx_passes/post_grad.py": "a1bc4ef86d9f8bda79c6f9bc2f14f07d0c725f5ff7aa9dcf2284a3032c6cd33e",
+      "_inductor/fx_passes/joint_graph.py": "e21f3f4eca819cb7ec517f9f68b834d16d129abdf86179f30b8e0f9217ffb197",
+      "_inductor/pattern_matcher.py": "c2f7ad9a952c26f7c2afe609144ad45ffa1aaaa659369df30d3d2ae2eea58e0b"
+    }
+  },
+  "device": "NVIDIA GeForce RTX 4090",
+  "cases": [
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float32:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.19892008998431265,
+      "before_validation_host40": {
+        "median_us": 25.256700000000002,
+        "samples_us": [
+          25.492075,
+          25.256700000000002,
+          24.525225
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 24.331575,
+        "samples_us": [
+          25.731299999999997,
+          24.530725,
+          24.331575,
+          24.1401,
+          24.217,
+          24.348325,
+          24.2349
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 8,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 8,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 3,
+          "fxgraph_cache_hit": 1
+        }
+      },
+      "host40": {
+        "median_us": 24.078375,
+        "samples_us": [
+          24.325825000000002,
+          24.13195,
+          23.94565,
+          23.832625,
+          23.5514,
+          24.078375,
+          24.518625
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 23.7633525,
+        "samples_us": [
+          23.949767499999997,
+          24.2516125,
+          23.755425,
+          23.7633525,
+          23.6630525,
+          23.67743,
+          23.898110000000003
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 8,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 8,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 3,
+          "fxgraph_cache_hit": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 23.982079029083252,
+        "samples_us": [
+          24.335041046142578,
+          24.227840900421143,
+          23.982079029083252,
+          23.806400299072266,
+          23.571200370788574
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.4320000000000164
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.1440000000000055
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.0160000000000764
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.048000000000002
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.015999999999849
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 24.143000000000157,
+          "cpu_us": 24.143000000000157
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 81.98699999999974,
+          "cpu_us": 1161.5810000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.050000000000139,
+          "cpu_us": 7.050000000000139
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.674999999999955,
+          "cpu_us": 14.674999999999955
+        },
+        {
+          "name": "## Call CompiledFxGraph f7diosmqdgmgsuhk4iyhvbvffqspykohhuwgleey36b5dmzgi5re ##",
+          "count": 5,
+          "self_cpu_us": 104.65199999999993,
+          "cpu_us": 1057.8690000000004
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 897.483,
+          "cpu_us": 897.483
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 30.85000000000059,
+          "cpu_us": 55.73400000000038
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 24.883999999999787,
+          "cpu_us": 24.883999999999787
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 3.4829999999999472,
+          "cpu_us": 3.4829999999999472
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.896749995648861,
+        "samples_us": [
+          1.9027499482035637,
+          1.8967999145388603,
+          1.8972499296069145,
+          1.896749995648861,
+          1.896275021135807,
+          1.896350085735321,
+          1.8963249400258064
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float32:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.0859234260278754,
+      "before_validation_host40": {
+        "median_us": 313.73107500000003,
+        "samples_us": [
+          314.37532500000003,
+          313.73107500000003,
+          313.6518
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 315.49580000000003,
+        "samples_us": [
+          315.690375,
+          315.49580000000003,
+          314.57302500000003,
+          314.906,
+          315.48047499999996,
+          319.3047,
+          327.45799999999997
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 6,
+          "unique_graphs": 2
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 2,
+          "async_compile_cache_miss": 4,
+          "async_compile_cache_hit": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 16,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 16,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 2,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6
+        }
+      },
+      "host40": {
+        "median_us": 333.87579999999997,
+        "samples_us": [
+          307.713975,
+          307.740475,
+          326.84245,
+          333.87579999999997,
+          336.52755,
+          335.859875,
+          336.1326
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 329.35421,
+        "samples_us": [
+          333.0823775,
+          329.11406000000005,
+          329.1637625,
+          329.17841500000003,
+          329.35421,
+          330.68059500000004,
+          339.71232000000003
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 6,
+          "unique_graphs": 2
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 2,
+          "async_compile_cache_miss": 4,
+          "async_compile_cache_hit": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 16,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 16,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 2,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 339.5489501953125,
+        "samples_us": [
+          339.63905334472656,
+          339.6049499511719,
+          339.5489501953125,
+          337.80078887939453,
+          333.36177825927734
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "Memset (Device)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 322.087
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.560000000000173
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.41599999999994
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 318.98299999999995
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.272000000000162
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.41599999999994
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 318.95100000000025
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.111999999999625
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.0709999999999
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.144000000000233
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.2619999999997
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.463999999999942
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 30.949000000000197,
+          "cpu_us": 30.949000000000197
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 87.50699999999983,
+          "cpu_us": 1306.4290000000003
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 12.879000000000289,
+          "cpu_us": 12.879000000000289
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 17.588999999999913,
+          "cpu_us": 17.588999999999913
+        },
+        {
+          "name": "## Call CompiledFxGraph fk34mgv3cgicjraoyg3ck7lu2mhygnpn5bf3alklvfcqjlrnebjk ##",
+          "count": 5,
+          "self_cpu_us": 127.80700000000002,
+          "cpu_us": 1188.4540000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 875.3700000000001,
+          "cpu_us": 875.3700000000001
+        },
+        {
+          "name": "aten::mm",
+          "count": 5,
+          "self_cpu_us": 95.32899999999972,
+          "cpu_us": 143.712
+        },
+        {
+          "name": "cudaDeviceGetAttribute",
+          "count": 5,
+          "self_cpu_us": 2.1220000000002983,
+          "cpu_us": 2.1220000000002983
+        },
+        {
+          "name": "cudaMemsetAsync",
+          "count": 5,
+          "self_cpu_us": 21.016000000000076,
+          "cpu_us": 21.016000000000076
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 10,
+          "self_cpu_us": 37.254999999999654,
+          "cpu_us": 37.254999999999654
+        },
+        {
+          "name": "Memset (Device)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "count": 5,
+          "self_cpu_us": 29.55500000000029,
+          "cpu_us": 41.565000000000055
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 1258.2339999999997,
+          "cpu_us": 1258.2339999999997
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 328.6858081817627,
+        "samples_us": [
+          321.4423894882202,
+          328.73198986053467,
+          328.66499423980713,
+          328.6858081817627,
+          328.67019176483154,
+          328.7166118621826,
+          328.9060115814209
+        ],
+        "invocations_per_graph": 8,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_softmax:float32:16x128",
+      "kind": "add_softmax",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.02890625799773261,
+      "before_validation_host40": {
+        "median_us": 26.652274999999996,
+        "samples_us": [
+          27.842275,
+          26.652274999999996,
+          26.234500000000004
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 25.954700000000003,
+        "samples_us": [
+          27.804425,
+          26.348075,
+          25.81125,
+          25.954700000000003,
+          25.786775,
+          25.51605,
+          26.179975000000002
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 8,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 6,
+          "async_compile_cache_hit": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 16,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 16,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 3,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "host40": {
+        "median_us": 25.50765,
+        "samples_us": [
+          26.43125,
+          25.50765,
+          25.478825,
+          25.29455,
+          25.798174999999997,
+          25.807875000000003,
+          25.502375
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.295787500000003,
+        "samples_us": [
+          25.0628375,
+          25.324540000000002,
+          25.352197500000003,
+          25.30208,
+          25.295787500000003,
+          25.00556,
+          24.8868575
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 8,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 6,
+          "async_compile_cache_hit": 3,
+          "benchmarking.InductorBenchmarker.benchmark": 16,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 16,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 3,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 25.253920555114746,
+        "samples_us": [
+          25.253920555114746,
+          25.577280521392822,
+          25.21087884902954,
+          25.359840393066406,
+          25.23087978363037
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.2479999999999905
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.2480000000000473
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.906000000000134,
+          "cpu_us": 19.906000000000134
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 74.34900000000016,
+          "cpu_us": 452.38800000000003
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.769999999999968,
+          "cpu_us": 6.769999999999968
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.594000000000023,
+          "cpu_us": 13.594000000000023
+        },
+        {
+          "name": "## Call CompiledFxGraph f6rchhsx53unomneeblkiqwao3zcpfms34ewg27crb2nd7cevo35 ##",
+          "count": 5,
+          "self_cpu_us": 102.63799999999986,
+          "cpu_us": 357.6749999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 196.7,
+          "cpu_us": 196.7
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 29.43499999999989,
+          "cpu_us": 58.337000000000046
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 28.902000000000157,
+          "cpu_us": 28.902000000000157
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.189999999999941,
+          "cpu_us": 6.189999999999941
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.0187500156462193,
+        "samples_us": [
+          1.0231750085949898,
+          1.0188249871134758,
+          1.0184749960899353,
+          1.0186499916017056,
+          1.0189750231802464,
+          1.0187500156462193,
+          1.0185999795794487
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_softmax:float32:2048x2048",
+      "kind": "add_softmax",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.07198992295889184,
+      "before_validation_host40": {
+        "median_us": 26.444375,
+        "samples_us": [
+          28.1775,
+          26.444375,
+          26.085
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 26.01695,
+        "samples_us": [
+          27.21685,
+          26.245925,
+          25.9781,
+          26.01695,
+          25.7725,
+          25.860899999999997,
+          26.0726
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 10,
+          "unique_graphs": 4
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 4,
+          "async_compile_cache_miss": 8,
+          "async_compile_cache_hit": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 18,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 18,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 4,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 25.6812,
+        "samples_us": [
+          26.946575000000003,
+          26.342275,
+          25.5477,
+          25.567349999999998,
+          25.6084,
+          25.95935,
+          25.6812
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.051495,
+        "samples_us": [
+          25.10435,
+          25.0693625,
+          25.051495,
+          24.93184,
+          24.757615,
+          25.3598,
+          25.032249999999998
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 10,
+          "unique_graphs": 4
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 4,
+          "async_compile_cache_miss": 8,
+          "async_compile_cache_hit": 4,
+          "benchmarking.InductorBenchmarker.benchmark": 18,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 18,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 4,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 25.02863883972168,
+        "samples_us": [
+          25.16144037246704,
+          25.02863883972168,
+          24.90367889404297,
+          24.801440238952637,
+          25.11039972305298
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.799999999999955
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.801000000000045
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.41599999999994
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.512000000000057
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.448000000000093
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 17.03900000000003,
+          "cpu_us": 17.03900000000003
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 76.13599999999985,
+          "cpu_us": 653.4969999999998
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.462000000000074,
+          "cpu_us": 6.462000000000074
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.15799999999993,
+          "cpu_us": 13.15799999999993
+        },
+        {
+          "name": "## Call CompiledFxGraph f34irudwvm5yylyhii2sx4d2v3vee7uficzwrl2fbi3cgxyb2d2k ##",
+          "count": 5,
+          "self_cpu_us": 97.80700000000002,
+          "cpu_us": 557.741
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 188.701,
+          "cpu_us": 188.701
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 29.29600000000005,
+          "cpu_us": 271.233
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 241.93699999999995,
+          "cpu_us": 241.93699999999995
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.559000000000083,
+          "cpu_us": 5.559000000000083
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 12.157324701547623,
+        "samples_us": [
+          12.16762512922287,
+          12.153425067663193,
+          12.157324701547623,
+          12.15987503528595,
+          12.15592473745346,
+          12.17077523469925,
+          12.032424658536911
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm:float32:16x128",
+      "kind": "add_layernorm",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.031067190982867032,
+      "before_validation_host40": {
+        "median_us": 26.539274999999996,
+        "samples_us": [
+          28.1438,
+          26.539274999999996,
+          26.1308
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 26.02785,
+        "samples_us": [
+          27.527825,
+          26.304725,
+          25.907975,
+          26.02785,
+          25.79645,
+          26.158025,
+          25.4861
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 12,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 10,
+          "async_compile_cache_hit": 5,
+          "benchmarking.InductorBenchmarker.benchmark": 18,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 18,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 5,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 25.996850000000002,
+        "samples_us": [
+          25.996850000000002,
+          26.099149999999998,
+          26.048725,
+          25.828750000000003,
+          26.036775,
+          25.714850000000002,
+          25.957549999999998
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.52944,
+        "samples_us": [
+          25.512292499999997,
+          25.52944,
+          25.4860675,
+          25.320347499999997,
+          25.5887825,
+          25.5988625,
+          25.697745
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 12,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 10,
+          "async_compile_cache_hit": 5,
+          "benchmarking.InductorBenchmarker.benchmark": 18,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 18,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 7,
+          "fxgraph_cache_hit": 5,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 25.531039237976074,
+        "samples_us": [
+          25.4150390625,
+          25.531039237976074,
+          25.41951894760132,
+          25.764319896697998,
+          25.59216022491455
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2160000000001219
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2159999999998945
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1200000000001182
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.05600000000004
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.34500000000017,
+          "cpu_us": 18.34500000000017
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 72.62700000000041,
+          "cpu_us": 1313.2910000000002
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.345999999999847,
+          "cpu_us": 6.345999999999847
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.41200000000002,
+          "cpu_us": 13.41200000000002
+        },
+        {
+          "name": "## Call CompiledFxGraph fqpkbvtnmp7jr77ms2adyv2pobn44iqpjgejr5st4hetfzil32r6 ##",
+          "count": 5,
+          "self_cpu_us": 124.65799999999945,
+          "cpu_us": 1220.906
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 824.194,
+          "cpu_us": 824.194
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 31.052000000000362,
+          "cpu_us": 272.0540000000004
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 241.00200000000007,
+          "cpu_us": 241.00200000000007
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.725999999999885,
+          "cpu_us": 5.725999999999885
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 0.9719500318169594,
+        "samples_us": [
+          0.9799499996006489,
+          0.9720499627292156,
+          0.9720000438392162,
+          0.9719249792397022,
+          0.9715749882161617,
+          0.9717250242829323,
+          0.9719500318169594
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm:float32:2048x2048",
+      "kind": "add_layernorm",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.1738753070239909,
+      "before_validation_host40": {
+        "median_us": 26.989974999999998,
+        "samples_us": [
+          27.158325,
+          26.989974999999998,
+          26.428175
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 26.074725,
+        "samples_us": [
+          27.32495,
+          26.156200000000002,
+          26.110325,
+          25.986325,
+          25.807225,
+          26.074725,
+          26.012150000000002
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 6
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 6,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 6,
+          "benchmarking.InductorBenchmarker.benchmark": 25,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 25,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 14,
+          "fxgraph_cache_hit": 6,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 25.9113,
+        "samples_us": [
+          26.6221,
+          25.74325,
+          26.169175000000003,
+          26.14885,
+          25.806725,
+          25.81945,
+          25.9113
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.3145325,
+        "samples_us": [
+          25.21964,
+          25.662655,
+          25.446759999999998,
+          25.38446,
+          25.3145325,
+          25.0205625,
+          25.037955
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 6
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 6,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 6,
+          "benchmarking.InductorBenchmarker.benchmark": 25,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 25,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 14,
+          "fxgraph_cache_hit": 6,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 25.32399892807007,
+        "samples_us": [
+          25.375359058380127,
+          25.32399892807007,
+          25.39695978164673,
+          25.15791893005371,
+          24.8307204246521
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.759999999999991
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.600000000000023
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.343999999999937
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.343999999999937
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.344999999999914
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.08500000000005,
+          "cpu_us": 18.08500000000005
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 74.50200000000007,
+          "cpu_us": 658.161
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.694000000000045,
+          "cpu_us": 6.694000000000045
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.239999999999952,
+          "cpu_us": 13.239999999999952
+        },
+        {
+          "name": "## Call CompiledFxGraph fdiezzukzmipmmwcigtc5lgu7opg746ygzmcm3zxvorge2yog5pc ##",
+          "count": 5,
+          "self_cpu_us": 103.34100000000001,
+          "cpu_us": 563.7249999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 189.29899999999998,
+          "cpu_us": 189.29899999999998
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 29.423999999999864,
+          "cpu_us": 271.0849999999999
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 241.66100000000006,
+          "cpu_us": 241.66100000000006
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.951999999999998,
+          "cpu_us": 5.951999999999998
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 9.08142477273941,
+        "samples_us": [
+          9.087800234556198,
+          9.08142477273941,
+          9.077849984169006,
+          9.076975286006927,
+          9.07604992389679,
+          9.095624834299088,
+          9.093525260686874
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:mul_sum:float32:16x128",
+      "kind": "mul_sum",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.02812833501957357,
+      "before_validation_host40": {
+        "median_us": 26.244549999999997,
+        "samples_us": [
+          27.072449999999996,
+          26.244549999999997,
+          26.221725
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 25.89365,
+        "samples_us": [
+          26.985275,
+          26.21325,
+          25.753425,
+          25.991075000000002,
+          25.89365,
+          25.737025,
+          25.73225
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 16,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 14,
+          "async_compile_cache_hit": 7,
+          "benchmarking.InductorBenchmarker.benchmark": 25,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 25,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 14,
+          "fxgraph_cache_hit": 7,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 25.8538,
+        "samples_us": [
+          28.4928,
+          25.976325000000003,
+          25.644125000000003,
+          25.8538,
+          25.741925,
+          25.7428,
+          26.076925
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.289387499999997,
+        "samples_us": [
+          25.207089999999997,
+          25.289387499999997,
+          25.2562775,
+          25.519005000000003,
+          25.4778575,
+          25.64206,
+          25.2127775
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 16,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 14,
+          "async_compile_cache_hit": 7,
+          "benchmarking.InductorBenchmarker.benchmark": 25,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 25,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 14,
+          "fxgraph_cache_hit": 7,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 25.33008098602295,
+        "samples_us": [
+          25.242080688476562,
+          25.462560653686523,
+          25.33008098602295,
+          25.23279905319214,
+          25.574560165405273
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.1200000000000045
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.183999999999969
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.024000000000001
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.024000000000001
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.024000000000001
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.66600000000014,
+          "cpu_us": 19.66600000000014
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 74.226,
+          "cpu_us": 689.76
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.890000000000157,
+          "cpu_us": 6.890000000000157
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.664999999999893,
+          "cpu_us": 13.664999999999893
+        },
+        {
+          "name": "## Call CompiledFxGraph ft37qt4apdxnus6mpj2eo6bpolpcuj5ivebnftea7gf3hgyay7so ##",
+          "count": 5,
+          "self_cpu_us": 105.68499999999995,
+          "cpu_us": 594.9789999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 200.849,
+          "cpu_us": 200.849
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 31.165999999999997,
+          "cpu_us": 288.445
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 257.279,
+          "cpu_us": 257.279
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.4669999999999845,
+          "cpu_us": 6.4669999999999845
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 0.9232250042259693,
+        "samples_us": [
+          0.9287750348448753,
+          0.9236499667167664,
+          0.9232250042259693,
+          0.9231500327587128,
+          0.9230749681591988,
+          0.9232250042259693,
+          0.9235999546945095
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:mul_sum:float32:2048x2048",
+      "kind": "mul_sum",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.1458237209590152,
+      "before_validation_host40": {
+        "median_us": 26.720425,
+        "samples_us": [
+          28.532725,
+          26.578275,
+          26.720425
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 26.390625,
+        "samples_us": [
+          27.450400000000002,
+          26.390625,
+          26.614600000000003,
+          26.60635,
+          26.3226,
+          26.053199999999997,
+          26.2945
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 8
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 8,
+          "async_compile_cache_miss": 16,
+          "async_compile_cache_hit": 8,
+          "benchmarking.InductorBenchmarker.benchmark": 31,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 31,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 20,
+          "fxgraph_cache_hit": 8,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 25.911925000000004,
+        "samples_us": [
+          26.823925000000003,
+          25.698050000000002,
+          25.9304,
+          25.885275,
+          25.566075,
+          25.911925000000004,
+          26.091699999999996
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 25.435855,
+        "samples_us": [
+          25.188004999999997,
+          25.435855,
+          25.548305,
+          25.306955,
+          25.515817499999997,
+          25.335985,
+          25.442145
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 8
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 8,
+          "async_compile_cache_miss": 16,
+          "async_compile_cache_hit": 8,
+          "benchmarking.InductorBenchmarker.benchmark": 31,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 31,
+          "generated_module_cache_hit": 18,
+          "coordesc_tuning_bench": 20,
+          "fxgraph_cache_hit": 8,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 24.92192029953003,
+        "samples_us": [
+          25.095839500427246,
+          25.23871898651123,
+          24.87920045852661,
+          24.90623950958252,
+          24.92192029953003
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 13.536000000000058
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.9920000000000755
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.768000000000029
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.768000000000029
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.768000000000029
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 17.166999999999803,
+          "cpu_us": 17.166999999999803
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 77.50499999999977,
+          "cpu_us": 660.47
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.434000000000111,
+          "cpu_us": 6.434000000000111
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.012,
+          "cpu_us": 13.012
+        },
+        {
+          "name": "## Call CompiledFxGraph f5hrbekqxycq4jd3kd677ymyz6yyqu24bblxghgzde3ixjugi7pj ##",
+          "count": 5,
+          "self_cpu_us": 102.67699999999996,
+          "cpu_us": 563.5190000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 190.10700000000003,
+          "cpu_us": 190.10700000000003
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 30.32600000000008,
+          "cpu_us": 270.7350000000001
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 240.40900000000005,
+          "cpu_us": 240.40900000000005
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.765999999999963,
+          "cpu_us": 5.765999999999963
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 4.630675166845322,
+        "samples_us": [
+          4.637375101447105,
+          4.63237501680851,
+          4.63082492351532,
+          4.630349949002266,
+          4.630675166845322,
+          4.629924893379211,
+          4.629724845290184
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float16:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.028532038966659456,
+      "before_validation_host40": {
+        "median_us": 27.4139,
+        "samples_us": [
+          29.031875000000003,
+          27.4139,
+          26.981150000000003
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 26.865375,
+        "samples_us": [
+          28.488025,
+          27.367775,
+          26.68395,
+          26.865375,
+          26.972224999999998,
+          26.463549999999998,
+          26.662925
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 21,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 18,
+          "async_compile_cache_hit": 9,
+          "benchmarking.InductorBenchmarker.benchmark": 39,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 39,
+          "generated_module_cache_hit": 36,
+          "coordesc_tuning_bench": 23,
+          "fxgraph_cache_hit": 9,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 26.789675,
+        "samples_us": [
+          27.5168,
+          26.977925,
+          27.061124999999997,
+          26.789675,
+          26.698275000000002,
+          26.750025,
+          26.706650000000003
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 26.482105,
+        "samples_us": [
+          26.1139575,
+          26.182392500000002,
+          26.420472500000002,
+          26.482105,
+          26.50999,
+          26.949632499999996,
+          26.8547275
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 21,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 18,
+          "async_compile_cache_hit": 9,
+          "benchmarking.InductorBenchmarker.benchmark": 39,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 39,
+          "generated_module_cache_hit": 36,
+          "coordesc_tuning_bench": 23,
+          "fxgraph_cache_hit": 9,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 26.730880737304688,
+        "samples_us": [
+          26.719679832458496,
+          26.98319911956787,
+          26.646239757537842,
+          26.82096004486084,
+          26.730880737304688
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.375
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4069999999999254
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.3759999999999764
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4079999999999018
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.3759999999999764
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.2139999999997,
+          "cpu_us": 18.2139999999997
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 69.56600000000049,
+          "cpu_us": 1326.7650000000003
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.257999999999981,
+          "cpu_us": 6.257999999999981
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.869999999999763,
+          "cpu_us": 12.869999999999763
+        },
+        {
+          "name": "## Call CompiledFxGraph fjyqed5tkhkqzin2pbmptwxlkjzfgtu3yybqglx7t53kfytykyyb ##",
+          "count": 5,
+          "self_cpu_us": 113.49299999999994,
+          "cpu_us": 1238.0710000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 850.741,
+          "cpu_us": 850.741
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 31.164999999999964,
+          "cpu_us": 273.8370000000002
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 242.67200000000025,
+          "cpu_us": 242.67200000000025
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.716999999999871,
+          "cpu_us": 5.716999999999871
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.2671500444412231,
+        "samples_us": [
+          1.2724749743938446,
+          1.2674749828875065,
+          1.266700029373169,
+          1.2675000354647636,
+          1.2670749798417091,
+          1.2671500444412231,
+          1.2667249888181686
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float16:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03016455698525533,
+      "before_validation_host40": {
+        "median_us": 110.215075,
+        "samples_us": [
+          111.653575,
+          110.198325,
+          110.215075
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 110.291275,
+        "samples_us": [
+          110.60685000000001,
+          110.19835,
+          110.34504999999999,
+          110.291275,
+          110.342725,
+          110.117525,
+          110.15425
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 24,
+          "unique_graphs": 10
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 10,
+          "async_compile_cache_miss": 20,
+          "async_compile_cache_hit": 10,
+          "benchmarking.InductorBenchmarker.benchmark": 70,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 70,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 28,
+          "fxgraph_cache_hit": 10,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "host40": {
+        "median_us": 110.29167500000001,
+        "samples_us": [
+          110.49794999999999,
+          110.29167500000001,
+          110.373075,
+          110.13497500000001,
+          110.123075,
+          110.35820000000001,
+          110.11755000000001
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 106.222135,
+        "samples_us": [
+          109.436435,
+          109.43303250000001,
+          109.4114525,
+          106.222135,
+          105.1241925,
+          105.1120725,
+          105.22274499999999
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 24,
+          "unique_graphs": 10
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 10,
+          "async_compile_cache_miss": 20,
+          "async_compile_cache_hit": 10,
+          "benchmarking.InductorBenchmarker.benchmark": 70,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 70,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 28,
+          "fxgraph_cache_hit": 10,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 105.75584411621094,
+        "samples_us": [
+          105.67536354064941,
+          105.75584411621094,
+          105.75584411621094,
+          105.80143928527832,
+          105.77263832092285
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 107.13799999999992
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.05799999999999
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.08999999999992
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.47300000000007
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.21799999999985
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.632999999999882,
+          "cpu_us": 19.632999999999882
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 75.13400000000001,
+          "cpu_us": 682.2160000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.709000000000032,
+          "cpu_us": 6.709000000000032
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.702999999999918,
+          "cpu_us": 13.702999999999918
+        },
+        {
+          "name": "## Call CompiledFxGraph fdmcoc42ujdcwalfq5rtnaw4vfbienyc4nhltese6dqu5nalbf4z ##",
+          "count": 5,
+          "self_cpu_us": 117.48300000000029,
+          "cpu_us": 586.6700000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 184.05999999999997,
+          "cpu_us": 184.05999999999997
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 32.29899999999998,
+          "cpu_us": 285.12699999999995
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 252.82799999999997,
+          "cpu_us": 252.82799999999997
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 269.6819999999999,
+          "cpu_us": 269.6819999999999
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 105.96439838409424,
+        "samples_us": [
+          103.75720262527466,
+          103.0616044998169,
+          104.26419973373413,
+          105.98859786987305,
+          105.96439838409424,
+          105.97779750823975,
+          106.02840185165405
+        ],
+        "invocations_per_graph": 8,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm_affine:float16:16x128",
+      "kind": "add_layernorm_affine",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03359415498562157,
+      "before_validation_host40": {
+        "median_us": 27.695299999999996,
+        "samples_us": [
+          28.6427,
+          27.357675,
+          27.695299999999996
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 27.17965,
+        "samples_us": [
+          29.07,
+          27.623925000000003,
+          27.157725,
+          27.199175000000004,
+          27.1375,
+          27.153825,
+          27.17965
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 11,
+          "benchmarking.InductorBenchmarker.benchmark": 70,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 70,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 28,
+          "fxgraph_cache_hit": 11,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "host40": {
+        "median_us": 27.0339,
+        "samples_us": [
+          29.185025000000003,
+          27.077825,
+          26.96595,
+          26.865025000000003,
+          27.1197,
+          27.010250000000003,
+          27.0339
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 26.301237500000003,
+        "samples_us": [
+          26.4157275,
+          26.248355,
+          26.301237500000003,
+          26.3895325,
+          26.437765,
+          26.295592499999998,
+          26.251694999999998
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 11,
+          "benchmarking.InductorBenchmarker.benchmark": 70,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 70,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 28,
+          "fxgraph_cache_hit": 11,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 26.532480716705322,
+        "samples_us": [
+          26.532480716705322,
+          26.602718830108643,
+          26.666080951690674,
+          26.527199745178223,
+          26.370880603790283
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1829999999999927
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2469999999999573
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0880000000000791
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1200000000000045
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.967000000000013,
+          "cpu_us": 18.967000000000013
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 73.42100000000005,
+          "cpu_us": 655.6999999999999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.411999999999907,
+          "cpu_us": 7.411999999999907
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.408000000000072,
+          "cpu_us": 12.408000000000072
+        },
+        {
+          "name": "## Call CompiledFxGraph fkucihtf3j5jsqhgxped4habrpjaodbrsk2p2iixghtzni2ywk5u ##",
+          "count": 5,
+          "self_cpu_us": 101.33999999999975,
+          "cpu_us": 562.459
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 186.01,
+          "cpu_us": 186.01
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 35.16700000000026,
+          "cpu_us": 275.10900000000015
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 239.9419999999999,
+          "cpu_us": 239.9419999999999
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.665000000000077,
+          "cpu_us": 5.665000000000077
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 0.983474962413311,
+        "samples_us": [
+          0.9888749569654465,
+          0.983550027012825,
+          0.983474962413311,
+          0.9833750315010548,
+          0.9836249984800816,
+          0.9833499789237976,
+          0.9833750315010548
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm_affine:float16:2048x2048",
+      "kind": "add_layernorm_affine",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.7962691669818014,
+      "before_validation_host40": {
+        "median_us": 28.09205,
+        "samples_us": [
+          30.479924999999998,
+          27.985149999999997,
+          28.09205
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 27.691625,
+        "samples_us": [
+          29.512475000000002,
+          27.921174999999998,
+          27.48075,
+          27.443275,
+          27.691625,
+          27.202525,
+          27.713775
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 28,
+          "unique_graphs": 12
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 12,
+          "async_compile_cache_miss": 24,
+          "async_compile_cache_hit": 12,
+          "benchmarking.InductorBenchmarker.benchmark": 80,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 80,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 38,
+          "fxgraph_cache_hit": 12,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "host40": {
+        "median_us": 27.748450000000002,
+        "samples_us": [
+          28.90455,
+          28.07685,
+          27.76175,
+          27.119774999999997,
+          27.748450000000002,
+          27.651799999999998,
+          27.671075000000002
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 27.20002,
+        "samples_us": [
+          27.428672499999998,
+          27.353085,
+          27.139495,
+          26.925794999999997,
+          27.0531475,
+          27.20002,
+          27.323065
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 28,
+          "unique_graphs": 12
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 12,
+          "async_compile_cache_miss": 24,
+          "async_compile_cache_hit": 12,
+          "benchmarking.InductorBenchmarker.benchmark": 80,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 80,
+          "generated_module_cache_hit": 56,
+          "coordesc_tuning_bench": 38,
+          "fxgraph_cache_hit": 12,
+          "extern_calls": 1,
+          "generated_module_cache_miss": 20,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 14,
+          "select_algorithm_num_precompilation_exceptions": 6,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "select_algorithm_autotune": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 27.07616090774536,
+        "samples_us": [
+          27.437119483947754,
+          27.36799955368042,
+          27.070400714874268,
+          27.07616090774536,
+          27.01728105545044
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.744000000000028
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.744000000000028
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.711999999999989
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.807999999999993
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.6159999999999854
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 25.847999999999985,
+          "cpu_us": 25.847999999999985
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 77.7399999999999,
+          "cpu_us": 705.3789999999999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 8.199999999999918,
+          "cpu_us": 8.199999999999918
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.468000000000018,
+          "cpu_us": 14.468000000000018
+        },
+        {
+          "name": "## Call CompiledFxGraph f76vpllcv6o34qhecbcgnluhbt7tjyuelr573zdpldzlangj5rmv ##",
+          "count": 5,
+          "self_cpu_us": 118.24700000000007,
+          "cpu_us": 604.9710000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 199.21300000000002,
+          "cpu_us": 199.21300000000002
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 40.08000000000027,
+          "cpu_us": 287.511
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 247.43099999999976,
+          "cpu_us": 247.43099999999976
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.989999999999895,
+          "cpu_us": 5.989999999999895
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 7.522474974393845,
+        "samples_us": [
+          7.528775185346603,
+          7.523325085639954,
+          7.524050027132034,
+          7.518749684095383,
+          7.520999759435654,
+          7.522474974393845,
+          7.520650327205658
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": null
+    }
+  ],
+  "ended_at": 1793458036.8200784
+}

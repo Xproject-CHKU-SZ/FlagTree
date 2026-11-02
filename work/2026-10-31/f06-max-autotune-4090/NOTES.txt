@@ -1,0 +1,8 @@
+Four-route same-process RTX4090 comparison. Current implementation and mathematical graph unchanged.
+New route: torch.compile(graph, backend='inductor', fullgraph=True, dynamic=False, mode='max-autotune-no-cudagraphs').
+Actual Torch 2.11 mode options: max_autotune=True, coordinate_descent_tuning=True. No forced Triton-only backend, no disabled epilogue profitability checks, no altered precision policy. Compare native mode as shipped.
+Keep eager, default Inductor, and current_static as concurrent baselines.
+All 180 cases, original seed and tolerances. Two serial independent processes, seven rotating-order host batches of 40 calls; 8 warmups and 0.5s CPU preheat. Host timing includes guards/output allocation and excludes setup/compilation. Separate five-trial 20ms CUDA Graph replay diagnostic; normal-call profiler outside timing.
+Numerical failures retained and excluded from performance comparisons; no relaxed tolerances.
+Fresh cache directory initially; smoke warms six cases, round-a warms remainder, round-b uses caches. Setup time is observed preparation time and not a uniformly cold compile benchmark.
+No global Inductor configuration or graph_fusion implementation changed. This enables optimization in the reproducible benchmark route only.
