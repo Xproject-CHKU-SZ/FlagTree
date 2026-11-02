@@ -1,0 +1,2525 @@
+{
+  "status": "completed",
+  "route": "max_static",
+  "repeat": 1,
+  "started_at": 1793458001.2469323,
+  "identity": {
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+    "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+    "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+    "fusion_logic_sha256": {
+      "_inductor/scheduler.py": "904a90ee27cb641f7f6f0ecacdb38599d0f63bd5e37dd230f0e541edbd5dccb7",
+      "_inductor/lowering.py": "0b1e1ac3585aa5e8916ad05c8426d05f9bb1ea758899a3f661c9bc0d47cdebb6",
+      "_inductor/codegen/triton.py": "e54e0e0bd28299a84f6d3625ebd7776f8c8f2233541a3d30a7df8f89b489d222",
+      "_inductor/fx_passes/post_grad.py": "a1bc4ef86d9f8bda79c6f9bc2f14f07d0c725f5ff7aa9dcf2284a3032c6cd33e",
+      "_inductor/fx_passes/joint_graph.py": "e21f3f4eca819cb7ec517f9f68b834d16d129abdf86179f30b8e0f9217ffb197",
+      "_inductor/pattern_matcher.py": "c2f7ad9a952c26f7c2afe609144ad45ffa1aaaa659369df30d3d2ae2eea58e0b"
+    }
+  },
+  "device": "NVIDIA GeForce RTX 4090",
+  "cases": [
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float32:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.27334230102133006,
+      "before_validation_host40": {
+        "median_us": 31.894600000000004,
+        "samples_us": [
+          32.807825,
+          31.894600000000004,
+          31.6624
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 31.813025,
+        "samples_us": [
+          33.1828,
+          31.813025,
+          32.03255,
+          31.524,
+          32.0051,
+          31.251150000000003,
+          31.674200000000003
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "generated_module_cache_miss": 18,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 19,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 19,
+          "fxgraph_cache_hit": 1,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 31.359275000000004,
+        "samples_us": [
+          31.86625,
+          31.489275,
+          31.18895,
+          31.319499999999998,
+          31.359275000000004,
+          31.187,
+          31.514924999999998
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 31.1365825,
+        "samples_us": [
+          31.0877925,
+          31.1062575,
+          31.1365825,
+          31.230300000000003,
+          31.28335,
+          31.052065,
+          31.155257499999998
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 3,
+          "unique_graphs": 1
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 1,
+          "async_compile_cache_miss": 2,
+          "async_compile_cache_hit": 1,
+          "generated_module_cache_miss": 18,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 19,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 19,
+          "fxgraph_cache_hit": 1,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 31.451361179351807,
+        "samples_us": [
+          31.22879981994629,
+          31.46752119064331,
+          31.451361179351807,
+          31.56399965286255,
+          31.390879154205322
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.463999999999942
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.048000000000002
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.048000000000002
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.0170000000000528
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 2.048000000000002
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.340000000000202,
+          "cpu_us": 18.340000000000202
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 78.67000000000007,
+          "cpu_us": 1171.586
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.2560000000001565,
+          "cpu_us": 7.2560000000001565
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.563999999999922,
+          "cpu_us": 13.563999999999922
+        },
+        {
+          "name": "## Call CompiledFxGraph frf4ccvjxyz472jhnpbhlrszthazeouxn526djo6bc37fijfftpk ##",
+          "count": 5,
+          "self_cpu_us": 145.57200000000023,
+          "cpu_us": 1072.096
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 899.273,
+          "cpu_us": 899.273
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 3.2289999999998145,
+          "cpu_us": 3.2289999999998145
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 24.021999999999935,
+          "cpu_us": 24.021999999999935
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 8.771999999999935,
+          "cpu_us": 8.771999999999935
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float32:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.5069568500039168,
+      "before_validation_host40": {
+        "median_us": 307.2821,
+        "samples_us": [
+          307.2237,
+          307.2821,
+          307.52285
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 330.67085000000003,
+        "samples_us": [
+          307.030175,
+          307.312225,
+          320.6369,
+          330.86035000000004,
+          330.6912,
+          330.798025,
+          330.67085000000003
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 6,
+          "unique_graphs": 2
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 2,
+          "async_compile_cache_miss": 4,
+          "async_compile_cache_hit": 2,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 29,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 29,
+          "fxgraph_cache_hit": 2,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 10,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 332.81475,
+        "samples_us": [
+          308.435675,
+          308.718025,
+          312.29085,
+          333.331475,
+          332.81475,
+          333.08865000000003,
+          333.361875
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 329.44693,
+        "samples_us": [
+          331.0359175,
+          329.39354249999997,
+          329.4082925,
+          329.44693,
+          329.43535499999996,
+          329.4624925,
+          337.67269500000003
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 6,
+          "unique_graphs": 2
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 2,
+          "async_compile_cache_miss": 4,
+          "async_compile_cache_hit": 2,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 29,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 29,
+          "fxgraph_cache_hit": 2,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 10,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 336.70719146728516,
+        "samples_us": [
+          340.494384765625,
+          338.56990814208984,
+          336.70719146728516,
+          334.6441650390625,
+          334.63375091552734
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999999791
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 323.9720000000001
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.367999999999938
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4490000000000691
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.547
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.432000000000016
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.44800000000009277
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.70799999999986
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.624000000000024
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 321.0279999999998
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.400000000000091
+        },
+        {
+          "name": "Memset (Unknown)",
+          "us": 0.4479999999998654
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.70700000000033
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "us": 10.528999999999996
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 16.607000000000028,
+          "cpu_us": 16.607000000000028
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 70.12699999999961,
+          "cpu_us": 912.7649999999996
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.351999999999904,
+          "cpu_us": 6.351999999999904
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.56599999999996,
+          "cpu_us": 12.56599999999996
+        },
+        {
+          "name": "## Call CompiledFxGraph f7iznpvbg3bmnkt7tvuppshpvjm6owr45m5zsfhfquk26phg6lzt ##",
+          "count": 5,
+          "self_cpu_us": 144.32399999999984,
+          "cpu_us": 823.7200000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 643.7160000000001,
+          "cpu_us": 643.7160000000001
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 3.07100000000014,
+          "cpu_us": 3.07100000000014
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 32.60900000000004,
+          "cpu_us": 32.60900000000004
+        },
+        {
+          "name": "Memset (Unknown)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 1415.452,
+          "cpu_us": 1415.452
+        },
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_softmax:float32:16x128",
+      "kind": "add_softmax",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.3381154569797218,
+      "before_validation_host40": {
+        "median_us": 33.4225,
+        "samples_us": [
+          34.8472,
+          33.185025,
+          33.4225
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.204674999999995,
+        "samples_us": [
+          33.98265,
+          33.3221,
+          33.204674999999995,
+          33.342575,
+          32.81545,
+          32.8269,
+          33.073025
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 8,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 6,
+          "async_compile_cache_hit": 3,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 37,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 37,
+          "fxgraph_cache_hit": 3,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 18,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.89835,
+        "samples_us": [
+          33.640474999999995,
+          32.955775,
+          32.89835,
+          32.700225,
+          34.349775,
+          32.588775,
+          32.617675000000006
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.4539975,
+        "samples_us": [
+          32.532645,
+          32.51617,
+          32.4910925,
+          32.4539975,
+          32.313919999999996,
+          32.257365,
+          32.219965
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 8,
+          "unique_graphs": 3
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 3,
+          "async_compile_cache_miss": 6,
+          "async_compile_cache_hit": 3,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 37,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 37,
+          "fxgraph_cache_hit": 3,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 18,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.7512001991272,
+        "samples_us": [
+          32.871999740600586,
+          32.7512001991272,
+          32.64336109161377,
+          32.80112028121948,
+          32.74032115936279
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.2479999999999336
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1510000000000673
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 1.1519999999998163
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 15.149999999999906,
+          "cpu_us": 15.149999999999906
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 69.99100000000044,
+          "cpu_us": 1041.3160000000003
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.524999999999849,
+          "cpu_us": 6.524999999999849
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 11.913000000000224,
+          "cpu_us": 11.913000000000224
+        },
+        {
+          "name": "## Call CompiledFxGraph fttfhevw26cnwxzbwal6ki7znch546is2mrqfua36tlw2tcjs3ka ##",
+          "count": 5,
+          "self_cpu_us": 140.7550000000001,
+          "cpu_us": 952.8869999999997
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 789.142,
+          "cpu_us": 789.142
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.4049999999997453,
+          "cpu_us": 2.4049999999997453
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 20.58499999999981,
+          "cpu_us": 20.58499999999981
+        },
+        {
+          "name": "triton_per_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.230000000000018,
+          "cpu_us": 6.230000000000018
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:add_softmax:float32:2048x2048",
+      "kind": "add_softmax",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.8254875369602814,
+      "before_validation_host40": {
+        "median_us": 32.811975000000004,
+        "samples_us": [
+          34.441475000000004,
+          32.616875,
+          32.811975000000004
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.2901,
+        "samples_us": [
+          34.140249999999995,
+          33.304050000000004,
+          33.819575,
+          33.2901,
+          32.987275,
+          33.1928,
+          33.100425
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 10,
+          "unique_graphs": 4
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 4,
+          "async_compile_cache_miss": 8,
+          "async_compile_cache_hit": 4,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 52,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 52,
+          "fxgraph_cache_hit": 4,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 31,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.997975000000004,
+        "samples_us": [
+          33.272225,
+          32.785125,
+          33.187675,
+          32.997975000000004,
+          32.619825,
+          32.957325,
+          33.21025
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.745485,
+        "samples_us": [
+          32.6601825,
+          32.6614075,
+          32.780085,
+          32.840625,
+          32.8935975,
+          32.745485,
+          32.6190175
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 10,
+          "unique_graphs": 4
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 4,
+          "async_compile_cache_miss": 8,
+          "async_compile_cache_hit": 4,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 52,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 52,
+          "fxgraph_cache_hit": 4,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 31,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.68208026885986,
+        "samples_us": [
+          32.76063919067383,
+          32.68208026885986,
+          33.567678928375244,
+          32.67551898956299,
+          32.450881004333496
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 12.0
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 11.67999999999995
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 11.711999999999989
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 11.744000000000028
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "us": 11.840000000000032
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 13.93999999999997,
+          "cpu_us": 13.93999999999997
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 73.1760000000001,
+          "cpu_us": 672.498
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.579999999999956,
+          "cpu_us": 6.579999999999956
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.971999999999937,
+          "cpu_us": 14.971999999999937
+        },
+        {
+          "name": "## Call CompiledFxGraph fyj2m3fjxxieyq2jsnoetmovjlak6qmsxmekwoozzuaxi4dgqbvd ##",
+          "count": 5,
+          "self_cpu_us": 140.33699999999993,
+          "cpu_us": 577.7700000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 193.198,
+          "cpu_us": 193.198
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.718999999999994,
+          "cpu_us": 2.718999999999994
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 241.51600000000013,
+          "cpu_us": 241.51600000000013
+        },
+        {
+          "name": "triton_red_fused__softmax_add_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.559999999999945,
+          "cpu_us": 5.559999999999945
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm:float32:16x128",
+      "kind": "add_layernorm",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.12932785699376836,
+      "before_validation_host40": {
+        "median_us": 33.786125,
+        "samples_us": [
+          34.628474999999995,
+          33.786125,
+          33.672125
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.4257,
+        "samples_us": [
+          34.044675,
+          33.3078,
+          33.585975000000005,
+          33.00455,
+          33.414225,
+          33.770025,
+          33.4257
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 12,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 10,
+          "async_compile_cache_hit": 5,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 57,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 57,
+          "fxgraph_cache_hit": 5,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 36,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.98905,
+        "samples_us": [
+          33.770475,
+          33.444125,
+          32.914,
+          33.1841,
+          32.98905,
+          32.8194,
+          32.969475
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.988385,
+        "samples_us": [
+          32.85074,
+          32.9376575,
+          33.05287,
+          33.216645,
+          32.988385,
+          32.93616,
+          33.0785575
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 12,
+          "unique_graphs": 5
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 5,
+          "async_compile_cache_miss": 10,
+          "async_compile_cache_hit": 5,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 57,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 57,
+          "fxgraph_cache_hit": 5,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 36,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.75968074798584,
+        "samples_us": [
+          32.666239738464355,
+          32.75968074798584,
+          32.75968074798584,
+          32.89488077163696,
+          32.89488077163696
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.2160000000000082
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0880000000000791
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0880000000000791
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 15.73299999999989,
+          "cpu_us": 15.73299999999989
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 68.25599999999997,
+          "cpu_us": 664.098
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.06200000000004,
+          "cpu_us": 6.06200000000004
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.33099999999996,
+          "cpu_us": 12.33099999999996
+        },
+        {
+          "name": "## Call CompiledFxGraph f2dnuhwxyk24itoo7tlt5gblp5bowj6ycso7vvnnqtkfuozkf2t3 ##",
+          "count": 5,
+          "self_cpu_us": 142.0949999999999,
+          "cpu_us": 577.449
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 192.681,
+          "cpu_us": 192.681
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.7280000000001223,
+          "cpu_us": 2.7280000000001223
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 239.94499999999988,
+          "cpu_us": 239.94499999999988
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.772000000000048,
+          "cpu_us": 5.772000000000048
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm:float32:2048x2048",
+      "kind": "add_layernorm",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.25059761200100183,
+      "before_validation_host40": {
+        "median_us": 34.1589,
+        "samples_us": [
+          37.674075,
+          34.1589,
+          33.774275
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.237875,
+        "samples_us": [
+          33.923275000000004,
+          33.237875,
+          33.3378,
+          33.101600000000005,
+          33.341375,
+          33.189925,
+          33.074149999999996
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 6
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 6,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 6,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 64,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 64,
+          "fxgraph_cache_hit": 6,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 43,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 33.262975,
+        "samples_us": [
+          33.784775,
+          33.150774999999996,
+          33.0205,
+          33.194900000000004,
+          33.34545,
+          33.39555,
+          33.262975
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.979495,
+        "samples_us": [
+          32.888895000000005,
+          32.9580725,
+          32.979495,
+          32.93382,
+          33.007197500000004,
+          33.0542425,
+          32.986937499999996
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 14,
+          "unique_graphs": 6
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 6,
+          "async_compile_cache_miss": 12,
+          "async_compile_cache_hit": 6,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 64,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 64,
+          "fxgraph_cache_hit": 6,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 43,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 33.3625602722168,
+        "samples_us": [
+          33.62128019332886,
+          33.39263916015625,
+          33.328800201416016,
+          33.3625602722168,
+          33.3024001121521
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.82400000000007
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.344000000000051
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.344000000000051
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.312000000000012
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 9.375999999999976
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 14.736000000000104,
+          "cpu_us": 14.736000000000104
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 69.12300000000016,
+          "cpu_us": 680.7650000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.373999999999924,
+          "cpu_us": 6.373999999999924
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.213999999999913,
+          "cpu_us": 12.213999999999913
+        },
+        {
+          "name": "## Call CompiledFxGraph fbo2au22sdobxzv7cvyj63frnpmt6zvol3eot4dmepmpawlleoha ##",
+          "count": 5,
+          "self_cpu_us": 141.19100000000003,
+          "cpu_us": 593.0540000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 204.13199999999998,
+          "cpu_us": 204.13199999999998
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.5600000000000023,
+          "cpu_us": 2.5600000000000023
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 245.17100000000005,
+          "cpu_us": 245.17100000000005
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.697000000000003,
+          "cpu_us": 5.697000000000003
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "report117:mul_sum:float32:16x128",
+      "kind": "mul_sum",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.10853513999609277,
+      "before_validation_host40": {
+        "median_us": 33.0423,
+        "samples_us": [
+          34.1983,
+          32.70395,
+          33.0423
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 32.8549,
+        "samples_us": [
+          33.387175,
+          32.805099999999996,
+          33.754275,
+          32.705075,
+          32.8074,
+          33.087725,
+          32.8549
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 16,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 14,
+          "async_compile_cache_hit": 7,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 68,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 68,
+          "fxgraph_cache_hit": 7,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 47,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.6592,
+        "samples_us": [
+          34.7596,
+          32.65195,
+          32.672675,
+          33.088775,
+          32.6592,
+          32.53045,
+          32.5307
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.1916375,
+        "samples_us": [
+          32.3986975,
+          32.36294,
+          32.1645975,
+          32.16872,
+          32.256775,
+          32.082930000000005,
+          32.1916375
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 16,
+          "unique_graphs": 7
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 7,
+          "async_compile_cache_miss": 14,
+          "async_compile_cache_hit": 7,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 68,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 68,
+          "fxgraph_cache_hit": 7,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 47,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.24287986755371,
+        "samples_us": [
+          32.32352018356323,
+          32.24287986755371,
+          32.17504024505615,
+          32.211360931396484,
+          32.353599071502686
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.2160000000000082
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "us": 1.0879999999999654
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 17.36399999999996,
+          "cpu_us": 17.36399999999996
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 73.84699999999998,
+          "cpu_us": 690.6240000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.557000000000059,
+          "cpu_us": 6.557000000000059
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 14.13200000000002,
+          "cpu_us": 14.13200000000002
+        },
+        {
+          "name": "## Call CompiledFxGraph f6bvkqorumolg72fjmdzf2s7f3qxd7fb5ehvftfyc33lnhqq2rx4 ##",
+          "count": 5,
+          "self_cpu_us": 154.49800000000005,
+          "cpu_us": 596.0880000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 192.354,
+          "cpu_us": 192.354
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 3.1289999999999054,
+          "cpu_us": 3.1289999999999054
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 246.10700000000008,
+          "cpu_us": 246.10700000000008
+        },
+        {
+          "name": "triton_per_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.699000000000069,
+          "cpu_us": 5.699000000000069
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:mul_sum:float32:2048x2048",
+      "kind": "mul_sum",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.1517886189976707,
+      "before_validation_host40": {
+        "median_us": 33.11875,
+        "samples_us": [
+          34.29245,
+          32.9359,
+          33.11875
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.055925,
+        "samples_us": [
+          34.32395,
+          33.170675,
+          32.939975,
+          32.799775,
+          33.03075,
+          33.055925,
+          33.072925
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 8
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 8,
+          "async_compile_cache_miss": 16,
+          "async_compile_cache_hit": 8,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 74,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 74,
+          "fxgraph_cache_hit": 8,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.7532,
+        "samples_us": [
+          34.1619,
+          33.177425,
+          32.549875,
+          32.751925,
+          32.70955,
+          33.210674999999995,
+          32.7532
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.537155,
+        "samples_us": [
+          32.6682,
+          32.498705,
+          32.53849,
+          32.41876,
+          32.3399475,
+          32.591395000000006,
+          32.537155
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 18,
+          "unique_graphs": 8
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 8,
+          "async_compile_cache_miss": 16,
+          "async_compile_cache_hit": 8,
+          "generated_module_cache_miss": 38,
+          "select_algorithm_precompile": 1,
+          "select_algorithm_num_precompiles": 18,
+          "select_algorithm_autotune": 1,
+          "benchmarking.InductorBenchmarker.benchmark": 74,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 74,
+          "fxgraph_cache_hit": 8,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.789599895477295,
+        "samples_us": [
+          32.51856088638306,
+          32.789599895477295,
+          32.60656118392944,
+          32.831199169158936,
+          32.9367995262146
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.960000000000036
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.73599999999999
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.73599999999999
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.703999999999951
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "us": 4.6720000000000255
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 14.532000000000139,
+          "cpu_us": 14.532000000000139
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 69.84999999999985,
+          "cpu_us": 664.433
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.209999999999965,
+          "cpu_us": 6.209999999999965
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 16.08800000000008,
+          "cpu_us": 16.08800000000008
+        },
+        {
+          "name": "## Call CompiledFxGraph fwksaww453wn2nl6fonysq245jzk46bcjmkl3q376qusrgbpoorl ##",
+          "count": 5,
+          "self_cpu_us": 143.5260000000003,
+          "cpu_us": 572.2850000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 189.14,
+          "cpu_us": 189.14
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.56799999999987,
+          "cpu_us": 2.56799999999987
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 237.05099999999993,
+          "cpu_us": 237.05099999999993
+        },
+        {
+          "name": "triton_red_fused_mul_sum_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.802999999999997,
+          "cpu_us": 5.802999999999997
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float16:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.039194234006572515,
+      "before_validation_host40": {
+        "median_us": 33.004175,
+        "samples_us": [
+          34.3296,
+          33.004175,
+          32.86385
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 32.882999999999996,
+        "samples_us": [
+          33.4014,
+          32.314499999999995,
+          32.882999999999996,
+          33.105399999999996,
+          32.91135,
+          32.424975,
+          32.28805
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 21,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 18,
+          "async_compile_cache_hit": 9,
+          "generated_module_cache_miss": 56,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 94,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 94,
+          "fxgraph_cache_hit": 9,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 32.389125,
+        "samples_us": [
+          33.509275,
+          32.389125,
+          32.180425,
+          32.571325,
+          32.171875,
+          32.615375,
+          32.388600000000004
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 31.938585,
+        "samples_us": [
+          32.09352,
+          31.9017625,
+          32.070635,
+          31.938585,
+          31.8950725,
+          31.902017500000003,
+          31.955255
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 21,
+          "unique_graphs": 9
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 9,
+          "async_compile_cache_miss": 18,
+          "async_compile_cache_hit": 9,
+          "generated_module_cache_miss": 56,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 94,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 94,
+          "fxgraph_cache_hit": 9,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.01519966125488,
+        "samples_us": [
+          32.13088035583496,
+          32.03455924987793,
+          32.01519966125488,
+          31.956000328063965,
+          32.00927972793579
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4080000000001291
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4089999999998781
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4079999999999018
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4079999999999018
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 1.4069999999999254
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 19.18700000000048,
+          "cpu_us": 19.18700000000048
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 67.03699999999935,
+          "cpu_us": 1305.5240000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.32900000000015,
+          "cpu_us": 6.32900000000015
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 11.91900000000011,
+          "cpu_us": 11.91900000000011
+        },
+        {
+          "name": "## Call CompiledFxGraph fslr2tfwhwe5y5y53txfgiboxrsfyjonqvwxvw7n4fdzdx3j3d6b ##",
+          "count": 5,
+          "self_cpu_us": 141.85199999999986,
+          "cpu_us": 1220.2390000000005
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 839.4490000000001,
+          "cpu_us": 839.4490000000001
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.6920000000000073,
+          "cpu_us": 2.6920000000000073
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 236.24600000000044,
+          "cpu_us": 236.24600000000044
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.944999999999936,
+          "cpu_us": 5.944999999999936
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float16:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.034831424010917544,
+      "before_validation_host40": {
+        "median_us": 110.449025,
+        "samples_us": [
+          110.86015,
+          110.449025,
+          110.397975
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 110.48805,
+        "samples_us": [
+          111.1653,
+          110.48805,
+          110.543125,
+          110.67490000000001,
+          110.36890000000001,
+          110.39760000000001,
+          110.38145
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 24,
+          "unique_graphs": 10
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 10,
+          "async_compile_cache_miss": 20,
+          "async_compile_cache_hit": 10,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 94,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 94,
+          "fxgraph_cache_hit": 10,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 110.3952,
+        "samples_us": [
+          110.68109999999999,
+          110.418225,
+          110.73074999999999,
+          110.345675,
+          110.34485,
+          110.3952,
+          110.3219
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 108.808745,
+        "samples_us": [
+          109.605875,
+          109.58805249999999,
+          109.7198475,
+          108.808745,
+          105.545255,
+          105.54349500000001,
+          105.618085
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 24,
+          "unique_graphs": 10
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 10,
+          "async_compile_cache_miss": 20,
+          "async_compile_cache_hit": 10,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 94,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 94,
+          "fxgraph_cache_hit": 10,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 53,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 105.69199562072754,
+        "samples_us": [
+          106.02304458618164,
+          105.67440032958984,
+          105.69199562072754,
+          105.67695617675781,
+          105.87535858154297
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.82300000000009
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.02299999999991
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.18299999999999
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 105.02300000000002
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "us": 104.95900000000006
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 18.983000000000118,
+          "cpu_us": 18.983000000000118
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 75.97499999999991,
+          "cpu_us": 710.0629999999999
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.722999999999985,
+          "cpu_us": 6.722999999999985
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 13.069999999999936,
+          "cpu_us": 13.069999999999936
+        },
+        {
+          "name": "## Call CompiledFxGraph fvnnfbjuhjaim7nkwrsreqqurde2vgkm5tfngloa7lqetzecrjur ##",
+          "count": 5,
+          "self_cpu_us": 155.9390000000002,
+          "cpu_us": 614.2950000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 200.08899999999997,
+          "cpu_us": 200.08899999999997
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 3.6049999999999613,
+          "cpu_us": 3.6049999999999613
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 254.66199999999998,
+          "cpu_us": 254.66199999999998
+        },
+        {
+          "name": "triton_tem_fused_add_gelu_mm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 257.9680000000001,
+          "cpu_us": 257.9680000000001
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "report117:add_layernorm_affine:float16:16x128",
+      "kind": "add_layernorm_affine",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.12862710701301694,
+      "before_validation_host40": {
+        "median_us": 33.6645,
+        "samples_us": [
+          33.934775,
+          33.3003,
+          33.6645
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.53375,
+        "samples_us": [
+          34.263400000000004,
+          33.9607,
+          33.635225000000005,
+          33.53375,
+          33.27915,
+          33.36765,
+          33.349875
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 11,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 99,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 99,
+          "fxgraph_cache_hit": 11,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 58,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 33.360225,
+        "samples_us": [
+          34.1492,
+          33.30415,
+          33.66615,
+          33.0698,
+          33.416425,
+          33.360225,
+          33.1009
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.8009725,
+        "samples_us": [
+          33.00036,
+          32.8519875,
+          32.8009725,
+          32.5197575,
+          32.6802825,
+          32.847655,
+          32.7752925
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 26,
+          "unique_graphs": 11
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 11,
+          "async_compile_cache_miss": 22,
+          "async_compile_cache_hit": 11,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 99,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 99,
+          "fxgraph_cache_hit": 11,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 58,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 32.980639934539795,
+        "samples_us": [
+          32.72608041763306,
+          33.06384086608887,
+          32.971999645233154,
+          32.980639934539795,
+          32.99168109893799
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1840000000000828
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1200000000000045
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.1199999999998909
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0880000000000791
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "us": 1.0879999999999654
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 16.316999999999922,
+          "cpu_us": 16.316999999999922
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 68.1360000000002,
+          "cpu_us": 664.1740000000001
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 6.769999999999925,
+          "cpu_us": 6.769999999999925
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.330999999999932,
+          "cpu_us": 12.330999999999932
+        },
+        {
+          "name": "## Call CompiledFxGraph fb2lfqzvysmybrltjh25ljtqub2jm5f4hcvgoucw2t6nqp3e333o ##",
+          "count": 5,
+          "self_cpu_us": 142.7680000000001,
+          "cpu_us": 576.9370000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 186.229,
+          "cpu_us": 186.229
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.5649999999999977,
+          "cpu_us": 2.5649999999999977
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 245.375,
+          "cpu_us": 245.375
+        },
+        {
+          "name": "triton_per_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.725999999999885,
+          "cpu_us": 5.725999999999885
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    },
+    {
+      "case_id": "large:add_layernorm_affine:float16:2048x2048",
+      "kind": "add_layernorm_affine",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.16927950998069718,
+      "before_validation_host40": {
+        "median_us": 33.228775,
+        "samples_us": [
+          34.559075,
+          33.228775,
+          33.2233
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 33.15405,
+        "samples_us": [
+          33.947025000000004,
+          33.681775,
+          33.15405,
+          32.8744,
+          32.880725,
+          32.5823,
+          33.267450000000004
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "stats": {
+          "calls_captured": 28,
+          "unique_graphs": 12
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 12,
+          "async_compile_cache_miss": 24,
+          "async_compile_cache_hit": 12,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 106,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 106,
+          "fxgraph_cache_hit": 12,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 65,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "host40": {
+        "median_us": 33.018975,
+        "samples_us": [
+          33.292575,
+          33.076325000000004,
+          32.962225000000004,
+          32.8714,
+          33.196775,
+          32.799400000000006,
+          33.018975
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 32.4854125,
+        "samples_us": [
+          32.4854125,
+          32.471039999999995,
+          32.4588575,
+          32.51043,
+          32.394975,
+          32.603865,
+          32.58541
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "stats": {
+          "calls_captured": 28,
+          "unique_graphs": 12
+        },
+        "inductor": {
+          "triton_bundler_load_static_autotuner": 12,
+          "async_compile_cache_miss": 24,
+          "async_compile_cache_hit": 12,
+          "generated_module_cache_miss": 76,
+          "select_algorithm_precompile": 2,
+          "select_algorithm_num_precompiles": 36,
+          "select_algorithm_autotune": 2,
+          "benchmarking.InductorBenchmarker.benchmark": 106,
+          "benchmarking.InductorBenchmarker.benchmark_gpu": 106,
+          "fxgraph_cache_hit": 12,
+          "extern_calls": 1,
+          "coordesc_tuning_bench": 65,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8,
+          "cudagraph_recorded_non_static_inputs": 0
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 33.04287910461426,
+        "samples_us": [
+          32.833759784698486,
+          33.04287910461426,
+          33.003199100494385,
+          33.043999671936035,
+          33.058879375457764
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.552999999999997
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.360000000000014
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.393000000000029
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.3279999999999745
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "us": 7.360000000000014
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "TorchDynamo Cache Lookup",
+          "count": 5,
+          "self_cpu_us": 15.628000000000014,
+          "cpu_us": 15.628000000000014
+        },
+        {
+          "name": "Torch-Compiled Region: 0/0",
+          "count": 5,
+          "self_cpu_us": 78.56399999999996,
+          "cpu_us": 664.62
+        },
+        {
+          "name": "Pregraph bytecode",
+          "count": 5,
+          "self_cpu_us": 7.087000000000145,
+          "cpu_us": 7.087000000000145
+        },
+        {
+          "name": "AOTDispatcher Runtime Wrapper Prologue",
+          "count": 5,
+          "self_cpu_us": 12.138999999999939,
+          "cpu_us": 12.138999999999939
+        },
+        {
+          "name": "## Call CompiledFxGraph find3oskgnipawyp3icjbvlen6oafjq5hdyyxondqmf5w62shtmm ##",
+          "count": 5,
+          "self_cpu_us": 144.08199999999977,
+          "cpu_us": 566.8299999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 183.37499999999997,
+          "cpu_us": 183.37499999999997
+        },
+        {
+          "name": "cudaStreamIsCapturing",
+          "count": 5,
+          "self_cpu_us": 2.2360000000001605,
+          "cpu_us": 2.2360000000001605
+        },
+        {
+          "name": "cudaGraphLaunch",
+          "count": 5,
+          "self_cpu_us": 237.13700000000006,
+          "cpu_us": 237.13700000000006
+        },
+        {
+          "name": "triton_red_fused_add_native_layer_norm_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.752000000000066,
+          "cpu_us": 5.752000000000066
+        }
+      ],
+      "capture_error": "Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html",
+      "capture_traceback": "Traceback (most recent call last):\n  File \"/tmp/f06-timing-audit-4090-20261031/audit_worker.py\", line 114, in main\n    for _ in range(repetitions-1):fn(*inputs)\n                                  ^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 472, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1779, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1790, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/f/flagtree/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1034, in compile_wrapper\n    raise e.with_traceback(None) from e.__cause__  # User compiler error\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch._dynamo.exc.Unsupported: Attempt to trace generator\n  Explanation: Generators cannot be compiled directly with `torch.compile`.\n  Hint: Call a generator from inside of a non-generator Python function and compile that function instead.\n  Hint: This graph break is fundamental - it is unlikely that Dynamo will ever be able to trace through your code. Consider finding a workaround.\n\n  Developer debug context: \n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0003.html\n",
+      "execution": null
+    }
+  ],
+  "ended_at": 1793458017.535326
+}

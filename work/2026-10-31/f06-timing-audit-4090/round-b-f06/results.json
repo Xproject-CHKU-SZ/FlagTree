@@ -1,0 +1,3577 @@
+{
+  "status": "completed",
+  "route": "f06",
+  "repeat": 1,
+  "started_at": 1793458041.4185436,
+  "identity": {
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "native_sha256": "2d2ff540ccee97996ea39038e7a1fc38f52ea5aea201d60c0ef0013c2e10f8a0",
+    "compiler_sha256": "d5f1abf028029de5f77f461c3efa13453bb9e0e9a2dec9dfe174e67d3ba14bb0",
+    "driver_sha256": "45868d30c38de18f154cffe807374fcd0fcac6c149c2ff9ace6dc9a62b59091d",
+    "fusion_logic_sha256": {
+      "_inductor/scheduler.py": "904a90ee27cb641f7f6f0ecacdb38599d0f63bd5e37dd230f0e541edbd5dccb7",
+      "_inductor/lowering.py": "0b1e1ac3585aa5e8916ad05c8426d05f9bb1ea758899a3f661c9bc0d47cdebb6",
+      "_inductor/codegen/triton.py": "e54e0e0bd28299a84f6d3625ebd7776f8c8f2233541a3d30a7df8f89b489d222",
+      "_inductor/fx_passes/post_grad.py": "a1bc4ef86d9f8bda79c6f9bc2f14f07d0c725f5ff7aa9dcf2284a3032c6cd33e",
+      "_inductor/fx_passes/joint_graph.py": "e21f3f4eca819cb7ec517f9f68b834d16d129abdf86179f30b8e0f9217ffb197",
+      "_inductor/pattern_matcher.py": "c2f7ad9a952c26f7c2afe609144ad45ffa1aaaa659369df30d3d2ae2eea58e0b"
+    }
+  },
+  "device": "NVIDIA GeForce RTX 4090",
+  "cases": [
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float32:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.2809152459958568,
+      "before_validation_host40": {
+        "median_us": 8.193850000000001,
+        "samples_us": [
+          8.61425,
+          8.193850000000001,
+          8.02325
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 8.079649999999999,
+        "samples_us": [
+          8.463049999999999,
+          8.079649999999999,
+          8.195175,
+          8.102875000000001,
+          8.041075,
+          8.013675000000001,
+          8.02315
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 1,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 1
+        }
+      },
+      "host40": {
+        "median_us": 7.987025,
+        "samples_us": [
+          8.238025,
+          7.945825000000001,
+          7.9883,
+          7.987025,
+          7.9826999999999995,
+          8.005575,
+          7.922175
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 7.8299675,
+        "samples_us": [
+          7.8580825,
+          7.8060225,
+          7.839582500000001,
+          7.8988425,
+          7.8299675,
+          7.8060125000000005,
+          7.8039525
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 1,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 7.953119874000549,
+        "samples_us": [
+          7.925599813461304,
+          7.953119874000549,
+          8.003360033035278,
+          7.941920161247253,
+          7.971839904785156
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_0",
+          "us": 2.4320000000000164
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 2.175999999999931
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 2.015999999999849
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 2.015999999999849
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 2.0160000000000764
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 88.83899999999971,
+          "cpu_us": 1087.964
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 936.355,
+          "cpu_us": 936.355
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "count": 5,
+          "self_cpu_us": 40.21300000000042,
+          "cpu_us": 62.77000000000021
+        },
+        {
+          "name": "cuLaunchKernelEx",
+          "count": 5,
+          "self_cpu_us": 22.55699999999979,
+          "cpu_us": 22.55699999999979
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 3.947000000000344,
+          "cpu_us": 3.947000000000344
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.896749995648861,
+        "samples_us": [
+          1.902800053358078,
+          1.8969999626278877,
+          1.896749995648861,
+          1.8966250121593475,
+          1.896899938583374,
+          1.8964499235153198,
+          1.8965749070048332
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_small_matmul_single_kernel",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              64
+            ],
+            "stride": [
+              64,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              64,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "prepared_launch": "enabled",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_compiler_options": {
+          "max_autotune": true,
+          "max_autotune_gemm_backends": "TRITON",
+          "epilogue_fusion": true,
+          "benchmark_epilogue_fusion": false,
+          "pattern_matcher": false,
+          "emulate_precision_casts": true,
+          "use_static_cuda_launcher": false,
+          "size_asserts": false,
+          "triton.cudagraphs": false
+        },
+        "kernel_provider": "native_inductor_codegen",
+        "shape": [
+          16,
+          128,
+          64
+        ],
+        "activation": "gelu_exact",
+        "rounding_boundaries": [
+          "matmul_output_dtype",
+          "add_output_dtype"
+        ],
+        "kernel_name": "triton_tem_fused_0",
+        "kernel_count": 1
+      }
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float32:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.0420673550106585,
+      "before_validation_host40": {
+        "median_us": 314.24195,
+        "samples_us": [
+          314.24195,
+          313.317,
+          325.7604
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 313.38955,
+        "samples_us": [
+          313.815075,
+          313.254775,
+          313.38955,
+          313.36785,
+          313.174325,
+          313.4679,
+          314.31080000000003
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 2,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 2,
+          "extern_calls": 1
+        }
+      },
+      "host40": {
+        "median_us": 308.128775,
+        "samples_us": [
+          306.97355,
+          307.3129,
+          307.64835,
+          308.128775,
+          308.76307499999996,
+          329.26125,
+          333.607325
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 329.65792,
+        "samples_us": [
+          332.70581500000003,
+          329.65792,
+          329.5890075,
+          329.60112000000004,
+          329.610625,
+          329.698515,
+          337.7766025
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 2,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 2,
+          "extern_calls": 1
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 336.1716842651367,
+        "samples_us": [
+          339.56897735595703,
+          339.55902099609375,
+          336.1716842651367,
+          334.8107147216797,
+          334.8209762573242
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "Memset (Device)",
+          "us": 0.4479999999999791
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 323.744
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 10.591999999999985
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.44800000000009277
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 321.08900000000006
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 10.336000000000013
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.4479999999999791
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.7359999999999
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 10.368000000000166
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.41599999999994
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.865
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 10.304000000000087
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.44800000000009277
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "us": 320.8320000000001
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 10.336000000000013
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 94.90999999999985,
+          "cpu_us": 413.71700000000004
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 206.16500000000002,
+          "cpu_us": 206.16500000000002
+        },
+        {
+          "name": "aten::mm",
+          "count": 5,
+          "self_cpu_us": 45.524,
+          "cpu_us": 78.93400000000008
+        },
+        {
+          "name": "cudaDeviceGetAttribute",
+          "count": 5,
+          "self_cpu_us": 1.294999999999959,
+          "cpu_us": 1.294999999999959
+        },
+        {
+          "name": "cudaMemsetAsync",
+          "count": 5,
+          "self_cpu_us": 13.439000000000021,
+          "cpu_us": 13.439000000000021
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 10,
+          "self_cpu_us": 29.614000000000203,
+          "cpu_us": 29.614000000000203
+        },
+        {
+          "name": "Memset (Device)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "count": 5,
+          "self_cpu_us": 22.769999999999982,
+          "cpu_us": 33.708000000000084
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 1477.4009999999998,
+          "cpu_us": 1477.4009999999998
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 329.3951988220215,
+        "samples_us": [
+          321.2398052215576,
+          328.68900299072266,
+          328.6976099014282,
+          329.3951988220215,
+          332.46519565582275,
+          332.367205619812,
+          332.49800205230713
+        ],
+        "invocations_per_graph": 8,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+      }
+    },
+    {
+      "case_id": "report117:add_softmax:float32:16x128",
+      "kind": "add_softmax",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.04007291601737961,
+      "before_validation_host40": {
+        "median_us": 9.794025000000001,
+        "samples_us": [
+          10.204675,
+          9.734824999999999,
+          9.794025000000001
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 9.601125,
+        "samples_us": [
+          10.077375,
+          9.638124999999999,
+          9.69845,
+          9.508475,
+          9.4534,
+          9.601125,
+          9.532475
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 3,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 3,
+          "extern_calls": 1,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "host40": {
+        "median_us": 9.495925,
+        "samples_us": [
+          9.85745,
+          9.5077,
+          9.481925,
+          9.4255,
+          9.4526,
+          9.721875,
+          9.495925
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 9.4184675,
+        "samples_us": [
+          9.4296525,
+          9.421155,
+          9.4428725,
+          9.38579,
+          9.4135775,
+          9.4132225,
+          9.4184675
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 3,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 3,
+          "extern_calls": 1,
+          "pattern_matcher_count": 1,
+          "pattern_matcher_nodes": 4
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 9.47327971458435,
+        "samples_us": [
+          9.424960017204285,
+          9.550079703330994,
+          9.503200054168701,
+          9.47327971458435,
+          9.38751995563507
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "us": 1.3119999999998981
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "us": 1.344000000000051
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "us": 1.2160000000001219
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "us": 1.2159999999998945
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "us": 1.183999999999969
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 83.95799999999997,
+          "cpu_us": 1015.1360000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 887.2560000000001,
+          "cpu_us": 887.2560000000001
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 23.953000000000316,
+          "cpu_us": 43.92200000000014
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 19.968999999999824,
+          "cpu_us": 19.968999999999824
+        },
+        {
+          "name": "triton_per_fused_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.742000000000189,
+          "cpu_us": 6.742000000000189
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.1065499857068062,
+        "samples_us": [
+          1.112074963748455,
+          1.1068250052630901,
+          1.1065499857068062,
+          1.1062749661505222,
+          1.106099970638752,
+          1.106099970638752,
+          1.1065499857068062
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_softmax",
+        "match_kind": "add_softmax",
+        "calls": [
+          "add",
+          "softmax"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "large:add_softmax:float32:2048x2048",
+      "kind": "add_softmax",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.039562785997986794,
+      "before_validation_host40": {
+        "median_us": 13.031325,
+        "samples_us": [
+          13.667925,
+          13.031325,
+          13.031
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 12.980425,
+        "samples_us": [
+          13.248275000000001,
+          13.064175,
+          12.991050000000001,
+          12.9595,
+          12.980425,
+          12.965475000000001,
+          12.977924999999999
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 4,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 4,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 12.998425000000001,
+        "samples_us": [
+          13.271625,
+          13.01425,
+          13.004024999999999,
+          12.998425000000001,
+          12.991325,
+          12.9716,
+          12.945150000000002
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 12.676025,
+        "samples_us": [
+          12.677835,
+          12.666715,
+          12.676025,
+          12.6790075,
+          12.67459,
+          12.670607500000001,
+          12.6772075
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 4,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 4,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 12.7292799949646,
+        "samples_us": [
+          12.73967981338501,
+          12.7292799949646,
+          12.734559774398804,
+          12.698400020599365,
+          12.702239751815796
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "us": 12.544999999999959
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "us": 12.512000000000057
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "us": 12.288999999999987
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "us": 12.479999999999905
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "us": 12.447999999999979
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 93.03600000000017,
+          "cpu_us": 568.9300000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 189.301,
+          "cpu_us": 189.301
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 27.938999999999737,
+          "cpu_us": 286.5929999999999
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 258.65400000000017,
+          "cpu_us": 258.65400000000017
+        },
+        {
+          "name": "triton_red_fused_exp_prepare_softmax_online_sub_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.856000000000108,
+          "cpu_us": 5.856000000000108
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 12.040399760007858,
+        "samples_us": [
+          11.825224757194519,
+          11.912199854850769,
+          12.002649903297424,
+          12.040399760007858,
+          12.080375105142593,
+          12.367124855518341,
+          12.370000034570694
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_softmax",
+        "match_kind": "add_softmax",
+        "calls": [
+          "add",
+          "softmax"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "report117:add_layernorm:float32:16x128",
+      "kind": "add_layernorm",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.031285303994081914,
+      "before_validation_host40": {
+        "median_us": 9.79185,
+        "samples_us": [
+          10.0815,
+          9.629574999999999,
+          9.79185
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 9.599425,
+        "samples_us": [
+          10.248775,
+          9.54255,
+          9.6828,
+          9.523175,
+          9.6205,
+          9.599425,
+          9.541875000000001
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 5,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 5,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 9.4907,
+        "samples_us": [
+          9.81745,
+          9.45445,
+          9.4885,
+          9.45975,
+          9.4907,
+          9.552200000000001,
+          9.493224999999999
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 9.27408,
+        "samples_us": [
+          9.37048,
+          9.33658,
+          9.263185,
+          9.286405,
+          9.249305,
+          9.27408,
+          9.269985
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 5,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 5,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 9.413120150566101,
+        "samples_us": [
+          9.413120150566101,
+          9.39408004283905,
+          9.397439956665039,
+          9.425280094146729,
+          9.449120163917542
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2479999999999336
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2799999999999727
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.15199999999993
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.1200000000000045
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 89.11099999999993,
+          "cpu_us": 548.757
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 192.03300000000002,
+          "cpu_us": 192.03300000000002
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 26.346000000000004,
+          "cpu_us": 267.613
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 241.267,
+          "cpu_us": 241.267
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 7.072999999999865,
+          "cpu_us": 7.072999999999865
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.0345499962568283,
+        "samples_us": [
+          1.03984996676445,
+          1.0349749587476254,
+          1.0345499962568283,
+          1.0342000052332878,
+          1.0344999842345715,
+          1.0343500413000584,
+          1.0346000082790852
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "large:add_layernorm:float32:2048x2048",
+      "kind": "add_layernorm",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.03280806896509603,
+      "before_validation_host40": {
+        "median_us": 10.799925,
+        "samples_us": [
+          11.103925,
+          10.799925,
+          10.727075000000001
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 10.612,
+        "samples_us": [
+          10.95345,
+          10.70475,
+          10.59905,
+          10.637175000000001,
+          10.612,
+          10.607175,
+          10.5937
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 6,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 6,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 10.606725,
+        "samples_us": [
+          10.837725,
+          10.655249999999999,
+          10.595675,
+          10.606725,
+          10.606725,
+          10.609275,
+          10.552525
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 10.285215,
+        "samples_us": [
+          10.2921225,
+          10.284727499999999,
+          10.285215,
+          10.2765725,
+          10.2790975,
+          10.301175,
+          10.44051
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 6,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 6,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 10.48143982887268,
+        "samples_us": [
+          10.536320209503174,
+          10.48143982887268,
+          10.48367977142334,
+          10.466560125350952,
+          10.456639528274536
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_0",
+          "us": 10.20799999999997
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 10.52800000000002
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 10.206999999999994
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 10.080000000000041
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 10.495999999999981
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 93.95600000000002,
+          "cpu_us": 553.8939999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 193.941,
+          "cpu_us": 193.941
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 26.959999999999866,
+          "cpu_us": 265.99699999999984
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 239.03699999999998,
+          "cpu_us": 239.03699999999998
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.736999999999853,
+          "cpu_us": 5.736999999999853
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 9.314599633216858,
+        "samples_us": [
+          9.493900090456009,
+          9.307750314474106,
+          9.306024760007858,
+          9.304825216531754,
+          9.314599633216858,
+          9.335075318813324,
+          9.357699751853943
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "report117:mul_sum:float32:16x128",
+      "kind": "mul_sum",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.018188996997196227,
+      "before_validation_host40": {
+        "median_us": 9.549,
+        "samples_us": [
+          10.284375,
+          9.549,
+          9.42075
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 9.67525,
+        "samples_us": [
+          10.211175,
+          9.67525,
+          9.68345,
+          9.60975,
+          9.576425,
+          9.6032,
+          9.82445
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 7,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 7,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 9.6572,
+        "samples_us": [
+          9.959125,
+          9.646899999999999,
+          9.6572,
+          9.6993,
+          9.519525,
+          9.5592,
+          9.722024999999999
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 9.3216525,
+        "samples_us": [
+          9.399082499999999,
+          9.2887825,
+          9.3029075,
+          9.3454875,
+          9.3050525,
+          9.324394999999999,
+          9.3216525
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 7,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 7,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 9.426400065422058,
+        "samples_us": [
+          9.426400065422058,
+          9.387680292129517,
+          9.45967972278595,
+          9.417920112609863,
+          9.434239864349365
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2169999999999845
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2160000000000082
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.0879999999999654
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.0880000000000791
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 94.29100000000011,
+          "cpu_us": 562.4450000000002
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 197.142,
+          "cpu_us": 197.142
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 27.57500000000016,
+          "cpu_us": 271.01200000000006
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 243.4369999999999,
+          "cpu_us": 243.4369999999999
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.4220000000000255,
+          "cpu_us": 6.4220000000000255
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 0.9846000000834465,
+        "samples_us": [
+          0.989999994635582,
+          0.9855249896645546,
+          0.98452502861619,
+          0.9848250076174736,
+          0.9844000451266766,
+          0.9846000000834465,
+          0.9844750165939331
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "mul_sum",
+        "match_kind": "mul_sum",
+        "calls": [
+          "mul",
+          "sum_1"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "large:mul_sum:float32:2048x2048",
+      "kind": "mul_sum",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float32",
+      "tolerance": {
+        "atol": 0.0003,
+        "rtol": 0.0003
+      },
+      "status": "passed",
+      "setup_seconds": 0.019156508962623775,
+      "before_validation_host40": {
+        "median_us": 10.12605,
+        "samples_us": [
+          11.899975000000001,
+          10.12605,
+          10.028324999999999
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 9.821475,
+        "samples_us": [
+          10.5899,
+          9.90115,
+          9.899075,
+          9.77675,
+          9.80005,
+          9.821475,
+          9.8125
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 8,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 8,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 9.79815,
+        "samples_us": [
+          10.14,
+          9.902175,
+          9.79815,
+          9.70895,
+          9.7083,
+          9.74765,
+          9.839324999999999
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 9.4786475,
+        "samples_us": [
+          9.4406125,
+          9.470055,
+          9.459235,
+          9.496375,
+          9.484065000000001,
+          9.4885875,
+          9.4786475
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 8,
+          "generated_module_cache_miss": 18,
+          "async_compile_cache_miss": 8,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 9.615520238876343,
+        "samples_us": [
+          9.620320200920105,
+          9.615520238876343,
+          9.668800234794617,
+          9.607840180397034,
+          9.605119824409485
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_0",
+          "us": 6.239999999999895
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 5.5359999999999445
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 5.5359999999999445
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 5.567999999999984
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 5.47199999999998
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 92.81999999999982,
+          "cpu_us": 578.2669999999999
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 203.031,
+          "cpu_us": 203.031
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 27.709000000000117,
+          "cpu_us": 282.4160000000001
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 254.707,
+          "cpu_us": 254.707
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 6.05600000000004,
+          "cpu_us": 6.05600000000004
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 5.333025008440018,
+        "samples_us": [
+          5.341525003314018,
+          5.332374945282936,
+          5.333949998021126,
+          5.332674831151962,
+          5.3338248282670975,
+          5.332950130105019,
+          5.333025008440018
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "mul_sum",
+        "match_kind": "mul_sum",
+        "calls": [
+          "mul",
+          "sum_1"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float32",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 2,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "report117:matmul_bias_gelu_exact:float16:16x128:64",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 16,
+      "N": 128,
+      "K": 64,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.07831523497588933,
+      "before_validation_host40": {
+        "median_us": 9.45895,
+        "samples_us": [
+          10.1908,
+          9.45895,
+          9.378125
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 9.4184,
+        "samples_us": [
+          10.03275,
+          9.486125,
+          9.4184,
+          9.375375,
+          9.313500000000001,
+          9.385724999999999,
+          9.598875
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 9,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 9,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 9.384125000000001,
+        "samples_us": [
+          9.6212,
+          9.490525,
+          9.300075,
+          9.384125000000001,
+          9.26395,
+          9.291549999999999,
+          9.419325
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 9.1436575,
+        "samples_us": [
+          9.096477499999999,
+          9.16713,
+          9.136162500000001,
+          9.1360575,
+          9.1436575,
+          9.1865225,
+          9.16063
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 9,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 9,
+          "extern_calls": 1,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 9.323199987411499,
+        "samples_us": [
+          9.312639832496643,
+          9.363200068473816,
+          9.306560158729553,
+          9.323199987411499,
+          9.34880018234253
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_tem_fused_0",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 1.47199999999998
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "us": 1.4720000000002074
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 81.47599999999966,
+          "cpu_us": 1286.1259999999997
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 927.5649999999999,
+          "cpu_us": 927.5649999999999
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "count": 5,
+          "self_cpu_us": 33.996999999999844,
+          "cpu_us": 277.08500000000004
+        },
+        {
+          "name": "cuLaunchKernelEx",
+          "count": 5,
+          "self_cpu_us": 243.0880000000002,
+          "cpu_us": 243.0880000000002
+        },
+        {
+          "name": "triton_tem_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.7719999999999345,
+          "cpu_us": 5.7719999999999345
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.3544999994337559,
+        "samples_us": [
+          1.3685000129044056,
+          1.354924961924553,
+          1.354449987411499,
+          1.3544999994337559,
+          1.3544250279664993,
+          1.3545749709010124,
+          1.3541249558329582
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_small_matmul_single_kernel",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              64
+            ],
+            "stride": [
+              64,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              64,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "prepared_launch": "enabled",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_compiler_options": {
+          "max_autotune": true,
+          "max_autotune_gemm_backends": "TRITON",
+          "epilogue_fusion": true,
+          "benchmark_epilogue_fusion": false,
+          "pattern_matcher": false,
+          "emulate_precision_casts": true,
+          "use_static_cuda_launcher": false,
+          "size_asserts": false,
+          "triton.cudagraphs": false
+        },
+        "kernel_provider": "native_inductor_codegen",
+        "shape": [
+          16,
+          128,
+          64
+        ],
+        "activation": "gelu_exact",
+        "rounding_boundaries": [
+          "matmul_output_dtype",
+          "add_output_dtype"
+        ],
+        "kernel_name": "triton_tem_fused_0",
+        "kernel_count": 1
+      }
+    },
+    {
+      "case_id": "large:matmul_bias_gelu_exact:float16:2048x2048x2048",
+      "kind": "matmul_bias_gelu_exact",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.0314300199970603,
+      "before_validation_host40": {
+        "median_us": 116.454025,
+        "samples_us": [
+          116.80995,
+          116.27837500000001,
+          116.454025
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 115.803125,
+        "samples_us": [
+          116.24927499999998,
+          116.0107,
+          115.8149,
+          115.747875,
+          115.71155000000002,
+          115.803125,
+          115.709025
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 10,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 10,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 115.773675,
+        "samples_us": [
+          115.97132500000001,
+          115.71735000000001,
+          115.77037499999999,
+          115.819075,
+          115.773675,
+          115.80735,
+          115.69075000000001
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 115.23720999999999,
+        "samples_us": [
+          115.4046575,
+          115.3665425,
+          115.23569499999999,
+          115.23720999999999,
+          115.244445,
+          114.01380999999999,
+          112.843225
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 10,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 10,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 113.37295532226562,
+        "samples_us": [
+          113.3198356628418,
+          113.37295532226562,
+          113.34400177001953,
+          113.37295532226562,
+          113.3846378326416
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "us": 109.02699999999993
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 5.729000000000042
+        },
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "us": 106.65800000000002
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 5.631999999999948
+        },
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "us": 106.94599999999991
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 5.567999999999984
+        },
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "us": 106.75400000000002
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 5.599999999999909
+        },
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "us": 106.62600000000009
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "us": 5.664999999999964
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 103.44700000000006,
+          "cpu_us": 608.6740000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 193.55400000000003,
+          "cpu_us": 193.55400000000003
+        },
+        {
+          "name": "aten::mm",
+          "count": 5,
+          "self_cpu_us": 39.95799999999991,
+          "cpu_us": 279.5329999999999
+        },
+        {
+          "name": "cudaLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 239.575,
+          "cpu_us": 239.575
+        },
+        {
+          "name": "ampere_fp16_s1688gemm_fp16_128x64_sliced1x2_ldg8_f2f_nn",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "count": 5,
+          "self_cpu_us": 21.847000000000207,
+          "cpu_us": 32.1400000000001
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 10.292999999999893,
+          "cpu_us": 10.292999999999893
+        },
+        {
+          "name": "triton_poi_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 383.509,
+          "cpu_us": 383.509
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 109.55899953842163,
+        "samples_us": [
+          110.247802734375,
+          109.55899953842163,
+          109.38960313796997,
+          109.39160585403442,
+          109.35039520263672,
+          111.73620223999023,
+          112.77819871902466
+        ],
+        "invocations_per_graph": 8,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "matmul_bias_gelu",
+        "match_kind": "matmul_bias_gelu_exact",
+        "calls": [
+          "matmul",
+          "add",
+          "gelu"
+        ],
+        "placeholders": [
+          "a",
+          "b",
+          "bias"
+        ],
+        "input_count": 3,
+        "attr_targets": [],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 0,
+        "traced_placeholders": 3,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+      }
+    },
+    {
+      "case_id": "report117:add_layernorm_affine:float16:16x128",
+      "kind": "add_layernorm_affine",
+      "M": 16,
+      "N": 128,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.038017021026462317,
+      "before_validation_host40": {
+        "median_us": 13.184000000000001,
+        "samples_us": [
+          13.8233,
+          13.184000000000001,
+          13.049074999999998
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 12.926599999999999,
+        "samples_us": [
+          13.4386,
+          13.269649999999999,
+          13.1049,
+          12.892075,
+          12.862725000000001,
+          12.749825,
+          12.926599999999999
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 11,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 11,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 12.856225,
+        "samples_us": [
+          13.04595,
+          12.899325,
+          12.58045,
+          12.856225,
+          12.586625,
+          13.013925,
+          12.542925
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 12.343605,
+        "samples_us": [
+          12.401847499999999,
+          12.3166175,
+          12.35881,
+          12.33981,
+          12.343605,
+          12.306579999999999,
+          12.451785
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 11,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 11,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 12.482719421386719,
+        "samples_us": [
+          12.460800409317017,
+          12.545280456542969,
+          12.506400346755981,
+          12.482719421386719,
+          12.45919942855835
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2160000000000082
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.2800000000000864
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.15199999999993
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.1520000000000437
+        },
+        {
+          "name": "triton_per_fused_0",
+          "us": 1.1520000000000437
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 93.33499999999998,
+          "cpu_us": 560.1440000000001
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 195.67700000000002,
+          "cpu_us": 195.67700000000002
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 31.240000000000123,
+          "cpu_us": 271.1320000000001
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 239.892,
+          "cpu_us": 239.892
+        },
+        {
+          "name": "triton_per_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.937999999999988,
+          "cpu_us": 5.937999999999988
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 1.0316249914467335,
+        "samples_us": [
+          1.0368750430643559,
+          1.0316249914467335,
+          1.0314499959349632,
+          1.0320000350475311,
+          1.0318250395357609,
+          1.0314250364899635,
+          1.0314499959349632
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm_affine",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [
+          "weight",
+          "bias"
+        ],
+        "inputs": [
+          {
+            "shape": [
+              16,
+              128
+            ],
+            "stride": [
+              128,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              128
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 2,
+        "traced_placeholders": 4,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    },
+    {
+      "case_id": "large:add_layernorm_affine:float16:2048x2048",
+      "kind": "add_layernorm_affine",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "dtype": "float16",
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "status": "passed",
+      "setup_seconds": 0.04013569495873526,
+      "before_validation_host40": {
+        "median_us": 13.34315,
+        "samples_us": [
+          13.950700000000001,
+          13.255225,
+          13.34315
+        ],
+        "calls": 40
+      },
+      "after_validation_host40": {
+        "median_us": 12.950149999999999,
+        "samples_us": [
+          13.431925000000001,
+          13.005350000000002,
+          12.950149999999999,
+          13.025375,
+          12.867925,
+          12.878325,
+          12.926275
+        ],
+        "calls": 40
+      },
+      "counters_before_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 12,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 12,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "host40": {
+        "median_us": 13.0655,
+        "samples_us": [
+          13.402875,
+          13.0655,
+          12.940000000000001,
+          13.054025,
+          13.488475,
+          13.0147,
+          13.53855
+        ],
+        "calls": 40
+      },
+      "host400": {
+        "median_us": 12.507185,
+        "samples_us": [
+          12.518089999999999,
+          12.524775,
+          12.507185,
+          12.479027499999999,
+          12.4812225,
+          12.465072500000002,
+          12.604782499999999
+        ],
+        "calls": 400
+      },
+      "counters_after_timing": {
+        "inductor": {
+          "fxgraph_cache_bypass": 12,
+          "generated_module_cache_miss": 36,
+          "async_compile_cache_miss": 12,
+          "extern_calls": 2,
+          "pattern_matcher_count": 2,
+          "pattern_matcher_nodes": 8
+        }
+      },
+      "direct_cuda_events_us": {
+        "median_us": 12.649279832839966,
+        "samples_us": [
+          12.659519910812378,
+          12.649760246276855,
+          12.649279832839966,
+          12.6254403591156,
+          12.594720125198364
+        ]
+      },
+      "profiler_gpu_events": [
+        {
+          "name": "triton_red_fused_0",
+          "us": 9.567999999999984
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 9.53699999999992
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 9.281000000000063
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 9.345000000000027
+        },
+        {
+          "name": "triton_red_fused_0",
+          "us": 9.344999999999914
+        }
+      ],
+      "profiler_cpu": [
+        {
+          "name": "## Call CompiledFxGraph None ##",
+          "count": 5,
+          "self_cpu_us": 92.92000000000002,
+          "cpu_us": 559.0789999999998
+        },
+        {
+          "name": "Activity Buffer Request",
+          "count": 1,
+          "self_cpu_us": 195.20299999999997,
+          "cpu_us": 195.20299999999997
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 31.201999999999998,
+          "cpu_us": 270.9559999999999
+        },
+        {
+          "name": "cuLaunchKernel",
+          "count": 5,
+          "self_cpu_us": 239.7539999999999,
+          "cpu_us": 239.7539999999999
+        },
+        {
+          "name": "triton_red_fused_0",
+          "count": 5,
+          "self_cpu_us": 0,
+          "cpu_us": 0
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "count": 2,
+          "self_cpu_us": 5.831999999999994,
+          "cpu_us": 5.831999999999994
+        }
+      ],
+      "uniform_graph_gpu_us": {
+        "median_us": 9.294924885034561,
+        "samples_us": [
+          9.061150252819061,
+          9.052900224924088,
+          9.17622521519661,
+          9.3020498752594,
+          9.295149892568588,
+          9.294924885034561,
+          9.298475086688995
+        ],
+        "invocations_per_graph": 64,
+        "replays": 20
+      },
+      "execution": {
+        "kind": "inductor_static_inference",
+        "template": "add_layernorm",
+        "match_kind": "add_layernorm_affine",
+        "calls": [
+          "add",
+          "layer_norm"
+        ],
+        "placeholders": [
+          "a",
+          "b"
+        ],
+        "input_count": 2,
+        "attr_targets": [
+          "weight",
+          "bias"
+        ],
+        "inputs": [
+          {
+            "shape": [
+              2048,
+              2048
+            ],
+            "stride": [
+              2048,
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": false,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "attrs": [
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          },
+          {
+            "shape": [
+              2048
+            ],
+            "stride": [
+              1
+            ],
+            "storage_offset": 0,
+            "dtype": "torch.float16",
+            "device": "cuda:0",
+            "layout": "torch.strided",
+            "requires_grad": true,
+            "conjugate_view": false,
+            "negative_view": false
+          }
+        ],
+        "output_count": 1,
+        "inference_only": true,
+        "training_flag_guarded": false,
+        "fallback_supplied": true,
+        "generated_source_count": 1,
+        "precision_state": {
+          "float32_matmul_precision": "highest",
+          "cuda_matmul_allow_tf32": false,
+          "cudnn_allow_tf32": false,
+          "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+            false,
+            true
+          ],
+          "deterministic_algorithms": false,
+          "deterministic_algorithms_warn_only": false,
+          "cudnn_deterministic": false
+        },
+        "autocast": "required_disabled",
+        "transform_modes": "required_none",
+        "cuda_graphs": false,
+        "inference_scope": "operator-only FX graph; module.training is not consulted",
+        "guard_checks": [
+          "call_arity",
+          "keyword_arguments",
+          "forward_code_identity",
+          "forward_hooks",
+          "autocast",
+          "torch_function_mode",
+          "dispatch_mode",
+          "functorch_transform",
+          "precision_state",
+          "tensor_type",
+          "shape",
+          "stride",
+          "storage_offset",
+          "dtype",
+          "device",
+          "layout",
+          "requires_grad",
+          "conjugate_negative_view",
+          "tensor_aliasing",
+          "live_attr_lookup"
+        ],
+        "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+        "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+        "precision_policy": "eager_materialization_boundaries",
+        "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+        "graph_lifted_get_attrs": 2,
+        "traced_placeholders": 4,
+        "bias_reuse_skipped_reason": "template_is_not_matmul_bias",
+        "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+        "small_matmul_skipped_reason": "not_small_matmul_template"
+      }
+    }
+  ],
+  "ended_at": 1793458055.2690911
+}

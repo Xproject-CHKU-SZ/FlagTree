@@ -1,0 +1,92 @@
+def run_and_get_code(
+    fn: Callable[P, _T],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> tuple[_T, list[str]]:
+    from .graph import GraphLowering
+
+    source_codes: OrderedSet[str] = OrderedSet()
+
+    def save_output_code(code: str) -> None:
+        source_codes.add(code)
+
+    with mock.patch.object(GraphLowering, "save_output_code", save_output_code):
+        torch._dynamo.reset()
+        result = fn(*args, **kwargs)
+    return result, list(source_codes)
+
+def reset() -> None:
+    """
+    Clear all compile caches and restore initial state.  This function is intended
+    to reset Dynamo's state *as if* you had started a fresh process invocation, which
+    makes it good for testing scenarios where you want to behave as if you started
+    a new process.  It does NOT affect any file system caches.
+
+    NB: this does NOT reset logging state.  Don't use this to test logging
+    initialization/reinitialization.
+    """
+    # TODO: https://github.com/pytorch/pytorch/issues/139200
+    import logging
+
+    log = logging.getLogger(__name__)
+    log.info("torch._dynamo.reset")
+    with convert_frame.compile_lock:
+        reset_code_caches()
+        convert_frame.input_codes.clear()
+        reset_code_state()
+        convert_frame.output_codes.clear()
+        orig_code_map.clear()
+        guard_failures.clear()
+        graph_break_reasons.clear()
+        resume_execution.ContinueExecutionCache.cache.clear()
+        _reset_guarded_backend_cache()
+        reset_frame_count()
+        torch._dynamo.compiled_autograd.reset()
+        convert_frame.FRAME_COUNTER = 0
+        convert_frame.FRAME_COMPILE_COUNTER.clear()
+        callback_handler.clear()
+        GenerationTracker.clear()
+        TensorifyState.clear()
+        torch._dynamo.utils.warn_once_cache.clear()
+        torch._C._autograd._saved_tensors_hooks_set_tracing(False)
+
+        # Reset cudagraph trees unconditionally since they are global state
+        # not tied to a specific backend instance
+        if torch.cuda.is_available():
+            from torch._inductor.cudagraph_trees import reset_cudagraph_trees
+
+            reset_cudagraph_trees()
+
+@forbid_in_graph
+def mark_static_address(t: Any, guard: bool = False) -> None:
+    """
+    Marks an input tensor whose address should be treated as constant across calls to the
+    same dynamo-compiled function. This indicates to cudagraphs that an extra allocation
+    is not needed for this input. The data_ptr will be guarded if guard=True, and cause a full
+    recompile if the data_ptr changes. Note: If this address changes, cudagraphs will re-record
+    if guard=False.
+    """
+    if not isinstance(t, torch.Tensor):
+        raise TypeError(f"mark_static_address expects a tensor but received {type(t)}")
+
+    if guard:
+        t._dynamo_static_input_type = "guarded"  # type: ignore[attr-defined]
+    else:
+        t._dynamo_static_input_type = "unguarded"  # type: ignore[attr-defined]
+
+    def _copy_inputs_and_remove_from_src(
+        self, dsts: list[InputType], srcs: list[InputType]
+    ) -> None:
+        dst_tensors = []
+        src_tensors = []
+        for idx in self.non_static_input_idx:
+            if not isinstance(srcs[idx], torch.Tensor):
+                continue
+            expanded_dims = self.expanded_dims[idx]
+            dst_tensors.append(index_expanded_dims(dsts[idx], expanded_dims))  # type: ignore[arg-type]
+            src_tensors.append(index_expanded_dims(srcs[idx], expanded_dims))  # type: ignore[arg-type]
+            srcs[idx] = None  # type: ignore[call-overload]
+        # Fails on empty lists
+        if dst_tensors:
+            torch._foreach_copy_(dst_tensors, src_tensors)
+

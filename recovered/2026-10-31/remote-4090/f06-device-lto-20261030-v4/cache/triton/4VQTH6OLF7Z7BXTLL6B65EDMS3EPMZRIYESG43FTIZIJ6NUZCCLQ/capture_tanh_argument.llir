@@ -1,0 +1,90 @@
+; ModuleID = 'LLVMDialectModule'
+source_filename = "LLVMDialectModule"
+target datalayout = "e-p3:32:32-p4:32:32-p5:32:32-p6:32:32-p7:32:32-i64:64-i128:128-i256:256-v16:16-v32:32-n16:32:64"
+
+; Function Attrs: nounwind
+define ptx_kernel void @capture_tanh_argument(ptr addrspace(1) %0, ptr addrspace(1) %1, ptr addrspace(1) %2, i32 %3, ptr addrspace(1) %4, ptr addrspace(1) readnone captures(none) %5, ptr addrspace(1) readnone captures(none) %6) local_unnamed_addr #0 !dbg !4 {
+  %8 = tail call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x(), !dbg !7
+  %9 = shl i32 %8, 7, !dbg !8
+  %10 = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !dbg !9
+  %11 = and i32 %10, 127, !dbg !9
+  %12 = or disjoint i32 %9, %11, !dbg !10
+  %13 = icmp slt i32 %12, 2048, !dbg !11
+  %14 = srem i32 %12, 128, !dbg !12
+  %15 = sext i32 %12 to i64, !dbg !13
+  %16 = getelementptr half, ptr addrspace(1) %0, i64 %15, !dbg !13
+  %17 = tail call i16 asm sideeffect "mov.u16 $0, 0x0;\0A\09@$2 ld.global.b16 { $0 }, [ $1 + 0 ];", "=c,l,b"(ptr addrspace(1) %16, i1 %13) #2, !dbg !14
+  %18 = bitcast i16 %17 to half, !dbg !14
+  %19 = sext i32 %14 to i64, !dbg !15
+  %20 = getelementptr half, ptr addrspace(1) %1, i64 %19, !dbg !15
+  %21 = tail call i64 asm sideeffect "mov.u64 $0, 0x0;\0A\09createpolicy.fractional.L2::evict_last.b64 $0, 1.0;", "=l"() #2, !dbg !16
+  %22 = tail call i16 asm sideeffect "mov.u16 $0, 0x0;\0A\09@$3 ld.global.L1::evict_last.L2::cache_hint.b16 { $0 }, [ $1 + 0 ], $2;", "=c,l,l,b"(ptr addrspace(1) %20, i64 %21, i1 %13) #2, !dbg !16
+  %23 = bitcast i16 %22 to half, !dbg !16
+  %24 = fadd half %18, %23, !dbg !17
+  %25 = fpext half %24 to float, !dbg !18
+  %26 = fmul float %25, 5.000000e-01, !dbg !19
+  %27 = fmul float %25, %25, !dbg !20
+  %28 = fmul float %27, %25, !dbg !21
+  %29 = fmul float %28, 0x3FA6E4E260000000, !dbg !22
+  %30 = fadd float %29, %25, !dbg !23
+  %31 = fmul float %30, 0x3FE9884540000000, !dbg !24
+  %32 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %31) #2, !dbg !25
+  %33 = fadd float %32, 1.000000e+00, !dbg !26
+  %34 = fmul float %33, %26, !dbg !27
+  %35 = fptrunc float %34 to half, !dbg !28
+  %36 = getelementptr half, ptr addrspace(1) %2, i64 %15, !dbg !29
+  %37 = bitcast half %35 to i16, !dbg !30
+  tail call void asm sideeffect "@$2 st.global.b16 [ $1 + 0 ], { $0 };", "c,l,b"(i16 %37, ptr addrspace(1) %36, i1 %13) #2, !dbg !30
+  %38 = getelementptr float, ptr addrspace(1) %4, i64 %15, !dbg !31
+  %39 = bitcast float %31 to i32, !dbg !32
+  tail call void asm sideeffect "@$2 st.global.b32 [ $1 + 0 ], { $0 };", "r,l,b"(i32 %39, ptr addrspace(1) %38, i1 %13) #2, !dbg !32
+  ret void, !dbg !33
+}
+
+; Function Attrs: mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare noundef range(i32 0, 2147483647) i32 @llvm.nvvm.read.ptx.sreg.ctaid.x() #1
+
+; Function Attrs: mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #1
+
+attributes #0 = { nounwind "nvvm.reqntid"="128" }
+attributes #1 = { mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none) }
+attributes #2 = { nounwind }
+
+!llvm.dbg.cu = !{!0}
+!llvm.module.flags = !{!2, !3}
+
+!0 = distinct !DICompileUnit(language: DW_LANG_C, file: !1, producer: "triton", isOptimized: true, runtimeVersion: 0, emissionKind: LineTablesOnly)
+!1 = !DIFile(filename: "013-precise-capture.py", directory: "/tmp/f06-device-lto-20261030-v4/smoke")
+!2 = !{i32 2, !"Debug Info Version", i32 3}
+!3 = !{i32 4, !"nvvm-reflect-ftz", i32 1}
+!4 = distinct !DISubprogram(name: "capture_tanh_argument", linkageName: "capture_tanh_argument", scope: !1, file: !1, line: 8, type: !5, scopeLine: 8, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !0)
+!5 = !DISubroutineType(cc: DW_CC_normal, types: !6)
+!6 = !{}
+!7 = !DILocation(line: 10, column: 28, scope: !4)
+!8 = !DILocation(line: 10, column: 33, scope: !4)
+!9 = !DILocation(line: 11, column: 36, scope: !4)
+!10 = !DILocation(line: 11, column: 23, scope: !4)
+!11 = !DILocation(line: 12, column: 21, scope: !4)
+!12 = !DILocation(line: 14, column: 18, scope: !4)
+!13 = !DILocation(line: 15, column: 29, scope: !4)
+!14 = !DILocation(line: 15, column: 33, scope: !4)
+!15 = !DILocation(line: 16, column: 29, scope: !4)
+!16 = !DILocation(line: 16, column: 33, scope: !4)
+!17 = !DILocation(line: 22, column: 19, scope: !4)
+!18 = !DILocation(line: 23, column: 19, scope: !4)
+!19 = !DILocation(line: 26, column: 19, scope: !4)
+!20 = !DILocation(line: 27, column: 19, scope: !4)
+!21 = !DILocation(line: 28, column: 20, scope: !4)
+!22 = !DILocation(line: 30, column: 20, scope: !4)
+!23 = !DILocation(line: 31, column: 19, scope: !4)
+!24 = !DILocation(line: 33, column: 20, scope: !4)
+!25 = !DILocation(line: 34, column: 38, scope: !4)
+!26 = !DILocation(line: 36, column: 20, scope: !4)
+!27 = !DILocation(line: 37, column: 20, scope: !4)
+!28 = !DILocation(line: 39, column: 21, scope: !4)
+!29 = !DILocation(line: 41, column: 24, scope: !4)
+!30 = !DILocation(line: 41, column: 35, scope: !4)
+!31 = !DILocation(line: 42, column: 25, scope: !4)
+!32 = !DILocation(line: 42, column: 51, scope: !4)
+!33 = !DILocation(line: 42, column: 4, scope: !4)

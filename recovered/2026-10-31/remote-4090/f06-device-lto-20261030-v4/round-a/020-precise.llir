@@ -1,0 +1,177 @@
+; ModuleID = 'LLVMDialectModule'
+source_filename = "LLVMDialectModule"
+target datalayout = "e-p3:32:32-p4:32:32-p5:32:32-p6:32:32-p7:32:32-i64:64-i128:128-i256:256-v16:16-v32:32-n16:32:64"
+
+; Function Attrs: nounwind
+define ptx_kernel void @triton_poi_fused_0(ptr addrspace(1) %0, ptr addrspace(1) %1, ptr addrspace(1) %2, i32 %3, ptr addrspace(1) readnone captures(none) %4, ptr addrspace(1) readnone captures(none) %5) local_unnamed_addr #0 !dbg !4 {
+  %7 = tail call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x(), !dbg !7
+  %8 = shl i32 %7, 10, !dbg !8
+  %9 = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !dbg !9
+  %10 = shl nuw nsw i32 %9, 3, !dbg !9
+  %11 = and i32 %10, 1016, !dbg !9
+  %12 = or disjoint i32 %11, %8, !dbg !10
+  %13 = srem i32 %12, 1024, !dbg !11
+  %14 = sext i32 %12 to i64, !dbg !12
+  %15 = getelementptr bfloat, ptr addrspace(1) %0, i64 %14, !dbg !12
+  %16 = tail call { i32, i32, i32, i32 } asm sideeffect "mov.u32 $0, 0x0;\0A\09mov.u32 $1, 0x0;\0A\09mov.u32 $2, 0x0;\0A\09mov.u32 $3, 0x0;\0A\09ld.global.v4.b32 { $0, $1, $2, $3 }, [ $4 + 0 ];", "=r,=r,=r,=r,l"(ptr addrspace(1) %15) #2, !dbg !13
+  %17 = extractvalue { i32, i32, i32, i32 } %16, 0, !dbg !13
+  %18 = bitcast i32 %17 to <2 x bfloat>, !dbg !13
+  %19 = extractvalue { i32, i32, i32, i32 } %16, 1, !dbg !13
+  %20 = bitcast i32 %19 to <2 x bfloat>, !dbg !13
+  %21 = extractvalue { i32, i32, i32, i32 } %16, 2, !dbg !13
+  %22 = bitcast i32 %21 to <2 x bfloat>, !dbg !13
+  %23 = extractvalue { i32, i32, i32, i32 } %16, 3, !dbg !13
+  %24 = bitcast i32 %23 to <2 x bfloat>, !dbg !13
+  %25 = sext i32 %13 to i64, !dbg !14
+  %26 = getelementptr bfloat, ptr addrspace(1) %1, i64 %25, !dbg !14
+  %27 = tail call i64 asm sideeffect "mov.u64 $0, 0x0;\0A\09createpolicy.fractional.L2::evict_last.b64 $0, 1.0;", "=l"() #2, !dbg !15
+  %28 = tail call { i32, i32, i32, i32 } asm sideeffect "mov.u32 $0, 0x0;\0A\09mov.u32 $1, 0x0;\0A\09mov.u32 $2, 0x0;\0A\09mov.u32 $3, 0x0;\0A\09ld.global.L1::evict_last.L2::cache_hint.v4.b32 { $0, $1, $2, $3 }, [ $4 + 0 ], $5;", "=r,=r,=r,=r,l,l"(ptr addrspace(1) %26, i64 %27) #2, !dbg !15
+  %29 = extractvalue { i32, i32, i32, i32 } %28, 0, !dbg !15
+  %30 = bitcast i32 %29 to <2 x bfloat>, !dbg !15
+  %31 = extractvalue { i32, i32, i32, i32 } %28, 1, !dbg !15
+  %32 = bitcast i32 %31 to <2 x bfloat>, !dbg !15
+  %33 = extractvalue { i32, i32, i32, i32 } %28, 2, !dbg !15
+  %34 = bitcast i32 %33 to <2 x bfloat>, !dbg !15
+  %35 = extractvalue { i32, i32, i32, i32 } %28, 3, !dbg !15
+  %36 = bitcast i32 %35 to <2 x bfloat>, !dbg !15
+  %37 = fadd <2 x bfloat> %18, %30, !dbg !16
+  %38 = fpext <2 x bfloat> %37 to <2 x float>, !dbg !17
+  %39 = fmul <2 x float> %38, splat (float 5.000000e-01), !dbg !18
+  %40 = extractelement <2 x float> %38, i64 0, !dbg !19
+  %41 = fmul float %40, %40, !dbg !20
+  %42 = extractelement <2 x float> %38, i64 1, !dbg !19
+  %43 = fmul float %42, %42, !dbg !20
+  %44 = fmul float %41, %40, !dbg !21
+  %45 = fmul float %43, %42, !dbg !21
+  %46 = fmul float %44, 0x3FA6E4E260000000, !dbg !22
+  %47 = fmul float %45, 0x3FA6E4E260000000, !dbg !22
+  %48 = fadd float %46, %40, !dbg !19
+  %49 = fadd float %47, %42, !dbg !19
+  %50 = fmul float %48, 0x3FE9884540000000, !dbg !23
+  %51 = fmul float %49, 0x3FE9884540000000, !dbg !23
+  %52 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %50) #2, !dbg !24
+  %53 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %51) #2, !dbg !24
+  %54 = insertelement <2 x float> poison, float %52, i64 0, !dbg !25
+  %55 = insertelement <2 x float> %54, float %53, i64 1, !dbg !25
+  %56 = fadd <2 x float> %55, splat (float 1.000000e+00), !dbg !25
+  %57 = fmul <2 x float> %56, %39, !dbg !26
+  %58 = fptrunc <2 x float> %57 to <2 x bfloat>, !dbg !27
+  %59 = fadd <2 x bfloat> %20, %32, !dbg !16
+  %60 = fpext <2 x bfloat> %59 to <2 x float>, !dbg !17
+  %61 = fmul <2 x float> %60, splat (float 5.000000e-01), !dbg !18
+  %62 = extractelement <2 x float> %60, i64 0, !dbg !19
+  %63 = fmul float %62, %62, !dbg !20
+  %64 = extractelement <2 x float> %60, i64 1, !dbg !19
+  %65 = fmul float %64, %64, !dbg !20
+  %66 = fmul float %63, %62, !dbg !21
+  %67 = fmul float %65, %64, !dbg !21
+  %68 = fmul float %66, 0x3FA6E4E260000000, !dbg !22
+  %69 = fmul float %67, 0x3FA6E4E260000000, !dbg !22
+  %70 = fadd float %68, %62, !dbg !19
+  %71 = fadd float %69, %64, !dbg !19
+  %72 = fmul float %70, 0x3FE9884540000000, !dbg !23
+  %73 = fmul float %71, 0x3FE9884540000000, !dbg !23
+  %74 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %72) #2, !dbg !24
+  %75 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %73) #2, !dbg !24
+  %76 = insertelement <2 x float> poison, float %74, i64 0, !dbg !25
+  %77 = insertelement <2 x float> %76, float %75, i64 1, !dbg !25
+  %78 = fadd <2 x float> %77, splat (float 1.000000e+00), !dbg !25
+  %79 = fmul <2 x float> %78, %61, !dbg !26
+  %80 = fptrunc <2 x float> %79 to <2 x bfloat>, !dbg !27
+  %81 = fadd <2 x bfloat> %22, %34, !dbg !16
+  %82 = fpext <2 x bfloat> %81 to <2 x float>, !dbg !17
+  %83 = fmul <2 x float> %82, splat (float 5.000000e-01), !dbg !18
+  %84 = extractelement <2 x float> %82, i64 0, !dbg !19
+  %85 = fmul float %84, %84, !dbg !20
+  %86 = extractelement <2 x float> %82, i64 1, !dbg !19
+  %87 = fmul float %86, %86, !dbg !20
+  %88 = fmul float %85, %84, !dbg !21
+  %89 = fmul float %87, %86, !dbg !21
+  %90 = fmul float %88, 0x3FA6E4E260000000, !dbg !22
+  %91 = fmul float %89, 0x3FA6E4E260000000, !dbg !22
+  %92 = fadd float %90, %84, !dbg !19
+  %93 = fadd float %91, %86, !dbg !19
+  %94 = fmul float %92, 0x3FE9884540000000, !dbg !23
+  %95 = fmul float %93, 0x3FE9884540000000, !dbg !23
+  %96 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %94) #2, !dbg !24
+  %97 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %95) #2, !dbg !24
+  %98 = insertelement <2 x float> poison, float %96, i64 0, !dbg !25
+  %99 = insertelement <2 x float> %98, float %97, i64 1, !dbg !25
+  %100 = fadd <2 x float> %99, splat (float 1.000000e+00), !dbg !25
+  %101 = fmul <2 x float> %83, %100, !dbg !26
+  %102 = fptrunc <2 x float> %101 to <2 x bfloat>, !dbg !27
+  %103 = fadd <2 x bfloat> %24, %36, !dbg !16
+  %104 = fpext <2 x bfloat> %103 to <2 x float>, !dbg !17
+  %105 = fmul <2 x float> %104, splat (float 5.000000e-01), !dbg !18
+  %106 = extractelement <2 x float> %104, i64 0, !dbg !19
+  %107 = fmul float %106, %106, !dbg !20
+  %108 = extractelement <2 x float> %104, i64 1, !dbg !19
+  %109 = fmul float %108, %108, !dbg !20
+  %110 = fmul float %107, %106, !dbg !21
+  %111 = fmul float %109, %108, !dbg !21
+  %112 = fmul float %110, 0x3FA6E4E260000000, !dbg !22
+  %113 = fmul float %111, 0x3FA6E4E260000000, !dbg !22
+  %114 = fadd float %112, %106, !dbg !19
+  %115 = fadd float %113, %108, !dbg !19
+  %116 = fmul float %114, 0x3FE9884540000000, !dbg !23
+  %117 = fmul float %115, 0x3FE9884540000000, !dbg !23
+  %118 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %116) #2, !dbg !24
+  %119 = tail call float asm "{ .reg .f32 a, z, p, small, e, d, r, large; .reg .b32 sign, bits; .reg .pred use_small, saturated; abs.ftz.f32 a, $1; setp.ltu.f32 use_small, a, 0f3F19999A; mul.f32 z, $1, $1; fma.rn.ftz.f32 p, 0f3C80F082, z, 0fBD563CAE; fma.rn.ftz.f32 p, p, z, 0f3E085941; fma.rn.ftz.f32 p, p, z, 0fBEAAA9ED; fma.rn.ftz.f32 p, p, z, 0f00000000; fma.rn.ftz.f32 small, p, $1, $1; mul.f32 e, a, 0f4038AA3B; ex2.approx.ftz.f32 e, e; add.f32 d, e, 0f3F800000; rcp.approx.ftz.f32 r, d; fma.rn.ftz.f32 large, r, 0fC0000000, 0f3F800000; setp.ge.f32 saturated, a, 0f41102CB4; selp.f32 large, 0f3F800000, large, saturated; mov.b32 sign, $1; and.b32 sign, sign, 0x80000000; mov.b32 bits, large; or.b32 bits, bits, sign; mov.b32 large, bits; selp.f32 $0, small, large, use_small; }", "=f,f"(float %117) #2, !dbg !24
+  %120 = insertelement <2 x float> poison, float %118, i64 0, !dbg !25
+  %121 = insertelement <2 x float> %120, float %119, i64 1, !dbg !25
+  %122 = fadd <2 x float> %121, splat (float 1.000000e+00), !dbg !25
+  %123 = fmul <2 x float> %105, %122, !dbg !26
+  %124 = fptrunc <2 x float> %123 to <2 x bfloat>, !dbg !27
+  %125 = getelementptr bfloat, ptr addrspace(1) %2, i64 %14, !dbg !28
+  %126 = bitcast <2 x bfloat> %58 to i32, !dbg !29
+  %127 = bitcast <2 x bfloat> %80 to i32, !dbg !29
+  %128 = bitcast <2 x bfloat> %102 to i32, !dbg !29
+  %129 = bitcast <2 x bfloat> %124 to i32, !dbg !29
+  tail call void asm sideeffect "st.global.v4.b32 [ $4 + 0 ], { $0, $1, $2, $3 };", "r,r,r,r,l"(i32 %126, i32 %127, i32 %128, i32 %129, ptr addrspace(1) %125) #2, !dbg !29
+  ret void, !dbg !30
+}
+
+; Function Attrs: mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare noundef range(i32 0, 2147483647) i32 @llvm.nvvm.read.ptx.sreg.ctaid.x() #1
+
+; Function Attrs: mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #1
+
+attributes #0 = { nounwind "nvvm.reqntid"="128" }
+attributes #1 = { mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none) }
+attributes #2 = { nounwind }
+
+!llvm.dbg.cu = !{!0}
+!llvm.module.flags = !{!2, !3}
+
+!0 = distinct !DICompileUnit(language: DW_LANG_C, file: !1, producer: "triton", isOptimized: true, runtimeVersion: 0, emissionKind: LineTablesOnly)
+!1 = !DIFile(filename: "cergyaw5ivy3eah3lwttqfrkm5qquyqvqdnwzfohslvdd4b7znyb.py", directory: "/tmp/f06-device-lto-20261030-v4/cache/inductor/er")
+!2 = !{i32 2, !"Debug Info Version", i32 3}
+!3 = !{i32 4, !"nvvm-reflect-ftz", i32 1}
+!4 = distinct !DISubprogram(name: "triton_poi_fused_0", linkageName: "triton_poi_fused_0", scope: !1, file: !1, line: 18, type: !5, scopeLine: 18, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !0)
+!5 = !DISubroutineType(cc: DW_CC_normal, types: !6)
+!6 = !{}
+!7 = !DILocation(line: 20, column: 28, scope: !4)
+!8 = !DILocation(line: 20, column: 33, scope: !4)
+!9 = !DILocation(line: 21, column: 36, scope: !4)
+!10 = !DILocation(line: 21, column: 23, scope: !4)
+!11 = !DILocation(line: 24, column: 19, scope: !4)
+!12 = !DILocation(line: 25, column: 30, scope: !4)
+!13 = !DILocation(line: 25, column: 35, scope: !4)
+!14 = !DILocation(line: 26, column: 30, scope: !4)
+!15 = !DILocation(line: 26, column: 35, scope: !4)
+!16 = !DILocation(line: 32, column: 19, scope: !4)
+!17 = !DILocation(line: 33, column: 19, scope: !4)
+!18 = !DILocation(line: 36, column: 19, scope: !4)
+!19 = !DILocation(line: 41, column: 19, scope: !4)
+!20 = !DILocation(line: 37, column: 19, scope: !4)
+!21 = !DILocation(line: 38, column: 20, scope: !4)
+!22 = !DILocation(line: 40, column: 20, scope: !4)
+!23 = !DILocation(line: 43, column: 20, scope: !4)
+!24 = !DILocation(line: 44, column: 38, scope: !4)
+!25 = !DILocation(line: 46, column: 20, scope: !4)
+!26 = !DILocation(line: 47, column: 20, scope: !4)
+!27 = !DILocation(line: 49, column: 21, scope: !4)
+!28 = !DILocation(line: 51, column: 25, scope: !4)
+!29 = !DILocation(line: 51, column: 37, scope: !4)
+!30 = !DILocation(line: 51, column: 4, scope: !4)

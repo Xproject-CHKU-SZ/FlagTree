@@ -1,0 +1,398 @@
+[
+  {
+    "case_id": "large:matmul_bias:bfloat16:128x1024x128",
+    "current_equals_addmm": true,
+    "current_max_abs": 0.25,
+    "addmm_max_abs": 0.25,
+    "preserve_boundaries_max_abs": 0.0,
+    "preserve_boundaries_passes": true,
+    "plan": {
+      "kind": "inductor_static_inference",
+      "template": "matmul_bias",
+      "match_kind": "matmul_bias",
+      "calls": [
+        "matmul",
+        "add"
+      ],
+      "placeholders": [
+        "a",
+        "b",
+        "bias"
+      ],
+      "input_count": 3,
+      "attr_targets": [],
+      "inputs": [
+        {
+          "shape": [
+            128,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            128,
+            1024
+          ],
+          "stride": [
+            1024,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            1024
+          ],
+          "stride": [
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        }
+      ],
+      "attrs": [],
+      "output_count": 1,
+      "inference_only": true,
+      "training_flag_guarded": false,
+      "fallback_supplied": true,
+      "generated_source_count": 1,
+      "precision_state": {
+        "float32_matmul_precision": "highest",
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "deterministic_algorithms": false,
+        "deterministic_algorithms_warn_only": false,
+        "cudnn_deterministic": false
+      },
+      "autocast": "required_disabled",
+      "transform_modes": "required_none",
+      "cuda_graphs": false,
+      "inference_scope": "operator-only FX graph; module.training is not consulted",
+      "guard_checks": [
+        "call_arity",
+        "keyword_arguments",
+        "forward_code_identity",
+        "forward_hooks",
+        "autocast",
+        "torch_function_mode",
+        "dispatch_mode",
+        "functorch_transform",
+        "precision_state",
+        "tensor_type",
+        "shape",
+        "stride",
+        "storage_offset",
+        "dtype",
+        "device",
+        "layout",
+        "requires_grad",
+        "conjugate_negative_view",
+        "tensor_aliasing",
+        "live_attr_lookup"
+      ],
+      "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+      "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+      "precision_policy": "eager_materialization_boundaries",
+      "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+      "graph_lifted_get_attrs": 0,
+      "traced_placeholders": 3,
+      "bias_reuse_skipped_reason": "bias_must_be_a_get_attr",
+      "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+      "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+    }
+  },
+  {
+    "case_id": "large:matmul_bias:bfloat16:512x1024x1024",
+    "current_equals_addmm": true,
+    "current_max_abs": 1.0,
+    "addmm_max_abs": 1.0,
+    "preserve_boundaries_max_abs": 0.0,
+    "preserve_boundaries_passes": true,
+    "plan": {
+      "kind": "inductor_static_inference",
+      "template": "matmul_bias",
+      "match_kind": "matmul_bias",
+      "calls": [
+        "matmul",
+        "add"
+      ],
+      "placeholders": [
+        "a",
+        "b",
+        "bias"
+      ],
+      "input_count": 3,
+      "attr_targets": [],
+      "inputs": [
+        {
+          "shape": [
+            512,
+            1024
+          ],
+          "stride": [
+            1024,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            1024,
+            1024
+          ],
+          "stride": [
+            1024,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            1024
+          ],
+          "stride": [
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        }
+      ],
+      "attrs": [],
+      "output_count": 1,
+      "inference_only": true,
+      "training_flag_guarded": false,
+      "fallback_supplied": true,
+      "generated_source_count": 1,
+      "precision_state": {
+        "float32_matmul_precision": "highest",
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "deterministic_algorithms": false,
+        "deterministic_algorithms_warn_only": false,
+        "cudnn_deterministic": false
+      },
+      "autocast": "required_disabled",
+      "transform_modes": "required_none",
+      "cuda_graphs": false,
+      "inference_scope": "operator-only FX graph; module.training is not consulted",
+      "guard_checks": [
+        "call_arity",
+        "keyword_arguments",
+        "forward_code_identity",
+        "forward_hooks",
+        "autocast",
+        "torch_function_mode",
+        "dispatch_mode",
+        "functorch_transform",
+        "precision_state",
+        "tensor_type",
+        "shape",
+        "stride",
+        "storage_offset",
+        "dtype",
+        "device",
+        "layout",
+        "requires_grad",
+        "conjugate_negative_view",
+        "tensor_aliasing",
+        "live_attr_lookup"
+      ],
+      "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+      "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+      "precision_policy": "eager_materialization_boundaries",
+      "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+      "graph_lifted_get_attrs": 0,
+      "traced_placeholders": 3,
+      "bias_reuse_skipped_reason": "bias_must_be_a_get_attr",
+      "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+      "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+    }
+  },
+  {
+    "case_id": "large:matmul_bias:bfloat16:2048x2048x2048",
+    "current_equals_addmm": true,
+    "current_max_abs": 1.0,
+    "addmm_max_abs": 1.0,
+    "preserve_boundaries_max_abs": 0.0,
+    "preserve_boundaries_passes": true,
+    "plan": {
+      "kind": "inductor_static_inference",
+      "template": "matmul_bias",
+      "match_kind": "matmul_bias",
+      "calls": [
+        "matmul",
+        "add"
+      ],
+      "placeholders": [
+        "a",
+        "b",
+        "bias"
+      ],
+      "input_count": 3,
+      "attr_targets": [],
+      "inputs": [
+        {
+          "shape": [
+            2048,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            2048,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        },
+        {
+          "shape": [
+            2048
+          ],
+          "stride": [
+            1
+          ],
+          "storage_offset": 0,
+          "dtype": "torch.bfloat16",
+          "device": "cuda:0",
+          "layout": "torch.strided",
+          "requires_grad": false,
+          "conjugate_view": false,
+          "negative_view": false
+        }
+      ],
+      "attrs": [],
+      "output_count": 1,
+      "inference_only": true,
+      "training_flag_guarded": false,
+      "fallback_supplied": true,
+      "generated_source_count": 1,
+      "precision_state": {
+        "float32_matmul_precision": "highest",
+        "cuda_matmul_allow_tf32": false,
+        "cudnn_allow_tf32": true,
+        "cuda_matmul_allow_fp16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "cuda_matmul_allow_bf16_reduced_precision_reduction": [
+          false,
+          true
+        ],
+        "deterministic_algorithms": false,
+        "deterministic_algorithms_warn_only": false,
+        "cudnn_deterministic": false
+      },
+      "autocast": "required_disabled",
+      "transform_modes": "required_none",
+      "cuda_graphs": false,
+      "inference_scope": "operator-only FX graph; module.training is not consulted",
+      "guard_checks": [
+        "call_arity",
+        "keyword_arguments",
+        "forward_code_identity",
+        "forward_hooks",
+        "autocast",
+        "torch_function_mode",
+        "dispatch_mode",
+        "functorch_transform",
+        "precision_state",
+        "tensor_type",
+        "shape",
+        "stride",
+        "storage_offset",
+        "dtype",
+        "device",
+        "layout",
+        "requires_grad",
+        "conjugate_negative_view",
+        "tensor_aliasing",
+        "live_attr_lookup"
+      ],
+      "compiler": "torch._inductor.compile_fx.compile_fx_inner",
+      "tracer": "torch.fx.experimental.proxy_tensor.make_fx",
+      "precision_policy": "eager_materialization_boundaries",
+      "decomposition_table": "torch._inductor.decomposition.select_decomp_table",
+      "graph_lifted_get_attrs": 0,
+      "traced_placeholders": 3,
+      "bias_reuse_skipped_reason": "bias_must_be_a_get_attr",
+      "tensor_guard": "native PyTorch TensorGuards plus storage/view/grad checks",
+      "small_matmul_skipped_reason": "outside_small_matmul_bounds"
+    }
+  }
+]
