@@ -297,6 +297,72 @@ class SmallMatmulSelectionTests(InferenceCPUTestBase):
         self.assertEqual(plan.plan_info["small_matmul_skipped_reason"], "compiler_single_kernel_not_verified")
 
 
+class LargeMatmulSelectionTests(InferenceCPUTestBase):
+
+    def _graph(self):
+        class Mod(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.register_buffer("bias", torch.randn(4))
+
+            def forward(self, x, w):
+                return torch.relu(x @ w + self.bias)
+
+        return torch.fx.symbolic_trace(Mod())
+
+    def test_scoped_policy_live_attributes_and_guard_fallback(self):
+        from torch._inductor import config
+        gm = self._graph()
+        args = (torch.randn(65, 5), torch.randn(5, 4))
+        fallback = _Backstop()
+        capture = self._install_mock_compiler()
+        before = config.get_config_copy()
+        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True):
+            plan = self.inference.compile_static(gm, args, fallback=fallback)
+        self.assertEqual(config.get_config_copy(), before)
+        self.assertIn("large_matmul_compiler_options", plan.plan_info)
+        # A generic/multiple-kernel compiler result is valid for the large path.
+        self.assertEqual(plan.kind, "inductor_static_inference")
+        self.assertNotIn("kernel_count", plan.plan_info)
+        held = plan(*args)
+        old = held.clone()
+        gm.bias = torch.randn(4)
+        torch.testing.assert_close(plan(*args), gm(*args))
+        torch.testing.assert_close(held, old)
+        self.assertIs(capture["compiled"][0].last_inputs[-1], gm.bias)
+        self.assertEqual(plan(torch.randn(64, 5), args[1]), "fallback")
+        self.assertEqual(plan.fallback_calls, 1)
+
+    def test_cpu_bias_only_and_small_policies_are_unchanged(self):
+        self._install_mock_compiler()
+        gm = self._graph()
+        args = (torch.randn(65, 5), torch.randn(5, 4))
+        plan = self.inference.compile_static(gm, args)
+        self.assertNotIn("large_matmul_compiler_options", plan.plan_info)
+        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True):
+            for graph, inputs in ((gm, (args[0][:64], args[1])),
+                                  (self._make_symbolic_mm_bias(), args)):
+                plan = self.inference.compile_static(graph, inputs)
+                self.assertNotIn("large_matmul_compiler_options", plan.plan_info)
+
+    def test_precision_gate_and_compile_failure_restore_options(self):
+        from torch._inductor import config
+        from dataclasses import replace
+        gm = self._graph()
+        args = (torch.randn(65, 5), torch.randn(5, 4))
+        analysis = self.inference._analyze(gm, args)
+        state = list(analysis.precision_state)
+        state[1] = True
+        spec, _ = self.inference._find_matmul_epilogue(replace(analysis, precision_state=tuple(state)), small=False)
+        self.assertIsNone(spec)
+        before = config.get_config_copy()
+        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True), \
+             mock.patch.object(self.inference, "_call_compile_fx_inner", side_effect=RuntimeError("compile failed")):
+            with self.assertRaisesRegex(RuntimeError, "compile failed"):
+                self.inference.compile_static(gm, args)
+        self.assertEqual(config.get_config_copy(), before)
+
+
 class GraphLiftingAndPlanTests(InferenceCPUTestBase):
 
     def test_compiler_plan_lifts_attrs_and_fetches_live_values(self):

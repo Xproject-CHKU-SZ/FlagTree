@@ -132,6 +132,25 @@ whether preparation succeeded. Generated size/stride assertions are disabled
 for this path because every public call already performs the corresponding
 TensorGuards checks; alignment checks are retained.
 
+Large NVIDIA matrix activation epilogues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dense NVIDIA SM80+ MatMul+Bias+ReLU, exact/tanh GELU or SiLU graphs outside the
+small-matrix bounds use a scoped autotuning policy. The dtype, contiguous-layout,
+bias-broadcast and disabled-TF32/reduced-reduction requirements above still apply.
+``max_autotune=True`` and ``coordinate_descent_tuning=True`` search native GEMM
+and pointwise configurations. Both ``ATEN`` and ``TRITON`` GEMM candidates remain
+available; ``benchmark_epilogue_fusion=True`` compares fused and split execution.
+This can increase compilation time and does not promise a single kernel or a
+global optimum. Native CUDA Graphs remain disabled.
+
+``pattern_matcher=False`` and ``emulate_precision_casts=True`` retain the original
+MatMul and Add dtype boundaries during tracing and lowering. The policy does not
+change precision tolerances or replace exact GELU with an approximation. The plan
+keeps its ordinary guards, output allocation and live attributes, and records
+the options in ``plan_info["large_matmul_compiler_options"]``. Small matrices,
+bias-only graphs, non-matrix templates and P800 retain their existing policies.
+
 With ``static_inference=True, avoid_bias_materialization=True``, an exact
 two-dimensional MatMul+Bias pattern with contiguous, same-dtype CUDA tensors
 can use a native operator execution plan. It invokes the original ``matmul``

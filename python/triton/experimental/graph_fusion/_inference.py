@@ -11,6 +11,8 @@ compilation.
 On NVIDIA SM80 and newer and positively identified P800, bounded dense GEMM+bias epilogues enable Inductor's
 automatic GEMM template selection and epilogue fusion. Matmul and addition
 output-dtype rounding are retained; no project arithmetic kernel is supplied.
+Larger dense NVIDIA activation epilogues also autotune, retaining both library
+and template candidates and benchmarking whether epilogue fusion is beneficial.
 
 The optional ``avoid_bias_materialization`` mode recognizes the narrow pattern
 ``torch.add(torch.matmul(x, w), bias)`` (either add operand order) and executes the
@@ -86,6 +88,20 @@ _SMALL_MATMUL_OPTIONS = {
     "use_static_cuda_launcher": False,
     # TensorGuards in every public call already check sizes and strides.
     "size_asserts": False,
+    "triton.cudagraphs": False,
+}
+
+# Larger NVIDIA epilogues must also search GEMM implementations. Unlike the
+# bounded small path, retain the library candidate and benchmark fusion: one
+# kernel is not necessarily faster than a library GEMM plus pointwise work.
+_LARGE_MATMUL_OPTIONS = {
+    "max_autotune": True,
+    "coordinate_descent_tuning": True,
+    "max_autotune_gemm_backends": "ATEN,TRITON",
+    "epilogue_fusion": True,
+    "benchmark_epilogue_fusion": True,
+    "pattern_matcher": False,
+    "emulate_precision_casts": True,
     "triton.cudagraphs": False,
 }
 
@@ -655,7 +671,15 @@ def _find_mm_add_reuse(analysis: _Analysis):
 
 
 def _find_small_matmul(analysis: _Analysis):
-    """Recognize bounded dense GEMM epilogues without reading tensor values."""
+    return _find_matmul_epilogue(analysis, small=True)
+
+
+def _find_matmul_epilogue(analysis: _Analysis, *, small: bool):
+    """Recognize dense GEMM epilogues without reading tensor values.
+
+    The small policy retains its bounds and diagnostic codes. The large policy
+    shares the same dtype, layout, broadcast and precision requirements.
+    """
     activations = {
         "matmul_bias": "none",
         "matmul_bias_relu": "relu",
@@ -686,7 +710,7 @@ def _find_small_matmul(analysis: _Analysis):
         return None, "small_matmul_rank_or_inner_dimension"
     m, k = x.shape
     n = w.shape[1]
-    if not (0 < m <= 64 and 0 < n <= 1024 and 0 < k <= 128):
+    if min(m, n, k) <= 0 or (small and not (m <= 64 and n <= 1024 and k <= 128)):
         return None, "outside_small_matmul_bounds"
     if bias.ndim == 0:
         strides = (0, 0)
@@ -717,6 +741,32 @@ def _small_matmul_device_supported(value):
         return torch.cuda.get_device_capability(value.device)[0] >= 8
     from ._p800_matmul import is_p800
     return is_p800(value)
+
+
+def _large_matmul_device_supported(value):
+    if value.device.type != "cuda":
+        return False
+    from triton.runtime import driver
+    return (type(driver.active).__module__ == "triton.backends.nvidia.driver"
+            and torch.cuda.get_device_capability(value.device)[0] >= 8)
+
+
+def _make_large_matmul_plan(analysis, spec, fallback):
+    from torch._dynamo.convert_frame import compile_lock
+    from torch._inductor import config
+
+    options = dict(_LARGE_MATMUL_OPTIONS)
+    with compile_lock, config.patch(options):
+        plan = _make_compiler_plan(analysis, fallback, None)
+    plan.plan_info.update(
+        large_matmul_compiler_options=options,
+        kernel_provider="native_inductor_codegen",
+        shape=list(spec.shape),
+        activation=spec.activation,
+        rounding_boundaries=["matmul_output_dtype", "add_output_dtype"],
+        fusion_policy="native_autotune_with_library_and_template_candidates",
+    )
+    return plan
 
 
 def _single_inductor_kernel(sources):
@@ -1312,6 +1362,17 @@ def compile_static(
         if _small_matmul_device_supported((analysis.example_inputs + analysis.attr_values)[small.indices[0]]):
             return _make_small_matmul_plan(analysis, small, fallback)
         small_reason = "small_matmul_requires_nvidia_sm80_or_p800"
+
+    # Only activation epilogues outside the small bounds use this policy.
+    # Preserve the existing bias-only reuse path and all non-NVIDIA behavior.
+    if small_reason == "outside_small_matmul_bounds":
+        large, _ = _find_matmul_epilogue(analysis, small=False)
+        if large is not None and large.activation != "none":
+            value = (analysis.example_inputs + analysis.attr_values)[large.indices[0]]
+            if _large_matmul_device_supported(value):
+                plan = _make_large_matmul_plan(analysis, large, fallback)
+                plan.plan_info["small_matmul_skipped_reason"] = small_reason
+                return plan
 
     bias_skip_reason = None
     if avoid_bias_materialization:

@@ -1,0 +1,218 @@
+diff --git a/docs/python-api/graph-fusion.rst b/docs/python-api/graph-fusion.rst
+index ed6fe6883..a763c14d0 100644
+--- a/docs/python-api/graph-fusion.rst
++++ b/docs/python-api/graph-fusion.rst
+@@ -132,6 +132,25 @@ whether preparation succeeded. Generated size/stride assertions are disabled
+ for this path because every public call already performs the corresponding
+ TensorGuards checks; alignment checks are retained.
+ 
++Large NVIDIA matrix activation epilogues
++^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++Dense NVIDIA SM80+ MatMul+Bias+ReLU, exact/tanh GELU or SiLU graphs outside the
++small-matrix bounds use a scoped autotuning policy. The dtype, contiguous-layout,
++bias-broadcast and disabled-TF32/reduced-reduction requirements above still apply.
++``max_autotune=True`` and ``coordinate_descent_tuning=True`` search native GEMM
++and pointwise configurations. Both ``ATEN`` and ``TRITON`` GEMM candidates remain
++available; ``benchmark_epilogue_fusion=True`` compares fused and split execution.
++This can increase compilation time and does not promise a single kernel or a
++global optimum. Native CUDA Graphs remain disabled.
++
++``pattern_matcher=False`` and ``emulate_precision_casts=True`` retain the original
++MatMul and Add dtype boundaries during tracing and lowering. The policy does not
++change precision tolerances or replace exact GELU with an approximation. The plan
++keeps its ordinary guards, output allocation and live attributes, and records
++the options in ``plan_info["large_matmul_compiler_options"]``. Small matrices,
++bias-only graphs, non-matrix templates and P800 retain their existing policies.
++
+ With ``static_inference=True, avoid_bias_materialization=True``, an exact
+ two-dimensional MatMul+Bias pattern with contiguous, same-dtype CUDA tensors
+ can use a native operator execution plan. It invokes the original ``matmul``
+diff --git a/python/test/unit/runtime/test_graph_fusion_static.py b/python/test/unit/runtime/test_graph_fusion_static.py
+index f3c158519..dfa7e5a6e 100644
+--- a/python/test/unit/runtime/test_graph_fusion_static.py
++++ b/python/test/unit/runtime/test_graph_fusion_static.py
+@@ -297,6 +297,72 @@ class SmallMatmulSelectionTests(InferenceCPUTestBase):
+         self.assertEqual(plan.plan_info["small_matmul_skipped_reason"], "compiler_single_kernel_not_verified")
+ 
+ 
++class LargeMatmulSelectionTests(InferenceCPUTestBase):
++
++    def _graph(self):
++        class Mod(torch.nn.Module):
++            def __init__(self):
++                super().__init__()
++                self.register_buffer("bias", torch.randn(4))
++
++            def forward(self, x, w):
++                return torch.relu(x @ w + self.bias)
++
++        return torch.fx.symbolic_trace(Mod())
++
++    def test_scoped_policy_live_attributes_and_guard_fallback(self):
++        from torch._inductor import config
++        gm = self._graph()
++        args = (torch.randn(65, 5), torch.randn(5, 4))
++        fallback = _Backstop()
++        capture = self._install_mock_compiler()
++        before = config.get_config_copy()
++        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True):
++            plan = self.inference.compile_static(gm, args, fallback=fallback)
++        self.assertEqual(config.get_config_copy(), before)
++        self.assertIn("large_matmul_compiler_options", plan.plan_info)
++        # A generic/multiple-kernel compiler result is valid for the large path.
++        self.assertEqual(plan.kind, "inductor_static_inference")
++        self.assertNotIn("kernel_count", plan.plan_info)
++        held = plan(*args)
++        old = held.clone()
++        gm.bias = torch.randn(4)
++        torch.testing.assert_close(plan(*args), gm(*args))
++        torch.testing.assert_close(held, old)
++        self.assertIs(capture["compiled"][0].last_inputs[-1], gm.bias)
++        self.assertEqual(plan(torch.randn(64, 5), args[1]), "fallback")
++        self.assertEqual(plan.fallback_calls, 1)
++
++    def test_cpu_bias_only_and_small_policies_are_unchanged(self):
++        self._install_mock_compiler()
++        gm = self._graph()
++        args = (torch.randn(65, 5), torch.randn(5, 4))
++        plan = self.inference.compile_static(gm, args)
++        self.assertNotIn("large_matmul_compiler_options", plan.plan_info)
++        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True):
++            for graph, inputs in ((gm, (args[0][:64], args[1])),
++                                  (self._make_symbolic_mm_bias(), args)):
++                plan = self.inference.compile_static(graph, inputs)
++                self.assertNotIn("large_matmul_compiler_options", plan.plan_info)
++
++    def test_precision_gate_and_compile_failure_restore_options(self):
++        from torch._inductor import config
++        from dataclasses import replace
++        gm = self._graph()
++        args = (torch.randn(65, 5), torch.randn(5, 4))
++        analysis = self.inference._analyze(gm, args)
++        state = list(analysis.precision_state)
++        state[1] = True
++        spec, _ = self.inference._find_matmul_epilogue(replace(analysis, precision_state=tuple(state)), small=False)
++        self.assertIsNone(spec)
++        before = config.get_config_copy()
++        with mock.patch.object(self.inference, "_large_matmul_device_supported", return_value=True), \
++             mock.patch.object(self.inference, "_call_compile_fx_inner", side_effect=RuntimeError("compile failed")):
++            with self.assertRaisesRegex(RuntimeError, "compile failed"):
++                self.inference.compile_static(gm, args)
++        self.assertEqual(config.get_config_copy(), before)
++
++
+ class GraphLiftingAndPlanTests(InferenceCPUTestBase):
+ 
+     def test_compiler_plan_lifts_attrs_and_fetches_live_values(self):
+diff --git a/python/triton/experimental/graph_fusion/_inference.py b/python/triton/experimental/graph_fusion/_inference.py
+index 0a4d6cb86..b6cb2932b 100644
+--- a/python/triton/experimental/graph_fusion/_inference.py
++++ b/python/triton/experimental/graph_fusion/_inference.py
+@@ -11,6 +11,8 @@ compilation.
+ On NVIDIA SM80 and newer and positively identified P800, bounded dense GEMM+bias epilogues enable Inductor's
+ automatic GEMM template selection and epilogue fusion. Matmul and addition
+ output-dtype rounding are retained; no project arithmetic kernel is supplied.
++Larger dense NVIDIA activation epilogues also autotune, retaining both library
++and template candidates and benchmarking whether epilogue fusion is beneficial.
+ 
+ The optional ``avoid_bias_materialization`` mode recognizes the narrow pattern
+ ``torch.add(torch.matmul(x, w), bias)`` (either add operand order) and executes the
+@@ -89,6 +91,20 @@ _SMALL_MATMUL_OPTIONS = {
+     "triton.cudagraphs": False,
+ }
+ 
++# Larger NVIDIA epilogues must also search GEMM implementations. Unlike the
++# bounded small path, retain the library candidate and benchmark fusion: one
++# kernel is not necessarily faster than a library GEMM plus pointwise work.
++_LARGE_MATMUL_OPTIONS = {
++    "max_autotune": True,
++    "coordinate_descent_tuning": True,
++    "max_autotune_gemm_backends": "ATEN,TRITON",
++    "epilogue_fusion": True,
++    "benchmark_epilogue_fusion": True,
++    "pattern_matcher": False,
++    "emulate_precision_casts": True,
++    "triton.cudagraphs": False,
++}
++
+ 
+ def _small_matmul_options():
+     from torch._inductor import config
+@@ -655,7 +671,15 @@ def _find_mm_add_reuse(analysis: _Analysis):
+ 
+ 
+ def _find_small_matmul(analysis: _Analysis):
+-    """Recognize bounded dense GEMM epilogues without reading tensor values."""
++    return _find_matmul_epilogue(analysis, small=True)
++
++
++def _find_matmul_epilogue(analysis: _Analysis, *, small: bool):
++    """Recognize dense GEMM epilogues without reading tensor values.
++
++    The small policy retains its bounds and diagnostic codes. The large policy
++    shares the same dtype, layout, broadcast and precision requirements.
++    """
+     activations = {
+         "matmul_bias": "none",
+         "matmul_bias_relu": "relu",
+@@ -686,7 +710,7 @@ def _find_small_matmul(analysis: _Analysis):
+         return None, "small_matmul_rank_or_inner_dimension"
+     m, k = x.shape
+     n = w.shape[1]
+-    if not (0 < m <= 64 and 0 < n <= 1024 and 0 < k <= 128):
++    if min(m, n, k) <= 0 or (small and not (m <= 64 and n <= 1024 and k <= 128)):
+         return None, "outside_small_matmul_bounds"
+     if bias.ndim == 0:
+         strides = (0, 0)
+@@ -719,6 +743,32 @@ def _small_matmul_device_supported(value):
+     return is_p800(value)
+ 
+ 
++def _large_matmul_device_supported(value):
++    if value.device.type != "cuda":
++        return False
++    from triton.runtime import driver
++    return (type(driver.active).__module__ == "triton.backends.nvidia.driver"
++            and torch.cuda.get_device_capability(value.device)[0] >= 8)
++
++
++def _make_large_matmul_plan(analysis, spec, fallback):
++    from torch._dynamo.convert_frame import compile_lock
++    from torch._inductor import config
++
++    options = dict(_LARGE_MATMUL_OPTIONS)
++    with compile_lock, config.patch(options):
++        plan = _make_compiler_plan(analysis, fallback, None)
++    plan.plan_info.update(
++        large_matmul_compiler_options=options,
++        kernel_provider="native_inductor_codegen",
++        shape=list(spec.shape),
++        activation=spec.activation,
++        rounding_boundaries=["matmul_output_dtype", "add_output_dtype"],
++        fusion_policy="native_autotune_with_library_and_template_candidates",
++    )
++    return plan
++
++
+ def _single_inductor_kernel(sources):
+     """Audit the generated wrapper, failing closed on unknown/multiple kernels.
+ 
+@@ -1313,6 +1363,17 @@ def compile_static(
+             return _make_small_matmul_plan(analysis, small, fallback)
+         small_reason = "small_matmul_requires_nvidia_sm80_or_p800"
+ 
++    # Only activation epilogues outside the small bounds use this policy.
++    # Preserve the existing bias-only reuse path and all non-NVIDIA behavior.
++    if small_reason == "outside_small_matmul_bounds":
++        large, _ = _find_matmul_epilogue(analysis, small=False)
++        if large is not None and large.activation != "none":
++            value = (analysis.example_inputs + analysis.attr_values)[large.indices[0]]
++            if _large_matmul_device_supported(value):
++                plan = _make_large_matmul_plan(analysis, large, fallback)
++                plan.plan_info["small_matmul_skipped_reason"] = small_reason
++                return plan
++
+     bias_skip_reason = None
+     if avoid_bias_materialization:
+         reuse, reason = _find_mm_add_reuse(analysis)
