@@ -36,6 +36,10 @@ docker compose --env-file .env wait verify
 
 验收：64³、256³ tile的FP32边界加载，3seed×30次，有限值、同输入逐位稳定、最大绝对误差≤1e-3；原有17项舍入IR＋12项取模＋6项BF16设备回归。BF16独立转换FAST_MODE=0；FAST_MODE=1的大向量独立转换仍是已知边界。这里是最小修复验收，不替代此前72项BLAS/54项转置或1800次稳定性记录。
 
+脚本另在独立进程关闭/启用/关闭舍入Pass，定向64项BF16输入的错误数必须为64→0→64。该对照验证补偿Pass的因果作用，不冒充完整历史镜像复现。FP32明确关闭TF32，并沿用FAST_MODE=1；BF16测试使用0，均由脚本设置。
+
+2026-11-03已在新的源码目录及独立venv完成原生源码编译（使用固定SDK缓存，不使用旧FlagTree wheel），新libtriton路径为`/opt/source-env/lib/python3.10/site-packages/triton/_C/libtriton.so`；上述BF16闭环、FP32 90次及35项回归通过。Dockerfile/Compose已完成语法与配置检查；本次尚未验证所有SDK公网URL的无缓存冷下载，也未在第二台XPU服务器实际运行。
+
 FP32按升级main基线解决，不虚构最小内部修复；BF16为arch3 SDNN限定的编译层舍入补偿；取模为Capture/Repair接入。没有性能或新算法验收指标。
 `build.log`为本次源码编译日志，`image.json`及`result.json`记录镜像、源码commit及实际新构建libtriton hash。源码构建后的hash不要求等于旧wheel hash。
 

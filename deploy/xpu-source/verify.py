@@ -36,13 +36,14 @@ def mm_kernel(A,B,C,M:tl.constexpr,N:tl.constexpr,K:tl.constexpr,T:tl.constexpr)
  b=tl.make_block_ptr(B,(K,N),(N,1),(0,0),(T,T),(1,0))
  av=tl.load(a,boundary_check=(0,1),padding_option='zero')
  bv=tl.load(b,boundary_check=(0,1),padding_option='zero')
- v=tl.dot(av,bv)
+ v=tl.dot(av,bv,allow_tf32=False)
  c=tl.make_block_ptr(C,(M,N),(N,1),(0,0),(T,T),(1,0))
  tl.store(c,v,boundary_check=(0,1))
 assert torch.cuda.is_available()
 for label in ['baseline','fixed','rollback']:
  subprocess.run([sys.executable,__file__,label],env=dict(os.environ,XMLIR_MATMUL_FAST_MODE='0'),check=True)
 records=[]
+os.environ['XMLIR_MATMUL_FAST_MODE']='1'
 for seed in [20261028,1234,42]:
  g=torch.Generator().manual_seed(seed)
  ah=torch.randn(64,64,generator=g);bh=torch.randn(64,64,generator=g)
