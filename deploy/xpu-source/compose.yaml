@@ -1,0 +1,16 @@
+services:
+  verify:
+    image: flagtree-xpu-from-source:local
+    ipc: host
+    shm_size: 4gb
+    devices:
+      - ${XPU_DEVICE:?set XPU_DEVICE}:${XPU_DEVICE:?set XPU_DEVICE}
+      - /dev/xpuctrl:/dev/xpuctrl
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
+      XMLIR_MATMUL_FAST_MODE: "0"
+      FLAGTREE_BACKEND: xpu
+    volumes:
+      - ${RESULTS_DIR:?set absolute RESULTS_DIR}:/results
+      - /usr/local/xpu:/usr/local/xpu:ro
+    command: ["/opt/source-env/bin/python", "/src/FlagTree/deploy/xpu-source/verify.py"]
