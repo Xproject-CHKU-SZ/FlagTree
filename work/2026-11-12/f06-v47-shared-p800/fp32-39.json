@@ -1,0 +1,4360 @@
+{
+  "suite": "fp32_39",
+  "image": "sha256:c74d1073f2da053d870cb109ca8daa6bb8c71f4d0abea8726997146263f5e4d1",
+  "card": 3,
+  "results": {
+    "matmul_bias_relu-float32-2048x2048": {
+      "template": "matmul_bias_relu",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 81.1885,
+      "public_us": 97.21799999999999,
+      "speedup": 0.8351179822666586,
+      "device_us": {
+        "eager": 56.93750083446503,
+        "public": 53.741250187158585
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu39fc_km_nmkI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "907ad80b58ae105fbff86d9bb47b808b40f10ef53c91122edcc0b93c75a4e3d1",
+            "bytes": 22824,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38relu_fwdIfEEvPKT_PS1_l",
+            "sha256": "076d6ecadecfbb0531066da29a45835dec1bfe644ee466c777c256df272f0332",
+            "bytes": 1360,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "5018219af74841540f6f255083e555c8d38dab1b1e5eacb229feddf09b554774",
+            "bytes": 4136,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        0.8239791199983558,
+        0.8909647716528958
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 48.724000000000004,
+          "wait": 32.009,
+          "total": 81.1885
+        },
+        "public": {
+          "submit": 44.854,
+          "wait": 52.549,
+          "total": 97.21799999999999
+        },
+        "wide": {
+          "submit": 57.4885,
+          "wait": 28.459,
+          "total": 85.773
+        }
+      },
+      "attempt": "attempt-1-SBbRLc",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_exact-float32-2048x2048": {
+      "template": "matmul_bias_gelu_exact",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 312.374,
+      "public_us": 176.976,
+      "speedup": 1.7650641894946208,
+      "device_us": {
+        "eager": 283.2939922809601,
+        "public": 130.2478164434433
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu39fc_km_nmkI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "907ad80b58ae105fbff86d9bb47b808b40f10ef53c91122edcc0b93c75a4e3d1",
+            "bytes": 22824,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "5435a7d44eb819144ff97944942598dae337dba3de57b1a607144ff7f0ae187e",
+            "bytes": 6580,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.7501362229449995,
+        1.7876594520826048
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 59.964,
+          "wait": 253.615,
+          "total": 312.374
+        },
+        "public": {
+          "submit": 48.644,
+          "wait": 128.4375,
+          "total": 176.976
+        },
+        "wide": {
+          "submit": 67.793,
+          "wait": 250.53,
+          "total": 318.22299999999996
+        }
+      },
+      "attempt": "attempt-1-gts12V",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_exact-float32-2048x2048": {
+      "template": "add_gelu_exact",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 270.7495,
+      "public_us": 120.602,
+      "speedup": 2.2449834994444537,
+      "device_us": {
+        "eager": 254.38851118087769,
+        "public": 81.09606057405472
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "68ecd02d76c18af7e0e1ac9d4c5926bd66b1cc121ff964f4761822853e5dfdee",
+            "bytes": 1912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        2.224587680222648,
+        2.2647100655082117
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 27.094,
+          "wait": 243.29000000000002,
+          "total": 270.7495
+        },
+        "public": {
+          "submit": 40.739000000000004,
+          "wait": 80.048,
+          "total": 120.602
+        },
+        "wide": {
+          "submit": 33.974500000000006,
+          "wait": 240.7155,
+          "total": 275.194
+        }
+      },
+      "attempt": "attempt-1-vibieW",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_exact-float32-512x1024": {
+      "template": "add_gelu_exact",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 57.838499999999996,
+      "public_us": 49.699,
+      "speedup": 1.1637759311052536,
+      "device_us": {
+        "eager": 42.56068915128708,
+        "public": 27.948938310146332
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "be88a10f7ce7d206ead4bda438e6ab3aa798ca1a72173e9223999f6f0941f306",
+            "bytes": 3380,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1517708270555858,
+        1.2120888638240448
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.72,
+          "wait": 33.19,
+          "total": 57.838499999999996
+        },
+        "public": {
+          "submit": 21.88,
+          "wait": 27.994,
+          "total": 49.699
+        },
+        "wide": {
+          "submit": 30.6845,
+          "wait": 31.2345,
+          "total": 61.8185
+        }
+      },
+      "attempt": "attempt-1-oR8QzP",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_exact-float32-64x1024": {
+      "template": "add_gelu_exact",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 31.8995,
+      "public_us": 27.164,
+      "speedup": 1.1743299955823885,
+      "device_us": {
+        "eager": 12.17193715274334,
+        "public": 7.187187671661377
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "be88a10f7ce7d206ead4bda438e6ab3aa798ca1a72173e9223999f6f0941f306",
+            "bytes": 3380,
+            "entry": 0,
+            "grid": 8,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1509427140765378,
+        1.2176682714309248
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.389499999999998,
+          "wait": 7.32,
+          "total": 31.8995
+        },
+        "public": {
+          "submit": 20.009999999999998,
+          "wait": 7.22,
+          "total": 27.164
+        },
+        "wide": {
+          "submit": 30.744999999999997,
+          "wait": 6.255,
+          "total": 36.8095
+        }
+      },
+      "attempt": "attempt-1-BbCczd",
+      "eager_matches_v43b": true
+    },
+    "add_silu-float32-2048x2048": {
+      "template": "add_silu",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 88.1335,
+      "public_us": 86.723,
+      "speedup": 1.0162644281217208,
+      "device_us": {
+        "eager": 73.45075160264969,
+        "public": 64.8956224322319
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "1323a02731231b1438334f3317a81ce764e626321dbfb4cd90e3632f0f336fdb",
+            "bytes": 1636,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.0086745853594126,
+        1.0255733759170542
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.255000000000003,
+          "wait": 63.492999999999995,
+          "total": 88.1335
+        },
+        "public": {
+          "submit": 21.3795,
+          "wait": 65.359,
+          "total": 86.723
+        },
+        "wide": {
+          "submit": 30.6695,
+          "wait": 61.498000000000005,
+          "total": 92.453
+        }
+      },
+      "attempt": "attempt-1-2QrQZh",
+      "eager_matches_v43b": true
+    },
+    "add_silu-float32-512x1024": {
+      "template": "add_silu",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 33.403999999999996,
+      "public_us": 31.204,
+      "speedup": 1.0705037815664658,
+      "device_us": {
+        "eager": 19.047938287258148,
+        "public": 12.179750017821789
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "6534d5c169e429962154522088ebd534c97a22794ebff6e1d51fafcff40126f5",
+            "bytes": 1604,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.0578075207138307,
+        1.1176131265222407
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.3945,
+          "wait": 9.844999999999999,
+          "total": 33.403999999999996
+        },
+        "public": {
+          "submit": 18.5945,
+          "wait": 12.6,
+          "total": 31.204
+        },
+        "wide": {
+          "submit": 29.605,
+          "wait": 7.95,
+          "total": 37.475
+        }
+      },
+      "attempt": "attempt-1-v9WeYI",
+      "eager_matches_v43b": true
+    },
+    "add_silu-float32-64x1024": {
+      "template": "add_silu",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 29.899,
+      "public_us": 24.149,
+      "speedup": 1.238105097519566,
+      "device_us": {
+        "eager": 9.968187659978867,
+        "public": 5.155249964445829
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "ed680dd2f537b0942b5f25da0083ca220aa81519840b45c57934670c13a5cd23",
+            "bytes": 2472,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1893067755371356,
+        1.3156642101087705
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.1895,
+          "wait": 5.58,
+          "total": 29.899
+        },
+        "public": {
+          "submit": 18.58,
+          "wait": 5.53,
+          "total": 24.149
+        },
+        "wide": {
+          "submit": 29.539499999999997,
+          "wait": 5.915,
+          "total": 35.334
+        }
+      },
+      "attempt": "attempt-1-3RSVlx",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias-float32-2048x2048": {
+      "template": "matmul_bias",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 63.4285,
+      "public_us": 46.984,
+      "speedup": 1.3500021283841308,
+      "device_us": {
+        "eager": 38.650624454021454,
+        "public": 21.250000223517418
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu39fc_km_nmkI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "907ad80b58ae105fbff86d9bb47b808b40f10ef53c91122edcc0b93c75a4e3d1",
+            "bytes": 22824,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "grouped_mm_bias",
+            "sha256": "30d5e12698a35be4fbb8593c61f681d5f9eb299bd474c894b2ccbd2ee4c5d6cd",
+            "bytes": 1908,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.3381460422922122,
+        1.3963902605142176
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 42.099000000000004,
+          "wait": 21.32,
+          "total": 63.4285
+        },
+        "public": {
+          "submit": 25.384,
+          "wait": 21.5945,
+          "total": 46.984
+        },
+        "wide": {
+          "submit": 51.3435,
+          "wait": 18.18,
+          "total": 69.908
+        }
+      },
+      "attempt": "attempt-1-zEO5qW",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias-float32-512x1024": {
+      "template": "matmul_bias",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 50.704,
+      "public_us": 35.3645,
+      "speedup": 1.4337541885223883,
+      "device_us": {
+        "eager": 15.721062198281288,
+        "public": 10.262812487781048
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "da0476ef2abab6fe4c7f1112adb4dd9a7b90eddc2377ab5565638e8b7f02d7c2",
+            "bytes": 2596,
+            "entry": 0,
+            "grid": 8,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4071213342952937,
+        1.5503273902321493
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 42.119,
+          "wait": 8.495000000000001,
+          "total": 50.704
+        },
+        "public": {
+          "submit": 25.255,
+          "wait": 10.175,
+          "total": 35.3645
+        },
+        "wide": {
+          "submit": 50.619,
+          "wait": 8.91,
+          "total": 59.7735
+        }
+      },
+      "attempt": "attempt-1-sfCd4d",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias-float32-64x1024": {
+      "template": "matmul_bias",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 49.314,
+      "public_us": 32.424,
+      "speedup": 1.5209104367135455,
+      "device_us": {
+        "eager": 8.540250360965729,
+        "public": 8.111812174320221
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 11,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "da0476ef2abab6fe4c7f1112adb4dd9a7b90eddc2377ab5565638e8b7f02d7c2",
+            "bytes": 2596,
+            "entry": 0,
+            "grid": 4,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4816999907575708,
+        1.6470734744707347
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 40.939,
+          "wait": 7.87,
+          "total": 49.314
+        },
+        "public": {
+          "submit": 24.299500000000002,
+          "wait": 8.205,
+          "total": 32.424
+        },
+        "wide": {
+          "submit": 49.028999999999996,
+          "wait": 8.4145,
+          "total": 57.294
+        }
+      },
+      "attempt": "attempt-1-GWbIvo",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_tanh-float32-2048x2048": {
+      "template": "matmul_bias_gelu_tanh",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 278.624,
+      "public_us": 128.71249999999998,
+      "speedup": 2.164700398174226,
+      "device_us": {
+        "eager": 249.72112476825714,
+        "public": 98.46262633800507
+      },
+      "launches": 2,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu39fc_km_nmkI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "907ad80b58ae105fbff86d9bb47b808b40f10ef53c91122edcc0b93c75a4e3d1",
+            "bytes": 22824,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "grouped_mm_bias",
+            "sha256": "30d5e12698a35be4fbb8593c61f681d5f9eb299bd474c894b2ccbd2ee4c5d6cd",
+            "bytes": 1908,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "ew_gelu_tanh",
+            "sha256": "5bc83dd397882bcfaea3d5dc9e03b69084b006ab064c7ff33bbd3cd50608f187",
+            "bytes": 2608,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        2.1543921504952332,
+        2.190375664569904
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 59.683,
+          "wait": 219.4405,
+          "total": 278.624
+        },
+        "public": {
+          "submit": 34.519000000000005,
+          "wait": 94.518,
+          "total": 128.71249999999998
+        },
+        "wide": {
+          "submit": 68.744,
+          "wait": 216.636,
+          "total": 285.6745
+        }
+      },
+      "attempt": "attempt-1-SIxDAw",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_tanh-float32-512x1024": {
+      "template": "matmul_bias_gelu_tanh",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 93.793,
+      "public_us": 52.5785,
+      "speedup": 1.7838660288901358,
+      "device_us": {
+        "eager": 54.475124925374985,
+        "public": 22.5212499499321
+      },
+      "launches": 2,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "da0476ef2abab6fe4c7f1112adb4dd9a7b90eddc2377ab5565638e8b7f02d7c2",
+            "bytes": 2596,
+            "entry": 0,
+            "grid": 8,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "ew_gelu_tanh",
+            "sha256": "5bc83dd397882bcfaea3d5dc9e03b69084b006ab064c7ff33bbd3cd50608f187",
+            "bytes": 2608,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.715871401826527,
+        1.8379682394954793
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 54.824,
+          "wait": 39.2445,
+          "total": 93.793
+        },
+        "public": {
+          "submit": 33.4695,
+          "wait": 18.8745,
+          "total": 52.5785
+        },
+        "wide": {
+          "submit": 62.189,
+          "wait": 36.254000000000005,
+          "total": 98.173
+        }
+      },
+      "attempt": "attempt-1-8FrbJ3",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_tanh-float32-64x1024": {
+      "template": "matmul_bias_gelu_tanh",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 59.9585,
+      "public_us": 39.914500000000004,
+      "speedup": 1.5021733956331658,
+      "device_us": {
+        "eager": 15.618374571204185,
+        "public": 11.43299974501133
+      },
+      "launches": 2,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 11,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "da0476ef2abab6fe4c7f1112adb4dd9a7b90eddc2377ab5565638e8b7f02d7c2",
+            "bytes": 2596,
+            "entry": 0,
+            "grid": 4,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "ew_gelu_tanh",
+            "sha256": "5bc83dd397882bcfaea3d5dc9e03b69084b006ab064c7ff33bbd3cd50608f187",
+            "bytes": 2608,
+            "entry": 0,
+            "grid": 8,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4803990024937657,
+        1.670631566997566
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 51.513999999999996,
+          "wait": 8.684999999999999,
+          "total": 59.9585
+        },
+        "public": {
+          "submit": 31.948999999999998,
+          "wait": 8.02,
+          "total": 39.914500000000004
+        },
+        "wide": {
+          "submit": 60.084,
+          "wait": 9.049499999999998,
+          "total": 68.959
+        }
+      },
+      "attempt": "attempt-1-LARreC",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_relu-float32-512x1024": {
+      "template": "matmul_bias_relu",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 59.1135,
+      "public_us": 50.799,
+      "speedup": 1.1636744817811375,
+      "device_us": {
+        "eager": 19.653312861919403,
+        "public": 7.182437460869551
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38relu_fwdIfEEvPKT_PS1_l",
+            "sha256": "076d6ecadecfbb0531066da29a45835dec1bfe644ee466c777c256df272f0332",
+            "bytes": 1360,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "79c8fcd718a8ae1171406a31811a0b1b8f43bfed3bf4caa4cb257b2e4cd76d73",
+            "bytes": 2052,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1439941685218384,
+        1.244773880258197
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 50.888999999999996,
+          "wait": 8.39,
+          "total": 59.1135
+        },
+        "public": {
+          "submit": 44.0295,
+          "wait": 6.69,
+          "total": 50.799
+        },
+        "wide": {
+          "submit": 59.6235,
+          "wait": 9.25,
+          "total": 68.629
+        }
+      },
+      "attempt": "attempt-1-raitX6",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_relu-float32-64x1024": {
+      "template": "matmul_bias_relu",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 63.528999999999996,
+      "public_us": 52.079,
+      "speedup": 1.2198582922099117,
+      "device_us": {
+        "eager": 10.89831255376339,
+        "public": 4.572562407702208
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 11,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38relu_fwdIfEEvPKT_PS1_l",
+            "sha256": "076d6ecadecfbb0531066da29a45835dec1bfe644ee466c777c256df272f0332",
+            "bytes": 1360,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "208152a968293c815a24e6e5bc13def0d0f10a2f1dd459bd65ec878dbd211d66",
+            "bytes": 3528,
+            "entry": 0,
+            "grid": 8,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1863593439842741,
+        1.3579734378904071
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 54.449,
+          "wait": 9.0395,
+          "total": 63.528999999999996
+        },
+        "public": {
+          "submit": 45.013999999999996,
+          "wait": 6.975,
+          "total": 52.079
+        },
+        "wide": {
+          "submit": 63.3035,
+          "wait": 9.43,
+          "total": 72.59800000000001
+        }
+      },
+      "attempt": "attempt-1-8lxTSk",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_tanh-float32-2048x2048": {
+      "template": "add_gelu_tanh",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 220.4105,
+      "public_us": 104.59800000000001,
+      "speedup": 2.107215243121283,
+      "device_us": {
+        "eager": 205.16318082809448,
+        "public": 82.1676254272461
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "7d3f01840e623d798c256c29ed2200f39c2784aea4a313ecbedab1147fe81e03",
+            "bytes": 2692,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        2.099270993569838,
+        2.1237347596043246
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 25.549500000000002,
+          "wait": 194.5265,
+          "total": 220.4105
+        },
+        "public": {
+          "submit": 22.035,
+          "wait": 82.45349999999999,
+          "total": 104.59800000000001
+        },
+        "wide": {
+          "submit": 31.5895,
+          "wait": 192.736,
+          "total": 224.19
+        }
+      },
+      "attempt": "attempt-1-I9loEb",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_tanh-float32-512x1024": {
+      "template": "add_gelu_tanh",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 58.179,
+      "public_us": 36.614000000000004,
+      "speedup": 1.5889823564756649,
+      "device_us": {
+        "eager": 42.78131201863289,
+        "public": 15.306562185287476
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "ac47e920de35af6683914f6d5b8ebed2e855b79409405c08268273664cc3cddc",
+            "bytes": 2692,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.5752669184166916,
+        1.6481476436938165
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.4545,
+          "wait": 33.7445,
+          "total": 58.179
+        },
+        "public": {
+          "submit": 20.569499999999998,
+          "wait": 15.8895,
+          "total": 36.614000000000004
+        },
+        "wide": {
+          "submit": 30.2545,
+          "wait": 31.7745,
+          "total": 61.944
+        }
+      },
+      "attempt": "attempt-1-NZNQdY",
+      "eager_matches_v43b": true
+    },
+    "add_gelu_tanh-float32-64x1024": {
+      "template": "add_gelu_tanh",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 30.159,
+      "public_us": 24.814500000000002,
+      "speedup": 1.2153781055431299,
+      "device_us": {
+        "eager": 11.098625138401985,
+        "public": 5.549124907702208
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhIfEEvPKT_PS1_l",
+            "sha256": "2955a0e4aa7056cdcd3f7f4ab0b61b7ceadb40375924bb160430557b36d6689a",
+            "bytes": 1936,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_flat_add_act",
+            "sha256": "2190e3ad1f4d481679c35ac901ad6fdb26c3cc6dd73141d7254985936b871626",
+            "bytes": 1820,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1886088327446167,
+        1.3143260694108152
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.8445,
+          "wait": 6.385,
+          "total": 30.159
+        },
+        "public": {
+          "submit": 19.15,
+          "wait": 5.7945,
+          "total": 24.814500000000002
+        },
+        "wide": {
+          "submit": 31.4,
+          "wait": 6.135,
+          "total": 37.664500000000004
+        }
+      },
+      "attempt": "attempt-1-YScbjr",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm-float32-2048x2048": {
+      "template": "add_layernorm",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 64.499,
+      "public_us": 54.714,
+      "speedup": 1.178839053989838,
+      "device_us": {
+        "eager": 50.03900080919266,
+        "public": 32.84856304526329
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "8522d37ebbbd52c474007e6e4fb3f1b7ed7c455616d180457fb95ca1cc337b12",
+            "bytes": 26028,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1702455385624966,
+        1.1982947691632855
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 30.6495,
+          "wait": 33.034,
+          "total": 64.499
+        },
+        "public": {
+          "submit": 21.509500000000003,
+          "wait": 33.2,
+          "total": 54.714
+        },
+        "wide": {
+          "submit": 38.039500000000004,
+          "wait": 31.359,
+          "total": 69.76849999999999
+        }
+      },
+      "attempt": "attempt-1-jclrzY",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm-float32-512x1024": {
+      "template": "add_layernorm",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 36.894999999999996,
+      "public_us": 30.8445,
+      "speedup": 1.196161390199225,
+      "device_us": {
+        "eager": 15.373187139630318,
+        "public": 9.65800043195486
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "88015ff1a83bd14606edbaa19c7a2276e83b198251a7685a2728eb2be595ee25",
+            "bytes": 26020,
+            "entry": 0,
+            "grid": 4,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1744654777645198,
+        1.2252823715977863
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 31.154000000000003,
+          "wait": 5.75,
+          "total": 36.894999999999996
+        },
+        "public": {
+          "submit": 21.25,
+          "wait": 9.77,
+          "total": 30.8445
+        },
+        "wide": {
+          "submit": 37.604,
+          "wait": 6.359999999999999,
+          "total": 43.794
+        }
+      },
+      "attempt": "attempt-1-8sWDEt",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm-float32-64x1024": {
+      "template": "add_layernorm",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 36.494,
+      "public_us": 26.9795,
+      "speedup": 1.3526566467132453,
+      "device_us": {
+        "eager": 10.31775027513504,
+        "public": 6.03543734177947
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "5bd55bcefcd4468ac1b67c88a11ceb45560762c68ea736180488310f894f07e4",
+            "bytes": 26020,
+            "entry": 0,
+            "grid": 4,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.329380302471413,
+        1.4848775804128662
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 30.739,
+          "wait": 5.875,
+          "total": 36.494
+        },
+        "public": {
+          "submit": 20.924500000000002,
+          "wait": 6.12,
+          "total": 26.9795
+        },
+        "wide": {
+          "submit": 36.209999999999994,
+          "wait": 6.32,
+          "total": 42.515
+        }
+      },
+      "attempt": "attempt-1-Nln72t",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm_affine-float32-2048x2048": {
+      "template": "add_layernorm_affine",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 67.1385,
+      "public_us": 62.234,
+      "speedup": 1.078807404312755,
+      "device_us": {
+        "eager": 51.420439034700394,
+        "public": 40.23924842476845
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "bcf1c508fcdb523a468029e28c2058961cbef778f5b337a97ea337541198b9a7",
+            "bytes": 26032,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.0687826455602036,
+        1.1001799640071985
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 33.194,
+          "wait": 33.6695,
+          "total": 67.1385
+        },
+        "public": {
+          "submit": 21.68,
+          "wait": 40.539,
+          "total": 62.234
+        },
+        "wide": {
+          "submit": 41.094,
+          "wait": 30.6095,
+          "total": 71.658
+        }
+      },
+      "attempt": "attempt-1-Xlgd5B",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm_affine-float32-512x1024": {
+      "template": "add_layernorm_affine",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 39.834500000000006,
+      "public_us": 32.534,
+      "speedup": 1.2243960164750725,
+      "device_us": {
+        "eager": 16.93674921989441,
+        "public": 12.086562812328339
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "b152efe8ce2a15678cf2ee77536bf311d209c9aaf65922efdfc0430ac1b82986",
+            "bytes": 26024,
+            "entry": 0,
+            "grid": 4,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1957180924377468,
+        1.2958443474518966
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 33.914500000000004,
+          "wait": 5.97,
+          "total": 39.834500000000006
+        },
+        "public": {
+          "submit": 20.424500000000002,
+          "wait": 12.21,
+          "total": 32.534
+        },
+        "wide": {
+          "submit": 39.035,
+          "wait": 6.375,
+          "total": 45.659000000000006
+        }
+      },
+      "attempt": "attempt-2-ozXTFv",
+      "eager_matches_v43b": true
+    },
+    "add_layernorm_affine-float32-64x1024": {
+      "template": "add_layernorm_affine",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 37.954,
+      "public_us": 27.799500000000002,
+      "speedup": 1.365276353891257,
+      "device_us": {
+        "eager": 12.654812075197697,
+        "public": 6.641875021159649
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "bytes": 11920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_row_layernorm",
+            "sha256": "19e78f69efdd13f24d82d69bea345b8710facd193f41da9087e61078e1ae9970",
+            "bytes": 26024,
+            "entry": 0,
+            "grid": 4,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.3321432435356486,
+        1.4822016961054392
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 32.099500000000006,
+          "wait": 5.73,
+          "total": 37.954
+        },
+        "public": {
+          "submit": 21.174999999999997,
+          "wait": 6.635,
+          "total": 27.799500000000002
+        },
+        "wide": {
+          "submit": 37.399,
+          "wait": 6.115,
+          "total": 43.239
+        }
+      },
+      "attempt": "attempt-1-hg2wqR",
+      "eager_matches_v43b": true
+    },
+    "add_softmax-float32-2048x2048": {
+      "template": "add_softmax",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 91.40299999999999,
+      "public_us": 86.728,
+      "speedup": 1.053904160132829,
+      "device_us": {
+        "eager": 76.08887553215027,
+        "public": 63.24250251054764
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu311softmax_fwdIfEEvPKT_PS1_ll",
+            "sha256": "c5f093d29222079bba3933b7ad0f9b96dd9c36427b4ae72cea7457125f80035a",
+            "bytes": 14904,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_tle_row_softmax",
+            "sha256": "347ee89b6861665a5d75f315a17328865f50a522a7f7f7136884db8b2e44d5f1",
+            "bytes": 10520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.0457684278143569,
+        1.0657861212766944
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.3095,
+          "wait": 66.98400000000001,
+          "total": 91.40299999999999
+        },
+        "public": {
+          "submit": 22.564999999999998,
+          "wait": 64.1135,
+          "total": 86.728
+        },
+        "wide": {
+          "submit": 30.049,
+          "wait": 65.209,
+          "total": 95.253
+        }
+      },
+      "attempt": "attempt-1-DFn5ta",
+      "eager_matches_v43b": true
+    },
+    "add_softmax-float32-512x1024": {
+      "template": "add_softmax",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 35.3445,
+      "public_us": 33.909000000000006,
+      "speedup": 1.0423338936565512,
+      "device_us": {
+        "eager": 21.528374403715134,
+        "public": 12.376874685287476
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu311softmax_fwdIfEEvPKT_PS1_ll",
+            "sha256": "c5f093d29222079bba3933b7ad0f9b96dd9c36427b4ae72cea7457125f80035a",
+            "bytes": 14904,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_tle_row_softmax",
+            "sha256": "0ab7255382c36f8fe4893575f3152c27373e91029d45a2412892cd84cefebf58",
+            "bytes": 5932,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.0245037945125512,
+        1.0905372279157681
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.0245,
+          "wait": 12.235,
+          "total": 35.3445
+        },
+        "public": {
+          "submit": 21.4295,
+          "wait": 12.469,
+          "total": 33.909000000000006
+        },
+        "wide": {
+          "submit": 29.57,
+          "wait": 10.155000000000001,
+          "total": 39.5595
+        }
+      },
+      "attempt": "attempt-1-Je5hxB",
+      "eager_matches_v43b": true
+    },
+    "add_softmax-float32-64x1024": {
+      "template": "add_softmax",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 32.7545,
+      "public_us": 26.014499999999998,
+      "speedup": 1.2590862788060506,
+      "device_us": {
+        "eager": 14.752250164747238,
+        "public": 5.670499987900257
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu311softmax_fwdIfEEvPKT_PS1_ll",
+            "sha256": "c5f093d29222079bba3933b7ad0f9b96dd9c36427b4ae72cea7457125f80035a",
+            "bytes": 14904,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_tle_row_softmax",
+            "sha256": "a42c69f3710d27cf5d3de7ef9272330051107444ec23c4c3e8148a448bc2cfc2",
+            "bytes": 3708,
+            "entry": 0,
+            "grid": 8,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.2232111961244183,
+        1.3240812229771464
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.064500000000002,
+          "wait": 9.625,
+          "total": 32.7545
+        },
+        "public": {
+          "submit": 20.253999999999998,
+          "wait": 5.645,
+          "total": 26.014499999999998
+        },
+        "wide": {
+          "submit": 28.0945,
+          "wait": 7.93,
+          "total": 35.949
+        }
+      },
+      "attempt": "attempt-1-ijGEl4",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_exact-float32-512x1024": {
+      "template": "matmul_bias_gelu_exact",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "sdnn",
+      "compute_route": "sdnn",
+      "eager_us": 91.378,
+      "public_us": 60.794,
+      "speedup": 1.5030759614435636,
+      "device_us": {
+        "eager": 50.47149956226349,
+        "public": 17.90650002658367
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "triton_unk_fused_0",
+            "sha256": "b81a3765ea09bf8c30af772702c67aab97eac2f7ab771650f2f9ae79e99fbde7",
+            "bytes": 2568,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4753395926526733,
+        1.6219430293698505
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 56.183499999999995,
+          "wait": 35.044,
+          "total": 91.378
+        },
+        "public": {
+          "submit": 44.914500000000004,
+          "wait": 16.01,
+          "total": 60.794
+        },
+        "wide": {
+          "submit": 65.60849999999999,
+          "wait": 31.749499999999998,
+          "total": 96.96799999999999
+        }
+      },
+      "attempt": "attempt-1-rMkW4g",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_gelu_exact-float32-64x1024": {
+      "template": "matmul_bias_gelu_exact",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 59.784,
+      "public_us": 42.939,
+      "speedup": 1.3923007056522043,
+      "device_us": {
+        "eager": 16.265124082565308,
+        "public": 13.593312352895737
+      },
+      "launches": 2,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 11,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu321gelu_highprecision_nvIfEEvPKT_PS1_l",
+            "sha256": "345555e6e22773300212da4097785373327fc02bba98936d2a5412b33e7100eb",
+            "bytes": 2912,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "da0476ef2abab6fe4c7f1112adb4dd9a7b90eddc2377ab5565638e8b7f02d7c2",
+            "bytes": 2596,
+            "entry": 0,
+            "grid": 4,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "ew_gelu_exact",
+            "sha256": "b9cd9cea4ad3eb7f607d61f48dfab513325e471e61f5bf15937ab944593fa0b0",
+            "bytes": 3164,
+            "entry": 0,
+            "grid": 8,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.3615031102033237,
+        1.538911725771616
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 51.114000000000004,
+          "wait": 8.69,
+          "total": 59.784
+        },
+        "public": {
+          "submit": 32.854,
+          "wait": 10.125,
+          "total": 42.939
+        },
+        "wide": {
+          "submit": 60.338499999999996,
+          "wait": 9.055,
+          "total": 69.3635
+        }
+      },
+      "attempt": "attempt-1-vPSYzH",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_silu-float32-2048x2048": {
+      "template": "matmul_bias_silu",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 116.35249999999999,
+      "public_us": 76.884,
+      "speedup": 1.5133512824514852,
+      "device_us": {
+        "eager": 88.76318484544754,
+        "public": 49.838751554489136
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu39fc_km_nmkI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "907ad80b58ae105fbff86d9bb47b808b40f10ef53c91122edcc0b93c75a4e3d1",
+            "bytes": 22824,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "593bde8d0ebcd83a705ab031197cf668ba45021f39f7a04cef2cd0c984e113a6",
+            "bytes": 3260,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4970942299709424,
+        1.556420031639825
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 55.959,
+          "wait": 59.9935,
+          "total": 116.35249999999999
+        },
+        "public": {
+          "submit": 26.82,
+          "wait": 50.144000000000005,
+          "total": 76.884
+        },
+        "wide": {
+          "submit": 65.868,
+          "wait": 56.358999999999995,
+          "total": 122.5775
+        }
+      },
+      "attempt": "attempt-1-6tqwzZ",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_silu-float32-512x1024": {
+      "template": "matmul_bias_silu",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 62.823499999999996,
+      "public_us": 42.164,
+      "speedup": 1.4899796034531827,
+      "device_us": {
+        "eager": 25.402750819921494,
+        "public": 16.19499921798706
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 12,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "482963bdcb809822a2af6e648543096565110df7709ce6813597f4e73171a7e2",
+            "bytes": 3000,
+            "entry": 0,
+            "grid": 8,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.4347723128655663,
+        1.5555951025056947
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 52.229,
+          "wait": 9.97,
+          "total": 62.823499999999996
+        },
+        "public": {
+          "submit": 25.964,
+          "wait": 16.1845,
+          "total": 42.164
+        },
+        "wide": {
+          "submit": 59.9885,
+          "wait": 9.225000000000001,
+          "total": 69.30850000000001
+        }
+      },
+      "attempt": "attempt-1-12tQkx",
+      "eager_matches_v43b": true
+    },
+    "matmul_bias_silu-float32-64x1024": {
+      "template": "matmul_bias_silu",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "native_mm",
+      "compute_route": "native_mm",
+      "eager_us": 62.4935,
+      "public_us": 40.13,
+      "speedup": 1.5572763518564663,
+      "device_us": {
+        "eager": 13.639000244438648,
+        "public": 14.133750461041927
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "sdnn",
+            "symbol": "_ZN10xblas_xpu311fc_one_loopI27ArgsJL1_5321856422865063095EEvN4gemm5algo510MMArgsBaseIT_EENS3_15GlobalBlockArgsIS5_EENS3_12FragmentArgsIS5_EENS3_11UnisramArgsIS5_EENS3_8L1inArgsIS5_EE",
+            "sha256": "b0dd2d4a2ddcb4488d9fe2995ab69c6567dbed82b08b6e1322524001ffba133e",
+            "bytes": 10920,
+            "entry": 0,
+            "grid": 11,
+            "cores": 8,
+            "library": "?"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu38silu_fwdIfEEvPKT_PS1_l",
+            "sha256": "9c1b998ef1b9c47d3e95858659ab22861ed87a8140b11b0b0c64efbc3feff7d5",
+            "bytes": 1520,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "sdnn",
+            "symbol": "mm_act",
+            "sha256": "482963bdcb809822a2af6e648543096565110df7709ce6813597f4e73171a7e2",
+            "bytes": 3000,
+            "entry": 0,
+            "grid": 4,
+            "cores": 8,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.5175143479121314,
+        1.6582742726867228
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 53.834,
+          "wait": 8.34,
+          "total": 62.4935
+        },
+        "public": {
+          "submit": 26.189999999999998,
+          "wait": 14.04,
+          "total": 40.13
+        },
+        "wide": {
+          "submit": 62.519,
+          "wait": 8.724499999999999,
+          "total": 71.17349999999999
+        }
+      },
+      "attempt": "attempt-1-MhumdD",
+      "eager_matches_v43b": true
+    },
+    "mul_sum-float32-2048x2048": {
+      "template": "mul_sum",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 50.664,
+      "public_us": 36.858999999999995,
+      "speedup": 1.3745353916275538,
+      "device_us": {
+        "eager": 35.93556210398674,
+        "public": 17.35449954867363
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "13a63d391c1e7170c78f23bf02e4aad5d803130bc2d93961e22ee761bbb3798f",
+            "bytes": 1544,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.3500988979937834,
+        1.396816117893363
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.604,
+          "wait": 26.2195,
+          "total": 50.664
+        },
+        "public": {
+          "submit": 19.18,
+          "wait": 17.494999999999997,
+          "total": 36.858999999999995
+        },
+        "wide": {
+          "submit": 29.3545,
+          "wait": 24.2395,
+          "total": 53.92400000000001
+        }
+      },
+      "attempt": "attempt-1-Ose0eV",
+      "eager_matches_v43b": true
+    },
+    "mul_sum-float32-512x1024": {
+      "template": "mul_sum",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 29.65,
+      "public_us": 25.9345,
+      "speedup": 1.1432647631533286,
+      "device_us": {
+        "eager": 13.999312184751034,
+        "public": 6.281187292188406
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "290af50e48d5d7e3473f207aa327d7b11547bfdf684294ddedba5a34bc539b37",
+            "bytes": 1600,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1199969241416434,
+        1.1906686260102866
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.7845,
+          "wait": 5.8445,
+          "total": 29.65
+        },
+        "public": {
+          "submit": 19.8145,
+          "wait": 6.215,
+          "total": 25.9345
+        },
+        "wide": {
+          "submit": 29.9795,
+          "wait": 6.23,
+          "total": 36.304500000000004
+        }
+      },
+      "attempt": "attempt-1-hp0p6b",
+      "eager_matches_v43b": true
+    },
+    "mul_sum-float32-64x1024": {
+      "template": "mul_sum",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 29.944499999999998,
+      "public_us": 24.369,
+      "speedup": 1.2287947802536008,
+      "device_us": {
+        "eager": 9.519312530755997,
+        "public": 5.224625114351511
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "03c2238d3c731a33ea000462c86f6b23bb22a98c2f8b3cca25f649df2ab9aeba",
+            "bytes": 1600,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1993327773144287,
+        1.3147188284174585
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 24.0295,
+          "wait": 5.73,
+          "total": 29.944499999999998
+        },
+        "public": {
+          "submit": 18.669,
+          "wait": 5.595,
+          "total": 24.369
+        },
+        "wide": {
+          "submit": 29.9695,
+          "wait": 6.225,
+          "total": 36.434
+        }
+      },
+      "attempt": "attempt-1-o0yx6Q",
+      "eager_matches_v43b": true
+    },
+    "mul_sum_keepdim-float32-2048x2048": {
+      "template": "mul_sum_keepdim",
+      "shape": "2048x2048",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 50.274,
+      "public_us": 36.939,
+      "speedup": 1.3610005685048323,
+      "device_us": {
+        "eager": 35.88712587952614,
+        "public": 17.17531308531761
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "13a63d391c1e7170c78f23bf02e4aad5d803130bc2d93961e22ee761bbb3798f",
+            "bytes": 1544,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.3470800560284455,
+        1.3844172045343601
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.9195,
+          "wait": 26.139499999999998,
+          "total": 50.274
+        },
+        "public": {
+          "submit": 19.52,
+          "wait": 17.4945,
+          "total": 36.939
+        },
+        "wide": {
+          "submit": 29.935000000000002,
+          "wait": 24.149,
+          "total": 54.4285
+        }
+      },
+      "attempt": "attempt-1-L64jYJ",
+      "eager_matches_v43b": true
+    },
+    "mul_sum_keepdim-float32-512x1024": {
+      "template": "mul_sum_keepdim",
+      "shape": "512x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 28.774,
+      "public_us": 24.849,
+      "speedup": 1.1579540424161938,
+      "device_us": {
+        "eager": 13.921375386416912,
+        "public": 6.311874836683273
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "290af50e48d5d7e3473f207aa327d7b11547bfdf684294ddedba5a34bc539b37",
+            "bytes": 1600,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1176376280085774,
+        1.236409456378255
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 23.244999999999997,
+          "wait": 5.4895,
+          "total": 28.774
+        },
+        "public": {
+          "submit": 18.564999999999998,
+          "wait": 6.25,
+          "total": 24.849
+        },
+        "wide": {
+          "submit": 28.424500000000002,
+          "wait": 5.8795,
+          "total": 34.199
+        }
+      },
+      "attempt": "attempt-1-4llEC3",
+      "eager_matches_v43b": true
+    },
+    "mul_sum_keepdim-float32-64x1024": {
+      "template": "mul_sum_keepdim",
+      "shape": "64x1024",
+      "dtype": "float32",
+      "route": "cluster",
+      "compute_route": "cluster",
+      "eager_us": 28.3395,
+      "public_us": 24.335,
+      "speedup": 1.1645572221080749,
+      "device_us": {
+        "eager": 9.431124664843082,
+        "public": 5.100437439978123
+      },
+      "launches": 1,
+      "traces": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi2ELb0EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "bytes": 3008,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "symbol": "_ZN14xpukernel_xpu39reduce_mtILi0EffEEvPKT0_PT1_ll11ReduceParam",
+            "sha256": "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "bytes": 4408,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "symbol": "_vector_rows",
+            "sha256": "03c2238d3c731a33ea000462c86f6b23bb22a98c2f8b3cca25f649df2ab9aeba",
+            "bytes": 1600,
+            "entry": 0,
+            "grid": 12,
+            "cores": 64,
+            "library": "?"
+          }
+        ]
+      },
+      "accuracy_reference": "unrounded_fp32_eager",
+      "within_run95": [
+        1.1324301681685365,
+        1.2392394441146974
+      ],
+      "submit_wait_us": {
+        "eager": {
+          "submit": 22.86,
+          "wait": 5.49,
+          "total": 28.3395
+        },
+        "public": {
+          "submit": 18.7045,
+          "wait": 5.595,
+          "total": 24.335
+        },
+        "wide": {
+          "submit": 27.859499999999997,
+          "wait": 5.84,
+          "total": 33.6095
+        }
+      },
+      "attempt": "attempt-1-o6KAJF",
+      "eager_matches_v43b": true
+    }
+  },
+  "historical_candidate_checks": {
+    "matmul_bias_relu-float32-2048x2048": {
+      "sdnn": {
+        "previous_sha256": "760d02a11136cf334064e0132a29b0e832367f82b8927fb65d800e5433fae414",
+        "same_machine_code_observed": false,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "5018219af74841540f6f255083e555c8d38dab1b1e5eacb229feddf09b554774"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": true,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "native_mm_grouped_relu",
+              "reason": "validation incomplete or failed"
+            },
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "native_mm",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_1",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_2",
+              "reason": "no stable end-to-end gain over eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                116.30799999999999,
+                116.303
+              ],
+              "inductor": [
+                345.24300000000005,
+                346.053
+              ],
+              "native_mm": [
+                7014.244500000001,
+                7015.339
+              ],
+              "sdnn": [
+                97.91300000000001,
+                96.233
+              ],
+              "sdnn_cluster_at_1": [
+                129.332,
+                129.8025
+              ],
+              "sdnn_cluster_at_2": [
+                134.1375,
+                133.6575
+              ]
+            },
+            "accepted": [
+              "eager",
+              "sdnn"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                95.54849999999999,
+                94.748
+              ],
+              "faster_routes": [],
+              "candidate_medians_us": {
+                "eager": [
+                  105.863,
+                  107.333
+                ],
+                "inductor": [
+                  343.408,
+                  343.09299999999996
+                ],
+                "native_mm": [
+                  7012.754,
+                  7026.159
+                ],
+                "sdnn": [
+                  98.888,
+                  97.788
+                ],
+                "sdnn_cluster_at_1": [
+                  130.7925,
+                  129.35750000000002
+                ],
+                "sdnn_cluster_at_2": [
+                  135.868,
+                  135.02800000000002
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      },
+      "sdnn_cluster_at_1": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "0fd45045e9b375c8453bb2fc6436a6de6da2fb554fca3bbbce29d472f67cb7be",
+            "1747d51805b27f152112e85a0b8e52497ae97895778a2fa175ab79434c57726b",
+            "98e27942f84dcfa736b42e221dc85a752eb607dbfeb638305f94b56275c76828",
+            "b09dc8546e7d8af29076064a364aa40f64f75f8d20dca29ccf9bd6b95483edee",
+            "d4299320f9c6738e5387d7b5d0e950fdf3c283b4c657ee2f6dd6a001cb198823",
+            "df00c36f0fedd5720ded71a10f5a92de3695d6529b60e090b65fedc5e9729c81"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "native_mm_grouped_relu",
+              "reason": "validation incomplete or failed"
+            },
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "native_mm",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_1",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_2",
+              "reason": "no stable end-to-end gain over eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                116.30799999999999,
+                116.303
+              ],
+              "inductor": [
+                345.24300000000005,
+                346.053
+              ],
+              "native_mm": [
+                7014.244500000001,
+                7015.339
+              ],
+              "sdnn": [
+                97.91300000000001,
+                96.233
+              ],
+              "sdnn_cluster_at_1": [
+                129.332,
+                129.8025
+              ],
+              "sdnn_cluster_at_2": [
+                134.1375,
+                133.6575
+              ]
+            },
+            "accepted": [
+              "eager",
+              "sdnn"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                95.54849999999999,
+                94.748
+              ],
+              "faster_routes": [],
+              "candidate_medians_us": {
+                "eager": [
+                  105.863,
+                  107.333
+                ],
+                "inductor": [
+                  343.408,
+                  343.09299999999996
+                ],
+                "native_mm": [
+                  7012.754,
+                  7026.159
+                ],
+                "sdnn": [
+                  98.888,
+                  97.788
+                ],
+                "sdnn_cluster_at_1": [
+                  130.7925,
+                  129.35750000000002
+                ],
+                "sdnn_cluster_at_2": [
+                  135.868,
+                  135.02800000000002
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      },
+      "sdnn_cluster_at_2": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "38a1ce70fa18f976bb8a060b0ba1a776c6217aa3303d04d651160ffbad93da55",
+            "4622f5d13a04ce49fc4c5f498aca1101cdaa59e339e75a816caf32ae09bfadfe",
+            "4dc366e6bd48f03bbaeaa0e8f16b80073ba7e589229d24180cf32e8a02098019",
+            "4f1919ccb702ee38d46869ee738957abf764554f6526281bf7ee750aee2736c1",
+            "97fb115340c87f965e8cdfb1926a67f0df84bbe23fbaec67f48a6c84b899867b",
+            "d3a2740c8d87d87227b926d3baeb5d8206d23f7f18ca7783a68db3cd6c68cf61"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "native_mm_grouped_relu",
+              "reason": "validation incomplete or failed"
+            },
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "native_mm",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_1",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_2",
+              "reason": "no stable end-to-end gain over eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                116.30799999999999,
+                116.303
+              ],
+              "inductor": [
+                345.24300000000005,
+                346.053
+              ],
+              "native_mm": [
+                7014.244500000001,
+                7015.339
+              ],
+              "sdnn": [
+                97.91300000000001,
+                96.233
+              ],
+              "sdnn_cluster_at_1": [
+                129.332,
+                129.8025
+              ],
+              "sdnn_cluster_at_2": [
+                134.1375,
+                133.6575
+              ]
+            },
+            "accepted": [
+              "eager",
+              "sdnn"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                95.54849999999999,
+                94.748
+              ],
+              "faster_routes": [],
+              "candidate_medians_us": {
+                "eager": [
+                  105.863,
+                  107.333
+                ],
+                "inductor": [
+                  343.408,
+                  343.09299999999996
+                ],
+                "native_mm": [
+                  7012.754,
+                  7026.159
+                ],
+                "sdnn": [
+                  98.888,
+                  97.788
+                ],
+                "sdnn_cluster_at_1": [
+                  130.7925,
+                  129.35750000000002
+                ],
+                "sdnn_cluster_at_2": [
+                  135.868,
+                  135.02800000000002
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "matmul_bias_gelu_exact-float32-2048x2048": {
+      "sdnn": {
+        "previous_sha256": "b519a65dd69bd6c66777d4c981a1163ccafb8f1dc91708c3baf76f4db14b4382",
+        "same_machine_code_observed": false,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "5435a7d44eb819144ff97944942598dae337dba3de57b1a607144ff7f0ae187e"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": true,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                336.5285,
+                335.8285
+              ],
+              "inductor": [
+                472.9305,
+                471.45050000000003
+              ],
+              "native_mm": [
+                231.761,
+                231.476
+              ],
+              "sdnn": [
+                166.0265,
+                164.00150000000002
+              ],
+              "sdnn_cluster_at_1": [
+                242.3855,
+                244.615
+              ],
+              "sdnn_cluster_at_2": [
+                255.855,
+                255.94
+              ]
+            },
+            "accepted": [
+              "native_mm",
+              "sdnn",
+              "sdnn_cluster_at_1",
+              "sdnn_cluster_at_2"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                324.8385,
+                325.123
+              ],
+              "faster_routes": [
+                "native_mm",
+                "sdnn",
+                "sdnn_cluster_at_1",
+                "sdnn_cluster_at_2"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  333.5385,
+                  332.59299999999996
+                ],
+                "inductor": [
+                  472.6355,
+                  473.58
+                ],
+                "native_mm": [
+                  231.9005,
+                  232.58049999999997
+                ],
+                "sdnn": [
+                  172.19150000000002,
+                  173.226
+                ],
+                "sdnn_cluster_at_1": [
+                  246.85,
+                  242.84
+                ],
+                "sdnn_cluster_at_2": [
+                  264.715,
+                  262.9445
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      },
+      "sdnn_cluster_at_1": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "05ded256df908e5f41eb8c84d0dcb6e6543f00dbc4aad293e6f5cb2ac5dc9bb0",
+            "3f131e558b6ccfef6956f6e3444bfcdee2ee99f86aad6dd92c960cfa6ffbec64",
+            "709cb417377106fd293841d183b2a541d46500caa08b9800b04f60dfbe4bd2e1",
+            "cdb841e41f3d4939425886a09b19afa3e97aeb2a2c0aab9dffdb75e32749c466",
+            "e7e5fb67b1156bdde83d7465233f4c65cc40d187ef310d71ae6985ce0817d20d",
+            "f304931bd018513d7308604433bdf80096eedc5ca6efceadd8b49a693be8e70e"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                336.5285,
+                335.8285
+              ],
+              "inductor": [
+                472.9305,
+                471.45050000000003
+              ],
+              "native_mm": [
+                231.761,
+                231.476
+              ],
+              "sdnn": [
+                166.0265,
+                164.00150000000002
+              ],
+              "sdnn_cluster_at_1": [
+                242.3855,
+                244.615
+              ],
+              "sdnn_cluster_at_2": [
+                255.855,
+                255.94
+              ]
+            },
+            "accepted": [
+              "native_mm",
+              "sdnn",
+              "sdnn_cluster_at_1",
+              "sdnn_cluster_at_2"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                324.8385,
+                325.123
+              ],
+              "faster_routes": [
+                "native_mm",
+                "sdnn",
+                "sdnn_cluster_at_1",
+                "sdnn_cluster_at_2"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  333.5385,
+                  332.59299999999996
+                ],
+                "inductor": [
+                  472.6355,
+                  473.58
+                ],
+                "native_mm": [
+                  231.9005,
+                  232.58049999999997
+                ],
+                "sdnn": [
+                  172.19150000000002,
+                  173.226
+                ],
+                "sdnn_cluster_at_1": [
+                  246.85,
+                  242.84
+                ],
+                "sdnn_cluster_at_2": [
+                  264.715,
+                  262.9445
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      },
+      "sdnn_cluster_at_2": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "23dba6bb943212ebd8715ac2aa8d911158f28037d66d88fc9581cd434816400a",
+            "8920a93604678372e2c816b603738c0b7e6ab2cc125c636db82e397053b3ec4c",
+            "8a48814d6a7635865b0fe217bdb9fd9d4ad676be3999f42d98716b71376d0303",
+            "8fad5b22bae4bc6677884293bf33f5904af970344a39d67ae628b95c5e26ae7e",
+            "b9cd9cea4ad3eb7f607d61f48dfab513325e471e61f5bf15937ab944593fa0b0",
+            "deb270279140ec6cd8f1a5df40092e2d1c63a95b35eb90b39dcd461b6b26f5bc"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                336.5285,
+                335.8285
+              ],
+              "inductor": [
+                472.9305,
+                471.45050000000003
+              ],
+              "native_mm": [
+                231.761,
+                231.476
+              ],
+              "sdnn": [
+                166.0265,
+                164.00150000000002
+              ],
+              "sdnn_cluster_at_1": [
+                242.3855,
+                244.615
+              ],
+              "sdnn_cluster_at_2": [
+                255.855,
+                255.94
+              ]
+            },
+            "accepted": [
+              "native_mm",
+              "sdnn",
+              "sdnn_cluster_at_1",
+              "sdnn_cluster_at_2"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                324.8385,
+                325.123
+              ],
+              "faster_routes": [
+                "native_mm",
+                "sdnn",
+                "sdnn_cluster_at_1",
+                "sdnn_cluster_at_2"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  333.5385,
+                  332.59299999999996
+                ],
+                "inductor": [
+                  472.6355,
+                  473.58
+                ],
+                "native_mm": [
+                  231.9005,
+                  232.58049999999997
+                ],
+                "sdnn": [
+                  172.19150000000002,
+                  173.226
+                ],
+                "sdnn_cluster_at_1": [
+                  246.85,
+                  242.84
+                ],
+                "sdnn_cluster_at_2": [
+                  264.715,
+                  262.9445
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "matmul_bias-float32-2048x2048": {
+      "sdnn": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "d3a2740c8d87d87227b926d3baeb5d8206d23f7f18ca7783a68db3cd6c68cf61"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_1",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                87.848,
+                88.398
+              ],
+              "inductor": [
+                154.4315,
+                153.552
+              ],
+              "native_mm": [
+                46.0845,
+                46.064
+              ],
+              "sdnn": [
+                88.9185,
+                86.673
+              ],
+              "sdnn_cluster_at_1": [
+                123.362,
+                122.072
+              ]
+            },
+            "accepted": [
+              "native_mm"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                76.3135,
+                76.559
+              ],
+              "faster_routes": [
+                "native_mm"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  83.7535,
+                  83.8835
+                ],
+                "inductor": [
+                  155.03199999999998,
+                  151.517
+                ],
+                "native_mm": [
+                  45.324,
+                  47.369
+                ],
+                "sdnn": [
+                  96.27799999999999,
+                  94.463
+                ],
+                "sdnn_cluster_at_1": [
+                  128.2175,
+                  127.55199999999999
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      },
+      "sdnn_cluster_at_1": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "2172fe8b15da230af3c96884ff68daafc314bbb2bcebec72df236de7bb9699b5",
+            "3f131e558b6ccfef6956f6e3444bfcdee2ee99f86aad6dd92c960cfa6ffbec64",
+            "644d1360f0906ca4696cb7fadd1b327e9caafcebce8e7d1b8a5d41dbb2d27f82",
+            "8f5f8c5e15e098aaa343529e893ef40b413122ae5bdb7735d697ba292226c87d",
+            "aa3f91a06ea101d45cb168ec81310790e94e49e4478f255f4bea41610afd27c8",
+            "d9ddfdd96c0b2cfbfba6c23721b1daf078a659bc0882c18bfc9130639b755fe0"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "sdnn_cluster_at_1",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                87.848,
+                88.398
+              ],
+              "inductor": [
+                154.4315,
+                153.552
+              ],
+              "native_mm": [
+                46.0845,
+                46.064
+              ],
+              "sdnn": [
+                88.9185,
+                86.673
+              ],
+              "sdnn_cluster_at_1": [
+                123.362,
+                122.072
+              ]
+            },
+            "accepted": [
+              "native_mm"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                76.3135,
+                76.559
+              ],
+              "faster_routes": [
+                "native_mm"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  83.7535,
+                  83.8835
+                ],
+                "inductor": [
+                  155.03199999999998,
+                  151.517
+                ],
+                "native_mm": [
+                  45.324,
+                  47.369
+                ],
+                "sdnn": [
+                  96.27799999999999,
+                  94.463
+                ],
+                "sdnn_cluster_at_1": [
+                  128.2175,
+                  127.55199999999999
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "matmul_bias_silu-float32-2048x2048": {
+      "native_mm": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "593bde8d0ebcd83a705ab031197cf668ba45021f39f7a04cef2cd0c984e113a6"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": true,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                134.453,
+                133.822
+              ],
+              "inductor": [
+                163.637,
+                166.34199999999998
+              ],
+              "native_mm": [
+                75.923,
+                75.0985
+              ],
+              "native_mm_sdk_silu": [
+                97.838,
+                97.7035
+              ]
+            },
+            "accepted": [
+              "native_mm",
+              "native_mm_sdk_silu"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                121.7975,
+                122.16300000000001
+              ],
+              "faster_routes": [
+                "native_mm",
+                "native_mm_sdk_silu"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  132.96699999999998,
+                  133.1725
+                ],
+                "inductor": [
+                  166.93650000000002,
+                  166.782
+                ],
+                "native_mm": [
+                  76.413,
+                  76.4685
+                ],
+                "native_mm_sdk_silu": [
+                  98.168,
+                  98.028
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "matmul_bias_silu-float32-64x1024": {
+      "native_mm": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "482963bdcb809822a2af6e648543096565110df7709ce6813597f4e73171a7e2"
+          ]
+        },
+        "candidate_status": "passed",
+        "candidate_error": null,
+        "selected": true,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                86.078,
+                83.62299999999999
+              ],
+              "inductor": [
+                129.9525,
+                124.9025
+              ],
+              "native_mm": [
+                39.099500000000006,
+                37.689
+              ],
+              "native_mm_sdk_silu": [
+                44.9495,
+                44.319
+              ]
+            },
+            "accepted": [
+              "native_mm",
+              "native_mm_sdk_silu"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                70.7485,
+                70.829
+              ],
+              "faster_routes": [
+                "native_mm",
+                "native_mm_sdk_silu"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  81.31800000000001,
+                  80.1735
+                ],
+                "inductor": [
+                  130.46800000000002,
+                  129.7125
+                ],
+                "native_mm": [
+                  39.623999999999995,
+                  39.809
+                ],
+                "native_mm_sdk_silu": [
+                  45.248999999999995,
+                  44.299
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "mul_sum-float32-2048x2048": {
+      "sdnn": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "14cd488ce01d4df961b0ffd9e2e5dc221af1661d9fe46f9f25631235de79fc9b",
+            "1e38fda844fb7e0f18aad50fdee86889464a9f39fc6a7b6db052125d60a971a0",
+            "34092cc22e4e357b4275974bf6c9071edd658dac305e1dd08a5c359139238857",
+            "41174e4a0422bbc583ca7a5393c4b2b0ba6ea85d090ff3503a5e7a5e048ea8f4",
+            "45bf336c239a62b9e6a16afaa69eff32e71731ac9f2b9bb1dcdfabec44c82f78",
+            "6e9e0159301927f7f7227953219b542e65e4c157edba6d0c4bc692c96817a2a8",
+            "900ab126b111cfd958d67affe5ccc52f458fad3a4fc477a776881010a82de417",
+            "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "a82d914beff57220e34014741ce4f9ae47eccb4799a7b8daa9c5e6858843b332",
+            "aeac12550fd24f956bd5ecbace87e632b2c7700bcba9a38657e36e4b8635d67b",
+            "bff9dd759d26d42be3dd2d3a3ac00f01bb7a5149b87de757a0739e01bbd2c4f8",
+            "cd13b4cb80c29372bce2c87c0cf3244280d668e76c9cd24bfe2681777aeb1894",
+            "d1ca10607cf8201259f3754213b78ab6a3966b9bdb987e68866c65acd7a8588a",
+            "d9a641ebbb7919e9d9ea15afe4f036b4d4d6f98ce668675accb463263fc3915b",
+            "f04f1eb0777dffece086f5608172d2574c454124a5ffa2be4f430a191d9226ed"
+          ]
+        },
+        "candidate_status": "rejected",
+        "candidate_error": "Traceback (most recent call last):\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 132, in _validate\n    compare(fn(*special), want, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 36, in assert_close\n    torch.testing.assert_close(x, y, equal_nan=True, **tolerance)\n  File \"/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/testing/_comparison.py\", line 1589, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 2048 (0.0%)\nGreatest absolute difference: nan at index (0,) (up to 0.0003 allowed)\nGreatest relative difference: nan at index (0,) (up to 0.0003 allowed)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 352, in measure_candidates\n    checks = validate(fn, reference, inputs, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 158, in validate\n    return _validate(fn, reference, inputs, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 134, in _validate\n    raise AssertionError(f'special input {index} ({label}): {exc}') from exc\nAssertionError: special input 0 (+Inf): Tensor-likes are not close!\n\nMismatched elements: 1 / 2048 (0.0%)\nGreatest absolute difference: nan at index (0,) (up to 0.0003 allowed)\nGreatest relative difference: nan at index (0,) (up to 0.0003 allowed)\n",
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "sdnn",
+              "reason": "validation incomplete or failed"
+            },
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                64.3735,
+                65.054
+              ],
+              "inductor": [
+                84.428,
+                81.3185
+              ],
+              "cluster": [
+                38.744,
+                38.224500000000006
+              ]
+            },
+            "accepted": [
+              "cluster"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                52.759,
+                52.409
+              ],
+              "faster_routes": [
+                "cluster"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  60.623999999999995,
+                  60.929
+                ],
+                "inductor": [
+                  85.98400000000001,
+                  85.449
+                ],
+                "cluster": [
+                  38.903999999999996,
+                  38.564
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    },
+    "mul_sum_keepdim-float32-2048x2048": {
+      "sdnn": {
+        "previous_sha256": null,
+        "same_machine_code_observed": null,
+        "numeric_gate": {
+          "probe_count": 8,
+          "status": "passed",
+          "executed_sha256": [
+            "011cfe48da3ff03e14f1bd6ee24bd2757edd98a0b36c7b337dc690b7b1a75c08",
+            "14cd488ce01d4df961b0ffd9e2e5dc221af1661d9fe46f9f25631235de79fc9b",
+            "1e38fda844fb7e0f18aad50fdee86889464a9f39fc6a7b6db052125d60a971a0",
+            "34092cc22e4e357b4275974bf6c9071edd658dac305e1dd08a5c359139238857",
+            "41174e4a0422bbc583ca7a5393c4b2b0ba6ea85d090ff3503a5e7a5e048ea8f4",
+            "45bf336c239a62b9e6a16afaa69eff32e71731ac9f2b9bb1dcdfabec44c82f78",
+            "6e9e0159301927f7f7227953219b542e65e4c157edba6d0c4bc692c96817a2a8",
+            "900ab126b111cfd958d67affe5ccc52f458fad3a4fc477a776881010a82de417",
+            "9e3bdbd1807b1767c52509d383798a58d1d53b9c7d6a56182e639e7e813b0f0b",
+            "a82d914beff57220e34014741ce4f9ae47eccb4799a7b8daa9c5e6858843b332",
+            "aeac12550fd24f956bd5ecbace87e632b2c7700bcba9a38657e36e4b8635d67b",
+            "bff9dd759d26d42be3dd2d3a3ac00f01bb7a5149b87de757a0739e01bbd2c4f8",
+            "cd13b4cb80c29372bce2c87c0cf3244280d668e76c9cd24bfe2681777aeb1894",
+            "d1ca10607cf8201259f3754213b78ab6a3966b9bdb987e68866c65acd7a8588a",
+            "d9a641ebbb7919e9d9ea15afe4f036b4d4d6f98ce668675accb463263fc3915b",
+            "f04f1eb0777dffece086f5608172d2574c454124a5ffa2be4f430a191d9226ed"
+          ]
+        },
+        "candidate_status": "rejected",
+        "candidate_error": "Traceback (most recent call last):\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 132, in _validate\n    compare(fn(*special), want, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 36, in assert_close\n    torch.testing.assert_close(x, y, equal_nan=True, **tolerance)\n  File \"/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/testing/_comparison.py\", line 1589, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 2048 (0.0%)\nGreatest absolute difference: nan at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: nan at index (0, 0) (up to 0.0003 allowed)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 352, in measure_candidates\n    checks = validate(fn, reference, inputs, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 158, in validate\n    return _validate(fn, reference, inputs, tolerance)\n  File \"/opt/hsp/triton/experimental/graph_fusion/_resource_benchmark.py\", line 134, in _validate\n    raise AssertionError(f'special input {index} ({label}): {exc}') from exc\nAssertionError: special input 0 (+Inf): Tensor-likes are not close!\n\nMismatched elements: 1 / 2048 (0.0%)\nGreatest absolute difference: nan at index (0, 0) (up to 0.0003 allowed)\nGreatest relative difference: nan at index (0, 0) (up to 0.0003 allowed)\n",
+        "selected": false,
+        "public_selection": {
+          "rejections": [
+            {
+              "name": "sdnn",
+              "reason": "validation incomplete or failed"
+            },
+            {
+              "name": "inductor",
+              "reason": "no stable end-to-end gain over eager"
+            },
+            {
+              "name": "eager",
+              "reason": "no stable end-to-end gain over direct eager"
+            }
+          ],
+          "acceptance": {
+            "protocol": "public_module_ab_ba_v1",
+            "baseline": "eager",
+            "ranking": "mean_of_two_round_medians_us",
+            "minimum_gain": 0.03,
+            "round_medians_us": {
+              "eager": [
+                64.764,
+                64.774
+              ],
+              "inductor": [
+                81.2685,
+                79.98849999999999
+              ],
+              "cluster": [
+                37.804500000000004,
+                37.7445
+              ]
+            },
+            "accepted": [
+              "cluster"
+            ],
+            "direct_eager": {
+              "round_medians_us": [
+                52.659,
+                52.859
+              ],
+              "faster_routes": [
+                "cluster"
+              ],
+              "candidate_medians_us": {
+                "eager": [
+                  61.599,
+                  60.149
+                ],
+                "inductor": [
+                  84.798,
+                  82.979
+                ],
+                "cluster": [
+                  38.4895,
+                  38.2195
+                ]
+              }
+            }
+          },
+          "compute_tolerance": {
+            "atol": 0.0003,
+            "rtol": 0.0003
+          }
+        }
+      }
+    }
+  },
+  "summary": {
+    "count": 39,
+    "wins": 38,
+    "median": 1.2590862788060506,
+    "geomean": 1.3332758627725585
+  },
+  "by_dtype": {
+    "float32": {
+      "count": 39,
+      "wins": 38,
+      "median": 1.2590862788060506,
+      "geomean": 1.3332758627725585
+    }
+  }
+}

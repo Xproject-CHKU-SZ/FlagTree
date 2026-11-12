@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>P800 Softmax 反汇编与耗时</title>
+<style>body{font:16px/1.65 system-ui,sans-serif;color:#233536;max-width:960px;margin:3em auto;padding:0 1.4em}h1,h2{line-height:1.3}h2{margin-top:1.9em}table{border-collapse:collapse;width:100%}th,td{padding:.5em;text-align:left;border-bottom:1px solid #c7d1d0}th{background:#e8f1ee}a{color:#145e78}code{font-size:.9em}</style><main>
+<h1>P800 上 Add+Softmax 的反汇编与耗时</h1>
+<p>FP32，2048×2048，按行加 bias 后沿末维执行 Softmax。eager 调用加法和厂商 Softmax 两个设备内核。F06 将两步融合。最终镜像为 <code>f06-repair-20261108-v4</code>。<a href="manifest.json">镜像和设备代码指纹</a> · <a href="../f06-repair/b2-vector-device.log">eager 设备轨迹</a></p>
+<h2>实际设备代码</h2>
+<p>根据 profiler 的符号名从 <code>libxdnn_pytorch.so</code> 提取 14,904 字节，再用 XTDK LLVM 15 的 KL3 解码器逐字反汇编，3,726 个指令字全部解码。F06 使用实际运行所返回的 xpubin，内核正文按 LLVM 19 解码、已链接运行时代码按配套旧编码核对。三份反汇编的机器字与原二进制逐字节相符。</p>
+<p>eager 在 0x350 起连续对多个寄存器减去最大值，然后发射标量 <code>exp.f.rn</code> 并累加。另一段有 <code>vmax.f.mz</code>。B2 在 0x3ac 等位置调用同一 <code>fmaxf</code> 函数（0xac0），调用间能看到向量通道提取和局部内存读写。下表计数为静态出现次数；实际执行次数取决于分支与循环。</p>
+<table><tr><th>装载的设备代码</th><th>指令字</th><th>exp.f.rn</th><th>vextracti.f</th><th>vmax.f.mz / mh</th></tr>
+<tr><td><a href="eager-softmax-f32.kl3.asm">eager 的 softmax_fwd&lt;float&gt;</a></td><td>3,726</td><td>50</td><td>0</td><td>49 / 9</td></tr>
+<tr><td><a href="B2_128-linked.kl3.asm">B2，R=8、C=128</a></td><td>875</td><td>33</td><td>80</td><td>0 / 0</td></tr>
+<tr><td><a href="full_row-linked.kl3.asm">F06 整行指针内核，R=8</a></td><td>2,649</td><td>128</td><td>288</td><td>7 / 0</td></tr></table>
+<h2>差距测在什么地方</h2>
+<p>每个实现独立进程捕获八次调用，校验回放输出，取七个设备事件样本的中位数。eager 为 76.50 µs，B2 为 1,190.28 µs，整行 TLE 为 180.44 µs。B2 比 eager 多 1,113.77 µs，整行 TLE 多 103.94 µs。最初把所有形状放入同一进程的回放试验超时，回放数值取自后来完成的独立进程。<a href="isolated-replay.log">回放样本</a></p>
+<p>同一 B2 源码、相同 R=8 和 8 warps、相同精度，仅改变列分块 C。下表为独立于回放测试的普通调用设备事件中位数，均含新输出分配，9 批、每批 30 次。同轮 eager 为 78.68 µs。<a href="tiling.log">分块对照原始记录</a></p>
+<table><tr><th>列分块</th><th>128</th><th>256</th><th>512</th><th>1,024</th><th>2,048</th></tr><tr><td>B2 耗时（µs）</td><td>1,203.62</td><td>700.11</td><td>470.17</td><td>352.51</td><td>294.01</td></tr></table>
+<h2>指数替换与最大值归约</h2>
+<table><tr><th>单独改变的因素</th><th>B2 原版 → 实验版（µs）</th><th>整行 TLE 原版 → 实验版（µs）</th></tr>
+<tr><td>用显式 LLVM 向量运算和六阶多项式近似 Softmax 定义域上的 exp</td><td>1,215.55 → 1,420.43</td><td>184.41 → 252.38</td></tr>
+<tr><td>保持指数计算，仅把标量最大值调用改成内联 max.f</td><td>1,215.79 → 744.08</td><td>184.12 → 152.19</td></tr></table>
+<p>显式向量版最终发射向量乘加所需的乘法、加法指令，两种内核的标量 exp 均降至零。测过的两组随机输入、放大值域、偏移输入和特殊值均通过 Softmax 整体容差；实验范围为 FP32 Softmax，未认证通用 exp 的逐位语义。更便宜的非等价指数诊断也做过，不能作为正确实现。<a href="llvm-vector-ab.log">显式向量替换</a> · <a href="exp-ab.log">DSL 及非等价诊断</a></p>
+<p>B2 的 23 个 fmaxf 调用点替换后均消失，33 处标量 exp 保持。此次 Softmax 输出通过校验；单独测试 max.f 的 49 个输入对中，7 对与数值优先且正零优先的参考规则不一致，含第二操作数为 NaN 和一对有符号零。此优化仅用于定位。分块和最大值替换的耗时节省可能重叠。<a href="B2-fmax-relocations.txt">链接符号</a> · <a href="max-call-ab.log">归约对照</a> · <a href="isolated-replay.log">单指令边界验证</a></p>
+<h2>正式入口</h2>
+<p>标准 78 项中，这个 2048² Add+Softmax 选择 eager 回退。实际选中融合的 37 个组合中，按设备事件衡量，最大落后是 FP16 Add+GELU(tanh)、64×1024，融合入口为 46.61 µs，直接 eager 为 21.22 µs。该组合校准回放耗时分别为 4.27 与 10.36 µs，显示交付调用与单看设备回放的排序不同。<a href="../f06-repair/F06修复后实际路由与加速比.html">正式入口完整表</a></p></main></html>

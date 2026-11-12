@@ -1,0 +1,192 @@
+{
+  "status": "passed",
+  "route": "sdnn",
+  "ordinal": 208,
+  "repeat": 0,
+  "timing": "graph",
+  "started_at": 1793617147.819087,
+  "stage": "completed",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "case_id": "large:mul_sum_keepdim:float32:512x1024",
+    "kind": "mul_sum_keepdim",
+    "dtype": "float32",
+    "M": 512,
+    "N": 1024,
+    "K": null,
+    "tolerance": {
+      "atol": 0.0003,
+      "rtol": 0.0003
+    },
+    "input_builder": "large_nonmatmul",
+    "ordinal": 208
+  },
+  "physical_device": 0,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:59:13 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3220321\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 186 MiB\n\n",
+  "input_binding": {
+    "seed": 61,
+    "inputs": [
+      {
+        "shape": [
+          512,
+          1024
+        ],
+        "sha256": "e0d1dca87368fd7c2d442552564c084cbea17a47145c48effda8e830de053963"
+      },
+      {
+        "shape": [
+          1024
+        ],
+        "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+      }
+    ],
+    "parameters": {},
+    "graph": "graph():\n    %a : [num_users=1] = placeholder[target=a]\n    %b : [num_users=1] = placeholder[target=b]\n    %mul : [num_users=1] = call_function[target=operator.mul](args = (%a, %b), kwargs = {})\n    %sum_1 : [num_users=1] = call_function[target=torch.sum](args = (%mul,), kwargs = {dim: -1, keepdim: True})\n    return sum_1",
+    "note": "same historical operator definitions and dtype tolerances; larger inputs"
+  },
+  "resource_proof": {
+    "resource": "sdnn",
+    "matmul_path": "external",
+    "scalar_reduction_layout": true,
+    "native_template_eligibility": false,
+    "wrapper_audit": {
+      "generated_kernel_sources": [
+        "1f75616f80a705eff5d2e4d574151791c13560d2b88d37ec32a48d08b5f8a163"
+      ],
+      "external_call_targets": []
+    },
+    "external_calls": 0,
+    "kernel_evidence": [
+      {
+        "requested": "sdnn",
+        "effective": "sdnn",
+        "kernel_name": "triton_unk_fused_0",
+        "binary_hash": "462042484c5b4f843648932b2c63026f1ac0e436e8b07601cec866134965ee53",
+        "launch_clusters": null,
+        "launch_cores": null,
+        "asm_sha256": {
+          "source": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "ttir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "ttxir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "llir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "elf": "1bb339e1488d7f0012da0c9aae76dd78d3cee0cab60d35a2f672dc4aed39fe41",
+          "xpubin": "622c31a30488401ae78ef245a673567b5ea82aa9def29ddf1a045deee4c4ee47"
+        },
+        "native_metadata": {
+          "arch": 3,
+          "is_sdnn": true,
+          "num_warps": 8,
+          "num_ctas": -1,
+          "shared": -1,
+          "core_num": 64,
+          "cluster_num": 12
+        },
+        "wrapper_binding": "triton_unk_fused_0",
+        "source_sha256": "1f75616f80a705eff5d2e4d574151791c13560d2b88d37ec32a48d08b5f8a163",
+        "proof_scope": "bound_native_wrapper_binary"
+      }
+    ],
+    "source_code": "from ctypes import c_void_p, c_long, c_int\nimport torch\nimport math\nimport random\nimport os\nimport tempfile\nfrom math import inf, nan\nfrom cmath import nanj\nfrom torch._inductor.hooks import run_intermediate_hooks\nfrom torch._inductor.utils import maybe_profile\nfrom torch._inductor.codegen.memory_planning import _align as align\nfrom torch import device, empty_strided\nfrom torch._inductor.async_compile import AsyncCompile\nfrom torch._inductor.select_algorithm import extern_kernels\nimport triton\nimport triton.language as tl\nfrom torch._inductor.runtime.triton_heuristics import start_graph, end_graph\nfrom torch._C import _cuda_getCurrentRawStream as get_raw_stream\n\naten = torch.ops.aten\ninductor_ops = torch.ops.inductor\n_quantized = torch.ops._quantized\nassert_size_stride = torch._C._dynamo.guards.assert_size_stride\nassert_alignment = torch._C._dynamo.guards.assert_alignment\nempty_strided_cpu = torch._C._dynamo.guards._empty_strided_cpu\nempty_strided_cpu_pinned = torch._C._dynamo.guards._empty_strided_cpu_pinned\nempty_strided_cuda = torch._C._dynamo.guards._empty_strided_cuda\nempty_strided_xpu = torch._C._dynamo.guards._empty_strided_xpu\nempty_strided_mtia = torch._C._dynamo.guards._empty_strided_mtia\nreinterpret_tensor = torch._C._dynamo.guards._reinterpret_tensor\nalloc_from_pool = torch.ops.inductor._alloc_from_pool\nasync_compile = AsyncCompile()\nempty_strided_p2p = torch._C._distributed_c10d._SymmetricMemory.empty_strided_p2p\n\n\n# kernel path: /home/zhaoweiming/f06-resources-20261102/results/full-gpu0/cache/inductor/3x/c3xkf3vkepw3hrzr7jrf57x6mvcqachodhubqo4mo3da4c6b6evg.py\n# Topologically Sorted Source Nodes: [], Original ATen: []\n# Source node to ATen node mapping:\n# Graph fragment:\n#   %arg0_1 : Tensor \"f32[512, 1024][1024, 1]cuda:0\" = PlaceHolder[target=arg0_1]\n#   %arg1_1 : Tensor \"f32[1024][1]cuda:0\" = PlaceHolder[target=arg1_1]\n#   %mul : Tensor \"f32[512, 1024][1024, 1]cuda:0\"[num_users=1] = call_function[target=torch.ops.aten.mul.Tensor](args = (%arg0_1, %arg1_1), kwargs = {})\n#   %sum_1 : Tensor \"f32[512, 1][1, 1]cuda:0\"[num_users=1] = call_function[target=torch.ops.aten.sum.dim_IntList](args = (%mul, [-1], True), kwargs = {})\n#   return %sum_1\ntriton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''\nfrom triton.experimental.graph_fusion._resource_codegen import ResourceHeuristics\n_flagtree_resource_heuristics = ResourceHeuristics('sdnn')\n# P800 compiler policy: 0cae4db22355a3ee\n\nimport triton\nimport triton.language as tl\n\nfrom torch._inductor.runtime import triton_helpers, triton_heuristics\nfrom torch._inductor.runtime.triton_helpers import libdevice, math as tl_math\nfrom torch._inductor.runtime.hints import AutotuneHint, ReductionHint, TileHint, DeviceProperties\ntriton_helpers.set_driver_to_gpu()\n\n@_flagtree_resource_heuristics.persistent_reduction(\n    size_hints={'x': 512, 'r0_': 1024},\n    reduction_hint=ReductionHint.INNER,\n    filename=__file__,\n    triton_meta={'signature': {'in_ptr0': '*fp32', 'in_ptr1': '*fp32', 'out_ptr0': '*fp32', 'xnumel': 'i32', 'r0_numel': 'i32', 'XBLOCK': 'constexpr'}, 'device': DeviceProperties(type='cuda', index=0, multi_processor_count=8, cc=86, major=8, regs_per_multiprocessor=65536, max_threads_per_multi_processor=2048, warp_size=32), 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]], (3,): [['tt.divisibility', 16]], (4,): [['tt.divisibility', 16]]}]},\n    inductor_meta={'grid_type': 'Grid1D', 'autotune_hints': set(), 'kernel_name': 'triton_unk_fused_0', 'mutated_arg_names': [], 'optimize_mem': True, 'no_x_dim': None, 'num_load': 2, 'num_reduction': 1, 'backend_hash': 'BBC4B36C454CB29EFBE8ADB7A4FF48C122ADBC51440DF141A64CF5638D6E5425', 'are_deterministic_algorithms_enabled': False, 'assert_indirect_indexing': True, 'autotune_local_cache': True, 'autotune_pointwise': True, 'autotune_remote_cache': None, 'force_disable_caches': False, 'dynamic_scale_rblock': True, 'max_autotune': False, 'max_autotune_pointwise': False, 'min_split_scan_rblock': 256, 'spill_threshold': 16, 'store_cubin': False, 'tiling_scores': {'x': 4096, 'r0_': 2101248}}\n)\n@triton.jit\ndef triton_unk_fused_0(in_ptr0, in_ptr1, out_ptr0, xnumel, r0_numel, XBLOCK : tl.constexpr):\n    xnumel = 512\n    r0_numel = 1024\n    R0_BLOCK: tl.constexpr = 1024\n    rnumel = r0_numel\n    RBLOCK: tl.constexpr = R0_BLOCK\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]\n    xmask = xindex < xnumel\n    r0_index = tl.arange(0, R0_BLOCK)[None, :]\n    r0_offset = 0\n    r0_mask = tl.full([XBLOCK, R0_BLOCK], True, tl.int1)\n    roffset = r0_offset\n    rindex = r0_index\n    r0_1 = r0_index\n    x0 = xindex\n    tmp0 = tl.load(in_ptr0 + (r0_1 + 1024*x0), xmask, other=0.0)\n    tmp1 = tl.load(in_ptr1 + (r0_1), None, eviction_policy='evict_last')\n    tmp2 = tmp0 * tmp1\n    tmp3 = tl.broadcast_to(tmp2, [XBLOCK, R0_BLOCK])\n    tmp5 = tl.where(xmask, tmp3, 0)\n    tmp6 = tl.sum(tmp5, 1)[:, None].to(tl.float32)\n    tl.store(out_ptr0 + (x0), tmp6, xmask)\n''', device_str='cuda')\n\n\nasync_compile.wait(globals())\ndel async_compile\n\nclass Runner:\n    def __init__(self, partitions):\n        self.partitions = partitions\n\n    def recursively_apply_fns(self, fns):\n        new_callables = []\n        for fn, c in zip(fns, self.partitions):\n            new_callables.append(fn(c))\n        self.partitions = new_callables\n\n    def call(self, args):\n        arg0_1, arg1_1 = args\n        args.clear()\n        with torch.cuda._DeviceGuard(0):\n            torch.cuda.set_device(0)\n            buf0 = empty_strided_cuda((512, 1), (1, 1), torch.float32)\n            # Topologically Sorted Source Nodes: [], Original ATen: []\n            stream0 = get_raw_stream(0)\n            triton_unk_fused_0.run(arg0_1, arg1_1, buf0, 512, 1024, stream=stream0)\n            del arg0_1\n            del arg1_1\n        return (buf0, )\n\nrunner = Runner(partitions=[])\ncall = runner.call\nrecursively_apply_fns = runner.recursively_apply_fns\n\n\ndef benchmark_compiled_module(times=10, repeat=10):\n    from torch._dynamo.testing import rand_strided\n    from torch._inductor.utils import print_performance\n    arg0_1 = rand_strided((512, 1024), (1024, 1), device='cuda:0', dtype=torch.float32)\n    arg1_1 = rand_strided((1024, ), (1, ), device='cuda:0', dtype=torch.float32)\n    fn = lambda: call([arg0_1, arg1_1])\n    return print_performance(fn, times=times, repeat=repeat)\n\n\nif __name__ == \"__main__\":\n    from torch._inductor.wrapper_benchmark import compiled_module_main\n    compiled_module_main('None', benchmark_compiled_module)\n",
+    "resource_verified": true
+  },
+  "compiler_options": {
+    "emulate_precision_casts": true,
+    "pattern_matcher": false,
+    "epilogue_fusion": true,
+    "benchmark_epilogue_fusion": false,
+    "size_asserts": false,
+    "triton.cudagraphs": false,
+    "use_static_cuda_launcher": false,
+    "max_autotune_prune_choices_based_on_shared_mem": false
+  },
+  "setup_seconds": 2.9702134749968536,
+  "max_abs_error": 4.1961669921875e-05,
+  "counters_before": {
+    "inductor": {
+      "async_compile_cache_miss": 1
+    }
+  },
+  "e2e_us": {
+    "median_us": 1416.733,
+    "samples_us": [
+      1607.614,
+      1436.801,
+      1424.162,
+      1428.322,
+      1418.493,
+      1418.963,
+      1424.082,
+      1426.822,
+      1413.953,
+      1420.982,
+      1414.523,
+      1415.053,
+      1413.363,
+      1415.303,
+      1413.353,
+      1415.163,
+      1430.602,
+      1422.852,
+      1415.693,
+      1416.733,
+      1414.793,
+      1416.793,
+      1414.553,
+      1415.393,
+      1414.523,
+      1415.373,
+      1423.782,
+      1417.033,
+      1415.443,
+      1416.113,
+      1418.123
+    ]
+  },
+  "gpu_us": {
+    "median_us": 1382.6892852783203,
+    "samples_us": [
+      1382.7345848083496,
+      1382.7250480651855,
+      1382.6892852783203,
+      1382.535171508789,
+      1382.725429534912,
+      1382.5225830078125,
+      1382.6850891113281
+    ],
+    "invocations_per_graph": 64,
+    "replays_per_sample": 20
+  },
+  "counters_after": {
+    "inductor": {
+      "async_compile_cache_miss": 1
+    }
+  },
+  "ended_at": 1793617169.4247928
+}

@@ -20,6 +20,7 @@
 #include "llvm/IR/LLVMContext.h"  // llvm::LLVMContext
 
 #include "passes.h"
+#include "RowSoftmax.h"
 
 #include "triton/Tools/Sys/GetEnv.hpp"
 #include "triton/Conversion/TritonToTritonXPU/Passes.h"    // mlir::triton::createConvertTritonToTritonXPUPass
@@ -447,8 +448,12 @@ void init_triton_xpu_llvm(py::module &&m) {
 
     for (auto &func : llvm_mod->functions()) {
       auto it = XPUMetadata.find(func.getName());
-      if (it != XPUMetadata.end())
+      if (it != XPUMetadata.end()) {
+        if (xpu_arch == 3 && !isSdnnKernel && it->second.isKernel &&
+            !func.isDeclaration() && mlir_mod->hasAttr("flagtree.kl3_row_softmax"))
+          mlir::triton::xpu::reuseRowSoftmaxBias(func);
         mlir::triton::xpu::amendLLVMFunc(&func, it->second, xpu_arch);
+      }
       if (isSdnnKernel) {
         auto targetFeat = std::string("+cdnn") + std::to_string(xpu_arch);
         func.addFnAttr("target-features", targetFeat);
@@ -510,6 +515,17 @@ void init_triton_xpu(py::module &&m) {
   init_triton_xpu_passes_transform(passes.def_submodule("ttxpuir"));
   init_triton_sdnn_passes_conversion(passes.def_submodule("ttsdnnir"));
   init_triton_sdnn_passes_transform(passes.def_submodule("ttsdnnir"));
+  auto ttxpuir = passes.def_submodule("ttxpuir");
+  ttxpuir.def("add_tritonxpu_reconcile_layouts_pass", [](mlir::PassManager &pm) {
+    pm.addPass(mlir::triton::xpu::createTritonXPUReconcileLayouts());
+  });
+  auto sdnn = passes.def_submodule("ttsdnnir");
+  sdnn.def("add_capture_rank1_wrap_pass", [](mlir::PassManager &pm) {
+    pm.addPass(mlir::triton::xpu::createCaptureRank1WrapPass());
+  });
+  sdnn.def("add_repair_rank1_wrap_pass", [](mlir::PassManager &pm) {
+    pm.addPass(mlir::triton::xpu::createRepairRank1WrapPass());
+  });
   init_llvm_xpu_passes_transform(passes.def_submodule("llvmxpuir"));
   init_triton_xpu_llvm(m.def_submodule("llvm"));
 

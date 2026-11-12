@@ -1,0 +1,525 @@
+{
+  "image": "zhaoweiming/f06-p800:kl3-llvm-pass-20261109-v9",
+  "image_id": "sha256:4e3ba6da7a8269ff18d8559d40a202fabc2eeeff89b082ab54a7209f52e708c1",
+  "scope": "6 paired FP32/FP16 B2 ordinary-entry runs on P800-152, each comparison on the same card with fresh compiler caches. Temporary change to descriptor/launcher binding only. LLVM row schedule and selection threshold unchanged.",
+  "image_source_sha256": "59e113e5c1524c18078e20849292be0c8911cc21639da6cb8c1d310611ffb71a",
+  "experiment_source_sha256": "cae0feb0ee9ca2013aa46ddaf3f87ce7931fe63663b9370b1a409d2d1ac29cdd",
+  "selection": "Two independent rounds of ordinary candidate calls, minimum gain 3% in both. Public timings measure full torch.compile module against eager.",
+  "eager_fallback_by_output_shape": {
+    "64x1024": 25,
+    "512x1024": 24,
+    "2048x2048": 26
+  },
+  "pair_results": [
+    {
+      "card": 0,
+      "dtype": "float32",
+      "shape": "64x1024",
+      "bound": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            44.234,
+            44.954499999999996
+          ],
+          "inductor": [
+            115.7625,
+            117.3675
+          ],
+          "cluster": [
+            28.988999999999997,
+            29.524500000000003
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 13.910798139350359,
+          "inductor": 72.8525370854476,
+          "cluster": 4.647612967760461
+        },
+        "event_us": {
+          "eager": 20.68444937467575,
+          "compiled": 25.004026293754578
+        },
+        "sync_us": {
+          "eager": 35.769000000000005,
+          "compiled": 35.664500000000004
+        },
+        "batch_speedup": 0.8272447457728935,
+        "sync_speedup": 1.0029300845378457
+      },
+      "shipped": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            47.919,
+            47.564
+          ],
+          "inductor": [
+            119.55799999999999,
+            119.55250000000001
+          ],
+          "cluster": [
+            57.589,
+            58.0585
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 13.861640055376785,
+          "inductor": 72.98992630234338,
+          "cluster": 4.630486767991146
+        },
+        "event_us": {
+          "eager": 20.192499458789825,
+          "compiled": 31.40920102596283
+        },
+        "sync_us": {
+          "eager": 31.740000000000002,
+          "compiled": 43.764
+        },
+        "batch_speedup": 0.6428848490000977,
+        "sync_speedup": 0.7252536331231149
+      }
+    },
+    {
+      "card": 1,
+      "dtype": "float32",
+      "shape": "512x1024",
+      "bound": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            51.319,
+            51.674
+          ],
+          "inductor": [
+            576.9929999999999,
+            574.5435
+          ],
+          "cluster": [
+            44.464,
+            44.879000000000005
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 20.775750429943354,
+          "inductor": 529.0642169990924,
+          "cluster": 17.91742714968595
+        },
+        "event_us": {
+          "eager": 21.386149525642395,
+          "compiled": 24.724574387073517
+        },
+        "sync_us": {
+          "eager": 38.775000000000006,
+          "compiled": 49.839
+        },
+        "batch_speedup": 0.8649754366175656,
+        "sync_speedup": 0.7780051766688739
+      },
+      "shipped": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            51.934,
+            52.339
+          ],
+          "inductor": [
+            573.6179999999999,
+            576.563
+          ],
+          "cluster": [
+            69.9535,
+            70.86349999999999
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 20.92245073601751,
+          "inductor": 529.4041775240756,
+          "cluster": 18.050200868361067
+        },
+        "event_us": {
+          "eager": 20.860549807548523,
+          "compiled": 31.48212432861328
+        },
+        "sync_us": {
+          "eager": 34.724000000000004,
+          "compiled": 46.834
+        },
+        "batch_speedup": 0.662615698667733,
+        "sync_speedup": 0.7414271682965368
+      }
+    },
+    {
+      "card": 2,
+      "dtype": "float16",
+      "shape": "64x1024",
+      "bound": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            45.289,
+            45.829499999999996
+          ],
+          "inductor": [
+            121.2075,
+            121.662
+          ],
+          "cluster": [
+            30.2195,
+            30.3545
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 13.877469941047625,
+          "inductor": 74.13309531921271,
+          "cluster": 5.3290779756736395
+        },
+        "event_us": {
+          "eager": 21.035200357437134,
+          "compiled": 24.902375042438507
+        },
+        "sync_us": {
+          "eager": 37.519,
+          "compiled": 38.92400000000001
+        },
+        "batch_speedup": 0.8447065921057347,
+        "sync_speedup": 0.9639040180865274
+      },
+      "shipped": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            48.464,
+            48.92400000000001
+          ],
+          "inductor": [
+            124.063,
+            125.0825
+          ],
+          "cluster": [
+            57.984,
+            58.748999999999995
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 13.93633413670668,
+          "inductor": 74.18530378768693,
+          "cluster": 5.299330202501212
+        },
+        "event_us": {
+          "eager": 20.68147510290146,
+          "compiled": 31.465324759483337
+        },
+        "sync_us": {
+          "eager": 32.024,
+          "compiled": 44.5945
+        },
+        "batch_speedup": 0.6572782979672971,
+        "sync_speedup": 0.7181154626691633
+      }
+    },
+    {
+      "card": 3,
+      "dtype": "float16",
+      "shape": "512x1024",
+      "bound": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            51.964,
+            52.129
+          ],
+          "inductor": [
+            564.499,
+            566.7135000000001
+          ],
+          "cluster": [
+            49.444,
+            49.123999999999995
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 24.37602054505121,
+          "inductor": 519.8669660659064,
+          "cluster": 21.634306226457866
+        },
+        "event_us": {
+          "eager": 24.644824862480164,
+          "compiled": 24.8344749212265
+        },
+        "sync_us": {
+          "eager": 41.914,
+          "compiled": 55.434
+        },
+        "batch_speedup": 0.9923634359354125,
+        "sync_speedup": 0.7561063607172493
+      },
+      "shipped": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            53.174,
+            53.854
+          ],
+          "inductor": [
+            566.4735000000001,
+            567.499
+          ],
+          "cluster": [
+            74.169,
+            74.2085
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 24.493502719061716,
+          "inductor": 518.8415391104562,
+          "cluster": 21.65447317418598
+        },
+        "event_us": {
+          "eager": 24.277549982070923,
+          "compiled": 31.453800201416016
+        },
+        "sync_us": {
+          "eager": 38.274,
+          "compiled": 49.749
+        },
+        "batch_speedup": 0.7718479111143453,
+        "sync_speedup": 0.7693420973285895
+      }
+    },
+    {
+      "card": 4,
+      "dtype": "float16",
+      "shape": "2048x2048",
+      "bound": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            97.633,
+            97.548
+          ],
+          "inductor": [
+            947.061,
+            946.1510000000001
+          ],
+          "cluster": [
+            150.71699999999998,
+            150.577
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 69.5067706860994,
+          "inductor": 896.9060998213918,
+          "cluster": 122.0765239314029
+        },
+        "event_us": {
+          "eager": 69.09387707710266,
+          "compiled": 69.78567242622375
+        },
+        "sync_us": {
+          "eager": 83.07300000000001,
+          "compiled": 95.90350000000001
+        },
+        "batch_speedup": 0.9900868570142037,
+        "sync_speedup": 0.866214476009739
+      },
+      "shipped": {
+        "route": "eager",
+        "round_medians_us": {
+          "eager": [
+            99.618,
+            100.133
+          ],
+          "inductor": [
+            947.001,
+            947.5360000000001
+          ],
+          "cluster": [
+            180.1565,
+            179.656
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          },
+          {
+            "name": "cluster",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 69.59434977748938,
+          "inductor": 896.9128591972485,
+          "cluster": 122.30945470040305
+        },
+        "event_us": {
+          "eager": 69.17697787284851,
+          "compiled": 69.74847316741943
+        },
+        "sync_us": {
+          "eager": 83.77799999999999,
+          "compiled": 95.6435
+        },
+        "batch_speedup": 0.9918063397144316,
+        "sync_speedup": 0.8759403409536455
+      }
+    },
+    {
+      "card": 5,
+      "dtype": "float32",
+      "shape": "2048x2048",
+      "bound": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            101.188,
+            101.483
+          ],
+          "inductor": [
+            135.8825,
+            135.2575
+          ],
+          "cluster": [
+            88.738,
+            88.663
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 76.05165435421851,
+          "inductor": 91.36434524290023,
+          "cluster": 62.861984775912376
+        },
+        "event_us": {
+          "eager": 75.65027475357056,
+          "compiled": 64.01810050010681
+        },
+        "sync_us": {
+          "eager": 92.368,
+          "compiled": 96.923
+        },
+        "batch_speedup": 1.1817013338820377,
+        "sync_speedup": 0.9530039309555007
+      },
+      "shipped": {
+        "route": "cluster",
+        "round_medians_us": {
+          "eager": [
+            101.93299999999999,
+            102.188
+          ],
+          "inductor": [
+            135.207,
+            134.5125
+          ],
+          "cluster": [
+            89.508,
+            89.138
+          ]
+        },
+        "rejected": [
+          {
+            "name": "inductor",
+            "reason": "no stable end-to-end gain over eager"
+          }
+        ],
+        "captured_us": {
+          "eager": 76.02994288167646,
+          "inductor": 90.76517628085229,
+          "cluster": 63.53433093717021
+        },
+        "event_us": {
+          "eager": 75.72994828224182,
+          "compiled": 63.850051164627075
+        },
+        "sync_us": {
+          "eager": 93.07300000000001,
+          "compiled": 96.798
+        },
+        "batch_speedup": 1.1860593202499454,
+        "sync_speedup": 0.9615177999545446
+      }
+    }
+  ]
+}

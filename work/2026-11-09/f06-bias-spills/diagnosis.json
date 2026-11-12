@@ -1,0 +1,213 @@
+{
+  "scope": {
+    "device": "P800 KL3 personal Docker v7",
+    "shape": [
+      2048,
+      2048
+    ],
+    "bias": [
+      2048
+    ],
+    "dtype": "float32",
+    "product": "TLE B2 XB=16, YB=2048"
+  },
+  "end_to_end_graph_us": {
+    "fused_full": 87.92625367641449,
+    "preadded_full": 60.53287535905838,
+    "fused_center": 62.187500298023224,
+    "preadded_center": 32.828375697135925,
+    "fused_copy": 49.315374344587326,
+    "preadded_copy": 21.21249958872795,
+    "eager_add": 24.080874398350716,
+    "eager_pair": 77.2048756480217
+  },
+  "bias_GM_to_LM_requested_bytes": {
+    "tle": 16777216,
+    "eager_inferred": 793600,
+    "eager_inference": "768 initial 256-float tiles (initial matrix/bias DMA sizes agree); conditional refills occur at changes of 256-column stripe, seven separate boundaries confirmed by shifted-source data. Not an off-chip bandwidth counter.",
+    "eager_refill_affected_rows_per_stripe": [
+      20,
+      18,
+      13,
+      2,
+      12,
+      1,
+      11
+    ]
+  },
+  "vector_64B_per_core_tile": {
+    "fused_center": {
+      "vector_spills": {
+        "A+bias": {
+          "store": 29,
+          "load": 49
+        }
+      },
+      "reload_consumers": {
+        "A+bias to max": 20,
+        "A+bias to max+shift": 5,
+        "A+bias to shift": 24
+      },
+      "scalar_spills": {
+        "4-byte Folded Spill": 5,
+        "8-byte Folded Spill": 3,
+        "4-byte Folded Reload": 5,
+        "8-byte Folded Reload": 3
+      }
+    },
+    "fused_copy": {
+      "vector_spills": {
+        "A+bias": {
+          "store": 23,
+          "load": 23
+        }
+      },
+      "reload_consumers": {
+        "A+bias to output": 23
+      },
+      "scalar_spills": {}
+    },
+    "fused_full": {
+      "vector_spills": {
+        "A+bias": {
+          "store": 32,
+          "load": 53
+        },
+        "exp": {
+          "store": 21,
+          "load": 21
+        }
+      },
+      "reload_consumers": {
+        "A+bias to max": 21,
+        "A+bias to max+shift": 3,
+        "A+bias to shift": 29,
+        "exp to output": 21
+      },
+      "scalar_spills": {
+        "4-byte Folded Spill": 6,
+        "8-byte Folded Spill": 4,
+        "8-byte Folded Reload": 4,
+        "4-byte Folded Reload": 6
+      }
+    },
+    "preadded_center": {
+      "vector_spills": {
+        "matrix": {
+          "store": 23,
+          "load": 23
+        }
+      },
+      "reload_consumers": {
+        "matrix to shift": 23
+      },
+      "scalar_spills": {
+        "4-byte Folded Spill": 5,
+        "8-byte Folded Spill": 2,
+        "4-byte Folded Reload": 5,
+        "8-byte Folded Reload": 2
+      }
+    },
+    "preadded_copy": {
+      "vector_spills": {},
+      "reload_consumers": {},
+      "scalar_spills": {}
+    },
+    "preadded_full": {
+      "vector_spills": {
+        "matrix": {
+          "store": 24,
+          "load": 24
+        },
+        "exp": {
+          "store": 21,
+          "load": 21
+        }
+      },
+      "reload_consumers": {
+        "matrix to shift": 24,
+        "exp to output": 21
+      },
+      "scalar_spills": {
+        "4-byte Folded Spill": 5,
+        "8-byte Folded Spill": 3,
+        "8-byte Folded Reload": 3,
+        "4-byte Folded Reload": 5
+      }
+    }
+  },
+  "same_binary_tle_direct_25_pairs_us": {
+    "medians": {
+      "fused_full.baseline": 85.221625,
+      "fused_full.forward": 85.03183333333334,
+      "fused_full.strip_bias_lm": 84.861625,
+      "fused_full.strip_bias_dma": 61.89541666666667,
+      "fused_full.redirect": 61.92125,
+      "fused_full.strip_spill_write": 61.4879375,
+      "preadded_center.baseline": 30.68625,
+      "preadded_center.redirect": 30.7548125,
+      "preadded_center.strip_spill_write": 30.554583333333333
+    },
+    "paired_median_q1_q3": {
+      "fused_full.baseline -> fused_full.forward": [
+        0.08664583333333553,
+        -0.07018750000000296,
+        0.4635416666666572
+      ],
+      "fused_full.forward -> fused_full.strip_bias_lm": [
+        0.11208333333333087,
+        -0.03268749999999443,
+        0.3983333333333263
+      ],
+      "fused_full.strip_bias_lm -> fused_full.strip_bias_dma": [
+        22.94704166666667,
+        22.873500000000007,
+        23.048499999999997
+      ],
+      "fused_full.strip_bias_dma -> fused_full.redirect": [
+        -0.018145833333335304,
+        -0.06731249999999989,
+        0.08647916666666333
+      ],
+      "fused_full.redirect -> fused_full.strip_spill_write": [
+        0.41604166666666487,
+        0.3504374999999982,
+        0.450208333333336
+      ],
+      "preadded_center.baseline -> preadded_center.redirect": [
+        -0.046249999999997016,
+        -0.11687500000000028,
+        -0.024374999999999147
+      ],
+      "preadded_center.redirect -> preadded_center.strip_spill_write": [
+        0.2126874999999977,
+        0.1618541666666644,
+        0.24627083333333388
+      ]
+    },
+    "operand_control": "Preadded random input and zero bias, unchanged output bits. Forward the matrix in the 32 adds, remove 32 bias vector reads, then remove bias DMA only. The original fence stays in the raw test. Redirect 49 reloads to the input tile and remove the corresponding 30 spill writes. Two chunks share address registers with live exp spills and are excluded."
+  },
+  "native_bias": {
+    "elements_per_core_chunk": 128,
+    "scalar_input_loads": 128,
+    "scalar_spill_stores": 102,
+    "scalar_spill_reloads": 102,
+    "lane_inserts": 128,
+    "contiguous_vector_reads_in_control": 8,
+    "paired_kernel_medians_us": {
+      "vector": 148.57077083333334,
+      "scalar": 153.09902083333333
+    },
+    "paired_gain_median_q1_q3_us": [
+      4.522812500000015,
+      4.295125000000013,
+      4.709270833333335
+    ]
+  },
+  "limitations": [
+    "Graph replay of modified TLE diagnostic blobs stalled; exclude fixed-controls.log and fixed-wall.log from timing. fixed-direct.log uses direct launches with device synchronization.",
+    "native-asm-only-control.log changed only the printed assembly and kept the original executable; exclude it. native-vector-linked.log and native-paired.log verify the executable.",
+    "tle.log contains an unused-DMA exploratory failure and was excluded. tle-verified.log checks all six reported variants.",
+    "No production sources or route selection changed."
+  ]
+}

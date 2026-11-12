@@ -1,0 +1,999 @@
+{
+  "sources": {
+    "official": "https://github.com/flagos-ai/FlagTree",
+    "main": "6b1549dda9a24939c8d8098187d91bed7d8f514e",
+    "official_binary_source": "d65b6d70511e4d9aaeb3bf52ae762a96212def0a",
+    "xpu_trees": {
+      "d65b6d70511e4d9aaeb3bf52ae762a96212def0a": "6d1f001e7def33e5c308995105549583e96da8c0",
+      "6b1549dda9a24939c8d8098187d91bed7d8f514e": "6d1f001e7def33e5c308995105549583e96da8c0"
+    },
+    "changes_between_commits": [
+      ".github/actions/collect-gems-record/action.yml",
+      ".github/actions/collect-gems-record/scripts/collect_gems_record.py",
+      ".github/actions/collect-gems-record/scripts/flaggems_runs.schema.json",
+      ".github/workflows/notify-pr-owner.yml"
+    ],
+    "paths": {
+      "third_party/xpu/backend/compiler.py": {
+        "upstream_sha256": "a11cc16a42b26a0c51aa8001d4efd1bca2e83c1321cf23967debf3be956b632b",
+        "workspace_sha256": "06bbdb7aad7c9f3e65d7581619c4c0e937ab7cf61d76f1a6cccd50cb3734b599"
+      },
+      "third_party/xpu/backend/driver.py": {
+        "upstream_sha256": "b0caa2d996b802c9b5239189704d17d8fe00a34300164a5a009d1d449da8ea90",
+        "workspace_sha256": "f2f963df7f206ee64015e0b11a0f643e6402005ce121446bbd9ef4b1c5410969"
+      },
+      "third_party/xpu/lib/Dialect/TritonXPU/Transforms/TLEDtypeConvert.cpp": {
+        "upstream_sha256": "14c33077358a467cf64f983c96a9b11f9505e2698e6199ce13142a5b85501834",
+        "workspace_sha256": "14c33077358a467cf64f983c96a9b11f9505e2698e6199ce13142a5b85501834"
+      },
+      "third_party/xpu/lib/Dialect/TritonXPU/Transforms/LegalizeExternEW.cpp": {
+        "upstream_sha256": "fbac94f35d008ded30bc7c2c0ea646ea9ab11ef50d2081b7287572b970c0c295",
+        "workspace_sha256": "c9b067964552045c2475a2cd6cdcf4100f19c31486b1062aed792b39361aadd1"
+      },
+      "third_party/xpu/lib/Conversion/TritonXPUToLLVM/LoadStoreOpToLLVM.cpp": {
+        "upstream_sha256": "ea14b373be5129b1907c6ad656b5edc52bdd1dcef3a251be7c064f2bf6303bc1",
+        "workspace_sha256": "bde922217f39f5d27e1c82f193c2659444146809650547545170627794ab38a9"
+      },
+      "python/triton/compiler/compiler.py": {
+        "upstream_sha256": "e8e8d8e9671c75648c557019df57532439c65f1b4cd3340ccd687dcc311b6e58",
+        "workspace_sha256": "1fd60c265dc6512942b88d01c33f23056130334f4eebb1d0be5e956d4de4e6a3"
+      },
+      "python/triton/experimental/graph_fusion/_resource_entry.py": {
+        "upstream_sha256": null,
+        "workspace_sha256": "f7ad81de7eeb75a51481925d70956c013525d3b5f8066549d644db1ea8521f0d"
+      },
+      "python/triton/experimental/graph_fusion/_p800_inductor_gelu.py": {
+        "upstream_sha256": null,
+        "workspace_sha256": "1661ce182a32b571bdbf4cefd9397068663a02f4c60e0af59fed5b11137555a2"
+      }
+    }
+  },
+  "personal_image": "zhaoweiming/f06-p800:inductor-bf16-final-20261109-v24",
+  "image_id": "sha256:795671a32805a3a408e4b83bd39403934d76d8a9e4854c96fa2afa44034e5570",
+  "device": "P800-152, physical card 6 for timing (Torch sees CUDA device 0)",
+  "sdk": "2.9.0+cu129",
+  "scope": "BF16 Add + GELU, contiguous MxN and row-bias N, no-grad; two modes and three sizes",
+  "protocol": "128 paired alternating warm samples per entry per shape after 24 warmups; host perf_counter_ns around call, synchronize before and after; plain timing without LD_PRELOAD; independent launch-hook run records loaded machine bytes; device median from 8-call graph replay and 13 retained event samples; ratio=eager wall / native wall",
+  "tests": "52 passed, 1 warning in 11.30s",
+  "compile_controls": {
+    "official": {
+      "target": {
+        "exit": 1,
+        "identity": {
+          "stack": "official",
+          "test": "target",
+          "lib": "f95a9cff9aa856fb24daa2347530d9df0bf52551705a705073d5de33691a1468",
+          "compiler": "a11cc16a42b26a0c51aa8001d4efd1bca2e83c1321cf23967debf3be956b632b",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/rt/triton/backends/xpu/compiler.py"
+        },
+        "final": "llc (LLVM 19) failed:"
+      },
+      "mixed": {
+        "exit": 1,
+        "identity": {
+          "stack": "official",
+          "test": "mixed",
+          "lib": "f95a9cff9aa856fb24daa2347530d9df0bf52551705a705073d5de33691a1468",
+          "compiler": "a11cc16a42b26a0c51aa8001d4efd1bca2e83c1321cf23967debf3be956b632b",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/rt/triton/backends/xpu/compiler.py"
+        },
+        "final": "PassManager::run failed: loc(\"/repair/mixed-output.ttir\":64:5): 'tt.store' op failed to verify that value type matches ptr type"
+      },
+      "descriptor": {
+        "exit": 1,
+        "identity": {
+          "stack": "official",
+          "test": "descriptor",
+          "lib": "f95a9cff9aa856fb24daa2347530d9df0bf52551705a705073d5de33691a1468",
+          "compiler": "a11cc16a42b26a0c51aa8001d4efd1bca2e83c1321cf23967debf3be956b632b",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/rt/triton/backends/xpu/compiler.py"
+        },
+        "final": "PassManager::run failed: loc(\"ad\"(\"/repair/pointer.py\":7:33)): failed to legalize operation 'tt.make_tensor_descriptor' that was explicitly marked illegal"
+      }
+    },
+    "v23": {
+      "target": {
+        "exit": 1,
+        "identity": {
+          "stack": "v23",
+          "test": "target",
+          "lib": "cae2af8db976bd70fb62d4bb4a7d97fd4fa7ce20baf7e7d669a277af74861ae2",
+          "compiler": "ced08268438f44c06dd946b584bd736a55f238c5253cf2d7ccf352886bcd08cf",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "Unknown XPU architecture: 86"
+      },
+      "mixed": {
+        "exit": 1,
+        "identity": {
+          "stack": "v23",
+          "test": "mixed",
+          "lib": "cae2af8db976bd70fb62d4bb4a7d97fd4fa7ce20baf7e7d669a277af74861ae2",
+          "compiler": "ced08268438f44c06dd946b584bd736a55f238c5253cf2d7ccf352886bcd08cf",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "PassManager::run failed: loc(\"/repair/mixed-output.ttir\":64:5): 'tt.store' op failed to verify that value type matches ptr type"
+      },
+      "descriptor": {
+        "exit": 1,
+        "identity": {
+          "stack": "v23",
+          "test": "descriptor",
+          "lib": "cae2af8db976bd70fb62d4bb4a7d97fd4fa7ce20baf7e7d669a277af74861ae2",
+          "compiler": "ced08268438f44c06dd946b584bd736a55f238c5253cf2d7ccf352886bcd08cf",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "PassManager::run failed: loc(\"ad\"(\"/repair/pointer.py\":7:33)): failed to legalize operation 'tt.make_tensor_descriptor' that was explicitly marked illegal"
+      }
+    },
+    "v24": {
+      "target": {
+        "exit": 0,
+        "identity": {
+          "stack": "v24",
+          "test": "target",
+          "lib": "42d03c17acf24d0d89795e760126d0b82acad7786a4201fec2890d3d59622e30",
+          "compiler": "06bbdb7aad7c9f3e65d7581619c4c0e937ab7cf61d76f1a6cccd50cb3734b599",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "GPUTarget(backend='cuda', arch=3, warp_size=1)"
+      },
+      "mixed": {
+        "exit": 1,
+        "identity": {
+          "stack": "v24",
+          "test": "mixed",
+          "lib": "42d03c17acf24d0d89795e760126d0b82acad7786a4201fec2890d3d59622e30",
+          "compiler": "06bbdb7aad7c9f3e65d7581619c4c0e937ab7cf61d76f1a6cccd50cb3734b599",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "PassManager::run failed: loc(\"/repair/mixed-output.ttir\":64:5): 'tt.store' op failed to verify that value type matches ptr type"
+      },
+      "descriptor": {
+        "exit": 0,
+        "identity": {
+          "stack": "v24",
+          "test": "descriptor",
+          "lib": "42d03c17acf24d0d89795e760126d0b82acad7786a4201fec2890d3d59622e30",
+          "compiler": "06bbdb7aad7c9f3e65d7581619c4c0e937ab7cf61d76f1a6cccd50cb3734b599",
+          "actual": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+          "file": "/opt/hsp/triton/backends/xpu/compiler.py"
+        },
+        "final": "GPUTarget(backend='cuda', arch=3, warp_size=1)"
+      }
+    }
+  },
+  "cases": [
+    {
+      "mode": "tanh",
+      "shape": "64x1024",
+      "route": "Inductor TLE cluster",
+      "plain": {
+        "submit_us": {
+          "eager": 34.595,
+          "native": 81.593
+        },
+        "end_to_end_us": {
+          "eager": 41.2345,
+          "native": 90.03800000000001
+        },
+        "eager_over_native": 0.45796774695128717,
+        "device_us": {
+          "eager": 12.358250096440315,
+          "native": 9.97187476605177
+        },
+        "cold_first_compare_s": 0.43827771209180355,
+        "exhaustive_bits_numerically_different": 150
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 34.1245,
+          "native": 82.179
+        },
+        "end_to_end_us": {
+          "eager": 41.1995,
+          "native": 91.6235
+        },
+        "eager_over_native": 0.4496608402866077,
+        "device_us": {
+          "eager": 12.154375202953815,
+          "native": 10.04362478852272
+        },
+        "cold_first_compare_s": 0.4441318550379947,
+        "exhaustive_bits_numerically_different": 150
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1",
+            "bytes": 4452,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+            "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88",
+            "bytes": 2112,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    },
+    {
+      "mode": "exact",
+      "shape": "64x1024",
+      "route": "Inductor TLE cluster",
+      "plain": {
+        "submit_us": {
+          "eager": 35.7295,
+          "native": 80.8185
+        },
+        "end_to_end_us": {
+          "eager": 43.309,
+          "native": 89.23349999999999
+        },
+        "eager_over_native": 0.48534462953935464,
+        "device_us": {
+          "eager": 13.409624807536602,
+          "native": 11.76149956882
+        },
+        "cold_first_compare_s": 0.4421671540476382,
+        "exhaustive_bits_numerically_different": 3
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 34.0945,
+          "native": 80.174
+        },
+        "end_to_end_us": {
+          "eager": 43.989000000000004,
+          "native": 88.463
+        },
+        "eager_over_native": 0.497258740942541,
+        "device_us": {
+          "eager": 13.354250229895115,
+          "native": 11.807749979197979
+        },
+        "cold_first_compare_s": 0.4415932659758255,
+        "exhaustive_bits_numerically_different": 3
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2",
+            "bytes": 13792,
+            "clusters": 8,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00",
+            "bytes": 3264,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    },
+    {
+      "mode": "tanh",
+      "shape": "512x1024",
+      "route": "Inductor TLE cluster",
+      "plain": {
+        "submit_us": {
+          "eager": 35.624,
+          "native": 83.783
+        },
+        "end_to_end_us": {
+          "eager": 61.869,
+          "native": 100.818
+        },
+        "eager_over_native": 0.6136701779444147,
+        "device_us": {
+          "eager": 39.154376834630966,
+          "native": 37.18787431716919
+        },
+        "cold_first_compare_s": 0.4485460959840566,
+        "exhaustive_bits_numerically_different": 1200
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 34.609,
+          "native": 83.4085
+        },
+        "end_to_end_us": {
+          "eager": 60.924,
+          "native": 99.81299999999999
+        },
+        "eager_over_native": 0.6103814132427641,
+        "device_us": {
+          "eager": 39.184000343084335,
+          "native": 37.21575066447258
+        },
+        "cold_first_compare_s": 0.44646767899394035,
+        "exhaustive_bits_numerically_different": 1200
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "sha256": "538c5cbb959c908c288fedfd08721cf33ede3f2d2962a2d01000602d6d3edc0a",
+            "bytes": 14728,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+            "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88",
+            "bytes": 2112,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    },
+    {
+      "mode": "exact",
+      "shape": "512x1024",
+      "route": "Inductor TLE cluster",
+      "plain": {
+        "submit_us": {
+          "eager": 34.449,
+          "native": 84.8635
+        },
+        "end_to_end_us": {
+          "eager": 68.53800000000001,
+          "native": 114.203
+        },
+        "eager_over_native": 0.600141852665867,
+        "device_us": {
+          "eager": 47.5582517683506,
+          "native": 50.726376473903656
+        },
+        "cold_first_compare_s": 0.4465539960656315,
+        "exhaustive_bits_numerically_different": 24
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 35.608999999999995,
+          "native": 85.05799999999999
+        },
+        "end_to_end_us": {
+          "eager": 69.83850000000001,
+          "native": 115.2875
+        },
+        "eager_over_native": 0.6057768621923454,
+        "device_us": {
+          "eager": 47.659873962402344,
+          "native": 50.676874816417694
+        },
+        "cold_first_compare_s": 0.4460559469880536,
+        "exhaustive_bits_numerically_different": 24
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770",
+            "bytes": 13792,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00",
+            "bytes": 3264,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    },
+    {
+      "mode": "tanh",
+      "shape": "2048x2048",
+      "route": "vendor Add + Inductor cluster GELU",
+      "plain": {
+        "submit_us": {
+          "eager": 31.554,
+          "native": 117.10749999999999
+        },
+        "end_to_end_us": {
+          "eager": 239.99,
+          "native": 247.485
+        },
+        "eager_over_native": 0.969715336283007,
+        "device_us": {
+          "eager": 220.83736956119537,
+          "native": 171.5923696756363
+        },
+        "cold_first_compare_s": 0.48629785201046616,
+        "exhaustive_bits_numerically_different": 9600
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 32.0695,
+          "native": 118.7425
+        },
+        "end_to_end_us": {
+          "eager": 238.64600000000002,
+          "native": 248.32999999999998
+        },
+        "eager_over_native": 0.9610035034027303,
+        "device_us": {
+          "eager": 220.80175578594208,
+          "native": 171.48837447166443
+        },
+        "cold_first_compare_s": 1.658224896993488,
+        "exhaustive_bits_numerically_different": 9600
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "sha256": "54b5fb347cb2aafa5293cce1fc479d6a315ad7ece57f3338157639ea0b7efec6",
+            "bytes": 5592,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+            "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88",
+            "bytes": 2112,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    },
+    {
+      "mode": "exact",
+      "shape": "2048x2048",
+      "route": "vendor Add + vendor GELU",
+      "plain": {
+        "submit_us": {
+          "eager": 29.0995,
+          "native": 103.673
+        },
+        "end_to_end_us": {
+          "eager": 275.98,
+          "native": 325.0785
+        },
+        "eager_over_native": 0.8489641732689182,
+        "device_us": {
+          "eager": 260.08087396621704,
+          "native": 259.80862975120544
+        },
+        "cold_first_compare_s": 0.48450780694838613,
+        "exhaustive_bits_numerically_different": 0
+      },
+      "traced": {
+        "submit_us": {
+          "eager": 29.18,
+          "native": 102.118
+        },
+        "end_to_end_us": {
+          "eager": 275.5695,
+          "native": 323.363
+        },
+        "eager_over_native": 0.8521986127046075,
+        "device_us": {
+          "eager": 259.5653831958771,
+          "native": 259.5718801021576
+        },
+        "cold_first_compare_s": 0.6395026569953188,
+        "exhaustive_bits_numerically_different": 0
+      },
+      "machine": {
+        "native": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00",
+            "bytes": 3264,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435",
+            "bytes": 3960,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00",
+            "bytes": 3264,
+            "clusters": 12,
+            "cores": 64,
+            "type": 0
+          }
+        ]
+      }
+    }
+  ],
+  "stock_abba": [
+    {
+      "arm": "1-official",
+      "host": {
+        "public": [
+          81.44800000000001,
+          101.588
+        ],
+        "eager": [
+          31.219,
+          37.929
+        ]
+      },
+      "gpu_us": 39.657626301050186,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 31842,
+          "unequal": 31870
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "688e3ee54f3f13fb55c7ee4b6046fb7bdd4bfa25c750f6a656d705b5ae5e33f2",
+        "bytes": 1196,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    },
+    {
+      "arm": "2-v23",
+      "host": {
+        "public": [
+          82.6785,
+          103.783
+        ],
+        "eager": [
+          34.569500000000005,
+          41.0495
+        ]
+      },
+      "gpu_us": 43.61699894070625,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 0,
+          "unequal": 28
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "a6ad0323d8c58092bff5edc4548cecec5a5daae9f2245307ee8648363d601631",
+        "bytes": 1448,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    },
+    {
+      "arm": "3-v23",
+      "host": {
+        "public": [
+          80.668,
+          104.163
+        ],
+        "eager": [
+          37.7795,
+          44.914
+        ]
+      },
+      "gpu_us": 44.25562545657158,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 0,
+          "unequal": 28
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "a6ad0323d8c58092bff5edc4548cecec5a5daae9f2245307ee8648363d601631",
+        "bytes": 1448,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    },
+    {
+      "arm": "4-official",
+      "host": {
+        "public": [
+          82.7535,
+          101.293
+        ],
+        "eager": [
+          33.5045,
+          41.123999999999995
+        ]
+      },
+      "gpu_us": 39.59599882364273,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 31842,
+          "unequal": 31870
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "688e3ee54f3f13fb55c7ee4b6046fb7bdd4bfa25c750f6a656d705b5ae5e33f2",
+        "bytes": 1196,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    }
+  ],
+  "ablations": {
+    "unclamp": {
+      "host": {
+        "public": [
+          82.95349999999999,
+          106.163
+        ],
+        "eager": [
+          32.2945,
+          38.974999999999994
+        ]
+      },
+      "gpu_us": 43.03250089287758,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 31842,
+          "unequal": 31870
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "c560f11f674dac62c6320c009ffda669e425c307d6e8e0bb59b96cb5f0b5de43",
+        "bytes": 1308,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    },
+    "nativecast": {
+      "host": {
+        "public": [
+          80.17349999999999,
+          102.21799999999999
+        ],
+        "eager": [
+          31.369,
+          37.914
+        ]
+      },
+      "gpu_us": 42.07649827003479,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 0,
+          "unequal": 28
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "b7bf26db520593e6ba24cdce3fe688bd70346d40f459a722d69a4df5c050a5a1",
+        "bytes": 1340,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    },
+    "nativecast-unclamp": {
+      "host": {
+        "public": [
+          84.1635,
+          102.618
+        ],
+        "eager": [
+          36.769999999999996,
+          44.1345
+        ]
+      },
+      "gpu_us": 41.32762551307678,
+      "checks": {
+        "exhaustive": {
+          "outside_tolerance": 31842,
+          "unequal": 31870
+        },
+        "random": {
+          "outside_tolerance": 0,
+          "unequal": 16135
+        },
+        "ties": {
+          "outside_tolerance": 0,
+          "unequal": 14567
+        }
+      },
+      "machine": {
+        "name": "triton_poi_fused_add_gelu_0",
+        "sha256": "688e3ee54f3f13fb55c7ee4b6046fb7bdd4bfa25c750f6a656d705b5ae5e33f2",
+        "bytes": 1196,
+        "clusters": 12,
+        "cores": 64,
+        "type": 0
+      }
+    }
+  },
+  "hot_layers": {
+    "eager": [
+      22.2295,
+      28.875
+    ],
+    "public": [
+      65.2885,
+      73.473
+    ],
+    "runner": [
+      14.1945,
+      23.304000000000002
+    ],
+    "kernel": [
+      8.9,
+      19.845
+    ],
+    "empty": [
+      4.31,
+      9.159500000000001
+    ]
+  },
+  "v23_isolated_eager_hit": [
+    {
+      "mode": "tanh",
+      "m": 64,
+      "selected": "eager",
+      "calibrations": 1,
+      "guard_us": 1.581609375,
+      "median": {
+        "direct": [
+          22.069499999999998,
+          28.6645
+        ],
+        "public": [
+          30.014499999999998,
+          36.2395
+        ],
+        "wrapper_forward": [
+          27.909,
+          34.314
+        ],
+        "replay": [
+          20.21,
+          26.939999999999998
+        ],
+        "plan": [
+          19.604,
+          26.5795
+        ]
+      }
+    },
+    {
+      "mode": "exact",
+      "m": 64,
+      "selected": "eager",
+      "calibrations": 1,
+      "guard_us": 1.5697734375,
+      "median": {
+        "direct": [
+          22.28,
+          30.0
+        ],
+        "public": [
+          30.349,
+          37.454
+        ],
+        "wrapper_forward": [
+          28.119,
+          35.499
+        ],
+        "replay": [
+          20.2945,
+          28.03
+        ],
+        "plan": [
+          19.6295,
+          27.7345
+        ]
+      }
+    },
+    {
+      "mode": "tanh",
+      "m": 512,
+      "selected": "eager",
+      "calibrations": 1,
+      "guard_us": 1.56633984375,
+      "median": {
+        "direct": [
+          22.3745,
+          51.824
+        ],
+        "public": [
+          31.0095,
+          59.733999999999995
+        ],
+        "wrapper_forward": [
+          28.264499999999998,
+          57.5035
+        ],
+        "replay": [
+          20.384999999999998,
+          50.599
+        ],
+        "plan": [
+          19.845,
+          50.489
+        ]
+      }
+    },
+    {
+      "mode": "exact",
+      "m": 512,
+      "selected": "eager",
+      "calibrations": 1,
+      "guard_us": 1.5553203125,
+      "median": {
+        "direct": [
+          22.3345,
+          60.138999999999996
+        ],
+        "public": [
+          30.775,
+          67.9635
+        ],
+        "wrapper_forward": [
+          28.314,
+          66.09899999999999
+        ],
+        "replay": [
+          20.334000000000003,
+          59.028999999999996
+        ],
+        "plan": [
+          19.7745,
+          58.759
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>F06 v9 · P800 全模板加速比</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{font-family:Inter,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#172d36;margin:0;background:#fafbfa;line-height:1.5}main{max-width:1330px;padding:35px 4vw 60px;margin:auto}h1{font-size:clamp(26px,4vw,40px);letter-spacing:-.04em;margin:0}h2{margin:34px 0 10px;font-size:22px}h3{margin:21px 0 8px}p{margin:9px 0;color:#394d56}table{border-collapse:collapse;width:100%;background:white;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:8px 12px;border-bottom:1px solid #d9e2e0;text-align:right;white-space:nowrap}th{background:#e5efec;color:#203f3a}th:first-child,td:first-child{text-align:left}small{display:block;color:#41695f}.scroll{overflow:auto}code{overflow-wrap:anywhere}a{color:#006459}nav{display:flex;gap:20px;flex-wrap:wrap;margin:14px 0;font-weight:600}summary{cursor:pointer;font-weight:650}details{margin:22px 0}footer{margin-top:30px;color:#495c64}.detail{font-size:13px}section{scroll-margin-top:12px}</style><main>
+<h1>F06 全模板加速比</h1><p>P800-152 · 个人 Docker v9 · 13 个模板 · 117 个组合 · 2026-11-09</p>
+<nav><a href="#FP32">FP32</a><a href="#FP16">FP16</a><a href="#BF16">BF16</a><a href="#timings">逐例耗时</a><a href="results.json">原始数据</a></nav>
+<p>正式入口根据当前输入选择执行路由。加速比为同卡 eager 耗时除以正式入口耗时，超过 1× 表示该口径实测更快。所有已报告的加速比均通过两组输入和输出独立性校验。</p>
+<div class="scroll"><table><tr><th>精度</th><th>通过</th><th>批量快于 eager</th><th>同步快于 eager</th><th>批量几何均值</th><th>同步几何均值</th></tr>
+<tr><td>FP32</td><td>39</td><td>18</td><td>18</td><td>1.06×</td><td>0.96×</td></tr>
+<tr><td>FP16</td><td>39</td><td>13</td><td>12</td><td>0.95×</td><td>0.90×</td></tr>
+<tr><td>BF16</td><td>39</td><td>0</td><td>0</td><td>0.75×</td><td>0.74×</td></tr>
+<tr><td>全部</td><td>117</td><td>31</td><td>30</td><td>0.91×</td><td>0.86×</td></tr>
+</table></div><p>下表每格依次列出<strong>设备事件批量加速比 / 单次同步加速比</strong>，第二行是该次校准实际选中的路由。eager 表示回退，仍按正式入口实测。尺寸为 M×N，矩阵乘法的 K 为 64。</p>
+<section id="FP32"><h2>FP32</h2><div class="scroll"><table><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr>
+<tr><td>matmul_bias</td><td><strong>0.93×</strong> / 1.02×<small>native_mm</small></td><td><strong>1.20×</strong> / 1.16×<small>sdnn</small></td><td><strong>1.38×</strong> / 1.07×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_relu</td><td><strong>1.46×</strong> / 1.48×<small>sdnn</small></td><td><strong>1.43×</strong> / 1.36×<small>sdnn</small></td><td><strong>2.02×</strong> / 1.26×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td><strong>1.46×</strong> / 1.33×<small>sdnn</small></td><td><strong>1.84×</strong> / 1.55×<small>sdnn</small></td><td><strong>3.07×</strong> / 2.31×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td><strong>0.67×</strong> / 0.69×<small>eager</small></td><td><strong>1.13×</strong> / 1.26×<small>native_mm</small></td><td><strong>2.16×</strong> / 1.65×<small>native_mm</small></td></tr>
+<tr><td>matmul_bias_silu</td><td><strong>1.13×</strong> / 1.03×<small>native_mm</small></td><td><strong>1.16×</strong> / 1.04×<small>native_mm</small></td><td><strong>1.78×</strong> / 1.19×<small>native_mm</small></td></tr>
+<tr><td>add_softmax</td><td><strong>0.66×</strong> / 0.73×<small>eager</small></td><td><strong>0.68×</strong> / 0.75×<small>eager</small></td><td><strong>1.19×</strong> / 0.97×<small>cluster</small></td></tr>
+<tr><td>add_gelu_exact</td><td><strong>0.79×</strong> / 0.87×<small>cluster</small></td><td><strong>1.50×</strong> / 1.02×<small>cluster</small></td><td><strong>1.46×</strong> / 1.30×<small>cluster</small></td></tr>
+<tr><td>add_gelu_tanh</td><td><strong>0.79×</strong> / 0.86×<small>cluster</small></td><td><strong>1.56×</strong> / 1.23×<small>cluster</small></td><td><strong>2.47×</strong> / 1.87×<small>cluster</small></td></tr>
+<tr><td>add_silu</td><td><strong>0.83×</strong> / 0.80×<small>cluster</small></td><td><strong>0.81×</strong> / 0.80×<small>cluster</small></td><td><strong>0.99×</strong> / 0.86×<small>eager</small></td></tr>
+<tr><td>add_layernorm</td><td><strong>0.70×</strong> / 0.67×<small>eager</small></td><td><strong>0.70×</strong> / 0.68×<small>eager</small></td><td><strong>0.99×</strong> / 0.81×<small>eager</small></td></tr>
+<tr><td>add_layernorm_affine</td><td><strong>0.55×</strong> / 0.57×<small>eager</small></td><td><strong>0.54×</strong> / 0.57×<small>eager</small></td><td><strong>0.97×</strong> / 0.74×<small>eager</small></td></tr>
+<tr><td>mul_sum</td><td><strong>0.59×</strong> / 0.69×<small>sdnn</small></td><td><strong>0.65×</strong> / 0.67×<small>eager</small></td><td><strong>0.98×</strong> / 0.79×<small>eager</small></td></tr>
+<tr><td>mul_sum_keepdim</td><td><strong>0.64×</strong> / 0.64×<small>eager</small></td><td><strong>0.65×</strong> / 0.66×<small>eager</small></td><td><strong>0.98×</strong> / 0.80×<small>eager</small></td></tr>
+</table></div></section>
+<section id="FP16"><h2>FP16</h2><div class="scroll"><table><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr>
+<tr><td>matmul_bias</td><td><strong>0.98×</strong> / 1.05×<small>native_mm</small></td><td><strong>1.16×</strong> / 1.29×<small>sdnn</small></td><td><strong>1.05×</strong> / 0.93×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_relu</td><td><strong>1.46×</strong> / 1.47×<small>sdnn</small></td><td><strong>1.40×</strong> / 1.33×<small>sdnn</small></td><td><strong>1.44×</strong> / 1.07×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td><strong>1.50×</strong> / 1.34×<small>sdnn</small></td><td><strong>1.90×</strong> / 1.60×<small>sdnn</small></td><td><strong>3.02×</strong> / 2.29×<small>sdnn</small></td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td><strong>0.65×</strong> / 0.67×<small>eager</small></td><td><strong>0.70×</strong> / 0.78×<small>eager</small></td><td><strong>0.99×</strong> / 0.91×<small>eager</small></td></tr>
+<tr><td>matmul_bias_silu</td><td><strong>0.67×</strong> / 0.69×<small>eager</small></td><td><strong>1.27×</strong> / 1.07×<small>native_mm</small></td><td><strong>0.99×</strong> / 0.83×<small>eager</small></td></tr>
+<tr><td>add_softmax</td><td><strong>0.65×</strong> / 0.73×<small>eager</small></td><td><strong>0.80×</strong> / 0.77×<small>eager</small></td><td><strong>0.99×</strong> / 0.86×<small>eager</small></td></tr>
+<tr><td>add_gelu_exact</td><td><strong>0.78×</strong> / 0.83×<small>cluster</small></td><td><strong>1.63×</strong> / 0.99×<small>cluster</small></td><td><strong>1.44×</strong> / 1.26×<small>cluster</small></td></tr>
+<tr><td>add_gelu_tanh</td><td><strong>0.77×</strong> / 0.87×<small>cluster</small></td><td><strong>1.34×</strong> / 1.05×<small>cluster</small></td><td><strong>2.52×</strong> / 1.88×<small>cluster</small></td></tr>
+<tr><td>add_silu</td><td><strong>0.77×</strong> / 0.80×<small>cluster</small></td><td><strong>0.82×</strong> / 0.82×<small>cluster</small></td><td><strong>0.99×</strong> / 0.87×<small>eager</small></td></tr>
+<tr><td>add_layernorm</td><td><strong>0.70×</strong> / 0.67×<small>eager</small></td><td><strong>0.70×</strong> / 0.65×<small>eager</small></td><td><strong>0.76×</strong> / 0.76×<small>eager</small></td></tr>
+<tr><td>add_layernorm_affine</td><td><strong>0.55×</strong> / 0.57×<small>eager</small></td><td><strong>0.54×</strong> / 0.56×<small>eager</small></td><td><strong>0.60×</strong> / 0.67×<small>eager</small></td></tr>
+<tr><td>mul_sum</td><td><strong>0.65×</strong> / 0.65×<small>eager</small></td><td><strong>0.64×</strong> / 0.69×<small>eager</small></td><td><strong>0.73×</strong> / 0.76×<small>eager</small></td></tr>
+<tr><td>mul_sum_keepdim</td><td><strong>0.64×</strong> / 0.61×<small>eager</small></td><td><strong>0.66×</strong> / 0.71×<small>eager</small></td><td><strong>0.74×</strong> / 0.75×<small>eager</small></td></tr>
+</table></div></section>
+<section id="BF16"><h2>BF16</h2><div class="scroll"><table><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr>
+<tr><td>matmul_bias</td><td><strong>0.63×</strong> / 0.65×<small>eager</small></td><td><strong>0.60×</strong> / 0.69×<small>eager</small></td><td><strong>0.90×</strong> / 0.77×<small>eager</small></td></tr>
+<tr><td>matmul_bias_relu</td><td><strong>0.66×</strong> / 0.68×<small>eager</small></td><td><strong>0.66×</strong> / 0.67×<small>eager</small></td><td><strong>0.96×</strong> / 0.79×<small>eager</small></td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td><strong>0.68×</strong> / 0.71×<small>eager</small></td><td><strong>0.85×</strong> / 0.79×<small>eager</small></td><td><strong>1.00×</strong> / 0.94×<small>eager</small></td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td><strong>0.64×</strong> / 0.68×<small>eager</small></td><td><strong>0.72×</strong> / 0.79×<small>eager</small></td><td><strong>1.00×</strong> / 0.93×<small>eager</small></td></tr>
+<tr><td>matmul_bias_silu</td><td><strong>0.65×</strong> / 0.69×<small>eager</small></td><td><strong>0.65×</strong> / 0.73×<small>eager</small></td><td><strong>0.99×</strong> / 0.85×<small>eager</small></td></tr>
+<tr><td>add_softmax</td><td><strong>0.67×</strong> / 0.73×<small>eager</small></td><td><strong>0.79×</strong> / 0.74×<small>eager</small></td><td><strong>0.99×</strong> / 0.89×<small>eager</small></td></tr>
+<tr><td>add_gelu_exact</td><td><strong>0.66×</strong> / 0.72×<small>eager</small></td><td><strong>0.98×</strong> / 0.83×<small>eager</small></td><td><strong>1.00×</strong> / 0.95×<small>eager</small></td></tr>
+<tr><td>add_gelu_tanh</td><td><strong>0.65×</strong> / 0.69×<small>eager</small></td><td><strong>0.98×</strong> / 0.80×<small>eager</small></td><td><strong>1.00×</strong> / 0.94×<small>eager</small></td></tr>
+<tr><td>add_silu</td><td><strong>0.66×</strong> / 0.71×<small>eager</small></td><td><strong>0.73×</strong> / 0.74×<small>eager</small></td><td><strong>0.99×</strong> / 0.89×<small>eager</small></td></tr>
+<tr><td>add_layernorm</td><td><strong>0.70×</strong> / 0.68×<small>eager</small></td><td><strong>0.68×</strong> / 0.69×<small>eager</small></td><td><strong>0.84×</strong> / 0.78×<small>eager</small></td></tr>
+<tr><td>add_layernorm_affine</td><td><strong>0.54×</strong> / 0.55×<small>eager</small></td><td><strong>0.52×</strong> / 0.54×<small>eager</small></td><td><strong>0.71×</strong> / 0.69×<small>eager</small></td></tr>
+<tr><td>mul_sum</td><td><strong>0.64×</strong> / 0.63×<small>eager</small></td><td><strong>0.64×</strong> / 0.68×<small>eager</small></td><td><strong>0.80×</strong> / 0.76×<small>eager</small></td></tr>
+<tr><td>mul_sum_keepdim</td><td><strong>0.66×</strong> / 0.66×<small>eager</small></td><td><strong>0.64×</strong> / 0.70×<small>eager</small></td><td><strong>0.78×</strong> / 0.75×<small>eager</small></td></tr>
+</table></div></section>
+<h2 id="timings">逐例耗时</h2><p>单位为 µs。批量测量在预热后取 7 轮设备事件中位数，每轮从正式入口调用 40 次，可能包含主机提交间隙。单次同步测量取 32 次中位数，包含入口检查、提交和等待。两种口径均交替运行 eager 与正式入口，排除冷编译。各精度汇总对每个用例等权。</p>
+<h3>FP32</h3><div class="scroll"><table class="detail"><tr><th>模板</th><th>尺寸</th><th>路由</th><th>批量 eager</th><th>批量正式</th><th>同步 eager</th><th>同步正式</th><th>冷启动（秒）</th></tr>
+<tr><td>matmul_bias</td><td>64×1024</td><td>native_mm</td><td>31.36</td><td>33.84</td><td>58.88</td><td>57.49</td><td>22.43</td></tr>
+<tr><td>matmul_bias</td><td>512×1024</td><td>sdnn</td><td>32.24</td><td>26.90</td><td>58.06</td><td>50.09</td><td>24.06</td></tr>
+<tr><td>matmul_bias</td><td>2048×2048</td><td>sdnn</td><td>39.16</td><td>28.31</td><td>70.61</td><td>66.11</td><td>33.50</td></tr>
+<tr><td>matmul_bias_relu</td><td>64×1024</td><td>sdnn</td><td>40.96</td><td>28.03</td><td>68.36</td><td>46.11</td><td>46.57</td></tr>
+<tr><td>matmul_bias_relu</td><td>512×1024</td><td>sdnn</td><td>39.37</td><td>27.52</td><td>67.67</td><td>49.58</td><td>55.41</td></tr>
+<tr><td>matmul_bias_relu</td><td>2048×2048</td><td>sdnn</td><td>57.02</td><td>28.29</td><td>91.03</td><td>72.20</td><td>81.28</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>64×1024</td><td>sdnn</td><td>40.17</td><td>27.55</td><td>69.62</td><td>52.36</td><td>9.43</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>512×1024</td><td>sdnn</td><td>50.94</td><td>27.74</td><td>101.21</td><td>65.28</td><td>31.01</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>2048×2048</td><td>sdnn</td><td>282.96</td><td>92.13</td><td>321.04</td><td>139.21</td><td>49.26</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64×1024</td><td>eager</td><td>43.17</td><td>64.30</td><td>58.59</td><td>85.52</td><td>11.43</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>512×1024</td><td>native_mm</td><td>55.28</td><td>49.05</td><td>106.46</td><td>84.74</td><td>14.07</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>2048×2048</td><td>native_mm</td><td>249.44</td><td>115.62</td><td>283.19</td><td>171.70</td><td>15.23</td></tr>
+<tr><td>matmul_bias_silu</td><td>64×1024</td><td>native_mm</td><td>40.09</td><td>35.44</td><td>70.34</td><td>68.45</td><td>6.32</td></tr>
+<tr><td>matmul_bias_silu</td><td>512×1024</td><td>native_mm</td><td>39.58</td><td>34.01</td><td>70.99</td><td>68.14</td><td>12.85</td></tr>
+<tr><td>matmul_bias_silu</td><td>2048×2048</td><td>native_mm</td><td>88.67</td><td>49.84</td><td>125.51</td><td>105.50</td><td>13.28</td></tr>
+<tr><td>add_softmax</td><td>64×1024</td><td>eager</td><td>20.57</td><td>31.28</td><td>31.52</td><td>43.18</td><td>8.76</td></tr>
+<tr><td>add_softmax</td><td>512×1024</td><td>eager</td><td>20.85</td><td>30.85</td><td>34.47</td><td>46.25</td><td>9.13</td></tr>
+<tr><td>add_softmax</td><td>2048×2048</td><td>cluster</td><td>75.55</td><td>63.71</td><td>93.32</td><td>95.96</td><td>7.39</td></tr>
+<tr><td>add_gelu_exact</td><td>64×1024</td><td>cluster</td><td>21.50</td><td>27.21</td><td>36.34</td><td>41.57</td><td>8.44</td></tr>
+<tr><td>add_gelu_exact</td><td>512×1024</td><td>cluster</td><td>42.33</td><td>28.14</td><td>63.67</td><td>62.18</td><td>8.41</td></tr>
+<tr><td>add_gelu_exact</td><td>2048×2048</td><td>cluster</td><td>253.28</td><td>173.97</td><td>271.97</td><td>209.42</td><td>10.59</td></tr>
+<tr><td>add_gelu_tanh</td><td>64×1024</td><td>cluster</td><td>21.31</td><td>26.82</td><td>34.82</td><td>40.53</td><td>21.34</td></tr>
+<tr><td>add_gelu_tanh</td><td>512×1024</td><td>cluster</td><td>42.32</td><td>27.10</td><td>61.77</td><td>50.15</td><td>44.91</td></tr>
+<tr><td>add_gelu_tanh</td><td>2048×2048</td><td>cluster</td><td>204.10</td><td>82.62</td><td>222.44</td><td>119.12</td><td>84.65</td></tr>
+<tr><td>add_silu</td><td>64×1024</td><td>cluster</td><td>21.85</td><td>26.40</td><td>32.40</td><td>40.62</td><td>12.54</td></tr>
+<tr><td>add_silu</td><td>512×1024</td><td>cluster</td><td>21.16</td><td>26.23</td><td>38.38</td><td>48.19</td><td>13.25</td></tr>
+<tr><td>add_silu</td><td>2048×2048</td><td>eager</td><td>73.05</td><td>73.58</td><td>87.43</td><td>101.09</td><td>21.88</td></tr>
+<tr><td>add_layernorm</td><td>64×1024</td><td>eager</td><td>27.61</td><td>39.69</td><td>33.48</td><td>50.20</td><td>12.77</td></tr>
+<tr><td>add_layernorm</td><td>512×1024</td><td>eager</td><td>27.18</td><td>38.79</td><td>32.91</td><td>48.74</td><td>12.75</td></tr>
+<tr><td>add_layernorm</td><td>2048×2048</td><td>eager</td><td>49.47</td><td>50.05</td><td>63.91</td><td>79.18</td><td>11.94</td></tr>
+<tr><td>add_layernorm_affine</td><td>64×1024</td><td>eager</td><td>29.16</td><td>52.99</td><td>38.04</td><td>66.55</td><td>13.92</td></tr>
+<tr><td>add_layernorm_affine</td><td>512×1024</td><td>eager</td><td>28.99</td><td>53.43</td><td>38.08</td><td>67.14</td><td>11.34</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048×2048</td><td>eager</td><td>51.17</td><td>52.81</td><td>66.49</td><td>89.27</td><td>11.14</td></tr>
+<tr><td>mul_sum</td><td>64×1024</td><td>sdnn</td><td>20.67</td><td>34.97</td><td>35.08</td><td>50.87</td><td>9.00</td></tr>
+<tr><td>mul_sum</td><td>512×1024</td><td>eager</td><td>20.07</td><td>30.76</td><td>26.74</td><td>39.90</td><td>11.28</td></tr>
+<tr><td>mul_sum</td><td>2048×2048</td><td>eager</td><td>35.29</td><td>35.98</td><td>49.08</td><td>61.75</td><td>15.09</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64×1024</td><td>eager</td><td>20.23</td><td>31.53</td><td>26.03</td><td>40.73</td><td>9.53</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512×1024</td><td>eager</td><td>20.32</td><td>31.24</td><td>26.92</td><td>40.57</td><td>11.66</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048×2048</td><td>eager</td><td>35.17</td><td>35.83</td><td>49.68</td><td>62.42</td><td>14.41</td></tr>
+</table></div>
+<h3>FP16</h3><div class="scroll"><table class="detail"><tr><th>模板</th><th>尺寸</th><th>路由</th><th>批量 eager</th><th>批量正式</th><th>同步 eager</th><th>同步正式</th><th>冷启动（秒）</th></tr>
+<tr><td>matmul_bias</td><td>64×1024</td><td>native_mm</td><td>33.30</td><td>33.92</td><td>61.10</td><td>58.24</td><td>21.42</td></tr>
+<tr><td>matmul_bias</td><td>512×1024</td><td>sdnn</td><td>31.89</td><td>27.44</td><td>60.75</td><td>47.14</td><td>26.97</td></tr>
+<tr><td>matmul_bias</td><td>2048×2048</td><td>sdnn</td><td>29.42</td><td>27.99</td><td>60.73</td><td>65.61</td><td>30.78</td></tr>
+<tr><td>matmul_bias_relu</td><td>64×1024</td><td>sdnn</td><td>40.33</td><td>27.71</td><td>70.55</td><td>47.85</td><td>48.05</td></tr>
+<tr><td>matmul_bias_relu</td><td>512×1024</td><td>sdnn</td><td>39.69</td><td>28.42</td><td>69.58</td><td>52.33</td><td>27.90</td></tr>
+<tr><td>matmul_bias_relu</td><td>2048×2048</td><td>sdnn</td><td>39.93</td><td>27.76</td><td>68.74</td><td>64.02</td><td>79.66</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>64×1024</td><td>sdnn</td><td>42.00</td><td>28.03</td><td>73.95</td><td>55.38</td><td>13.78</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>512×1024</td><td>sdnn</td><td>53.03</td><td>27.96</td><td>95.48</td><td>59.61</td><td>34.67</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>2048×2048</td><td>sdnn</td><td>277.07</td><td>91.86</td><td>315.17</td><td>137.67</td><td>42.45</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64×1024</td><td>eager</td><td>38.50</td><td>59.27</td><td>53.57</td><td>79.81</td><td>9.86</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>512×1024</td><td>eager</td><td>45.82</td><td>65.04</td><td>77.77</td><td>99.76</td><td>8.45</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>2048×2048</td><td>eager</td><td>254.58</td><td>255.99</td><td>279.93</td><td>306.36</td><td>12.27</td></tr>
+<tr><td>matmul_bias_silu</td><td>64×1024</td><td>eager</td><td>43.83</td><td>64.99</td><td>59.25</td><td>85.67</td><td>8.73</td></tr>
+<tr><td>matmul_bias_silu</td><td>512×1024</td><td>native_mm</td><td>43.70</td><td>34.40</td><td>76.73</td><td>71.44</td><td>10.02</td></tr>
+<tr><td>matmul_bias_silu</td><td>2048×2048</td><td>eager</td><td>84.26</td><td>85.01</td><td>106.83</td><td>128.64</td><td>6.37</td></tr>
+<tr><td>add_softmax</td><td>64×1024</td><td>eager</td><td>20.51</td><td>31.32</td><td>31.81</td><td>43.67</td><td>9.16</td></tr>
+<tr><td>add_softmax</td><td>512×1024</td><td>eager</td><td>24.11</td><td>30.10</td><td>37.82</td><td>48.94</td><td>14.70</td></tr>
+<tr><td>add_softmax</td><td>2048×2048</td><td>eager</td><td>69.16</td><td>69.81</td><td>83.27</td><td>96.72</td><td>14.23</td></tr>
+<tr><td>add_gelu_exact</td><td>64×1024</td><td>cluster</td><td>21.21</td><td>27.10</td><td>36.12</td><td>43.30</td><td>5.36</td></tr>
+<tr><td>add_gelu_exact</td><td>512×1024</td><td>cluster</td><td>44.97</td><td>27.59</td><td>63.28</td><td>63.69</td><td>5.63</td></tr>
+<tr><td>add_gelu_exact</td><td>2048×2048</td><td>cluster</td><td>247.60</td><td>172.30</td><td>267.57</td><td>212.32</td><td>9.90</td></tr>
+<tr><td>add_gelu_tanh</td><td>64×1024</td><td>cluster</td><td>21.03</td><td>27.48</td><td>33.91</td><td>39.18</td><td>23.42</td></tr>
+<tr><td>add_gelu_tanh</td><td>512×1024</td><td>cluster</td><td>35.91</td><td>26.89</td><td>53.67</td><td>51.05</td><td>45.99</td></tr>
+<tr><td>add_gelu_tanh</td><td>2048×2048</td><td>cluster</td><td>207.28</td><td>82.31</td><td>225.95</td><td>120.38</td><td>82.09</td></tr>
+<tr><td>add_silu</td><td>64×1024</td><td>cluster</td><td>21.31</td><td>27.71</td><td>33.58</td><td>41.81</td><td>12.31</td></tr>
+<tr><td>add_silu</td><td>512×1024</td><td>cluster</td><td>21.95</td><td>26.78</td><td>39.15</td><td>47.99</td><td>14.56</td></tr>
+<tr><td>add_silu</td><td>2048×2048</td><td>eager</td><td>69.38</td><td>69.94</td><td>83.63</td><td>95.86</td><td>17.80</td></tr>
+<tr><td>add_layernorm</td><td>64×1024</td><td>eager</td><td>27.38</td><td>39.07</td><td>33.96</td><td>50.51</td><td>14.24</td></tr>
+<tr><td>add_layernorm</td><td>512×1024</td><td>eager</td><td>27.03</td><td>38.89</td><td>33.49</td><td>51.39</td><td>13.93</td></tr>
+<tr><td>add_layernorm</td><td>2048×2048</td><td>eager</td><td>31.50</td><td>41.69</td><td>46.02</td><td>60.29</td><td>16.55</td></tr>
+<tr><td>add_layernorm_affine</td><td>64×1024</td><td>eager</td><td>29.15</td><td>53.06</td><td>36.83</td><td>65.14</td><td>16.62</td></tr>
+<tr><td>add_layernorm_affine</td><td>512×1024</td><td>eager</td><td>29.03</td><td>53.32</td><td>38.09</td><td>68.25</td><td>15.32</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048×2048</td><td>eager</td><td>34.01</td><td>56.84</td><td>50.76</td><td>76.22</td><td>14.32</td></tr>
+<tr><td>mul_sum</td><td>64×1024</td><td>eager</td><td>20.71</td><td>31.97</td><td>25.98</td><td>40.11</td><td>6.72</td></tr>
+<tr><td>mul_sum</td><td>512×1024</td><td>eager</td><td>20.38</td><td>31.72</td><td>28.74</td><td>41.49</td><td>6.80</td></tr>
+<tr><td>mul_sum</td><td>2048×2048</td><td>eager</td><td>23.48</td><td>32.07</td><td>36.90</td><td>48.54</td><td>12.31</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64×1024</td><td>eager</td><td>20.29</td><td>31.83</td><td>26.15</td><td>43.13</td><td>4.74</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512×1024</td><td>eager</td><td>19.82</td><td>30.17</td><td>28.63</td><td>40.35</td><td>9.02</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048×2048</td><td>eager</td><td>23.15</td><td>31.19</td><td>36.92</td><td>49.33</td><td>10.32</td></tr>
+</table></div>
+<h3>BF16</h3><div class="scroll"><table class="detail"><tr><th>模板</th><th>尺寸</th><th>路由</th><th>批量 eager</th><th>批量正式</th><th>同步 eager</th><th>同步正式</th><th>冷启动（秒）</th></tr>
+<tr><td>matmul_bias</td><td>64×1024</td><td>eager</td><td>33.10</td><td>52.18</td><td>45.16</td><td>69.96</td><td>14.36</td></tr>
+<tr><td>matmul_bias</td><td>512×1024</td><td>eager</td><td>32.44</td><td>54.08</td><td>50.84</td><td>73.20</td><td>18.13</td></tr>
+<tr><td>matmul_bias</td><td>2048×2048</td><td>eager</td><td>41.60</td><td>46.38</td><td>61.86</td><td>80.15</td><td>19.20</td></tr>
+<tr><td>matmul_bias_relu</td><td>64×1024</td><td>eager</td><td>41.50</td><td>62.44</td><td>56.11</td><td>82.82</td><td>11.49</td></tr>
+<tr><td>matmul_bias_relu</td><td>512×1024</td><td>eager</td><td>42.14</td><td>64.25</td><td>55.68</td><td>82.74</td><td>18.28</td></tr>
+<tr><td>matmul_bias_relu</td><td>2048×2048</td><td>eager</td><td>53.95</td><td>56.45</td><td>75.02</td><td>94.43</td><td>26.14</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>64×1024</td><td>eager</td><td>44.53</td><td>65.88</td><td>60.05</td><td>85.13</td><td>18.18</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>512×1024</td><td>eager</td><td>56.49</td><td>66.72</td><td>89.45</td><td>112.61</td><td>19.22</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>2048×2048</td><td>eager</td><td>297.73</td><td>298.85</td><td>324.77</td><td>347.00</td><td>22.74</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64×1024</td><td>eager</td><td>45.01</td><td>70.28</td><td>61.09</td><td>89.40</td><td>9.54</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>512×1024</td><td>eager</td><td>49.67</td><td>69.07</td><td>84.39</td><td>107.37</td><td>10.00</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>2048×2048</td><td>eager</td><td>277.10</td><td>278.30</td><td>300.03</td><td>321.02</td><td>14.61</td></tr>
+<tr><td>matmul_bias_silu</td><td>64×1024</td><td>eager</td><td>45.55</td><td>70.15</td><td>61.54</td><td>89.13</td><td>9.25</td></tr>
+<tr><td>matmul_bias_silu</td><td>512×1024</td><td>eager</td><td>44.60</td><td>68.49</td><td>65.46</td><td>89.41</td><td>11.98</td></tr>
+<tr><td>matmul_bias_silu</td><td>2048×2048</td><td>eager</td><td>108.56</td><td>109.40</td><td>134.04</td><td>156.98</td><td>15.34</td></tr>
+<tr><td>add_softmax</td><td>64×1024</td><td>eager</td><td>20.42</td><td>30.67</td><td>33.29</td><td>45.49</td><td>11.63</td></tr>
+<tr><td>add_softmax</td><td>512×1024</td><td>eager</td><td>25.40</td><td>32.09</td><td>39.28</td><td>52.84</td><td>19.15</td></tr>
+<tr><td>add_softmax</td><td>2048×2048</td><td>eager</td><td>83.41</td><td>84.05</td><td>97.60</td><td>110.16</td><td>4.19</td></tr>
+<tr><td>add_gelu_exact</td><td>64×1024</td><td>eager</td><td>21.25</td><td>32.34</td><td>29.92</td><td>41.47</td><td>5.42</td></tr>
+<tr><td>add_gelu_exact</td><td>512×1024</td><td>eager</td><td>45.68</td><td>46.40</td><td>59.50</td><td>71.28</td><td>6.97</td></tr>
+<tr><td>add_gelu_exact</td><td>2048×2048</td><td>eager</td><td>257.69</td><td>258.77</td><td>272.21</td><td>286.10</td><td>15.05</td></tr>
+<tr><td>add_gelu_tanh</td><td>64×1024</td><td>eager</td><td>21.36</td><td>32.84</td><td>29.11</td><td>42.10</td><td>14.49</td></tr>
+<tr><td>add_gelu_tanh</td><td>512×1024</td><td>eager</td><td>37.38</td><td>37.99</td><td>50.93</td><td>63.34</td><td>26.98</td></tr>
+<tr><td>add_gelu_tanh</td><td>2048×2048</td><td>eager</td><td>219.07</td><td>220.14</td><td>233.95</td><td>250.12</td><td>56.45</td></tr>
+<tr><td>add_silu</td><td>64×1024</td><td>eager</td><td>21.12</td><td>31.87</td><td>28.94</td><td>40.80</td><td>7.48</td></tr>
+<tr><td>add_silu</td><td>512×1024</td><td>eager</td><td>24.03</td><td>32.92</td><td>38.77</td><td>52.10</td><td>6.00</td></tr>
+<tr><td>add_silu</td><td>2048×2048</td><td>eager</td><td>82.94</td><td>83.54</td><td>97.02</td><td>109.58</td><td>10.81</td></tr>
+<tr><td>add_layernorm</td><td>64×1024</td><td>eager</td><td>26.83</td><td>38.47</td><td>32.81</td><td>48.38</td><td>10.48</td></tr>
+<tr><td>add_layernorm</td><td>512×1024</td><td>eager</td><td>26.92</td><td>39.35</td><td>34.25</td><td>49.84</td><td>20.55</td></tr>
+<tr><td>add_layernorm</td><td>2048×2048</td><td>eager</td><td>35.61</td><td>42.45</td><td>50.04</td><td>64.10</td><td>4.05</td></tr>
+<tr><td>add_layernorm_affine</td><td>64×1024</td><td>eager</td><td>29.27</td><td>54.46</td><td>38.26</td><td>68.96</td><td>12.00</td></tr>
+<tr><td>add_layernorm_affine</td><td>512×1024</td><td>eager</td><td>29.24</td><td>56.56</td><td>37.15</td><td>68.61</td><td>20.95</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048×2048</td><td>eager</td><td>39.55</td><td>55.47</td><td>54.41</td><td>78.97</td><td>4.23</td></tr>
+<tr><td>mul_sum</td><td>64×1024</td><td>eager</td><td>20.41</td><td>31.66</td><td>25.63</td><td>40.67</td><td>5.07</td></tr>
+<tr><td>mul_sum</td><td>512×1024</td><td>eager</td><td>20.07</td><td>31.39</td><td>29.06</td><td>42.70</td><td>7.25</td></tr>
+<tr><td>mul_sum</td><td>2048×2048</td><td>eager</td><td>25.08</td><td>31.39</td><td>40.24</td><td>52.88</td><td>9.06</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64×1024</td><td>eager</td><td>20.50</td><td>31.00</td><td>25.95</td><td>39.56</td><td>5.18</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512×1024</td><td>eager</td><td>20.09</td><td>31.40</td><td>29.19</td><td>41.73</td><td>8.07</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048×2048</td><td>eager</td><td>25.16</td><td>32.18</td><td>39.18</td><td>52.01</td><td>10.06</td></tr>
+</table></div>
+<h2>冷启动与复测</h2><p>首轮 102/117 个组合取得有效计时，另有 15 个组合安排独立进程补测。表中保留每个组合第一次通过两组输入校验的正式计时，编译缓存可在同一容器的不同进程间复用。每次尝试和候选拒绝原因见原始数据。</p>
+<p>BF16 的 matmul_bias 在 2048×2048、64×1024、512×1024 的首次校准中报告设备非法访存（700）。三档尺寸的独立 eager 对照通过 3/3，每档分别使用两组输入、每组重复 8 次并同步。</p>
+<footer>镜像 <code>zhaoweiming/f06-p800:kl3-llvm-pass-20261109-v9</code><br>镜像 ID <code>sha256:4e3ba6da7a8269ff18d8559d40a202fabc2eeeff89b082ab54a7209f52e708c1</code><br><a href="evidence.tar.gz">复测脚本与原始日志</a></footer></main></html>

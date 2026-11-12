@@ -1,0 +1,72 @@
+.................................................... [ 22%]
+..............................................F................. [ 50%]
+........................................................... [ 76%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+_ ResourceAutotuneTests.test_fast_entry_preserves_profiler_and_cleanup_after_failure _
+
+self = <test_graph_fusion_resource_autotune.ResourceAutotuneTests testMethod=test_fast_entry_preserves_profiler_and_cleanup_after_failure>
+
+    def test_fast_entry_preserves_profiler_and_cleanup_after_failure(self):
+        from torch._inductor.output_code import CompiledFxGraph
+        runtime = _load_module('_resource_runtime')
+        binary = object.__new__(CompiledFxGraph)
+        binary.compiled_fn_runner = None
+        binary._fx_graph_cache_key = 'unit-fast-entry'
+        binary.current_callable = lambda xs: xs[0] + 1
+        run, enabled = runtime.inference_entry(binary)
+        self.assertTrue(enabled)
+        with torch.no_grad():
+            self.assertEqual(run([2]), 3)
+>           with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU]) as prof:
+
+test_graph_fusion_resource_autotune.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/profiler/profiler.py:806: in __enter__
+    self.start()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/profiler/profiler.py:816: in start
+    self._transit_action(ProfilerAction.NONE, self.current_action)
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/profiler/profiler.py:872: in _transit_action
+    action()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/profiler/profiler.py:203: in prepare_trace
+    self.profiler._prepare_trace()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <unfinished torch.autograd.profile>
+
+    def _prepare_trace(self):
+        self.entered = True
+        t0 = perf_counter_ns()
+>       _prepare_profiler(self.config(create_trace_id=True), self.kineto_activities)
+E       RuntimeError: [2026-11-08 23:53:36] [FATAL] [/mnt/ssd3/xpytorch/workspace/706f7829-e6b1-48d9-8375-689914540cb5/subpod/baidu/xpu/cupti/lib/cupti/impl/context_manager.cpp:74:checkRuntimeProfilerEnv] Runtime profiler is disabled. To enable it, set the environment variable: XPU_ENABLE_PROFILER_TRACING=1
+
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/autograd/profiler.py:366: RuntimeError
+=============================== warnings summary ===============================
+opt/f06/code/python/test/unit/runtime/test_graph_fusion_static.py::SmallMatmulSelectionTests::test_compiler_single_kernel_audit_does_not_trust_a_requested_count
+  /opt/f06/code/python/triton/experimental/graph_fusion/_inference.py:380: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+    return (_get_matmul_precision(), _get_tf32(), _get_cudnn_tf32(), _get_fp16_reduction(), _get_bf16_reduction(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_graph_fusion_resource_autotune.py::ResourceAutotuneTests::test_fast_entry_preserves_profiler_and_cleanup_after_failure
+1 failed, 228 passed, 1 warning, 41 subtests passed in 7.73s
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+ATTACHED True
+PASS cold
+SNAPSHOT dict_keys(['backend', 'cached', 'call_impl', 'cls', 'code', 'eval_frame', 'forward', 'get_eval_frame_callback', 'is_fx_tracing', 'mod', 'module_call', 'names', 'native_profiler', 'nn_module', 'normal', 'optimized', 'run', 'torch']) True
+PASS new inputs
+PASS old output
+PASS kwargs
+PASS size guard
+PASS module state guard
+PASS noncontiguous
+PASS dtype guard
+PASS forward hook
+PASS hook removed
+PASS restore model
+RESET invalidated True
+PASS reset
+PASS force eager
+PASS after stance
+PASS all 8

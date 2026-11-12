@@ -21,6 +21,8 @@
 import os
 import sys
 import shutil
+import shlex
+import tempfile
 import inspect
 import subprocess
 import importlib.machinery
@@ -162,6 +164,8 @@ def _merge_xpu_packages(existing_packages):
     # top -- two sources for one package makes build_py copy whichever runs last.
     # Non-XPU builds go through default.py and keep the main-tree version.
 
+    add("triton.experimental.graph_fusion")
+
     for package in existing_packages:
         if (not package.startswith("triton.") or _is_backend_package(package) or _is_language_extra_package(package)
                 or package == "triton.profiler" or package.startswith("triton.profiler.")
@@ -174,6 +178,7 @@ def _merge_xpu_packages(existing_packages):
 def _merge_xpu_package_dir(existing_package_dir):
     package_dir = dict(existing_package_dir or {})
     package_dir[""] = XPU_PYTHON_ROOT
+    package_dir["triton.experimental.graph_fusion"] = "python/triton/experimental/graph_fusion"
 
     for package in find_packages(where=XPU_PYTHON_ROOT, include=["triton", "triton.*"]):
         rel_package_path = package.replace(".", "/")
@@ -578,6 +583,24 @@ def _drop_per_directory_llvm19_shlibs(flagtree_dir):
                 os.remove(p)
 
 
+def _stage_llvm19_link(sdk, source, destination):
+    """Build the upstream 19.1.7 linker against XTDK when its SDK omits the driver."""
+    sdk, destination = Path(sdk), Path(destination)
+    packaged = sdk / "bin/llvm-link"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=destination.parent) as temporary:
+        exe = Path(temporary) / "llvm-link"
+        if packaged.is_file():
+            shutil.copy2(packaged, exe)
+        else:
+            cxx = shlex.split(os.environ.get("CXX") or "c++")
+            subprocess.run([*cxx, "-std=c++17", "-O2", "-fno-rtti", "-I", str(sdk / "include"),
+                            str(source), "-L", str(sdk / "lib"), "-l:libLLVM.so.19.1",
+                            "-Wl,-rpath,$ORIGIN/../lib:$ORIGIN/../../../_xtdk_llvm19/lib",
+                            "-o", str(exe)], check=True)
+        exe.replace(destination)
+
+
 def _repoint_staged_tools_to_shared_llvm19(flagtree_dir, cache):
     """Point every staged LLVM 19 tool's RPATH at the shared runtime.
 
@@ -732,6 +755,8 @@ def collect_xpu_backend_package_data(backend):
     driver_c = Path(backend.backend_dir) / "driver.c"
     if driver_c.exists():
         files.append("driver.c")
+    if (Path(backend.backend_dir) / "llvm19/bin/llvm-link").is_file():
+        files.append("llvm19/bin/llvm-link")
     xpu3_dir = Path(backend.backend_dir) / "xpu3"
     if xpu3_dir.is_dir():
         files.extend(str(path.relative_to(backend.backend_dir)) for path in xpu3_dir.rglob("*") if path.is_file())
@@ -782,6 +807,7 @@ def _compiled_python_packages():
 
 def get_package_data(backends):
     package_data = {
+        "triton.experimental.graph_fusion": ["_p800_layernorm.xpu", "_p800_bf16_gelu.xpu", "_p800_vector_rows.xpu", "_resource_entry.c"],
         "triton": ["FLAGTREE_BACKEND"], "triton.backends": ["_tables/*.json"],
         # The one shared copy of the LLVM 19 runtime.  The package is
         # reached through the symlink `python/triton/backends/_xtdk_llvm19`
@@ -1056,9 +1082,10 @@ def register_cache(cache, flagtree_backend, check_env, set_llvm_env):
                "llvm-objdump", "xpu-elfconv", "xpu2-elfconv", "xpu3-elfconv", "xpu4-elfconv", "xpu5-elfconv", "xpu-xxd",
                "xpu-crt.xpu", "xpu3-crt.xpu", "xpu4-crt.xpu", "xpu-kernel.t"), condition=is_xpu,
         copy_src_path=f"{_llvm19_pkg}/bin", copy_dst_path="third_party/xpu/backend/llvm19/bin")
-    # `opt` (read-in) and `llvm-link` (tle.raw merge) are not in the desensitized
-    # package: the read-in degrades when `opt` is absent (see compiler.py) and
-    # tle.raw payload kernels fail loudly without `llvm-link`.
+    if is_xpu:
+        xpu_dir = Path(cache.flagtree_dir) / "third_party/xpu"
+        _stage_llvm19_link(_llvm19_pkg, xpu_dir / "tools/llvm19-link/llvm-link.cpp",
+                           xpu_dir / "backend/llvm19/bin/llvm-link")
     cache.store(
         # clang's resource dir for the LLVM 19 side (the tools above read it
         # through `$ORIGIN/../lib/clang/19`).

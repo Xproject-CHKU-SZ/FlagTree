@@ -1,0 +1,4218 @@
+{
+  "image": "zhaoweiming/f06-p800:auto-inductor-final-20261109-v25",
+  "image_id": "sha256:77958e4701222a9b07886844fd05a6a6ecba5f93516c1cd96c2d335d9e3506fa",
+  "server": "P800-152",
+  "device": 6,
+  "protocol": {
+    "path": "Three dimensions x two dtypes x affine on/off x normal/high offset. Original, bit-identical clone, three independent scalar arithmetic overrides, and all three together. SHA-matched per launch. Setting the active variance result to zero makes native rstd = 1/sqrt(0.001).",
+    "taps": "512x1024, input offset 1000, no affine, seed 61. On private copies of the same vendor image, return the operands and result of the active variance subtraction via the FP32 rstd output. Validate second_moment - mean_square and mean * mean bitwise over all rows.",
+    "candidates": "v25 captured FX graph, compile_candidate for the proposed cluster and inductor plans, actual xpu_launch_async descriptor after warmup, 512x1024. Tolerances atol=rtol=0.0003 (float32) / 0.003 (float16). CPU FP64 reference takes the already rounded Add output.",
+    "prior": "The 12 formal route traces and timing are from the v25 slow30 run. The tutorial binaries and statistic substitutions are from the v25 official A/B run."
+  },
+  "active_variance_pc": {
+    "float32-64x1024": "0x2134",
+    "float32-512x1024": "0xa4c",
+    "float32-2048x2048": "0xa4c",
+    "float16-64x1024": "0x157c",
+    "float16-512x1024": "0x157c",
+    "float16-2048x2048": "0xa38"
+  },
+  "registers": [
+    {
+      "dtype": "float32",
+      "row": 172,
+      "col": 255,
+      "rows_verified": 512,
+      "max_abs_rstd_rebuilt": 1.1920928955078125e-07,
+      "mean": 1000.010986328125,
+      "y": 4.262177467346191,
+      "var64": 1.057346387795178,
+      "original": 1.1087183952331543,
+      "second_moment": 1000022.8125,
+      "mean_square": 1000022.0,
+      "variance": 0.8125
+    },
+    {
+      "dtype": "float16",
+      "row": 137,
+      "col": 255,
+      "rows_verified": 512,
+      "max_abs_rstd_rebuilt": 1.1920928955078125e-07,
+      "mean": 1000.009765625,
+      "y": 4.42578125,
+      "var64": 1.0653343200683594,
+      "original": 1.1087183952331543,
+      "second_moment": 1000020.375,
+      "mean_square": 1000019.5625,
+      "variance": 0.8125
+    }
+  ],
+  "vendor_and_tutorial": {
+    "vendor-layernorm-float16": {
+      "file": "assembly/vendor-layernorm-float16.asm",
+      "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+      "bytes": 11720
+    },
+    "vendor-add-float16": {
+      "file": "assembly/vendor-add-float16.asm",
+      "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+      "bytes": 2976
+    },
+    "official-tutorial-float16": {
+      "file": "assembly/official-tutorial-float16.asm",
+      "sha256": "8a2427f98565e6332008113554206ddc1a56d9063ae4ce4bd08faf3e88267217",
+      "bytes": 4144
+    },
+    "vendor-layernorm-float32": {
+      "file": "assembly/vendor-layernorm-float32.asm",
+      "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+      "bytes": 11920
+    },
+    "vendor-add-float32": {
+      "file": "assembly/vendor-add-float32.asm",
+      "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+      "bytes": 3008
+    },
+    "official-tutorial-float32": {
+      "file": "assembly/official-tutorial-float32.asm",
+      "sha256": "186a620510f7121b500b7457c0697c4b4909712bed1f1844b601af271dad0e49",
+      "bytes": 3364
+    }
+  },
+  "candidate_runs": [
+    {
+      "template": "add_layernorm",
+      "dtype": "float32",
+      "geometry": "512x1024",
+      "backend": "cluster",
+      "symbol": "_flat_row_reduce",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/cluster-add_layernorm-float32.asm",
+      "sha256": "d97e2085355ab3aacc598cefd28abd86dcf9ff8f7fe75ddf9fb35f8394912897",
+      "bytes": 5156,
+      "tiles": {
+        "r": 16,
+        "c": 256,
+        "warps": 8,
+        "us": 43.4
+      },
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 4.5299530029296875e-06
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 487347,
+          "max_finite_abs": 0.5253105163574219
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 1.430511474609375e-06
+        },
+        "candidate_against_eager": {
+          "bad": 487350,
+          "max_finite_abs": 0.5253098011016846
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float32",
+      "geometry": "512x1024",
+      "backend": "inductor",
+      "symbol": "triton_per_fused_add_native_layer_norm_0",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/inductor-add_layernorm-float32.asm",
+      "sha256": "1094fd303da49fa1aa45ba18a2e9b96933d94ac446c9637ef8f3c9642f5b201a",
+      "bytes": 6664,
+      "tiles": null,
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 7.152557373046875e-07
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 487347,
+          "max_finite_abs": 0.5253105163574219
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 0.00016808509826660156
+        },
+        "candidate_against_eager": {
+          "bad": 487565,
+          "max_finite_abs": 0.5252885818481445
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float32",
+      "geometry": "512x1024",
+      "backend": "cluster",
+      "symbol": "_flat_row_reduce",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/cluster-add_layernorm_affine-float32.asm",
+      "sha256": "5b3a3ffe4bb693cb35b95fbf0087bb1ee803cec1443efa0bf40ee408d8851f4a",
+      "bytes": 6400,
+      "tiles": {
+        "r": 4,
+        "c": 1024,
+        "warps": 8,
+        "us": 56.58
+      },
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 5.662441253662109e-07
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 333847,
+          "max_finite_abs": 0.07784491777420044
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 3.5762786865234375e-07
+        },
+        "candidate_against_eager": {
+          "bad": 333854,
+          "max_finite_abs": 0.07784485816955566
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float32",
+      "geometry": "512x1024",
+      "backend": "inductor",
+      "symbol": "triton_per_fused_add_native_layer_norm_0",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/inductor-add_layernorm_affine-float32.asm",
+      "sha256": "b2e620e9cf570cfd1edd134c886a07f166ab22e29d59df9d7f5833a0328ed302",
+      "bytes": 9816,
+      "tiles": null,
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 1.7881393432617188e-07
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 333847,
+          "max_finite_abs": 0.07784491777420044
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 5.383789539337158e-05
+        },
+        "candidate_against_eager": {
+          "bad": 333879,
+          "max_finite_abs": 0.07784026861190796
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float16",
+      "geometry": "512x1024",
+      "backend": "cluster",
+      "symbol": "_flat_row_reduce",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/cluster-add_layernorm-float16.asm",
+      "sha256": "25bea159a5061b10724d56a168dbd59a2580f57aae7b317cb619776be64de14e",
+      "bytes": 5052,
+      "tiles": {
+        "r": 16,
+        "c": 256,
+        "warps": 4,
+        "us": 41.71
+      },
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 0.001953125
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 430107,
+          "max_finite_abs": 0.5625
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 0.0
+        },
+        "candidate_against_eager": {
+          "bad": 430107,
+          "max_finite_abs": 0.5625
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float16",
+      "geometry": "512x1024",
+      "backend": "inductor",
+      "symbol": "triton_per_fused_add_native_layer_norm_0",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/inductor-add_layernorm-float16.asm",
+      "sha256": "7c6e9654d8ce9f707a2022657e631fdd62f1e4fd91b5dcc5a0787ecd9eb75581",
+      "bytes": 15944,
+      "tiles": null,
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 0.001953125
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 430107,
+          "max_finite_abs": 0.5625
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 0.0
+        },
+        "candidate_against_eager": {
+          "bad": 430107,
+          "max_finite_abs": 0.5625
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float16",
+      "geometry": "512x1024",
+      "backend": "cluster",
+      "symbol": "_flat_row_reduce",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/cluster-add_layernorm_affine-float16.asm",
+      "sha256": "735f101a923e373fd885ead1d3178e3c4af2befa0917ff80764c1bfef7bd2fc8",
+      "bytes": 7176,
+      "tiles": {
+        "r": 4,
+        "c": 1024,
+        "warps": 8,
+        "us": 55.57
+      },
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 0.000244140625
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 255705,
+          "max_finite_abs": 0.07421875
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 6.103515625e-05
+        },
+        "candidate_against_eager": {
+          "bad": 255669,
+          "max_finite_abs": 0.07421875
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float16",
+      "geometry": "512x1024",
+      "backend": "inductor",
+      "symbol": "triton_per_fused_add_native_layer_norm_0",
+      "clusters": 12,
+      "cores": 64,
+      "file": "assembly/inductor-add_layernorm_affine-float16.asm",
+      "sha256": "316247edbf826f08378f6ad6e7694114077d2f26f6b05c357aa65888d5df71d1",
+      "bytes": 19768,
+      "tiles": null,
+      "normal": {
+        "bad": 0,
+        "max_finite_abs": 0.000244140625
+      },
+      "conditioned": {
+        "eager_against_fp64": {
+          "bad": 255705,
+          "max_finite_abs": 0.07421875
+        },
+        "candidate_against_fp64": {
+          "bad": 0,
+          "max_finite_abs": 0.0001220703125
+        },
+        "candidate_against_eager": {
+          "bad": 255669,
+          "max_finite_abs": 0.07421875
+        }
+      }
+    }
+  ],
+  "statistics_substitution": [
+    {
+      "dtype": "float32",
+      "affine": false,
+      "n": 524288,
+      "results_vs_eager": {
+        "fp64_both": {
+          "bad": 487349,
+          "max_abs": 0.5253105163574219
+        },
+        "vendor_mean_only": {
+          "bad": 487351,
+          "max_abs": 0.5254073143005371
+        },
+        "vendor_rstd_only": {
+          "bad": 0,
+          "max_abs": 0.000110626220703125
+        },
+        "vendor_both": {
+          "bad": 0,
+          "max_abs": 0.0
+        }
+      },
+      "mean_max_abs": 0.00011223554611206055,
+      "variance_max_abs": 0.24484650690924448,
+      "row": 172,
+      "col": 255,
+      "exact_variance": 1.057346387795178,
+      "vendor_variance_from_rstd": 0.8124998808859336,
+      "mean64": 1000.0108866691589,
+      "mean_vendor": 1000.010986328125,
+      "rstd64": 0.9720443584840648,
+      "rstd_vendor": 1.1087183952331543,
+      "eager_y": 4.262177467346191,
+      "reference_y": 3.7368669509887695
+    },
+    {
+      "dtype": "float32",
+      "affine": true,
+      "n": 524288,
+      "results_vs_eager": {
+        "fp64_both": {
+          "bad": 333855,
+          "max_abs": 0.07784491777420044
+        },
+        "vendor_mean_only": {
+          "bad": 333859,
+          "max_abs": 0.07786548137664795
+        },
+        "vendor_rstd_only": {
+          "bad": 0,
+          "max_abs": 3.5434961318969727e-05
+        },
+        "vendor_both": {
+          "bad": 0,
+          "max_abs": 5.960464477539063e-08
+        }
+      },
+      "mean_max_abs": 0.00011223554611206055,
+      "variance_max_abs": 0.24484650690924448,
+      "row": 172,
+      "col": 721,
+      "exact_variance": 1.057346387795178,
+      "vendor_variance_from_rstd": 0.8124998808859336,
+      "mean64": 1000.0108866691589,
+      "mean_vendor": 1000.010986328125,
+      "rstd64": 0.9720443584840648,
+      "rstd_vendor": 1.1087183952331543,
+      "eager_y": 0.7153791785240173,
+      "reference_y": 0.6375342607498169
+    },
+    {
+      "dtype": "float16",
+      "affine": false,
+      "n": 524288,
+      "results_vs_eager": {
+        "fp64_both": {
+          "bad": 430107,
+          "max_abs": 0.5625
+        },
+        "vendor_mean_only": {
+          "bad": 430107,
+          "max_abs": 0.5625
+        },
+        "vendor_rstd_only": {
+          "bad": 0,
+          "max_abs": 0.0
+        },
+        "vendor_both": {
+          "bad": 0,
+          "max_abs": 0.0
+        }
+      },
+      "mean_max_abs": 0.0,
+      "variance_max_abs": 0.25283443918242576,
+      "row": 137,
+      "col": 255,
+      "exact_variance": 1.0653343200683594,
+      "vendor_variance_from_rstd": 0.8124998808859336,
+      "mean64": 1000.009765625,
+      "mean_vendor": 1000.009765625,
+      "rstd64": 0.9683967123768499,
+      "rstd_vendor": 1.1087183952331543,
+      "eager_y": 4.42578125,
+      "reference_y": 3.86328125
+    },
+    {
+      "dtype": "float16",
+      "affine": true,
+      "n": 524288,
+      "results_vs_eager": {
+        "fp64_both": {
+          "bad": 255669,
+          "max_abs": 0.07421875
+        },
+        "vendor_mean_only": {
+          "bad": 255669,
+          "max_abs": 0.07421875
+        },
+        "vendor_rstd_only": {
+          "bad": 0,
+          "max_abs": 0.0001220703125
+        },
+        "vendor_both": {
+          "bad": 0,
+          "max_abs": 0.0001220703125
+        }
+      },
+      "mean_max_abs": 0.0,
+      "variance_max_abs": 0.25283443918242576,
+      "row": 137,
+      "col": 721,
+      "exact_variance": 1.0653343200683594,
+      "vendor_variance_from_rstd": 0.8124998808859336,
+      "mean64": 1000.009765625,
+      "mean_vendor": 1000.009765625,
+      "rstd64": 0.9683967123768499,
+      "rstd_vendor": 1.1087183952331543,
+      "eager_y": 0.6708984375,
+      "reference_y": 0.5966796875
+    }
+  ],
+  "formal_routes": [
+    {
+      "template": "add_layernorm",
+      "dtype": "float32",
+      "shape": "64x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 10.249499999999998,
+          "wait": 1.0905,
+          "total": 11.45
+        },
+        "public-plan": {
+          "submit": 12.5645,
+          "wait": 1.245,
+          "total": 13.729999999999999
+        },
+        "plan-eager": {
+          "submit": -2.2845000000000013,
+          "wait": -0.1200000000000001,
+          "total": -2.3945000000000025
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 27.6045,
+          "wait": 5.75,
+          "total": 33.3445
+        },
+        "public": {
+          "submit": 38.104,
+          "wait": 6.9145,
+          "total": 45.119
+        },
+        "plan": {
+          "submit": 25.3795,
+          "wait": 5.625,
+          "total": 31.0795
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float32",
+      "shape": "512x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 10.43,
+          "wait": 1.2399999999999998,
+          "total": 11.620500000000003
+        },
+        "public-plan": {
+          "submit": 12.744000000000002,
+          "wait": 1.2694999999999999,
+          "total": 14.180499999999999
+        },
+        "plan-eager": {
+          "submit": -2.256000000000002,
+          "wait": -0.08000000000000007,
+          "total": -2.3244999999999987
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 28.089,
+          "wait": 5.75,
+          "total": 33.8395
+        },
+        "public": {
+          "submit": 38.629000000000005,
+          "wait": 6.985,
+          "total": 45.809
+        },
+        "plan": {
+          "submit": 25.709,
+          "wait": 5.675,
+          "total": 31.424500000000002
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float32",
+      "shape": "2048x2048",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 12.379999999999999,
+          "wait": -1.7399999999999984,
+          "total": 10.468999999999998
+        },
+        "public-plan": {
+          "submit": 14.3855,
+          "wait": -2.6050000000000004,
+          "total": 12.195
+        },
+        "plan-eager": {
+          "submit": -2.2955000000000005,
+          "wait": 0.8449999999999989,
+          "total": -1.509999999999998
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 28.6695,
+          "wait": 35.274,
+          "total": 63.8735
+        },
+        "public": {
+          "submit": 40.974000000000004,
+          "wait": 33.549,
+          "total": 74.5435
+        },
+        "plan": {
+          "submit": 26.4045,
+          "wait": 36.039,
+          "total": 62.408500000000004
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float16",
+      "shape": "64x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 9.57,
+          "wait": 0.8799999999999999,
+          "total": 10.410000000000004
+        },
+        "public-plan": {
+          "submit": 12.119,
+          "wait": 1.0300000000000002,
+          "total": 13.215000000000002
+        },
+        "plan-eager": {
+          "submit": -2.344000000000001,
+          "wait": -0.20000000000000018,
+          "total": -2.5854999999999997
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 27.7795,
+          "wait": 5.47,
+          "total": 33.3395
+        },
+        "public": {
+          "submit": 37.5095,
+          "wait": 6.33,
+          "total": 43.9845
+        },
+        "plan": {
+          "submit": 25.389,
+          "wait": 5.3,
+          "total": 30.765
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float16",
+      "shape": "512x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 10.204500000000001,
+          "wait": 1.025,
+          "total": 11.174500000000002
+        },
+        "public-plan": {
+          "submit": 12.514999999999999,
+          "wait": 1.185,
+          "total": 13.83
+        },
+        "plan-eager": {
+          "submit": -2.4049999999999994,
+          "wait": -0.14500000000000002,
+          "total": -2.4855
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 28.334,
+          "wait": 5.65,
+          "total": 34.039500000000004
+        },
+        "public": {
+          "submit": 38.649,
+          "wait": 6.7,
+          "total": 45.394
+        },
+        "plan": {
+          "submit": 25.7795,
+          "wait": 5.5495,
+          "total": 31.369500000000002
+        }
+      }
+    },
+    {
+      "template": "add_layernorm",
+      "dtype": "float16",
+      "shape": "2048x2048",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 11.704500000000001,
+          "wait": -1.375,
+          "total": 10.520000000000003
+        },
+        "public-plan": {
+          "submit": 14.8745,
+          "wait": -2.255000000000001,
+          "total": 12.579999999999998
+        },
+        "plan-eager": {
+          "submit": -3.0200000000000014,
+          "wait": 0.8650000000000002,
+          "total": -2.0345000000000013
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 29.5795,
+          "wait": 16.999499999999998,
+          "total": 46.569
+        },
+        "public": {
+          "submit": 41.349000000000004,
+          "wait": 15.7145,
+          "total": 57.028999999999996
+        },
+        "plan": {
+          "submit": 26.56,
+          "wait": 17.979,
+          "total": 44.644000000000005
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float32",
+      "shape": "64x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 9.434999999999999,
+          "wait": -0.10999999999999988,
+          "total": 9.189999999999998
+        },
+        "public-plan": {
+          "submit": 13.085,
+          "wait": -0.5654999999999997,
+          "total": 12.549499999999998
+        },
+        "plan-eager": {
+          "submit": -3.480500000000001,
+          "wait": 0.41999999999999993,
+          "total": -3.160499999999999
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 30.304000000000002,
+          "wait": 6.76,
+          "total": 37.069
+        },
+        "public": {
+          "submit": 39.929,
+          "wait": 6.5645,
+          "total": 46.559
+        },
+        "plan": {
+          "submit": 26.769,
+          "wait": 7.18,
+          "total": 33.949
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float32",
+      "shape": "512x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 10.1895,
+          "wait": 0.5800000000000001,
+          "total": 10.619499999999999
+        },
+        "public-plan": {
+          "submit": 14.274999999999999,
+          "wait": 0.0600000000000005,
+          "total": 14.299500000000002
+        },
+        "plan-eager": {
+          "submit": -4.030000000000001,
+          "wait": 0.4854999999999996,
+          "total": -3.440000000000005
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 31.0595,
+          "wait": 6.47,
+          "total": 37.564
+        },
+        "public": {
+          "submit": 41.343999999999994,
+          "wait": 7.0695,
+          "total": 48.314499999999995
+        },
+        "plan": {
+          "submit": 26.9695,
+          "wait": 7.0,
+          "total": 34.044
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float32",
+      "shape": "2048x2048",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 3008,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1EffffEEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "2b77be6df18fe35c8306fe82910cae7bc32bc7e325b9a98204586802c26a7bb4",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11920,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdIffEEvfllPKT_PS1_PKT0_S7_PfS8_b",
+            "sha256": "bb257ff989710ff009d29ae54b65dc5595efdf7cba8aeac500a3d2182e8e2575",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 9.955499999999999,
+          "wait": 0.5850000000000009,
+          "total": 10.795499999999997
+        },
+        "public-plan": {
+          "submit": 14.285000000000002,
+          "wait": -1.8854999999999968,
+          "total": 12.281000000000006
+        },
+        "plan-eager": {
+          "submit": -4.040000000000001,
+          "wait": 2.455499999999997,
+          "total": -1.609499999999997
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 32.0845,
+          "wait": 34.634,
+          "total": 66.529
+        },
+        "public": {
+          "submit": 42.149,
+          "wait": 35.219,
+          "total": 77.1285
+        },
+        "plan": {
+          "submit": 27.589,
+          "wait": 37.0695,
+          "total": 64.888
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float16",
+      "shape": "64x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 9.9495,
+          "wait": 1.5599999999999996,
+          "total": 11.719999999999999
+        },
+        "public-plan": {
+          "submit": 13.929499999999997,
+          "wait": 1.8850000000000002,
+          "total": 15.825000000000005
+        },
+        "plan-eager": {
+          "submit": -3.795,
+          "wait": -0.2749999999999999,
+          "total": -4.059500000000002
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 30.42,
+          "wait": 5.63,
+          "total": 36.0495
+        },
+        "public": {
+          "submit": 40.439,
+          "wait": 7.3,
+          "total": 47.754000000000005
+        },
+        "plan": {
+          "submit": 26.4045,
+          "wait": 5.37,
+          "total": 31.8095
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float16",
+      "shape": "512x1024",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 8.784999999999997,
+          "wait": 0.9005000000000001,
+          "total": 9.654999999999998
+        },
+        "public-plan": {
+          "submit": 12.7295,
+          "wait": 1.1800000000000002,
+          "total": 13.9945
+        },
+        "plan-eager": {
+          "submit": -3.8854999999999986,
+          "wait": -0.3155000000000001,
+          "total": -4.225000000000001
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 30.219,
+          "wait": 5.735,
+          "total": 35.9445
+        },
+        "public": {
+          "submit": 39.034000000000006,
+          "wait": 6.64,
+          "total": 45.704
+        },
+        "plan": {
+          "submit": 26.154,
+          "wait": 5.44,
+          "total": 31.634
+        }
+      }
+    },
+    {
+      "template": "add_layernorm_affine",
+      "dtype": "float16",
+      "shape": "2048x2048",
+      "route": "eager",
+      "physical_launches": {
+        "eager": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "public": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "plan": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ],
+        "reference": [
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 2976,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E7float16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "sha256": "a55df79ceb7b44862ca45a4bcb193c044022402d2dca89a466f0dd75c6d0b52c",
+            "dso": "libxdnn_pytorch.so"
+          },
+          {
+            "resource": "cluster",
+            "clusters": 12,
+            "cores": 64,
+            "size": 11720,
+            "entry_pc": 0,
+            "name": "_ZN14xpukernel_xpu314layer_norm_fwdI7float16S1_EEvfllPKT_PS2_PKT0_S8_PfS9_b",
+            "sha256": "2198505ddb2ef0384638128aeebdca5dc12437c1b43b54374e17afb65c664fb6",
+            "dso": "libxdnn_pytorch.so"
+          }
+        ]
+      },
+      "paired_us": {
+        "public-eager": {
+          "submit": 9.0105,
+          "wait": -0.09100000000000108,
+          "total": 8.895000000000003
+        },
+        "public-plan": {
+          "submit": 13.1345,
+          "wait": -2.005000000000001,
+          "total": 11.279999999999998
+        },
+        "plan-eager": {
+          "submit": -4.2844999999999995,
+          "wait": 1.9354999999999993,
+          "total": -2.4145000000000003
+        }
+      },
+      "wall_us": {
+        "eager": {
+          "submit": 31.134500000000003,
+          "wait": 17.569,
+          "total": 48.789
+        },
+        "public": {
+          "submit": 40.06,
+          "wait": 17.479999999999997,
+          "total": 57.649
+        },
+        "plan": {
+          "submit": 26.744500000000002,
+          "wait": 19.505,
+          "total": 46.278999999999996
+        }
+      }
+    }
+  ],
+  "ablation_runs": [
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7097693085670471,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1087183952331543,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955862045288086,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9995003938674927,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044867277145386,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa4c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x1608",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2134",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.9423902630805969,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float32",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.709770917892456,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.1539314985275269,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 64,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 64,
+      "marker_rows": 64,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.6955880522727966,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.03224515914917,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 512,
+      "n": 1024,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 512,
+      "marker_rows": 512,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 0.7044945955276489,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "normal",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": false,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "original",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "clone",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0xa38",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x157c",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "0x2070",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": true,
+      "changed_rows": 0,
+      "marker_rows": 0,
+      "rstd0": 1.0684345960617065,
+      "rstd_dtype": "torch.float32"
+    },
+    {
+      "dtype": "float16",
+      "m": 2048,
+      "n": 2048,
+      "input": "offset1000",
+      "affine": true,
+      "mode": "all",
+      "launches": 1,
+      "mean_equal": true,
+      "y_equal": false,
+      "changed_rows": 2048,
+      "marker_rows": 2048,
+      "rstd0": 31.622774124145508,
+      "rstd_dtype": "torch.float32"
+    }
+  ]
+}

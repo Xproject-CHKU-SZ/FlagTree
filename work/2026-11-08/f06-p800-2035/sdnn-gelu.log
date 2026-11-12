@@ -1,0 +1,83 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py:312: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+  warnings.warn(
+Autotune Choices Stats:
+{"num_choices": 19, "num_triton_choices": 19, "best_kernel": "triton_mm_17", "best_kernel_desc": "ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4", "best_time": 0.025735000148415565, "best_triton_pos": 0}
+AUTOTUNE mm(2048x64, 64x2048)
+strides: [64, 1], [2048, 1]
+dtypes: torch.float32, torch.float32
+  triton_mm_17 0.0257 ms 100.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_18 0.0263 ms 97.9% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8
+  triton_mm_15 0.0270 ms 95.2% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=8
+  triton_mm_16 0.0273 ms 94.4% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_12 0.0276 ms 93.1% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=4
+  triton_mm_14 0.0280 ms 91.8% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_11 0.0285 ms 90.3% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_9 0.0292 ms 88.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_10 0.0293 ms 88.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_13 0.0305 ms 84.5% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 5.8551 seconds and 0.0001 seconds precompiling for 19 choices
+CASE {"kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "2048x2048", "eager": {"us": 282.3}, "sdnn": {"us": 90.4, "valid": true}, "best": {"route": "sdnn", "us": 90.4, "vs_eager": 3.123}}
+Autotune Choices Stats:
+{"num_choices": 19, "num_triton_choices": 19, "best_kernel": "triton_mm_21", "best_kernel_desc": "ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=32, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8", "best_time": 0.020674999803304672, "best_triton_pos": 0}
+AUTOTUNE mm(512x64, 64x1024)
+strides: [64, 1], [1024, 1]
+dtypes: torch.float32, torch.float32
+  triton_mm_21 0.0207 ms 100.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=32, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8
+  triton_mm_33 0.0207 ms 100.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_35 0.0207 ms 99.9% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_34 0.0207 ms 99.8% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=8
+  triton_mm_29 0.0208 ms 99.6% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_31 0.0208 ms 99.5% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=4
+  triton_mm_23 0.0208 ms 99.4% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=4
+  triton_mm_30 0.0208 ms 99.4% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_22 0.0209 ms 99.1% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8
+  triton_mm_36 0.0209 ms 99.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=128, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 4.9913 seconds and 0.0001 seconds precompiling for 19 choices
+Timeout (0:01:40)!
+Thread 0x00007b4836ffd640 (most recent call first):
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/threading.py", line 324 in wait
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/threading.py", line 607 in wait
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/tqdm/_monitor.py", line 60 in run
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/threading.py", line 973 in _bootstrap
+
+Thread 0x00007b4a7f2e7480 (most recent call first):
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/cuda/__init__.py", line 1083 in synchronize
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/benchmarking.py", line 291 in benchmark_gpu
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/benchmarking.py", line 39 in wrapper
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 891 in bench
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 1023 in <dictcomp>
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 1022 in benchmark_all_configs
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 1048 in autotune_to_one_config
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 1272 in run
+  File "/data2/zhaoweiming/f06-152-20261106/cache/et1794141659/ind/uj/cujiw2lxan5bkctcssmmc4pfacosyswv3kolytb7256pv3aqbsxk.py", line 56 in call
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/codegen/triton.py", line 4827 in benchmark_codegened_module
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/codegen/triton.py", line 4780 in benchmark_fused_nodes
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/codegen/cuda_combined_scheduling.py", line 141 in benchmark_fused_nodes
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 3047 in benchmark_fused_nodes
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 3358 in speedup_by_fusion
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 3598 in fuse_nodes_once
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 3005 in fuse_nodes
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 2332 in _init
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/scheduler.py", line 2250 in __init__
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2254 in _update_scheduler
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2260 in codegen
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2325 in _compile_to_module
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2319 in compile_to_module
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1505 in codegen_and_compile
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1695 in fx_codegen_and_compile
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 963 in _compile_fx_inner
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py", line 144 in debug_wrapper
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 782 in compile_fx_inner
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_resource_codegen.py", line 539 in compile_region
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_resource_runtime.py", line 172 in prepare_regions
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_resource_autotune.py", line 199 in compile_candidate
+  File "/opt/f06/bench/current.py", line 89 in <module>
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 86 in _run_code
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 96 in _run_module_code
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/runpy.py", line 289 in run_path
+  File "<string>", line 1 in <module>

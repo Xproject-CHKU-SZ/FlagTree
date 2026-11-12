@@ -1,0 +1,438 @@
+--- a/python/triton/experimental/graph_fusion/_p800_flat.py
++++ b/python/triton/experimental/graph_fusion/_p800_flat.py
+@@ -324,6 +324,12 @@
+              'tiles': None, 'autotune': 'cached' if _load(key) else 'pending'}
+     from . import _p800_vector_rows
+     config = _p800_vector_rows.configuration(spec['kind'], spec['dtype'], spec['m'], spec['n'])
++    if (final_only and spec['dtype'] == 'bfloat16' and spec['kind'] in ('silu', 'gelu_tanh')
++            and 0 < spec['n'] <= 1024 and spec['n'] % 32):
++        from ._p800_layernorm import toolchain_available
++        if toolchain_available():
++            mode = 10 if spec['kind'] == 'silu' else 11
++            return _p800_vector_rows.prepare(spec, (mode, 32, (spec['m'] + 11) // 12, 12), proof)
+     if final_only and (spec['dtype'] == 'bfloat16' and spec['kind'] in ('silu', 'gelu_tanh')
+                        or spec['dtype'] == 'float16' and spec['kind'] == 'silu' and spec['m'] >= 512):
+         from ._p800_layernorm import toolchain_available
+--- a/python/triton/experimental/graph_fusion/_p800_fp32_mm.py
++++ b/python/triton/experimental/graph_fusion/_p800_fp32_mm.py
+@@ -65,12 +65,18 @@
+     if final_only and spec['act'] in (1, 3, 4):
+         bm, bn, warps = 64, 64, 4
+     grouped = (m, n, k) == (2048, 2048, 64) and (not final_only or spec['act'] in (0, 2))
++    # Reuse RHS panels on wide matrices with a partial final group. Mask
++    # its rows on load and store while keeping the column and K tiles dense.
++    partial_group = (m >= 1024 and m % 1024 != 0 and n >= 512 and n % 256 == 0 and k == 64
++                     and (not final_only or spec['act'] in (0, 1, 2)))
++    grouped = grouped or partial_group
+     kernel = mm_bias
+     if grouped:
+         from ._p800_native_mm import _aligned_bias_kernel
+         kernel = _aligned_bias_kernel()
+         bm, bn, warps = 128, 256, 4
+-    grid = (m * n // (bm * bn), 1, 1) if grouped else (triton.cdiv(m, bm), triton.cdiv(n, bn), 1)
++    grid = ((triton.cdiv(m, 8 * bm) * 8 * (n // bn), 1, 1) if grouped else
++            (triton.cdiv(m, bm), triton.cdiv(n, bn), 1))
+     proof = {'route': 'fp32_compute', 'resource': 'sdnn', 'resource_verified': False,
+              'tiles': dict(bm=bm, bn=bn, k=k, bk=64, warps=warps)}
+     bound = None
+@@ -90,6 +96,7 @@
+         with scope:
+             if grouped:
+                 binary = kernel[grid](a, b, bias, out, n, 64, bm, bn, RELU=final_only and spec['act'] == 2,
++                                      M=m if partial_group else 0, SILU=partial_group and final_only and spec['act'] == 1,
+                                       num_warps=warps, num_stages=3, is_sdnn=True)
+             else:
+                 binary = kernel[grid](a, b, bias, out, m, n, bm, bn, ACT=spec['act'] if final_only else 0,
+--- a/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
++++ b/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
+@@ -147,8 +147,23 @@
+             samples = timer(functions, inputs, seed=seed)
+             for name in functions:
+                 times.setdefault(name, []).append(statistics.median(samples[name]))
++        # A millisecond-scale launch interleaved with microsecond arms can
++        # change their ranking. Remeasure competitive arms without that launch.
++        fastest = [min(t[i] for t in times.values()) for i in range(2)]
++        finalists = {name: fn for name, fn in functions.items()
++                     if any(a <= 4 * b for a, b in zip(times[name], fastest))}
++        if 1 < len(finalists) < len(functions):
++            isolated = {name: [] for name in finalists}
++            for seed in (7303, 7403):
++                samples = timer(finalists, inputs, seed=seed)
++                for name in finalists:
++                    isolated[name].append(statistics.median(samples[name]))
++            for name, samples in isolated.items():
++                times[name].extend(samples)
++            functions = finalists
++            winner = 'sdk_eager' if 'sdk_eager' in finalists else next(iter(finalists))
+         for name in functions:
+-            if all(a <= b * .97 for a, b in zip(times[name], times[winner])):
++            if all(a <= b * .97 for a, b in zip(times[name][-2:], times[winner][-2:])):
+                 winner = name
+     if winner == 'sdk_eager':
+         return None, records, times
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.py
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.py
+@@ -24,6 +24,8 @@
+     if dtype in ('bfloat16', 'float16'):
+         return min(n, 1536)
+     if dtype == 'float32':
++        if n == 2048 and 128 < m <= 256:
++            return 512
+         return 256 if m <= 128 else 768
+     return None
+ 
+@@ -43,6 +45,21 @@
+     ...
+ 
+ 
++@tle.raw.dialect('xpu3', file='_p800_layernorm.xpu')
++def kl3_quarter_float(a, bias, weight, shift, out, first, rows, eps, affine):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_layernorm.xpu')
++def kl3_quarter_half(a, bias, weight, shift, out, first, rows, eps, affine):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_layernorm.xpu')
++def kl3_quarter_bf(a, bias, weight, shift, out, first, rows, eps, affine):
++    ...
++
++
+ @triton.jit
+ def _row_layernorm(A, B, W, SHIFT, OUT, N: tl.constexpr, SEGMENT: tl.constexpr,
+                    EPS: tl.constexpr, AFFINE: tl.constexpr, ROWS: tl.constexpr, M: tl.constexpr = None, FINAL_ONLY: tl.constexpr = False):
+@@ -53,10 +70,21 @@
+     dtype_code = 2 if A.dtype.element_ty == tl.bfloat16 else A.dtype.element_ty == tl.float16
+     if FINAL_ONLY:
+         dtype_code = dtype_code + 2
+-    tle.raw.call(kl3_add_layernorm, (A, B, W, SHIFT, OUT, first,
+-                 count, tl.full((), N, tl.int32), tl.full((), SEGMENT, tl.int32),
+-                 tl.full((), EPS, tl.float32), tl.full((), AFFINE, tl.int32),
+-                 tl.full((), dtype_code, tl.int32)))
++    if N == 2048 and SEGMENT == 512:
++        args = (A, B, W, SHIFT, OUT, first, count, tl.full((), EPS, tl.float32),
++                tl.full((), AFFINE, tl.int32))
++        if A.dtype.element_ty == tl.float32:
++            tle.raw.call(kl3_quarter_float, args)
++        elif A.dtype.element_ty == tl.float16:
++            tle.raw.call(kl3_quarter_half, args)
++        else:
++            tle.raw.call(kl3_quarter_bf, args)
++    else:
++        tle.raw.call(kl3_add_layernorm, (A, B, W, SHIFT, OUT, first,
++                     count, tl.full((), N, tl.int32), tl.full((), SEGMENT, tl.int32),
++                     tl.full((), EPS, tl.float32), tl.full((), AFFINE, tl.int32),
++                     tl.full((), dtype_code, tl.int32)))
++
+ 
+ 
+ @tle.raw.dialect('xpu3', file='_p800_layernorm.xpu')
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
+@@ -252,8 +252,9 @@
+             sum += p.sum;
+             squares += p.squares;
+         }
+-        float mean = sum / n;
+-        float inv = 1.f / __builtin_sqrtf((squares / n - mean * mean) + eps);
++        const float scale = 1.f / n;
++        float mean = sum * scale;
++        float inv = 1.f / __builtin_sqrtf((squares * scale - mean * mean) + eps);
+         mfence_lm();
+         normalize_output<T, Affine>(tile, out + base, w, s, n, mean, inv);
+     }
+@@ -304,6 +305,59 @@
+     }
+ }
+ 
++// Four 512-column FP32 partials are accumulated in ascending column order.
++template<bool Affine, class IO>
++static __device__ inline void quarter_row(const _global_ptr_ IO *a, const _global_ptr_ IO *bias,
++        const _global_ptr_ IO *weight, const _global_ptr_ IO *shift, _global_ptr_ IO *out,
++        int first, int rows, float eps) {
++#pragma clang fp contract(off)
++    __shared__ __simd__ float b[2048], w[2048], s[2048];
++    __shared__ float sums[64], squares[64];
++    __simd__ float tile[512];
++    stage_vectors<Affine>(bias, weight, shift, b, w, s, 2048);
++    const int cid = core_id(), col = (cid % 4) * 512;
++    for (int group = 0; group < rows; group += core_num() / 4) {
++        int row = group + cid / 4, base = (first + row) * 2048 + col;
++        if (row < rows) {
++            stage_row(a + base, tile, 512);
++            Moments p = moments(tile, b + col, 512);
++            sums[cid] = p.sum;
++            squares[cid] = p.squares;
++        }
++        mfence();
++        sync_cluster();
++        if (row < rows) {
++            int slot = cid & ~3;
++            float mean = (((sums[slot] + sums[slot+1]) + sums[slot+2]) + sums[slot+3]) / 2048;
++            float ms = (((squares[slot] + squares[slot+1]) + squares[slot+2]) + squares[slot+3]) / 2048;
++            float inv = 1.f / __builtin_sqrtf((ms - mean * mean) + eps);
++            normalize_output<float, Affine>(tile, out + base, w + col, s + col, 512, mean, inv);
++        }
++        sync_cluster();
++    }
++}
++
++extern "C" __device__ void kl3_quarter_float(const _global_ptr_ float *a, const _global_ptr_ float *b,
++        const _global_ptr_ float *w, const _global_ptr_ float *s, _global_ptr_ float *out,
++        int first, int rows, float eps, int affine) {
++    if (affine) quarter_row<true>(a,b,w,s,out,first,rows,eps);
++    else quarter_row<false>(a,b,w,s,out,first,rows,eps);
++}
++
++extern "C" __device__ void kl3_quarter_half(const _global_ptr_ uint16_t *a, const _global_ptr_ uint16_t *b,
++        const _global_ptr_ uint16_t *w, const _global_ptr_ uint16_t *s, _global_ptr_ uint16_t *out,
++        int first, int rows, float eps, int affine) {
++    if (affine) quarter_row<true>(a,b,w,s,out,first,rows,eps);
++    else quarter_row<false>(a,b,w,s,out,first,rows,eps);
++}
++
++extern "C" __device__ void kl3_quarter_bf(const _global_ptr_ int16_t *a, const _global_ptr_ int16_t *b,
++        const _global_ptr_ int16_t *w, const _global_ptr_ int16_t *s, _global_ptr_ int16_t *out,
++        int first, int rows, float eps, int affine) {
++    if (affine) quarter_row<true>(a,b,w,s,out,first,rows,eps);
++    else quarter_row<false>(a,b,w,s,out,first,rows,eps);
++}
++
+ template<class T, bool Affine>
+ static __device__ inline void dispatch(const _global_ptr_ T *a, const _global_ptr_ T *b,
+         const _global_ptr_ T *w, const _global_ptr_ T *s, _global_ptr_ T *out,
+--- a/python/triton/experimental/graph_fusion/_p800_native_mm.py
++++ b/python/triton/experimental/graph_fusion/_p800_native_mm.py
+@@ -318,7 +318,7 @@
+ 
+     @triton.jit
+     def grouped_mm_bias(A, B, Bias, Out, N: tl.constexpr, K: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr,
+-                        RELU: tl.constexpr = False):
++                        RELU: tl.constexpr = False, M: tl.constexpr = 0, SILU: tl.constexpr = False):
+         # Complete tiles only. Group eight output row tiles before advancing
+         # the column, as in the Kunlunxin AddMM and Inductor matrix templates.
+         pid = tl.program_id(0)
+@@ -326,7 +326,10 @@
+         row = (pid // group_width * 8 + pid % 8) * BM + tl.arange(0, BM)
+         col = (pid % group_width // 8) * BN + tl.arange(0, BN)
+         k = tl.arange(0, K)
+-        a = tl.load(A + row[:, None] * K + k[None, :])
++        if M:
++            a = tl.load(A + row[:, None] * K + k[None, :], mask=row[:, None] < M, other=0.)
++        else:
++            a = tl.load(A + row[:, None] * K + k[None, :])
+         b = tl.load(B + k[:, None] * N + col[None, :])
+         result = tl.dot(a.to(tl.float32), b.to(tl.float32), input_precision='ieee') + tl.load(Bias + col).to(tl.float32)[None, :]
+         if RELU:
+@@ -335,7 +338,12 @@
+                 result = tl.where(result < 0., 0., result)
+             else:
+                 result = tl.where(result != result, result, tl.maximum(result, 0.))
+-        tl.store(Out + row[:, None] * N + col[None, :], result)
++        if SILU:
++            result = result * tl.sigmoid(tl.minimum(result, 40.))
++        if M:
++            tl.store(Out + row[:, None] * N + col[None, :], result, mask=row[:, None] < M)
++        else:
++            tl.store(Out + row[:, None] * N + col[None, :], result)
+ 
+     return grouped_mm_bias
+ 
+--- a/python/triton/experimental/graph_fusion/_p800_reduce.py
++++ b/python/triton/experimental/graph_fusion/_p800_reduce.py
+@@ -759,7 +759,7 @@
+             kernel = _row_layernorm
+             constants = (spec['n'], width, spec['eps'], affine, rows, spec['m'], final_only)
+             tiles = {'rows': rows, 'segment': width}
+-            if final_only and spec['dtype'] in ('float16', 'bfloat16') and (spec['m'], spec['n']) == (2048, 2048):
++            if final_only and spec['dtype'] in ('float16', 'bfloat16') and spec['m'] >= 1024 and spec['n'] == 2048:
+                 grid = (12,)
+                 kernel = _packed_layernorm
+                 constants = (spec['m'], spec['n'], spec['eps'], affine, grid[0])
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.py
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.py
+@@ -4,6 +4,11 @@
+ import triton.experimental.tle as tle
+ 
+ @tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_bf_activation_rows(a, bias, out, first, rows, n, mode):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
+ def kl3_point_bf(a, b, out, pid, total, n, width, mode):
+     ...
+ 
+@@ -113,6 +118,21 @@
+ 
+ 
+ 
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_shard_sum_float(a, b, out, first, rows, n):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_shard_sum_bf(a, b, out, first, rows, n):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_shard_sum_half(a, b, out, first, rows, n):
++    ...
+ 
+ 
+ @tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
+@@ -158,7 +178,11 @@
+                  ROWS: tl.constexpr, WIDE_SUM: tl.constexpr = False, FINAL_ACT: tl.constexpr = False):
+     pid = tl.program_id(0)
+     n = tl.full((), N, tl.int32)
+-    if FINAL_ACT and KIND == 2 and M == 2048 and N == 2048 and TILE == 512 and A.dtype.element_ty == tl.float16:
++    if KIND == 10 or KIND == 11:
++        first = pid * (M // 12) + tl.minimum(pid, M % 12)
++        count = M // 12 + (pid < M % 12).to(tl.int32)
++        tle.raw.call(kl3_bf_activation_rows, (A, B, OUT, first, count, n, tl.full((), KIND - 8, tl.int32)))
++    elif FINAL_ACT and KIND == 2 and M == 2048 and N == 2048 and TILE == 512 and A.dtype.element_ty == tl.float16:
+         tle.raw.call(kl3_silu_half_2048, (A, B, OUT, pid))
+     elif FINAL_ACT:
+         args = (A, B, OUT, pid, tl.full((), M*N, tl.int32), n, tl.full((), TILE, tl.int32),
+@@ -184,7 +208,17 @@
+     else:
+         first = pid * ROWS
+         count = tl.minimum(ROWS, M - first)
+-        if KIND == 4:
++        if KIND == 9:
++            first = pid * (M // 12) + tl.minimum(pid, M % 12)
++            count = M // 12 + (pid < M % 12).to(tl.int32)
++            args = (A, B, OUT, first, count, n)
++            if A.dtype.element_ty == tl.float32:
++                tle.raw.call(kl3_shard_sum_float, args)
++            elif A.dtype.element_ty == tl.bfloat16:
++                tle.raw.call(kl3_shard_sum_bf, args)
++            else:
++                tle.raw.call(kl3_shard_sum_half, args)
++        elif KIND == 4:
+             if WIDE_SUM:
+                 if N == 1024:
+                     first = pid * (M // 12) + tl.minimum(pid, M % 12)
+@@ -244,6 +278,16 @@
+     if kind not in _KINDS:
+         return None
+     if (m, n) not in _SHAPES:
++        # The double-buffered kernel needs a second wave to prefetch. Short
++        # batches retain the ordinary flat candidate and its measured tile.
++        wave = 12 * 64 * 512
++        if (kind == 'silu' and dtype == 'float32' and n >= 512 and n % 512 == 0
++                and wave % n == 0 and 2 * wave <= m * n <= 0x7fffffff):
++            from ._p800_layernorm import toolchain_available
++            return (7, 512, 1, 12) if toolchain_available() else None
++        if kind == 'mul_sum' and dtype == 'float32' and 0 < m <= 12 * 64 and 512 < n <= 2048 and n != 1024:
++            from ._p800_layernorm import toolchain_available
++            return (9, 512, (m + 11) // 12, 12) if toolchain_available() else None
+         if kind != 'mul_sum' or not 0 < n <= 2048 or n % 64 or m <= 0 or m*n > 0x7fffffff:
+             return None
+         # The 1024-column cross-core sum has 64 scratch slots per cluster.
+@@ -288,12 +332,16 @@
+ 
+     mode, width, rows, grid = config
+     m, n = spec['m'], spec['n']
+-    shape = ((m, 1) if spec.get('keepdim') else (m,)) if mode == 4 else (m, n)
++    shape = ((m, 1) if spec.get('keepdim') else (m,)) if mode in (4, 9) else (m, n)
+     tiles = dict(programs=grid)
+     if mode == 8:
+         tiles.update(elements_per_core=(672, 704))
+     elif mode < 4 or mode == 7:
+         tiles['width'] = width
++    elif mode in (10, 11):
++        tiles.update(rows=rows, columns=n)
++    elif mode == 9:
++        tiles.update(rows=(m // 12, rows), partial_elements=512)
+     elif mode == 4:
+         wide_sum = spec['dtype'] == 'float32' or spec.get('final_round_only', False)
+         tiles.update(rows=rows, partial_elements=512 if wide_sum else 1024)
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
+@@ -638,3 +638,79 @@
+         _global_ptr_ int16_t *out, int first, int rows, int n) { final_sum(a,b,out,first,rows,n); }
+ extern "C" __device__ void kl3_sum_wide_half(const _global_ptr_ uint16_t *a, const _global_ptr_ uint16_t *b,
+         _global_ptr_ uint16_t *out, int first, int rows, int n) { final_sum(a,b,out,first,rows,n); }
++
++// reduce_mt distributes 2 KiB partials across the cores in column-block
++// order. Its compensation survives when a core advances to a different row.
++template<class T> static __device__ inline void shard_sum(const _global_ptr_ T *a,
++        const _global_ptr_ T *bias, _global_ptr_ T *out, int first, int rows, int n) {
++#pragma clang fp contract(off)
++    __shared__ __simd__ T b[2048], output[64];
++    __shared__ __simd__ float partials[4][64];
++    __simd__ T tile[512];
++    const int cid = core_id(), parts = (n + 511) / 512;
++    if (cid == 0) {
++        GM2SM_ASYNC(bias, b, n * sizeof(T));
++        mfence_sm_gm();
++        for (int i = n; i < ((n + 31) & ~31); ++i) b[i] = 0;
++    }
++    mfence();
++    sync_cluster();
++    float carry = 0.f;
++    for (int task = cid; task < parts * rows; task += core_num()) {
++        int part = task / rows, row = task % rows;
++        int off = part * 512, count = n - off < 512 ? n - off : 512;
++        int padded = (count + 31) & ~31;
++        GM2LM(a + (first + row) * n + off, tile, count * sizeof(T));
++        for (int i = count; i < padded; ++i) tile[i] = 0;
++        mfence_lm();
++        float value = serial_fold(fp32_chunk(tile, b + off, padded)) - carry;
++        partials[part][row] = value;
++        carry = value - value;
++    }
++    mfence();
++    sync_cluster();
++    if (cid < rows) {
++        float sum = partials[0][cid];
++        for (int part = 1; part < parts; ++part) sum += partials[part][cid];
++        store_final_sum(output + cid, sum);
++    }
++    mfence();
++    sync_cluster();
++    if (cid == 0 && rows) SM2GM(output, out + first, rows * sizeof(T));
++}
++#define SHARD_SUM(name, T) \
++extern "C" __device__ void name(const _global_ptr_ T *a, const _global_ptr_ T *b, _global_ptr_ T *o, \
++                                int first, int rows, int n) { shard_sum(a,b,o,first,rows,n); }
++SHARD_SUM(kl3_shard_sum_float, float)
++SHARD_SUM(kl3_shard_sum_bf, int16_t)
++SHARD_SUM(kl3_shard_sum_half, uint16_t)
++
++// Odd row strides change the bias phase on each flat tile. Stage valid bytes
++// of one row and share one bias per cluster instead of computing a remainder
++// for every output element.
++extern "C" __device__ void kl3_bf_activation_rows(const _global_ptr_ int16_t *a,
++        const _global_ptr_ int16_t *bias, _global_ptr_ int16_t *out,
++        int first, int rows, int n, int mode) {
++    __shared__ __simd__ int16_t b[1024];
++    __simd__ int16_t tile[1024];
++    const int padded = (n + 31) & ~31;
++    if (core_id() == 0) {
++        GM2SM_ASYNC(bias, b, n * sizeof(int16_t));
++        mfence_sm_gm();
++        for (int i = n; i < padded; ++i) b[i] = 0;
++    }
++    mfence();
++    sync_cluster();
++    for (int row = core_id(); row < rows; row += core_num()) {
++        int offset = (first + row) * n;
++        GM2LM(a + offset, tile, n * sizeof(int16_t));
++        for (int i = n; i < padded; ++i) tile[i] = 0;
++        mfence_lm();
++        for (int i = 0; i < padded; i += 32) {
++            Pair x = point_read(tile + i), y = point_shared(b + i);
++            save_final(tile + i, {activation(x.x + y.x, mode), activation(x.y + y.y, mode)});
++        }
++        mfence_lm();
++        LM2GM(tile, out + offset, n * sizeof(int16_t));
++    }
++}

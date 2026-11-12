@@ -1,0 +1,11 @@
+#include "xpu/kernel/xtdk.h"
+extern "C" __device__ unsigned long long read_clock() {
+  mfence();
+  return get_clock64();
+}
+extern "C" __device__ void probe_copy(_global_ptr_ const float* x,
+                                     _global_ptr_ float* y) {
+  __local__ float a[256];
+  GM2LM(x, a, sizeof(a));
+  LM2GM(a, y, sizeof(a));
+}

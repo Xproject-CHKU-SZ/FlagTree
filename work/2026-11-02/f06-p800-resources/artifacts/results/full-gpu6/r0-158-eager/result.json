@@ -1,0 +1,129 @@
+{
+  "status": "passed",
+  "route": "eager",
+  "ordinal": 158,
+  "repeat": 0,
+  "timing": "graph",
+  "started_at": 1793616888.3734076,
+  "stage": "completed",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "case_id": "large:add_softmax:float16:2048x2048",
+    "kind": "add_softmax",
+    "dtype": "float16",
+    "M": 2048,
+    "N": 2048,
+    "K": null,
+    "tolerance": {
+      "atol": 0.003,
+      "rtol": 0.003
+    },
+    "input_builder": "large_nonmatmul",
+    "ordinal": 158
+  },
+  "physical_device": 6,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:54:53 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:B6:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3196782\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 206 MiB\n\n",
+  "input_binding": {
+    "seed": 61,
+    "inputs": [
+      {
+        "shape": [
+          2048,
+          2048
+        ],
+        "sha256": "d2e969dd34b114e44879e475a0652808f66d6b66130161035bfe61319d044417"
+      },
+      {
+        "shape": [
+          2048
+        ],
+        "sha256": "2c1b3a53dc9395174766140ec31c8ebf34a874bd961fc3f4225901f62cbedd5e"
+      }
+    ],
+    "parameters": {},
+    "graph": "graph():\n    %a : [num_users=1] = placeholder[target=a]\n    %b : [num_users=1] = placeholder[target=b]\n    %add : [num_users=1] = call_function[target=operator.add](args = (%a, %b), kwargs = {})\n    %softmax : [num_users=1] = call_function[target=torch.softmax](args = (%add,), kwargs = {dim: -1})\n    return softmax",
+    "note": "same historical operator definitions and dtype tolerances; larger inputs"
+  },
+  "setup_seconds": 0.000302620988804847,
+  "max_abs_error": 0.0,
+  "counters_before": {},
+  "e2e_us": {
+    "median_us": 82.952,
+    "samples_us": [
+      159.165,
+      89.121,
+      84.272,
+      85.172,
+      84.502,
+      83.692,
+      82.832,
+      82.982,
+      82.282,
+      82.832,
+      82.952,
+      83.012,
+      82.142,
+      83.332,
+      83.012,
+      83.962,
+      82.962,
+      82.342,
+      82.612,
+      82.412,
+      82.442,
+      82.912,
+      82.592,
+      82.422,
+      82.482,
+      82.482,
+      83.912,
+      83.102,
+      82.372,
+      83.072,
+      82.912
+    ]
+  },
+  "gpu_us": {
+    "median_us": 67.72870421409607,
+    "samples_us": [
+      67.75410175323486,
+      67.72870421409607,
+      67.72273182868958,
+      67.72853136062622,
+      67.72464513778687,
+      67.73188710212708,
+      67.7406370639801
+    ],
+    "invocations_per_graph": 64,
+    "replays_per_sample": 20
+  },
+  "counters_after": {},
+  "ended_at": 1793616894.8552408
+}

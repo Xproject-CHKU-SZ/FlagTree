@@ -685,6 +685,32 @@ def make_launcher(constants, signature, ids, metadata):
                 hex_lines.append(hex_string)
         return ",\n    ".join(hex_lines)
 
+    # Expose the existing typed _launch to a bound dense launcher. Only
+    # integer scalars and live tensor addresses have a fixed packet ABI.
+    packet_code, packet_export = "", ""
+    word_types = {"i1": "b", "i32": "i", "i64": "l"}
+    if (xpu_arch == 3 and 1 <= len(signature) <= 23
+            and all(ty.startswith("*") or ty in word_types for ty in signature.values())):
+        types = "".join("p" if ty.startswith("*") else word_types[ty] for ty in signature.values())
+        args = ", ".join(f"(void *)(uintptr_t)v[{i}], sizes[{i}]" if ty.startswith("*")
+                         else f"({ty_to_cpp(ty)})v[{i}]" for i, ty in signature.items())
+        packet_code = f"""
+struct DenseLaunchABI {{
+  const char *types;
+  void (*issue)(const int *, uintptr_t, uintptr_t, const int64_t *, const int64_t *);
+}};
+static void issue_dense(const int *g, uintptr_t stream, uintptr_t fn, const int64_t *v, const int64_t *sizes) {{
+  _launch(g[0], g[1], g[2], g[3], g[4], g[5], (XPUStream)stream, (XPUFunc)fn, {args});
+}}
+static DenseLaunchABI dense_abi = {{"{types}", issue_dense}};
+"""
+        packet_export = """
+  PyObject *capsule = PyCapsule_New(&dense_abi, "triton.xpu.dense_launch.v1", NULL);
+  if (!capsule || PyModule_AddObject(m, "_dense_launch_abi", capsule) < 0) {
+    Py_XDECREF(capsule); Py_DECREF(m); return NULL;
+  }
+"""
+
     # generate glue code
     src = f"""
 #include <xpu/runtime.h>
@@ -776,6 +802,34 @@ static inline DevicePtrInfo getPointer(PyObject *obj, int idx) {{
   // than leaving the field indeterminate for them.
   ptr_info.numel = 0;
   ptr_info.valid = true;
+  // A bound descriptor already knows its dense element count. Keep the
+  // complete launch ABI while avoiding two Python tensor calls per pointer.
+  if ({int(xpu_arch == 3 and not is_sdnn)} && PyTuple_CheckExact(obj)) {{
+    PyObject *address, *count;
+    if (!PyArg_UnpackTuple(obj, "XPU pointer and numel", 2, 2, &address, &count)) {{
+      ptr_info.valid = false;
+      return ptr_info;
+    }}
+    if (!PyLong_CheckExact(address) || !PyLong_CheckExact(count)) {{
+      PyErr_SetString(PyExc_TypeError, "XPU pointer and numel must be integers");
+      ptr_info.valid = false;
+      return ptr_info;
+    }}
+    ptr_info.dev_ptr = (void *)(uintptr_t)PyLong_AsUnsignedLongLong(address);
+    if (PyErr_Occurred()) {{
+      ptr_info.valid = false;
+      return ptr_info;
+    }}
+    ptr_info.numel = PyLong_AsLongLong(count);
+    if (PyErr_Occurred()) {{
+      ptr_info.valid = false;
+    }} else if (ptr_info.numel < 0 || (!ptr_info.dev_ptr && ptr_info.numel != 0) ||
+               xpu{xpu_arch}PointerCheck(ptr_info.dev_ptr) == kINVALID) {{
+      PyErr_Format(PyExc_ValueError, "Invalid XPU pointer or element count at argument %d", idx);
+      ptr_info.valid = false;
+    }}
+    return ptr_info;
+  }}
   if (PyLong_Check(obj)) {{
     ptr_info.dev_ptr = PyLong_AsVoidPtr(obj);
     return ptr_info;
@@ -824,6 +878,7 @@ static inline DevicePtrInfo getPointer(PyObject *obj, int idx) {{
   return ptr_info;
 }}
 
+{packet_code}
 static PyObject* launch(PyObject* self, PyObject* args) {{
   int gridX, gridY, gridZ;
   uint64_t _stream;
@@ -897,6 +952,7 @@ PyMODINIT_FUNC PyInit___triton_launcher_xpu(void) {{
   if(m == NULL) {{
     return NULL;
   }}
+  {packet_export}
   PyModule_AddFunctions(m, ModuleMethods);
   return m;
 }}
@@ -949,6 +1005,7 @@ def _print_triton_launcher_info(fn_name, signature, constants, args):
 class XPULauncher(object):
 
     def __init__(self, src, metadata):
+        self.supports_sized_pointers = metadata.xpu_arch == 3 and not metadata.is_sdnn
         self._fn_name = _get_launcher_fn_name(src)
         self._signature = dict(src.signature) if hasattr(src, 'signature') else {}
         self._constants = dict(src.constants) if hasattr(src, 'constants') else {}

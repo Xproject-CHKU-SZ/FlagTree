@@ -1,0 +1,351 @@
+{
+  "status": "running",
+  "stage": "tuning_sdnn_4",
+  "pid": 4023123,
+  "gpu": 1,
+  "started_at": 1793628546.2744455,
+  "candidates": [
+    {
+      "resource": "sdnn",
+      "config": {
+        "algorithm": "vector",
+        "BLOCK": 8192,
+        "FORMULA": "muladd",
+        "LOOP_STYLE": "static",
+        "options": {
+          "enable_fp_fusion": true
+        }
+      },
+      "status": "error",
+      "index": 0,
+      "error": "out of resource: uni_sram PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+      "traceback": "Traceback (most recent call last):\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 572, in make_ttxir\n    pm.run(mod, 'make_ttxir')\nRuntimeError: PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data2/zhaoweiming/p800-capability-20261102/bench_worker_v5.py\", line 225, in evaluate\n    kernel=fn()\n  File \"/data2/zhaoweiming/p800-capability-20261102/bench_worker_v5.py\", line 168, in run\n    return kernel[grid](*operands(),**conf,is_sdnn=resource=='sdnn',**options)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 837, in launch\n    return fallback(*args, **kwargs)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 807, in <lambda>\n    fallback = lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)  # noqa: E731\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 752, in run\n    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 979, in _do_compile\n    kernel = self.compile(src, target=target, options=options.__dict__)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 428, in compile\n    cur_module = run_stage(ext, compile_ir, cur_module)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 349, in run_stage\n    next_module = compile_ir(module, metadata)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 881, in <lambda>\n    stages[\"ttxir\"] = lambda src, metadata: self.make_ttxir(src, metadata, options)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 575, in make_ttxir\n    raise OutOfResources(0, 0, f\"uni_sram {e}\")\ntriton.runtime.errors.OutOfResources: out of resource: uni_sram PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.\n"
+    },
+    {
+      "resource": "sdnn",
+      "config": {
+        "algorithm": "vector",
+        "BLOCK": 8192,
+        "FORMULA": "muladd",
+        "LOOP_STYLE": "static",
+        "options": {
+          "isCloseUnrollControl": true
+        }
+      },
+      "status": "error",
+      "index": 1,
+      "error": "out of resource: uni_sram PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+      "traceback": "Traceback (most recent call last):\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 572, in make_ttxir\n    pm.run(mod, 'make_ttxir')\nRuntimeError: PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data2/zhaoweiming/p800-capability-20261102/bench_worker_v5.py\", line 225, in evaluate\n    kernel=fn()\n  File \"/data2/zhaoweiming/p800-capability-20261102/bench_worker_v5.py\", line 168, in run\n    return kernel[grid](*operands(),**conf,is_sdnn=resource=='sdnn',**options)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 837, in launch\n    return fallback(*args, **kwargs)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 807, in <lambda>\n    fallback = lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)  # noqa: E731\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 752, in run\n    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/runtime/jit.py\", line 979, in _do_compile\n    kernel = self.compile(src, target=target, options=options.__dict__)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 428, in compile\n    cur_module = run_stage(ext, compile_ir, cur_module)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 349, in run_stage\n    next_module = compile_ir(module, metadata)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 881, in <lambda>\n    stages[\"ttxir\"] = lambda src, metadata: self.make_ttxir(src, metadata, options)\n  File \"/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 575, in make_ttxir\n    raise OutOfResources(0, 0, f\"uni_sram {e}\")\ntriton.runtime.errors.OutOfResources: out of resource: uni_sram PassManager::run failed: loc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): pipeline event id 64 exceeds the limit 64 for xpu_arch 3\nloc(\"/data2/zhaoweiming/p800-capability-20261102/kernels_v5.py\":7:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.\n"
+    },
+    {
+      "resource": "sdnn",
+      "config": {
+        "algorithm": "vector",
+        "BLOCK": 8192,
+        "FORMULA": "fma",
+        "LOOP_STYLE": "static",
+        "options": {
+          "enable_fp_fusion": true
+        }
+      },
+      "status": "passed",
+      "index": 2,
+      "metadata": {
+        "allow_fp8e4b15": false,
+        "allow_fp8e4nv": true,
+        "allowed_dot_input_precisions": [
+          "ieee",
+          "tf32"
+        ],
+        "arch": 3,
+        "backend_name": "xpu",
+        "budget_tiling": true,
+        "buffer_size_limit": 512,
+        "cluster_dims": [
+          1,
+          1,
+          1
+        ],
+        "cluster_num": 12,
+        "core_num": 64,
+        "debug": false,
+        "default_dot_input_precision": "tf32",
+        "enable_fp_fusion": true,
+        "ewtable": "",
+        "exp_range": ":0",
+        "extern_libs": [
+          [
+            "libdevice",
+            "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3.bc"
+          ],
+          [
+            "libdevice-sdnn",
+            "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3s.bc"
+          ]
+        ],
+        "grid": [
+          128
+        ],
+        "groups_per_cluster": 1,
+        "hash": "9ca72ada1d5b1357829ef8727e1ba828312ecd562d9ad7620384a2dd238813e7",
+        "instrumentation_mode": "",
+        "isAutoCoreTiling": false,
+        "isCLOSE_TTXPU_O_ATOMIC_SIM": false,
+        "isCloseClusterLoopGrid": false,
+        "isCloseCoreTiling": false,
+        "isCloseDtypeConvert": false,
+        "isCloseInterleave": false,
+        "isCloseMemoryAsync": false,
+        "isCloseMemoryCache": false,
+        "isCloseOffsetAnalysis": false,
+        "isCloseTLESmemVec": false,
+        "isCloseTLEVec": false,
+        "isCloseUnrollControl": false,
+        "isCloseVectorization": false,
+        "isClusterOneCoreActOnly": false,
+        "isOpenCmpNan": false,
+        "is_sdnn": true,
+        "is_tle": false,
+        "is_use_mask_zero": 0,
+        "load_tile_size": 131072,
+        "max_num_imprecise_acc_default": 0,
+        "name": "vector_kernel",
+        "num_ctas": -1,
+        "num_stages": 1,
+        "num_warps": -1,
+        "open_decision_entry": false,
+        "per_op_decision": true,
+        "pin_unroll_num": 0,
+        "printf_buf_offset": 0,
+        "sanitize_overflow": true,
+        "shared": -1,
+        "supported_fp8_dtypes": [],
+        "target": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+        "tensor_args": [],
+        "tle_raw_extern_libs": [
+          "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3s.bc"
+        ],
+        "tle_raw_payloads": [],
+        "tle_relieve_pressure": false,
+        "triton_version": "3.6.0",
+        "unroll_num": 2,
+        "use_int4_w4a8": false,
+        "vrf_budget": 24,
+        "xpu_arch": 3
+      },
+      "asm_sha256": {
+        "source": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ttir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ttxir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "llir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "elf": "c1ce9750783ef1b5040f723ce9bdf8375d94129f62519b8721d79c3b9b8304bf",
+        "xpubin": "e867e5311882da78a37f3eb33df9c35fcbe76d6bac4b6738e06b3c0316633ab4"
+      },
+      "accuracy": {
+        "max_abs_error": 0.0,
+        "max_tolerance_ratio": 0.0,
+        "bad_count": 0
+      },
+      "pilot_gpu_us": 74214.31732177734,
+      "graph_accuracy": {
+        "max_abs_error": 0.0,
+        "max_tolerance_ratio": 0.0,
+        "bad_count": 0
+      },
+      "tuning_gpu_us": {
+        "median_us": 74186.70654296875,
+        "samples_us": [
+          74229.59899902344,
+          74186.70654296875,
+          74180.01556396484
+        ],
+        "calls_per_graph": 1,
+        "replays_per_sample": 1
+      }
+    },
+    {
+      "resource": "sdnn",
+      "config": {
+        "algorithm": "vector",
+        "BLOCK": 8192,
+        "FORMULA": "fma",
+        "LOOP_STYLE": "static",
+        "options": {
+          "isCloseUnrollControl": true
+        }
+      },
+      "status": "passed",
+      "index": 3,
+      "metadata": {
+        "allow_fp8e4b15": false,
+        "allow_fp8e4nv": true,
+        "allowed_dot_input_precisions": [
+          "ieee",
+          "tf32"
+        ],
+        "arch": 3,
+        "backend_name": "xpu",
+        "budget_tiling": true,
+        "buffer_size_limit": 512,
+        "cluster_dims": [
+          1,
+          1,
+          1
+        ],
+        "cluster_num": 12,
+        "core_num": 64,
+        "debug": false,
+        "default_dot_input_precision": "tf32",
+        "enable_fp_fusion": false,
+        "ewtable": "",
+        "exp_range": ":0",
+        "extern_libs": [
+          [
+            "libdevice",
+            "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3.bc"
+          ],
+          [
+            "libdevice-sdnn",
+            "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3s.bc"
+          ]
+        ],
+        "grid": [
+          128
+        ],
+        "groups_per_cluster": 1,
+        "hash": "9c1574aeaf1c4436f4ba1ab77c64fc4ead9925381b854679076bf2f7a1974dd0",
+        "instrumentation_mode": "",
+        "isAutoCoreTiling": false,
+        "isCLOSE_TTXPU_O_ATOMIC_SIM": false,
+        "isCloseClusterLoopGrid": false,
+        "isCloseCoreTiling": false,
+        "isCloseDtypeConvert": false,
+        "isCloseInterleave": false,
+        "isCloseMemoryAsync": false,
+        "isCloseMemoryCache": false,
+        "isCloseOffsetAnalysis": false,
+        "isCloseTLESmemVec": false,
+        "isCloseTLEVec": false,
+        "isCloseUnrollControl": true,
+        "isCloseVectorization": false,
+        "isClusterOneCoreActOnly": false,
+        "isOpenCmpNan": false,
+        "is_sdnn": true,
+        "is_tle": false,
+        "is_use_mask_zero": 0,
+        "load_tile_size": 131072,
+        "max_num_imprecise_acc_default": 0,
+        "name": "vector_kernel",
+        "num_ctas": -1,
+        "num_stages": 1,
+        "num_warps": -1,
+        "open_decision_entry": false,
+        "per_op_decision": true,
+        "pin_unroll_num": 0,
+        "printf_buf_offset": 0,
+        "sanitize_overflow": true,
+        "shared": -1,
+        "supported_fp8_dtypes": [],
+        "target": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+        "tensor_args": [],
+        "tle_raw_extern_libs": [
+          "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/lib/libdevice-xpu3s.bc"
+        ],
+        "tle_raw_payloads": [],
+        "tle_relieve_pressure": false,
+        "triton_version": "3.6.0",
+        "unroll_num": 2,
+        "use_int4_w4a8": false,
+        "vrf_budget": 24,
+        "xpu_arch": 3
+      },
+      "asm_sha256": {
+        "source": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ttir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ttxir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "llir": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "elf": "2434c6e48533f2ca963e190ce7cfa0db95c0a083336c2d21b74cbe9538cae600",
+        "xpubin": "8b7f5090b9cebc3f85de2bb505b3f9ab55c17408671ca624ac1141a7d3e86de2"
+      },
+      "accuracy": {
+        "max_abs_error": 0.0,
+        "max_tolerance_ratio": 0.0,
+        "bad_count": 0
+      },
+      "pilot_gpu_us": 74211.0366821289,
+      "graph_accuracy": {
+        "max_abs_error": 0.0,
+        "max_tolerance_ratio": 0.0,
+        "bad_count": 0
+      },
+      "tuning_gpu_us": {
+        "median_us": 74204.88739013672,
+        "samples_us": [
+          74227.18811035156,
+          74204.88739013672,
+          74180.31311035156
+        ],
+        "calls_per_graph": 1,
+        "replays_per_sample": 1
+      }
+    },
+    {
+      "resource": "sdnn",
+      "config": {
+        "algorithm": "vector",
+        "BLOCK": 8192,
+        "FORMULA": "muladd",
+        "LOOP_STYLE": "dynamic",
+        "options": {
+          "enable_fp_fusion": true
+        }
+      },
+      "status": "running",
+      "index": 4
+    }
+  ],
+  "measurements": [],
+  "best": {
+    "sdnn": 2
+  },
+  "source_sha256": {
+    "bench_worker_v5.py": "05ea1541dc7683ea086c30aaba45bb090ba479682c462df400e5fae10dd9ff01",
+    "bench_cases_v5.py": "ed5c2d352994b2c1ef99832e026f59fe636c9b78f28c0de6a0e64bbef67caaf4",
+    "kernels_v5.py": "3567630ef99f77546caf26e6716d06964739036493ba39a83bd045756cc95f40",
+    "run_env.sh": "f878940cc7db14e6dcc7a193e2280e2bd4c0bd5caf0f7c39020db0c5593a9120"
+  },
+  "case": {
+    "op": "fma128",
+    "m": 1024,
+    "n": 1024,
+    "k": 0,
+    "dtype": "float32",
+    "output_dtype": "float32",
+    "scale": "large",
+    "ordinal": 61
+  },
+  "target": "GPUTarget(backend='cuda', arch=3, warp_size=1)",
+  "affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "counts": {
+    "flops": 268435456,
+    "bytes": 16777216
+  },
+  "tolerance": {
+    "atol": 0.0003,
+    "rtol": 0.0003
+  },
+  "input_sha256": "24a259a68a4704c7b0ef246cde34db041a7b0d9bb4ec442735dc544ccee0289e",
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 22:09:09 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:16:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 4023123\n            Type                          : C\n            Name                          : /data2/zhaoweiming/p800-capability-20261102/env/bin/python\n            Used XPU Memory               : 182 MiB\n\n"
+}

@@ -1,0 +1,242 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>F06 v16 热调用开销与实际路由</title><style>body{font:16px/1.65 system-ui,sans-serif;color:#18242a;max-width:1270px;margin:auto;padding:30px 22px 64px}h1{font-size:30px}h2{margin-top:32px;font-size:22px}p{max-width:105ch}div{overflow:auto}a{color:#09657a}table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:6px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid #dbe3e7}thead{background:#ecf4f5}</style><h1>F06 v16 热调用开销与实际路由</h1>
+<p>2026-11-09，P800 OAM 个人 Docker，<code>zhaoweiming/f06-p800:warm-entry-20261109-v16</code>。同一已编译执行计划上，新入口在 117/117 项的配对同步中位数更低。以单项配对差为单位，再对用例取中位数，每次提交节省 1.74 µs，每次同步调用节省 1.66 µs。</p>
+<p>将稳定的 Torch 原生查询函数绑定在模块安装阶段，在每次调用时读取模式、梯度、分析器和钩子状态。两个和三个位置参数是二元融合与矩阵乘模板的常见签名，入口直接检查 Tensor 类型并为这次调用构建原参数名到当前对象的字典。其他签名走通用打包逻辑。完整 Dynamo 守卫继续检查图状态与张量。公开入口代码的指纹也纳入选路记录的版本。</p>
+<h2>相同计划下的正式调用</h2>
+<div><table><thead><tr><th>精度</th><th>用例</th><th>新入口更快</th><th>提交节省 µs</th><th>同步节省 µs</th><th>同步耗时降低中位数</th></tr></thead><tbody>
+<tr><td>float32</td><td>39</td><td>39</td><td>1.52</td><td>1.50</td><td>3.42%</td></tr>
+<tr><td>float16</td><td>39</td><td>39</td><td>1.58</td><td>1.56</td><td>3.51%</td></tr>
+<tr><td>bfloat16</td><td>39</td><td>39</td><td>2.07</td><td>1.99</td><td>3.72%</td></tr>
+</tbody></table></div>
+<div><table><thead><tr><th>实际路由</th><th>用例</th><th>新入口更快</th><th>提交节省 µs</th><th>同步节省 µs</th></tr></thead><tbody>
+<tr><td>cluster</td><td>16</td><td>16</td><td>1.34</td><td>1.37</td></tr>
+<tr><td>eager</td><td>70</td><td>70</td><td>2.00</td><td>1.96</td></tr>
+<tr><td>native_mm</td><td>8</td><td>8</td><td>1.61</td><td>1.55</td></tr>
+<tr><td>sdnn</td><td>23</td><td>23</td><td>1.34</td><td>1.38</td></tr>
+</tbody></table></div>
+<p>每个用例先从正式入口完成校准，然后在一个 OptimizedModule 上切换随镜像一起核验的 v15 入口和实际安装的 v16 入口。逐一确认两者引用同一 Dynamo 守卫、同一重放字节码和同一已提交计划，并对齐原始模块输出。按随机顺序及反序测 28 个配对块，每块 8 次有效调用。耗时和配对差分别取中位数，二者的差可以略有不同。</p>
+<h2>固定缓冲区的图回放</h2>
+<p>此项在单独进程中由调用者显式捕获一次预热后的完整调用。驻留输入列假定上游已经写好固定地址、下游在下一次回放前使用复用的输出。独立输入与输出列每次都复制调用者传入的两份设备张量，并复制一份输出以供保留。四种调用均在同卡交错计时并同步，单位为 µs。</p>
+<div><table><thead><tr><th>模板</th><th>精度</th><th>尺寸</th><th>卡</th><th>实际路由</th><th>直接 eager</th><th>普通 v16</th><th>驻留输入与复用输出</th><th>计入输入复制和独立输出</th></tr></thead><tbody>
+<tr><td>mul_sum</td><td>float32</td><td>64x1024</td><td>1</td><td>cluster</td><td>37.17</td><td>49.31</td><td>24.65</td><td>44.09</td></tr>
+<tr><td>add_gelu_exact</td><td>float16</td><td>64x1024</td><td>2</td><td>sdnn</td><td>39.91</td><td>45.47</td><td>19.68</td><td>38.95</td></tr>
+<tr><td>add_layernorm_affine</td><td>bfloat16</td><td>64x1024</td><td>3</td><td>eager</td><td>40.27</td><td>54.14</td><td>22.38</td><td>41.93</td></tr>
+<tr><td>mul_sum</td><td>float32</td><td>64x1024</td><td>5</td><td>cluster</td><td>37.18</td><td>49.38</td><td>24.62</td><td>43.26</td></tr>
+<tr><td>add_gelu_exact</td><td>float16</td><td>64x1024</td><td>6</td><td>sdnn</td><td>39.60</td><td>45.00</td><td>19.45</td><td>38.66</td></tr>
+<tr><td>add_layernorm_affine</td><td>bfloat16</td><td>64x1024</td><td>7</td><td>eager</td><td>40.11</td><td>53.13</td><td>22.23</td><td>41.56</td></tr>
+</tbody></table></div>
+<p>回放对照获得 6 次有效计时。另外 4 次进程未在限时内取得有效计时。首轮 Softmax 未完成的尝试仅列入日志，同卡普通调用数据单独见全量矩阵。</p>
+<p>FP32 512×1024 Add + Softmax 在两张额外物理卡上通过捕获与交替输入的初始正确性检查，随后在 independent 路径的 torch.cuda.CUDAGraph.replay() 中等待至超时。这个结果涉及显式图回放。普通 v16 正式入口完成全量矩阵和同计划对照。</p>
+<div><table><thead><tr><th>Softmax 单独实验</th><th>卡</th><th>退出码</th><th>有效同步 µs</th><th>最后记录</th></tr></thead><tbody>
+<tr><td>驻留</td><td>0</td><td>124</td><td>—</td><td>STAGE iter resident 144</td></tr>
+<tr><td>驻留</td><td>2</td><td>124</td><td>—</td><td>STAGE begin cold</td></tr>
+<tr><td>复制后同步</td><td>4</td><td>124</td><td>—</td><td>STAGE iter ordered 144</td></tr>
+<tr><td>复制后同步</td><td>6</td><td>124</td><td>—</td><td>STAGE iter ordered 144</td></tr>
+</tbody></table></div>
+<p>resident 组在计时前准备好缓冲区。ordered 组计入输入复制、显式同步、回放和输出复制。每组单独捕获，成功样本包括 20 次预热、160 次有效回放和输出校验。</p>
+<p>其中 3 个独立进程在反复回放时停于 CUDAGraph.replay()。日志每 16 次记录一次进度，最后记录见表。这些数据不支持为该 Softmax 启用长期图回放。本次保留其普通正式入口。</p>
+<div><table><thead><tr><th>512×1024 FP32 对照</th><th>退出码</th><th>有效驻留回放 µs</th><th>等待栈或最后进度</th></tr></thead><tbody>
+<tr><td>eager</td><td>0</td><td>33.35</td><td>STAGE iter resident 176</td></tr>
+<tr><td>v15</td><td>124</td><td>—</td><td>CUDAGraph.replay()</td></tr>
+</tbody></table></div>
+<p>旧 v15 编译入口在驻留输入回放中也停于 replay()。相同输入形状的直接 eager 捕获完成全部 180 次调用。复现涉及这条 F06 编译路径，具体阻塞的设备操作尚未确定。普通 v16 调用适用于这一形状。</p>
+<p>适用时，在推理模式下先按正常入口校准，用固定形状、精度、设备的输入缓冲区在侧流预热并捕获。之后在同一有序流中准备数据、调用 graph.replay()、消费固定输出。实验交替使用两组不同的输入并逐次比对，另检查需要独立输出时保留的历次结果。模型、模式、存储或签名变化时需重新选路和捕获。完整示例在证据包的 experiment/replay.py。</p>
+<pre><code># compiled 是已创建的 F06 模块。示例在一个有序流中使用固定缓冲区。
+with torch.no_grad():
+    static_inputs = tuple(x.clone() for x in example_inputs)
+    compiled(*static_inputs)
+    stream = torch.cuda.Stream()
+    stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(stream):
+        for _ in range(4):
+            compiled(*static_inputs)
+    torch.cuda.synchronize()
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph, stream=stream):
+        static_out = compiled(*static_inputs)
+
+    # 上游写好 static_inputs 后，在同一有序流上回放和消费 static_out。
+    graph.replay()
+    # 若要保留这一轮结果，可在下次回放之前拷贝。
+    saved_result = static_out.clone()
+</code></pre>
+<h2>独立冷编译后的路由和加速比</h2>
+<p>117/117 项通过正式矩阵，47 项实选非 eager 路由，32 项正式调用快于直接 eager。独立 32 次交错调用口径的同步加速比几何平均为 0.96×，v15 同口径为 0.93×。两个版本分别冷编译，4 项实选路由不同。单独评估入口改动时使用上面的同计划配对结果。</p>
+<div><table><thead><tr><th>冷启动换路的模板</th><th>精度</th><th>形状</th><th>v15 路由</th><th>v16 路由</th><th>原发布入口 µs</th><th>本次入口 µs</th><th>固定本次计划的入口节省 µs</th></tr></thead><tbody>
+<tr><td>matmul_bias_silu</td><td>float16</td><td>2048x2048</td><td>eager</td><td>native_mm</td><td>124.32</td><td>122.06</td><td>2.20</td></tr>
+<tr><td>matmul_bias</td><td>float16</td><td>64x1024</td><td>native_mm</td><td>sdnn</td><td>58.50</td><td>49.45</td><td>1.56</td></tr>
+<tr><td>matmul_bias</td><td>float32</td><td>512x1024</td><td>native_mm</td><td>sdnn</td><td>61.42</td><td>45.12</td><td>1.43</td></tr>
+<tr><td>matmul_bias</td><td>float16</td><td>512x1024</td><td>sdnn</td><td>eager</td><td>45.92</td><td>61.52</td><td>3.77</td></tr>
+</tbody></table></div>
+<p>FP16 512×1024 MatMul + Bias 在本次正式冷启动中，Inductor 与 native_mm 候选报后端编译失败，SDNN 及分段候选没有有效配置，最终采用 eager。这一项的独立端到端耗时上升。固定本次已选计划后，新入口的配对耗时仍有下降。</p>
+<h3>float32</h3>
+<div><table><thead><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr></thead><tbody>
+<tr><td>matmul_bias</td><td>sdnn · 1.30×</td><td>sdnn · 1.26×</td><td>sdnn · 0.95×</td></tr>
+<tr><td>matmul_bias_relu</td><td>sdnn · 1.36×</td><td>sdnn · 1.32×</td><td>sdnn · 1.26×</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>sdnn · 1.53×</td><td>sdnn · 1.64×</td><td>sdnn · 2.30×</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>eager · 0.76×</td><td>native_mm · 1.25×</td><td>native_mm · 1.72×</td></tr>
+<tr><td>matmul_bias_silu</td><td>native_mm · 1.10×</td><td>native_mm · 1.07×</td><td>native_mm · 1.21×</td></tr>
+<tr><td>add_softmax</td><td>cluster · 1.09×</td><td>cluster · 1.09×</td><td>cluster · 0.99×</td></tr>
+<tr><td>add_gelu_exact</td><td>sdnn · 0.95×</td><td>sdnn · 1.21×</td><td>sdnn · 2.40×</td></tr>
+<tr><td>add_gelu_tanh</td><td>cluster · 0.88×</td><td>cluster · 1.31×</td><td>cluster · 1.89×</td></tr>
+<tr><td>add_silu</td><td>cluster · 0.89×</td><td>eager · 0.81×</td><td>eager · 0.91×</td></tr>
+<tr><td>add_layernorm</td><td>eager · 0.75×</td><td>eager · 0.76×</td><td>eager · 0.87×</td></tr>
+<tr><td>add_layernorm_affine</td><td>eager · 0.82×</td><td>eager · 0.81×</td><td>eager · 0.87×</td></tr>
+<tr><td>mul_sum</td><td>cluster · 0.75×</td><td>eager · 0.74×</td><td>eager · 0.87×</td></tr>
+<tr><td>mul_sum_keepdim</td><td>cluster · 0.78×</td><td>eager · 0.75×</td><td>eager · 0.86×</td></tr>
+</tbody></table></div>
+<h3>float16</h3>
+<div><table><thead><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr></thead><tbody>
+<tr><td>matmul_bias</td><td>sdnn · 1.17×</td><td>eager · 0.75×</td><td>sdnn · 0.96×</td></tr>
+<tr><td>matmul_bias_relu</td><td>sdnn · 1.37×</td><td>sdnn · 1.45×</td><td>sdnn · 1.11×</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>sdnn · 1.34×</td><td>sdnn · 1.45×</td><td>sdnn · 2.47×</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>eager · 0.75×</td><td>eager · 0.82×</td><td>eager · 0.94×</td></tr>
+<tr><td>matmul_bias_silu</td><td>native_mm · 1.10×</td><td>native_mm · 1.04×</td><td>native_mm · 0.97×</td></tr>
+<tr><td>add_softmax</td><td>cluster · 1.00×</td><td>cluster · 0.98×</td><td>eager · 0.92×</td></tr>
+<tr><td>add_gelu_exact</td><td>sdnn · 0.99×</td><td>sdnn · 1.35×</td><td>sdnn · 2.52×</td></tr>
+<tr><td>add_gelu_tanh</td><td>cluster · 0.94×</td><td>cluster · 1.13×</td><td>cluster · 1.96×</td></tr>
+<tr><td>add_silu</td><td>cluster · 0.92×</td><td>cluster · 0.85×</td><td>eager · 0.91×</td></tr>
+<tr><td>add_layernorm</td><td>eager · 0.76×</td><td>eager · 0.76×</td><td>eager · 0.83×</td></tr>
+<tr><td>add_layernorm_affine</td><td>eager · 0.79×</td><td>eager · 0.80×</td><td>eager · 0.84×</td></tr>
+<tr><td>mul_sum</td><td>eager · 0.74×</td><td>eager · 0.79×</td><td>eager · 0.83×</td></tr>
+<tr><td>mul_sum_keepdim</td><td>eager · 0.74×</td><td>eager · 0.78×</td><td>eager · 0.82×</td></tr>
+</tbody></table></div>
+<h3>bfloat16</h3>
+<div><table><thead><tr><th>模板</th><th>64×1024</th><th>512×1024</th><th>2048×2048</th></tr></thead><tbody>
+<tr><td>matmul_bias</td><td>eager · 0.73×</td><td>eager · 0.76×</td><td>eager · 0.84×</td></tr>
+<tr><td>matmul_bias_relu</td><td>eager · 0.73×</td><td>eager · 0.74×</td><td>eager · 0.85×</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>eager · 0.78×</td><td>eager · 0.84×</td><td>eager · 0.95×</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>eager · 0.74×</td><td>eager · 0.82×</td><td>eager · 0.95×</td></tr>
+<tr><td>matmul_bias_silu</td><td>eager · 0.75×</td><td>eager · 0.81×</td><td>eager · 0.90×</td></tr>
+<tr><td>add_softmax</td><td>eager · 0.81×</td><td>eager · 0.84×</td><td>eager · 0.92×</td></tr>
+<tr><td>add_gelu_exact</td><td>eager · 0.80×</td><td>eager · 0.87×</td><td>eager · 0.97×</td></tr>
+<tr><td>add_gelu_tanh</td><td>eager · 0.79×</td><td>eager · 0.86×</td><td>eager · 0.96×</td></tr>
+<tr><td>add_silu</td><td>eager · 0.80×</td><td>eager · 0.84×</td><td>eager · 0.92×</td></tr>
+<tr><td>add_layernorm</td><td>eager · 0.77×</td><td>eager · 0.76×</td><td>eager · 0.85×</td></tr>
+<tr><td>add_layernorm_affine</td><td>eager · 0.78×</td><td>eager · 0.79×</td><td>eager · 0.85×</td></tr>
+<tr><td>mul_sum</td><td>eager · 0.74×</td><td>eager · 0.80×</td><td>eager · 0.84×</td></tr>
+<tr><td>mul_sum_keepdim</td><td>eager · 0.74×</td><td>eager · 0.77×</td><td>eager · 0.81×</td></tr>
+</tbody></table></div>
+<h2>逐项同计划结果</h2>
+<div><table><thead><tr><th>模板</th><th>精度</th><th>尺寸</th><th>选中路由</th><th>v15 入口 µs</th><th>v16 入口 µs</th><th>直接 eager µs</th><th>提交节省 µs</th><th>同步节省 µs</th></tr></thead><tbody>
+<tr><td>matmul_bias</td><td>float32</td><td>2048x2048</td><td>sdnn</td><td>58.06</td><td>56.72</td><td>56.34</td><td>1.55</td><td>1.63</td></tr>
+<tr><td>matmul_bias</td><td>float16</td><td>2048x2048</td><td>sdnn</td><td>51.67</td><td>50.90</td><td>50.35</td><td>1.21</td><td>1.12</td></tr>
+<tr><td>matmul_bias_relu</td><td>float32</td><td>2048x2048</td><td>sdnn</td><td>52.08</td><td>50.13</td><td>78.81</td><td>1.83</td><td>1.74</td></tr>
+<tr><td>matmul_bias_relu</td><td>float16</td><td>2048x2048</td><td>sdnn</td><td>51.89</td><td>50.06</td><td>58.72</td><td>1.75</td><td>1.77</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float32</td><td>2048x2048</td><td>sdnn</td><td>119.64</td><td>118.10</td><td>303.41</td><td>1.34</td><td>1.46</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float16</td><td>2048x2048</td><td>sdnn</td><td>112.74</td><td>110.76</td><td>297.51</td><td>2.48</td><td>2.14</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float32</td><td>2048x2048</td><td>native_mm</td><td>150.98</td><td>148.72</td><td>273.08</td><td>2.19</td><td>2.55</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float16</td><td>2048x2048</td><td>eager</td><td>298.82</td><td>295.36</td><td>277.93</td><td>3.80</td><td>3.49</td></tr>
+<tr><td>matmul_bias_silu</td><td>float32</td><td>2048x2048</td><td>native_mm</td><td>88.47</td><td>86.98</td><td>113.64</td><td>1.47</td><td>1.28</td></tr>
+<tr><td>matmul_bias_silu</td><td>float16</td><td>2048x2048</td><td>native_mm</td><td>107.22</td><td>105.10</td><td>106.20</td><td>1.88</td><td>2.20</td></tr>
+<tr><td>add_softmax</td><td>float32</td><td>2048x2048</td><td>cluster</td><td>88.97</td><td>87.31</td><td>89.72</td><td>1.57</td><td>1.56</td></tr>
+<tr><td>add_softmax</td><td>float16</td><td>2048x2048</td><td>eager</td><td>92.38</td><td>90.69</td><td>83.36</td><td>1.89</td><td>1.78</td></tr>
+<tr><td>add_gelu_exact</td><td>float32</td><td>2048x2048</td><td>sdnn</td><td>106.42</td><td>105.44</td><td>268.70</td><td>0.85</td><td>0.99</td></tr>
+<tr><td>add_gelu_exact</td><td>float16</td><td>2048x2048</td><td>sdnn</td><td>98.14</td><td>96.89</td><td>261.61</td><td>1.40</td><td>1.30</td></tr>
+<tr><td>add_gelu_tanh</td><td>float32</td><td>2048x2048</td><td>cluster</td><td>110.89</td><td>109.44</td><td>219.54</td><td>1.52</td><td>1.49</td></tr>
+<tr><td>add_gelu_tanh</td><td>float16</td><td>2048x2048</td><td>cluster</td><td>109.38</td><td>108.09</td><td>221.26</td><td>1.05</td><td>1.18</td></tr>
+<tr><td>add_silu</td><td>float32</td><td>2048x2048</td><td>eager</td><td>96.50</td><td>94.74</td><td>86.90</td><td>2.02</td><td>1.80</td></tr>
+<tr><td>add_silu</td><td>float16</td><td>2048x2048</td><td>eager</td><td>92.71</td><td>91.06</td><td>83.39</td><td>1.78</td><td>1.51</td></tr>
+<tr><td>add_layernorm</td><td>float32</td><td>2048x2048</td><td>eager</td><td>72.76</td><td>70.90</td><td>62.86</td><td>1.84</td><td>1.83</td></tr>
+<tr><td>add_layernorm</td><td>float16</td><td>2048x2048</td><td>eager</td><td>55.27</td><td>53.11</td><td>45.06</td><td>2.45</td><td>2.03</td></tr>
+<tr><td>add_layernorm_affine</td><td>float32</td><td>2048x2048</td><td>eager</td><td>75.21</td><td>73.52</td><td>65.12</td><td>1.81</td><td>1.67</td></tr>
+<tr><td>add_layernorm_affine</td><td>float16</td><td>2048x2048</td><td>eager</td><td>58.42</td><td>56.03</td><td>47.79</td><td>2.56</td><td>2.33</td></tr>
+<tr><td>mul_sum</td><td>float32</td><td>2048x2048</td><td>eager</td><td>57.83</td><td>56.20</td><td>48.46</td><td>1.65</td><td>1.62</td></tr>
+<tr><td>mul_sum</td><td>float16</td><td>2048x2048</td><td>eager</td><td>46.21</td><td>45.11</td><td>36.85</td><td>1.09</td><td>1.08</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float32</td><td>2048x2048</td><td>eager</td><td>58.64</td><td>55.96</td><td>48.59</td><td>2.92</td><td>2.71</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float16</td><td>2048x2048</td><td>eager</td><td>46.10</td><td>44.63</td><td>36.95</td><td>1.75</td><td>1.57</td></tr>
+<tr><td>matmul_bias</td><td>float32</td><td>64x1024</td><td>sdnn</td><td>31.78</td><td>30.73</td><td>40.54</td><td>1.10</td><td>1.15</td></tr>
+<tr><td>matmul_bias</td><td>float16</td><td>64x1024</td><td>sdnn</td><td>30.39</td><td>29.00</td><td>39.52</td><td>1.41</td><td>1.56</td></tr>
+<tr><td>matmul_bias_relu</td><td>float32</td><td>64x1024</td><td>sdnn</td><td>32.72</td><td>31.05</td><td>49.97</td><td>1.45</td><td>1.50</td></tr>
+<tr><td>matmul_bias_relu</td><td>float16</td><td>64x1024</td><td>sdnn</td><td>31.13</td><td>29.87</td><td>50.86</td><td>1.45</td><td>1.54</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float32</td><td>64x1024</td><td>sdnn</td><td>34.78</td><td>33.37</td><td>55.75</td><td>1.29</td><td>1.36</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float16</td><td>64x1024</td><td>sdnn</td><td>35.84</td><td>34.59</td><td>51.72</td><td>1.18</td><td>1.27</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float32</td><td>64x1024</td><td>eager</td><td>75.14</td><td>71.30</td><td>54.31</td><td>3.34</td><td>3.53</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float16</td><td>64x1024</td><td>eager</td><td>76.22</td><td>73.46</td><td>54.72</td><td>2.31</td><td>2.32</td></tr>
+<tr><td>matmul_bias_silu</td><td>float32</td><td>64x1024</td><td>native_mm</td><td>49.50</td><td>47.85</td><td>54.75</td><td>1.92</td><td>1.51</td></tr>
+<tr><td>matmul_bias_silu</td><td>float16</td><td>64x1024</td><td>native_mm</td><td>51.18</td><td>49.63</td><td>56.45</td><td>1.46</td><td>1.56</td></tr>
+<tr><td>add_softmax</td><td>float32</td><td>64x1024</td><td>cluster</td><td>29.66</td><td>28.32</td><td>31.20</td><td>1.36</td><td>1.36</td></tr>
+<tr><td>add_softmax</td><td>float16</td><td>64x1024</td><td>cluster</td><td>30.68</td><td>29.27</td><td>31.16</td><td>1.32</td><td>1.37</td></tr>
+<tr><td>add_gelu_exact</td><td>float32</td><td>64x1024</td><td>sdnn</td><td>33.07</td><td>31.73</td><td>29.84</td><td>1.40</td><td>1.38</td></tr>
+<tr><td>add_gelu_exact</td><td>float16</td><td>64x1024</td><td>sdnn</td><td>31.72</td><td>30.62</td><td>28.91</td><td>0.95</td><td>0.97</td></tr>
+<tr><td>add_gelu_tanh</td><td>float32</td><td>64x1024</td><td>cluster</td><td>33.69</td><td>32.15</td><td>28.26</td><td>1.51</td><td>1.39</td></tr>
+<tr><td>add_gelu_tanh</td><td>float16</td><td>64x1024</td><td>cluster</td><td>31.42</td><td>29.99</td><td>28.44</td><td>1.55</td><td>1.51</td></tr>
+<tr><td>add_silu</td><td>float32</td><td>64x1024</td><td>cluster</td><td>31.84</td><td>30.51</td><td>27.11</td><td>1.19</td><td>1.11</td></tr>
+<tr><td>add_silu</td><td>float16</td><td>64x1024</td><td>cluster</td><td>32.75</td><td>31.49</td><td>27.54</td><td>1.33</td><td>1.35</td></tr>
+<tr><td>add_layernorm</td><td>float32</td><td>64x1024</td><td>eager</td><td>43.83</td><td>41.77</td><td>31.89</td><td>2.09</td><td>2.12</td></tr>
+<tr><td>add_layernorm</td><td>float16</td><td>64x1024</td><td>eager</td><td>44.05</td><td>42.02</td><td>31.96</td><td>2.10</td><td>2.11</td></tr>
+<tr><td>add_layernorm_affine</td><td>float32</td><td>64x1024</td><td>eager</td><td>44.49</td><td>42.56</td><td>35.32</td><td>1.85</td><td>1.91</td></tr>
+<tr><td>add_layernorm_affine</td><td>float16</td><td>64x1024</td><td>eager</td><td>44.67</td><td>42.95</td><td>34.13</td><td>1.58</td><td>1.70</td></tr>
+<tr><td>mul_sum</td><td>float32</td><td>64x1024</td><td>cluster</td><td>37.94</td><td>36.71</td><td>25.41</td><td>1.13</td><td>1.18</td></tr>
+<tr><td>mul_sum</td><td>float16</td><td>64x1024</td><td>eager</td><td>35.97</td><td>34.45</td><td>25.19</td><td>1.29</td><td>1.34</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float32</td><td>64x1024</td><td>cluster</td><td>37.01</td><td>35.66</td><td>25.44</td><td>1.39</td><td>1.35</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float16</td><td>64x1024</td><td>eager</td><td>37.14</td><td>35.21</td><td>25.79</td><td>1.74</td><td>2.08</td></tr>
+<tr><td>matmul_bias</td><td>float32</td><td>512x1024</td><td>sdnn</td><td>33.11</td><td>31.78</td><td>43.19</td><td>1.24</td><td>1.43</td></tr>
+<tr><td>matmul_bias</td><td>float16</td><td>512x1024</td><td>eager</td><td>63.61</td><td>59.97</td><td>45.06</td><td>3.93</td><td>3.77</td></tr>
+<tr><td>matmul_bias_relu</td><td>float32</td><td>512x1024</td><td>sdnn</td><td>35.62</td><td>35.25</td><td>50.56</td><td>0.63</td><td>0.82</td></tr>
+<tr><td>matmul_bias_relu</td><td>float16</td><td>512x1024</td><td>sdnn</td><td>35.83</td><td>34.30</td><td>51.25</td><td>1.72</td><td>1.65</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float32</td><td>512x1024</td><td>sdnn</td><td>44.55</td><td>43.05</td><td>81.81</td><td>1.56</td><td>1.49</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>float16</td><td>512x1024</td><td>sdnn</td><td>52.39</td><td>51.14</td><td>85.33</td><td>1.12</td><td>1.14</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float32</td><td>512x1024</td><td>native_mm</td><td>64.18</td><td>62.02</td><td>84.46</td><td>1.40</td><td>1.53</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>float16</td><td>512x1024</td><td>eager</td><td>97.59</td><td>95.17</td><td>78.25</td><td>2.71</td><td>2.64</td></tr>
+<tr><td>matmul_bias_silu</td><td>float32</td><td>512x1024</td><td>native_mm</td><td>50.26</td><td>48.58</td><td>53.82</td><td>1.74</td><td>1.92</td></tr>
+<tr><td>matmul_bias_silu</td><td>float16</td><td>512x1024</td><td>native_mm</td><td>52.50</td><td>50.78</td><td>54.04</td><td>0.98</td><td>1.45</td></tr>
+<tr><td>add_softmax</td><td>float32</td><td>512x1024</td><td>cluster</td><td>32.32</td><td>30.95</td><td>33.81</td><td>1.30</td><td>1.35</td></tr>
+<tr><td>add_softmax</td><td>float16</td><td>512x1024</td><td>cluster</td><td>38.53</td><td>37.53</td><td>37.38</td><td>1.14</td><td>1.03</td></tr>
+<tr><td>add_gelu_exact</td><td>float32</td><td>512x1024</td><td>sdnn</td><td>44.08</td><td>42.64</td><td>55.72</td><td>1.32</td><td>1.35</td></tr>
+<tr><td>add_gelu_exact</td><td>float16</td><td>512x1024</td><td>sdnn</td><td>42.42</td><td>41.36</td><td>58.44</td><td>1.15</td><td>1.16</td></tr>
+<tr><td>add_gelu_tanh</td><td>float32</td><td>512x1024</td><td>cluster</td><td>43.66</td><td>41.98</td><td>55.60</td><td>1.65</td><td>1.77</td></tr>
+<tr><td>add_gelu_tanh</td><td>float16</td><td>512x1024</td><td>cluster</td><td>41.49</td><td>40.23</td><td>49.02</td><td>1.36</td><td>1.40</td></tr>
+<tr><td>add_silu</td><td>float32</td><td>512x1024</td><td>eager</td><td>41.54</td><td>39.93</td><td>32.38</td><td>1.53</td><td>1.51</td></tr>
+<tr><td>add_silu</td><td>float16</td><td>512x1024</td><td>cluster</td><td>41.03</td><td>39.60</td><td>35.36</td><td>1.28</td><td>1.39</td></tr>
+<tr><td>add_layernorm</td><td>float32</td><td>512x1024</td><td>eager</td><td>44.28</td><td>42.11</td><td>32.33</td><td>2.06</td><td>2.22</td></tr>
+<tr><td>add_layernorm</td><td>float16</td><td>512x1024</td><td>eager</td><td>44.46</td><td>42.33</td><td>31.66</td><td>2.04</td><td>2.07</td></tr>
+<tr><td>add_layernorm_affine</td><td>float32</td><td>512x1024</td><td>eager</td><td>45.21</td><td>43.52</td><td>35.53</td><td>1.76</td><td>2.06</td></tr>
+<tr><td>add_layernorm_affine</td><td>float16</td><td>512x1024</td><td>eager</td><td>45.42</td><td>43.26</td><td>34.64</td><td>2.15</td><td>2.34</td></tr>
+<tr><td>mul_sum</td><td>float32</td><td>512x1024</td><td>eager</td><td>36.18</td><td>34.94</td><td>26.03</td><td>1.37</td><td>1.42</td></tr>
+<tr><td>mul_sum</td><td>float16</td><td>512x1024</td><td>eager</td><td>38.07</td><td>36.53</td><td>28.77</td><td>1.67</td><td>1.66</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float32</td><td>512x1024</td><td>eager</td><td>36.89</td><td>35.31</td><td>26.20</td><td>1.12</td><td>1.28</td></tr>
+<tr><td>mul_sum_keepdim</td><td>float16</td><td>512x1024</td><td>eager</td><td>37.88</td><td>36.47</td><td>28.47</td><td>1.58</td><td>1.40</td></tr>
+<tr><td>matmul_bias</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>80.72</td><td>77.99</td><td>64.89</td><td>3.05</td><td>2.78</td></tr>
+<tr><td>matmul_bias_relu</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>95.60</td><td>93.07</td><td>78.92</td><td>3.12</td><td>2.54</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>342.55</td><td>339.02</td><td>323.71</td><td>3.52</td><td>3.49</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>321.39</td><td>319.36</td><td>303.69</td><td>2.18</td><td>2.23</td></tr>
+<tr><td>matmul_bias_silu</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>143.96</td><td>141.78</td><td>128.47</td><td>2.62</td><td>2.26</td></tr>
+<tr><td>add_softmax</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>106.68</td><td>104.93</td><td>97.17</td><td>1.75</td><td>1.75</td></tr>
+<tr><td>add_gelu_exact</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>282.07</td><td>279.92</td><td>271.85</td><td>1.87</td><td>1.99</td></tr>
+<tr><td>add_gelu_tanh</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>243.98</td><td>242.31</td><td>233.67</td><td>1.90</td><td>1.70</td></tr>
+<tr><td>add_silu</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>105.96</td><td>104.34</td><td>96.47</td><td>1.58</td><td>1.56</td></tr>
+<tr><td>add_layernorm</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>58.25</td><td>56.14</td><td>48.44</td><td>2.22</td><td>2.11</td></tr>
+<tr><td>add_layernorm_affine</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>63.61</td><td>61.51</td><td>52.92</td><td>2.31</td><td>2.23</td></tr>
+<tr><td>mul_sum</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>47.36</td><td>45.82</td><td>38.70</td><td>1.61</td><td>1.54</td></tr>
+<tr><td>mul_sum_keepdim</td><td>bfloat16</td><td>2048x2048</td><td>eager</td><td>48.96</td><td>47.11</td><td>38.52</td><td>1.90</td><td>1.80</td></tr>
+<tr><td>matmul_bias</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>67.54</td><td>64.17</td><td>47.17</td><td>3.09</td><td>3.42</td></tr>
+<tr><td>matmul_bias_relu</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>74.68</td><td>71.07</td><td>51.36</td><td>3.26</td><td>3.57</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>71.31</td><td>68.65</td><td>53.11</td><td>2.85</td><td>2.90</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>81.70</td><td>78.64</td><td>57.27</td><td>2.71</td><td>2.77</td></tr>
+<tr><td>matmul_bias_silu</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>78.23</td><td>75.50</td><td>56.61</td><td>2.61</td><td>2.81</td></tr>
+<tr><td>add_softmax</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>41.71</td><td>40.14</td><td>32.82</td><td>1.42</td><td>1.26</td></tr>
+<tr><td>add_gelu_exact</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>39.00</td><td>37.16</td><td>29.68</td><td>2.07</td><td>1.93</td></tr>
+<tr><td>add_gelu_tanh</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>37.36</td><td>35.61</td><td>27.94</td><td>1.83</td><td>1.81</td></tr>
+<tr><td>add_silu</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>37.40</td><td>35.99</td><td>28.06</td><td>1.44</td><td>1.41</td></tr>
+<tr><td>add_layernorm</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>44.76</td><td>42.92</td><td>32.39</td><td>1.77</td><td>1.89</td></tr>
+<tr><td>add_layernorm_affine</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>46.50</td><td>44.06</td><td>33.67</td><td>2.23</td><td>2.55</td></tr>
+<tr><td>mul_sum</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>35.70</td><td>33.68</td><td>24.93</td><td>2.01</td><td>1.92</td></tr>
+<tr><td>mul_sum_keepdim</td><td>bfloat16</td><td>64x1024</td><td>eager</td><td>35.68</td><td>34.09</td><td>25.18</td><td>1.48</td><td>1.46</td></tr>
+<tr><td>matmul_bias</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>65.59</td><td>62.92</td><td>47.51</td><td>2.88</td><td>2.70</td></tr>
+<tr><td>matmul_bias_relu</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>65.86</td><td>63.30</td><td>48.35</td><td>2.63</td><td>3.03</td></tr>
+<tr><td>matmul_bias_gelu_exact</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>101.14</td><td>98.42</td><td>81.39</td><td>2.77</td><td>2.68</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>99.83</td><td>96.68</td><td>79.38</td><td>3.26</td><td>2.84</td></tr>
+<tr><td>matmul_bias_silu</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>78.80</td><td>75.97</td><td>59.73</td><td>2.91</td><td>2.86</td></tr>
+<tr><td>add_softmax</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>48.09</td><td>46.19</td><td>39.20</td><td>2.00</td><td>1.87</td></tr>
+<tr><td>add_gelu_exact</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>69.44</td><td>67.67</td><td>59.58</td><td>1.85</td><td>1.72</td></tr>
+<tr><td>add_gelu_tanh</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>60.54</td><td>58.91</td><td>50.67</td><td>1.99</td><td>1.69</td></tr>
+<tr><td>add_silu</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>45.67</td><td>43.86</td><td>37.14</td><td>1.84</td><td>1.64</td></tr>
+<tr><td>add_layernorm</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>45.60</td><td>44.20</td><td>32.43</td><td>1.41</td><td>1.30</td></tr>
+<tr><td>add_layernorm_affine</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>45.91</td><td>43.86</td><td>34.74</td><td>2.07</td><td>2.12</td></tr>
+<tr><td>mul_sum</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>37.15</td><td>35.72</td><td>28.84</td><td>1.67</td><td>1.54</td></tr>
+<tr><td>mul_sum_keepdim</td><td>bfloat16</td><td>512x1024</td><td>eager</td><td>37.72</td><td>36.31</td><td>28.58</td><td>1.56</td><td>1.48</td></tr>
+</tbody></table></div>
+<h2>回归与归档</h2>
+<p>117 项中有 108 项首次冷编译即通过。超时、异常和成功重试按用例保存。CPU 回归与正式设备入口的最终运行结果分别为 33 passed, 1 warning in 3.32s、6 passed, 1 warning in 4.88s。新增二至四参数测试以 FX 原图作为已校准计划，单独检验入口参数顺序、形状、精度、梯度和钩子。原有的参数替换与并发用例保留。最初新增测试选用了 F06 不支持的减法，修订为可区分参数顺序的加乘图后独立复测，首份测试日志也已保留。</p>
+<p><a href="results.json">逐项路由与原始计时</a> · <a href="evidence.tar.gz">复现脚本、源码差异与日志</a> · <a href="../../../python/triton/experimental/graph_fusion/_resource_entry.py">热入口</a> · <a href="../../../third_party/xpu/python/test/unit/language/test_layernorm_entry.py">设备回归</a> · <a href="../f06-v15-call-guards/F06热调用检查与选路门槛.html">前一轮调用分解</a></p>
+</html>

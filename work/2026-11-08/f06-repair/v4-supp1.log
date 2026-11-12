@@ -1,0 +1,55 @@
+START bf16-1024
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+dtype=bfloat16 xblock=1024 correct=4194304/4194304 (100.0%) nonfinite=0
+first64: 1111111111111111111111111111111111111111111111111111111111111111
+runs: [256]
+SUPPLEMENT ["bf16-1024", 0]
+START bf16-4096
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+Traceback (most recent call last):
+  File "/repair/bf16.py", line 52, in <module>
+    binary, evidence = gen.compile_region(gm, (a, b), 'cluster')
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_resource_codegen.py", line 553, in compile_region
+    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 782, in compile_fx_inner
+    return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py", line 144, in debug_wrapper
+    inner_compiled_fn = compiler_fn(gm, example_inputs)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 963, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1695, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1505, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2319, in compile_to_module
+    return self._compile_to_module()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2329, in _compile_to_module
+    mod = self._compile_to_module_lines(wrapper_code)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2397, in _compile_to_module_lines
+    mod = PyCodeCache.load_by_key_path(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/codecache.py", line 3548, in load_by_key_path
+    mod = _reload_python_module(key, path, set_sys_modules=in_toplevel)
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/compile_tasks.py", line 33, in _reload_python_module
+    exec(code, mod.__dict__, mod.__dict__)
+  File "/tmp/f06-bf16/cache/repro1794147608/ind/2v/c2vrrk7fdcsce3rmfu4fwgwtrjdnsuatuv62utzlnhcsyiflbsmw.py", line 44, in <module>
+    triton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/async_compile.py", line 500, in triton
+    kernel.precompile(
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+    self._precompile_worker()
+  File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+    compile_results.append(self._precompile_config(c))
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_resource_codegen.py", line 240, in compile_for_resource
+    raise RuntimeError("unsafe BF16 XBLOCK for P800 native launcher")
+RuntimeError: unsafe BF16 XBLOCK for P800 native launcher
+SUPPLEMENT ["bf16-4096", 1]
+START opt-in-silu
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+SPLIT {"dtype": "torch.float16", "route": "cluster", "exceptional_match": true, "admitted_by_numeric_gate": true, "evidence": 2}
+SPLIT {"dtype": "torch.float16", "route": "sdnn", "exceptional_match": true, "admitted_by_numeric_gate": true, "evidence": 2}
+SPLIT {"dtype": "torch.float32", "route": "cluster", "exceptional_match": true, "admitted_by_numeric_gate": true, "evidence": 2}
+SPLIT {"dtype": "torch.float32", "route": "sdnn", "exceptional_match": false, "admitted_by_numeric_gate": false, "evidence": 2}
+SUPPLEMENT ["opt-in-silu", 0]

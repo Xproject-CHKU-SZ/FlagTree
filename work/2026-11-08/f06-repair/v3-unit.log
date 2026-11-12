@@ -1,0 +1,199 @@
+..................................................... [ 68%]
+.......................F                                                 [100%]
+=================================== FAILURES ===================================
+_ CrossCallTests.test_supported_chain_preserves_targets_edges_and_live_replaced_parameters _
+
+thing = <module 'triton.experimental' from '/opt/hsp/triton/experimental/__init__.py'>
+comp = 'fusion', import_path = 'triton.experimental.fusion'
+
+    def _dot_lookup(thing, comp, import_path):
+        try:
+>           return getattr(thing, comp)
+E           AttributeError: module 'triton.experimental' has no attribute 'fusion'
+
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/unittest/mock.py:1248: AttributeError
+
+During handling of the above exception, another exception occurred:
+
+self = <test_graph_fusion_f06.CrossCallTests testMethod=test_supported_chain_preserves_targets_edges_and_live_replaced_parameters>
+
+    def test_supported_chain_preserves_targets_edges_and_live_replaced_parameters(self):
+        stage0 = torch.fx.symbolic_trace(_MatMulBias())
+        stage1 = torch.fx.symbolic_trace(_Relu())
+        example_inputs = (torch.randn(2, 3), )
+    
+        candidate = cross_call_candidate([stage0, stage1], example_inputs)
+        self.assertTrue(candidate.accepted, candidate.reason)
+        combined = candidate.graph_module
+        self.assertIsInstance(combined, torch.fx.GraphModule)
+    
+        targets = [node.target for node in combined.graph.nodes if node.op == "call_function"]
+        self.assertIn(operator.matmul, targets)
+        self.assertIn(operator.add, targets)
+        self.assertIn(torch.relu, targets)
+    
+        add_node = next(n for n in combined.graph.nodes if n.op == "call_function" and n.target is operator.add)
+        matmul_node = next(n for n in combined.graph.nodes if n.op == "call_function" and n.target is operator.matmul)
+        self.assertTrue(any(arg is matmul_node for arg in add_node.args))
+    
+        replacement_weight = torch.nn.Parameter(torch.randn(3, 4))
+        replacement_bias = torch.nn.Parameter(torch.randn(4))
+        stage0.weight = replacement_weight
+        stage0.bias = replacement_bias
+        self.assertTrue(any(p is replacement_weight for p in combined.parameters()))
+        self.assertTrue(any(p is replacement_bias for p in combined.parameters()))
+    
+        with torch.no_grad():
+            expected = torch.relu(stage0(example_inputs[0]))
+            got = combined(example_inputs[0])
+        torch.testing.assert_close(got, expected)
+    
+        sentinel = object()
+>       with mock.patch("triton.experimental.fusion.compile", return_value=sentinel) as compile_mock:
+
+test_graph_fusion_f06.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/unittest/mock.py:1431: in __enter__
+    self.target = self.getter()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/unittest/mock.py:1618: in <lambda>
+    getter = lambda: _importer(target)
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/unittest/mock.py:1261: in _importer
+    thing = _dot_lookup(thing, comp, import_path)
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/unittest/mock.py:1250: in _dot_lookup
+    __import__(import_path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module_name = 'triton.experimental.fusion', globals = None, locals = None
+fromlist = (), level = 0
+
+    def _custom_import(module_name, globals=None, locals=None, fromlist=(), level=0):
+        global SYMBOL_REWRITE_REGISTER
+        global MODULE_REPLCAE_REGISTER
+        global SKIP_LIST
+        global START
+    
+        if START and module_name in sys.modules:
+            module = builtins.__origin__import__(
+                module_name, globals=globals, locals=locals, fromlist=fromlist, level=level
+            )
+            return module
+    
+        # Due to an import hook issue encountered after upgrading to transformers version 4.42.3, it is necessary to add it to the list
+        trigger_hook_list = ["torch", "torch_xmlir", "torchvision", "transformers"]
+        is_trigger = any(
+            module_name == hook or module_name.startswith(hook + ".")
+            for hook in trigger_hook_list
+        )
+        top_module = module_name.split(".")[0]
+    
+        if is_trigger and not START:
+            import ctypes
+            import os
+            from importlib.metadata import version
+            try:
+                START = True
+                SKIP_LIST.append("torch")
+    
+                # CUDART_DUMMY_REGISTER 用来强制__cudaRegister***返回成功
+                # 在KL3上 官方pytorch会触发底下runtime报错,特此通过这个环境变量绕过这个错误
+                if "CUDART_DUMMY_REGISTER" not in os.environ:
+                    os.environ["CUDART_DUMMY_REGISTER"] = "1"
+    
+                if "CUDART_MODULE_LOADING" not in os.environ:
+                    os.environ["CUDART_MODULE_LOADING"] = "LAZY"
+    
+                # CUDA_DEVICE_MAX_CONNECTIONS 表示硬件每个device可使用的最大的并行数量
+                # 因为训练的时候往往是单进程一张卡, 目前不会存在一个设备上多任务的场景
+                # 因此将CUDA_DEVICE_MAX_CONNECTIONS 设置为最大的并行场景可有利于性能的发挥
+                # 当前主流的llama 70b 模型多流优化至少需要5个流，如果默认4的配置将发挥不出优势
+                if "CUDA_DEVICE_MAX_CONNECTIONS" not in os.environ:
+                    os.environ["CUDA_DEVICE_MAX_CONNECTIONS"] = "8"
+    
+                # CUDA_DEVICE_ORDER 可以更改device拓扑表征
+                # 设置oam_id保证所有机型都是一样的拓扑，然后根据这个拓扑去调整链路
+                # 默认使能这个环境变量可以让更多机型能够适配跑起来
+                if (
+                    "CUDA_DEVICE_ORDER" not in os.environ
+                    and os.environ.get("CUDA_VISIBLE_DEVICES") == "0,1,2,3,4,5,6,7"
+                ):
+                    os.environ["CUDA_DEVICE_ORDER"] = "OAM_ID"
+    
+                torch_version = version('torch')
+                if "XPU_FORCE_SHARED_DEVICE_CONTEXT" not in os.environ:
+                    os.environ["XPU_FORCE_SHARED_DEVICE_CONTEXT"] = "1"
+    
+                # Preload xcudart
+                import torch_plugin
+    
+                torch_plugin.initialize_runtime()
+                import torch
+    
+                import torch_xmlir
+                from torch_xmlir.symbrewrite import (
+                    SymbolRewriteRegister,
+                    ModuleReplaceRegister,
+                )
+    
+                SYMBOL_REWRITE_REGISTER = SymbolRewriteRegister()
+                MODULE_REPLCAE_REGISTER = ModuleReplaceRegister()
+                SYMBOL_REWRITE_REGISTER.enable_rewrite_for_module("torch")
+                for i in SYMBOL_REWRITE_REGISTER.reg.keys():
+                    module_list = [
+                        m for m in sys.modules if (i == m or m.startswith(i + "."))
+                    ]
+                    if i != "torch" and module_list:
+                        SKIP_LIST.append(i)
+                        for m in module_list:
+                            del sys.modules[m]
+                        for m in module_list:
+                            importlib.import_module(m)
+                        SYMBOL_REWRITE_REGISTER.enable_rewrite_for_module(i)
+            except Exception as e:
+                traceback.print_exc()
+                print(f"WARNING: import hook error: {e}", file=sys.stderr)
+    
+        if SYMBOL_REWRITE_REGISTER is not None:
+            is_symbol_replace = any(
+                (module_name == hook or module_name.startswith(hook + "."))
+                for hook in SYMBOL_REWRITE_REGISTER.reg.keys()
+            )
+            if top_module not in SKIP_LIST and is_symbol_replace:
+                try:
+                    SKIP_LIST.append(top_module)
+                    importlib.import_module(top_module)
+                    importlib.import_module(module_name)
+                    SYMBOL_REWRITE_REGISTER.enable_rewrite_for_module(top_module)
+                    SYMBOL_REWRITE_REGISTER.enable_rewrite_for_module(module_name)
+                except Exception as e:
+                    traceback.print_exc()
+                    print(f"WARNING: hook error!  {e}", file=sys.stderr)
+    
+        if MODULE_REPLCAE_REGISTER is not None:
+            is_module_replace = any(
+                module_name == hook or module_name.startswith(hook + ".")
+                for hook in MODULE_REPLCAE_REGISTER.keys()
+            )
+            if top_module not in SKIP_LIST and is_module_replace:
+                try:
+                    SKIP_LIST.append(module_name)
+                    MODULE_REPLCAE_REGISTER.replace_module(top_module)
+                    importlib.import_module(module_name)
+                except Exception as e:
+                    traceback.print_exc()
+                    print(f"WARNING: hook error! {e}", file=sys.stderr)
+    
+>       module = builtins.__origin__import__(
+            module_name, globals=globals, locals=locals, fromlist=fromlist, level=level
+        )
+E       ModuleNotFoundError: No module named 'triton.experimental.fusion'
+
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/xpytorch_import_hook.py:132: ModuleNotFoundError
+=============================== warnings summary ===============================
+test_graph_fusion_static.py::SmallMatmulSelectionTests::test_compiler_single_kernel_audit_does_not_trust_a_requested_count
+  /opt/f06/code/python/triton/experimental/graph_fusion/_inference.py:380: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+    return (_get_matmul_precision(), _get_tf32(), _get_cudnn_tf32(), _get_fp16_reduction(), _get_bf16_reduction(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_graph_fusion_f06.py::CrossCallTests::test_supported_chain_preserves_targets_edges_and_live_replaced_parameters
+1 failed, 76 passed, 1 warning, 19 subtests passed in 4.06s

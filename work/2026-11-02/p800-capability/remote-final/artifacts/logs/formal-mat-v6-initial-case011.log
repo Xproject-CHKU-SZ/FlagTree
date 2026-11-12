@@ -1,0 +1,34 @@
+XCCL /data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+XX: (pid 4125061,tid 138190832076160)cuda/src/cui/hal/kl3/kl3_gpfifo.cc:183:kl3ChannelCheckErrors kl3ChannelCheckErrors failed, error set to 66250, status= 700
+XX: (pid 4125061,tid 138190832076160)cuda/src/cui/hal/kl3/kl3_gpfifo.cc:184:kl3ChannelCheckErrors A kernel exception has occurred, please check dmesg for details.
+XX: (pid 4125061,tid 138190832076160)cuda/src/cui/hal/kl3/kl3_gpfifo.cc:183:kl3ChannelCheckErrors kl3ChannelCheckErrors failed, error set to 66250, status= 700
+XX: (pid 4125061,tid 138190832076160)cuda/src/cui/hal/kl3/kl3_gpfifo.cc:184:kl3ChannelCheckErrors A kernel exception has occurred, please check dmesg for details.
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apilaunch.cc:822:cuapi_xpu_launch_async cuapi_xpu_launch_async() failed in cuiInitCheckEx, status= 700
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apilaunch.cc:822:cuapi_xpu_launch_async cuapi_xpu_launch_async() failed in cuiInitCheckEx, status= 700
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apilaunch.cc:1064:cuapi_xpu_wait cuapi_xpu_wait() failed in cuiInitCheckEx, status= 700
+Traceback (most recent call last):
+  File "/data2/zhaoweiming/p800-capability-20261102/bench_worker_v6.py", line 331, in <module>
+    if __name__=='__main__':main()
+  File "/data2/zhaoweiming/p800-capability-20261102/bench_worker_v6.py", line 265, in main
+    assert input_hashes(xs)==initial_input_hashes,'A candidate modified its inputs'
+  File "/data2/zhaoweiming/p800-capability-20261102/bench_worker_v6.py", line 106, in input_hashes
+    return [hashlib.sha256(t.cpu().view(torch.uint8).numpy().tobytes()).hexdigest() for t in values]
+  File "/data2/zhaoweiming/p800-capability-20261102/bench_worker_v6.py", line 106, in <listcomp>
+    return [hashlib.sha256(t.cpu().view(torch.uint8).numpy().tobytes()).hexdigest() for t in values]
+RuntimeError: [RUNTIME ERROR]: error code= 700, an illegal memory access was encountered;
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apimem.cc:302:cuapiMemFree_common cuapiMemFree() failed in cuiInitCheckCtx, Incompatible context or Context error, status= 700
+Exception ignored in atexit callback: <function _prepare_to_exit at 0x7dadfcdcb9a0>
+Traceback (most recent call last):
+  File "/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch_xmlir/__init__.py", line 151, in _prepare_to_exit
+    _XMLIRC._prepare_to_exit()
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apilaunch.cc:1064:cuapi_xpu_wait cuapi_xpu_wait() failed in cuiInitCheckEx, status= 700
+XX: (pid 4125061,tid 138190832076160)cuda/src/api/apimem.cc:302:cuapiMemFree_common cuapiMemFree() failed in cuiInitCheckCtx, Incompatible context or Context error, status= 700

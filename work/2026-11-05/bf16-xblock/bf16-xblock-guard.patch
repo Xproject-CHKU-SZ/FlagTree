@@ -1,0 +1,103 @@
+--- a/python/triton/experimental/graph_fusion/_resource_codegen.py
++++ b/python/triton/experimental/graph_fusion/_resource_codegen.py
+@@ -5,6 +5,7 @@
+ are implemented separately in _p800_compiler and its lowering helpers.
+ """
+ import ast
++import os
+ from contextlib import contextmanager
+ from contextvars import ContextVar
+ import hashlib
+@@ -157,6 +158,11 @@
+ 
+             def wrapped(fn):
+                 tuner = decorate(fn)
++                cap = _MAX_XBLOCK
++                if cap is not None and getattr(tuner, 'configs', None):
++                    kept = [c for c in tuner.configs if int(c.kwargs.get('XBLOCK', 0)) <= cap]
++                    if kept:
++                        tuner.configs = kept
+                 compile_config = tuner._precompile_config
+ 
+                 def compile_for_resource(*a, **kw):
+@@ -201,6 +207,17 @@
+     rendered.finalize_all = finalize_resource
+     rendered.finalize_hook = finalize_hook_resource
+     return rendered
++
++
++# P800 bf16 pointwise codegen under-writes when a config's XBLOCK exceeds the
++# heuristic base tile: the candidate fails to compile (OutOfResources: uni_sram),
++# the launcher silently falls back to the base tile while the grid still uses the
++# requested XBLOCK, so only 1024/XBLOCK of the output is written and the rest
++# keeps uninitialized memory (bf16 often reads back as 0x7F80 = +inf).
++# f32/f16 compile the same tiles and are unaffected.
++# Plain module global: the tuner runs on a compile worker thread, where a
++# ContextVar set by the caller is not visible.
++_MAX_XBLOCK = None
+ 
+ 
+ @contextmanager
+@@ -217,6 +234,7 @@
+     from torch._inductor import config
+     from torch._inductor import utils
+     from torch._dynamo.convert_frame import compile_lock
++    from torch._inductor.runtime.coordinate_descent_tuner import CoordescTuner
+     # Scoped codegen change is context-local for unrelated compiler threads;
+     # explicit resource decorators survive async module loading. Disable the
+     # graph cache so a previously compiled unannotated graph cannot bypass this.
+@@ -282,10 +300,25 @@
+             return _annotate_partial_render(rendered, requested) if requested else rendered
+ 
+         TritonTemplateKernel.render = render
++
++        # Cap the coordinate-descent tile search: the tuner benchmarks configs
++        # without a correctness gate, and an XBLOCK above the base tile takes the
++        # broken fallback path described at _MAX_XBLOCK.
++        original_neighbour = CoordescTuner.get_neighbour_values
++
++        def capped_neighbours(tuner_self, prefix, cur_val, *args, **kwargs):
++            values = original_neighbour(tuner_self, prefix, cur_val, *args, **kwargs)
++            cap = _MAX_XBLOCK
++            if cap is not None and str(prefix).startswith(('XBLOCK', 'YBLOCK', 'ZBLOCK')):
++                values = [v for v in values if v is None or int(v) <= cap]
++            return values
++        CoordescTuner.get_neighbour_values = capped_neighbours
+         try:
+             with config.patch({"compile_threads": 1, "fx_graph_cache": False, "fx_graph_remote_cache": False}):
+                 yield
+         finally:
++            if CoordescTuner.get_neighbour_values is capped_neighbours:
++                CoordescTuner.get_neighbour_values = original_neighbour
+             if AlgorithmSelectorCache.__call__ is select_algorithm:
+                 AlgorithmSelectorCache.__call__ = original_select
+             if TritonKernel.want_no_x_dim is want_no_x_dim:
+@@ -353,6 +386,12 @@
+         "max_autotune_gemm": matmul_path == "template", "max_autotune_gemm_backends":
+         "TRITON" if matmul_path == "template" else "ATEN", "max_autotune": False, "autotune_in_subproc": False
+     }
++    bf16_inputs = any(isinstance(x, torch.Tensor) and x.dtype == torch.bfloat16 for x in inputs)
++    if bf16_inputs and not os.environ.get('FLAGTREE_ALLOW_BF16_CD'):
++        options["coordinate_descent_tuning"] = False
++    global _MAX_XBLOCK
++    previous_cap = _MAX_XBLOCK
++    _MAX_XBLOCK = 1024 if bf16_inputs else None
+     # Only scalar-output reductions need the P800 ownership repair. Softmax
+     # and LayerNorm write full rows and should keep native reduction layouts.
+     output_node = next(n for n in lowered.graph.nodes if n.op == 'output')
+@@ -360,9 +399,12 @@
+     scalar_reduction = (any(n.target == torch.ops.aten.sum.dim_IntList for n in lowered.graph.nodes) and all(
+         isinstance(n, torch.fx.Node) and isinstance(n.meta.get('val'), torch.Tensor) and n.meta['val'].numel() < max(
+             (x.numel() for x in inputs if isinstance(x, torch.Tensor)), default=0) for n in outputs))
+-    with generated_resource(resource, native_template_eligibility=matmul_path == "template",
+-                            scalar_reduction=scalar_reduction), config.patch(options):
+-        compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
++    try:
++        with generated_resource(resource, native_template_eligibility=matmul_path == "template",
++                                scalar_reduction=scalar_reduction), config.patch(options):
++            compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
++    finally:
++        _MAX_XBLOCK = previous_cap
+     source = compiled.source_code
+     wrapper_audit = audit_wrapper(source, resource)
+     external = len(wrapper_audit['external_call_targets'])

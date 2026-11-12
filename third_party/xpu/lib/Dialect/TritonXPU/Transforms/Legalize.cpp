@@ -959,17 +959,28 @@ struct TritonXPULegalizePass
                     constOp
                         ? dyn_cast<mlir::DenseElementsAttr>(constOp.getValue())
                         : nullptr;
-                if (!constOp || !targetTy || !constTy || !attr ||
-                    targetTy.getShape() == constTy.getShape())
+                if (!targetTy || !constTy || !attr || !attr.isSplat() ||
+                    constTy == targetTy ||
+                    constTy.getElementType() != targetTy.getElementType())
                   continue;
-                auto newValue = DenseElementsAttr::getFromRawBuffer(
-                    cast<ShapedType>(targetTy), attr.getRawData());
+                auto newValue = attr.resizeSplat(targetTy);
                 OpBuilder constBuilder(yieldOp);
                 auto newConstOp = constBuilder.create<mlir::arith::ConstantOp>(
                     constOp.getLoc(), targetTy, newValue);
                 yieldOp.setOperand(i, newConstOp);
               }
             };
+
+        // Captured splats may still have the unsliced type. Materialize a
+        // branch-local splat after the parent result types have been sliced.
+        auto reconcileIfYields = [&](scf::IfOp ifOp) {
+          for (Region &region : ifOp->getRegions()) {
+            if (!region.empty())
+              reshapeConstYieldOperandsToMatchResults(
+                  cast<scf::YieldOp>(region.front().getTerminator()),
+                  ifOp.getResultTypes());
+          }
+        };
 
         auto rewriteShapeSpecialOp = [&](Operation *shapeOp) {
           if (auto cvtOp = dyn_cast<triton::xpu::ConvertLayoutOp>(shapeOp)) {
@@ -1203,16 +1214,9 @@ struct TritonXPULegalizePass
                     handleXpuPrintOp(xpuPrintOp);
                   }
                 }
-                if (auto yieldOp =
-                        dyn_cast<mlir::scf::YieldOp>(elseBlock.getTerminator()))
-                  reshapeConstYieldOperandsToMatchResults(
-                      yieldOp, ifOp.getResultTypes());
-                for (auto newInBlockOpRes : ifOp->getResults()) {
-                  auto slicedOpType =
-                      getSlicedType(newInBlockOpRes.getType(), iterCount, true);
-                  newInBlockOpRes.setType(slicedOpType);
-                }
               }
+              setSlicedResTy(ifOp, /*isInner=*/true);
+              reconcileIfYields(ifOp);
             } else if (auto xpuPrintOp = dyn_cast<XPUPrintOp>(inBlockOp)) {
               handleXpuPrintOp(xpuPrintOp);
             } else {
@@ -1326,10 +1330,7 @@ struct TritonXPULegalizePass
               }
             }
           }
-          if (auto yieldOp =
-                  dyn_cast<mlir::scf::YieldOp>(newIfThenBlock.getTerminator()))
-            reshapeConstYieldOperandsToMatchResults(yieldOp,
-                                                    ifOp.getResultTypes());
+          reconcileIfYields(ifOp);
 
         } else if (auto reshapeOp = dyn_cast<mlir::triton::ReshapeOp>(op)) {
           if (auto reshapeResTy =

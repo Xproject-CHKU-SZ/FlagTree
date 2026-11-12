@@ -1,0 +1,163 @@
+{
+  "status": "passed",
+  "route": "eager",
+  "ordinal": 69,
+  "repeat": 1,
+  "timing": "graph",
+  "started_at": 1793617710.909465,
+  "stage": "completed",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "ordinal": 69,
+    "case_id": "report117:add_layernorm_affine:bfloat16:16x128",
+    "kind": "add_layernorm_affine",
+    "dtype": "bfloat16",
+    "M": 16,
+    "N": 128,
+    "K": null,
+    "inputs": [
+      {
+        "shape": [
+          16,
+          128
+        ],
+        "sha256": "4479df15bff3db2aa9b53622fa61cb116b0810a0f0dc9f9e3d8c1bf2723cbc19"
+      },
+      {
+        "shape": [
+          128
+        ],
+        "sha256": "65fec6cac32816b5bb81d73ef8b8365761d9f6d05cb866e42360d3a3c0ba272b"
+      }
+    ],
+    "parameters": {
+      "weight": "65fec6cac32816b5bb81d73ef8b8365761d9f6d05cb866e42360d3a3c0ba272b",
+      "bias": "116cae45fa884954204c361fd2b0579bef4edf76bb3bdd421f87657510de7eea"
+    },
+    "tolerance": {
+      "atol": 0.03,
+      "rtol": 0.003
+    },
+    "seed": 61,
+    "status": "not_started",
+    "candidate_us": null,
+    "separate_calls_us": null,
+    "inductor_original_us": null,
+    "speedup_vs_separate_calls": null,
+    "speedup_vs_inductor_original": null,
+    "original_ordinal": 96,
+    "input_builder": "historical_small"
+  },
+  "physical_device": 5,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 19:08:36 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:9C:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3275520\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 166 MiB\n\n",
+  "input_binding": {
+    "source_sha256": "c82c698a35b879a39e9278e313d0c26f432ddaaffeff1d372e1ceb50fbd84000",
+    "definition_ast_sha256": {
+      "Module": "49e5ec1e04a2ef032d2941bfe82be82b2d75b0d99c5a0bf8a8f04ddf17e8775e",
+      "Binary": "48e993c89f96845c941204f027d1c00ccffd4a1f0a3850e87adeaecedec2c640",
+      "rand": "abae7eb1b7beef0c4f99044b641316013c6e1f3eb79b60b2c957185a575e8a64"
+    },
+    "inputs": [
+      {
+        "shape": [
+          16,
+          128
+        ],
+        "sha256": "4479df15bff3db2aa9b53622fa61cb116b0810a0f0dc9f9e3d8c1bf2723cbc19"
+      },
+      {
+        "shape": [
+          128
+        ],
+        "sha256": "65fec6cac32816b5bb81d73ef8b8365761d9f6d05cb866e42360d3a3c0ba272b"
+      }
+    ],
+    "parameters": {
+      "weight": "65fec6cac32816b5bb81d73ef8b8365761d9f6d05cb866e42360d3a3c0ba272b",
+      "bias": "116cae45fa884954204c361fd2b0579bef4edf76bb3bdd421f87657510de7eea"
+    },
+    "graph": "graph():\n    %a : [num_users=1] = placeholder[target=a]\n    %b : [num_users=1] = placeholder[target=b]\n    %add : [num_users=1] = call_function[target=operator.add](args = (%a, %b), kwargs = {})\n    %weight : [num_users=1] = get_attr[target=weight]\n    %bias : [num_users=1] = get_attr[target=bias]\n    %layer_norm : [num_users=1] = call_function[target=torch.nn.functional.layer_norm](args = (%add, (128,)), kwargs = {weight: %weight, bias: %bias, eps: 0.001})\n    return layer_norm"
+  },
+  "setup_seconds": 0.00019138099742121994,
+  "max_abs_error": 0.0,
+  "counters_before": {},
+  "e2e_us": {
+    "median_us": 36.547,
+    "samples_us": [
+      88.451,
+      45.706,
+      39.146,
+      46.176,
+      38.217,
+      38.806,
+      37.356,
+      36.466,
+      36.416,
+      37.397,
+      36.967,
+      36.227,
+      36.817,
+      37.327,
+      37.907,
+      36.207,
+      36.187,
+      36.417,
+      36.547,
+      36.547,
+      36.427,
+      36.647,
+      37.307,
+      36.387,
+      36.507,
+      36.197,
+      36.626,
+      36.376,
+      36.057,
+      35.847,
+      36.087
+    ]
+  },
+  "gpu_us": {
+    "median_us": 6.427088379859924,
+    "samples_us": [
+      6.428284198045731,
+      6.442217528820038,
+      6.421870738267899,
+      6.427088379859924,
+      6.422939151525497,
+      6.424436718225479,
+      6.494884192943573
+    ],
+    "invocations_per_graph": 64,
+    "replays_per_sample": 20
+  },
+  "counters_after": {},
+  "ended_at": 1793617716.2836409
+}

@@ -1,0 +1,111 @@
+{
+  "shape": "64x1024",
+  "dtype": "BF16",
+  "mode": "GELU tanh",
+  "card": 6,
+  "protocol": "Same card, CPU affinity, script, inputs, inference module, caches private to each container. v25 automatic / v24 explicit / v24 explicit / v25 automatic. No LD_PRELOAD in Python. Public, eager and generated Runner in rotating forward/reverse order. 48 synchronized timed calls per path per round after 8 discarded. Each value below is the median of per-round medians. CompiledFxGraph.record_function was invoked once per forward; in the v25 diagnostic only, replace that context by nullcontext during rounds 1,2,5,6 (0-based). Supported hooks and profiler behaviour are not validated by the diagnostic.",
+  "runs": {
+    "why25a": {
+      "image": "sha256:77958e4701222a9b07886844fd05a6a6ecba5f93516c1cd96c2d335d9e3506fa",
+      "version": "v25",
+      "normal": {
+        "public": {
+          "submit_us": 77.896,
+          "end_to_end_us": 86.101
+        },
+        "eager": {
+          "submit_us": 33.257,
+          "end_to_end_us": 41.121
+        },
+        "runner": {
+          "submit_us": 19.179,
+          "end_to_end_us": 29.37
+        }
+      },
+      "diagnostic_without_record_function": {
+        "public": {
+          "submit_us": 52.076,
+          "end_to_end_us": 59.104
+        },
+        "eager": {
+          "submit_us": 31.941,
+          "end_to_end_us": 39.344
+        },
+        "runner": {
+          "submit_us": 18.274,
+          "end_to_end_us": 28.424
+        }
+      },
+      "public_reduction_us": 26.997
+    },
+    "why24a": {
+      "image": "sha256:795671a32805a3a408e4b83bd39403934d76d8a9e4854c96fa2afa44034e5570",
+      "version": "v24",
+      "normal": {
+        "public": {
+          "submit_us": 78.698,
+          "end_to_end_us": 87.048
+        },
+        "eager": {
+          "submit_us": 33.724,
+          "end_to_end_us": 41.197
+        },
+        "runner": {
+          "submit_us": 18.664,
+          "end_to_end_us": 28.847
+        }
+      }
+    },
+    "why24b": {
+      "image": "sha256:795671a32805a3a408e4b83bd39403934d76d8a9e4854c96fa2afa44034e5570",
+      "version": "v24",
+      "normal": {
+        "public": {
+          "submit_us": 77.459,
+          "end_to_end_us": 85.173
+        },
+        "eager": {
+          "submit_us": 32.937,
+          "end_to_end_us": 42.019
+        },
+        "runner": {
+          "submit_us": 18.817,
+          "end_to_end_us": 29.044
+        }
+      }
+    },
+    "why25b": {
+      "image": "sha256:77958e4701222a9b07886844fd05a6a6ecba5f93516c1cd96c2d335d9e3506fa",
+      "version": "v25",
+      "normal": {
+        "public": {
+          "submit_us": 79.421,
+          "end_to_end_us": 87.826
+        },
+        "eager": {
+          "submit_us": 33.397,
+          "end_to_end_us": 41.407
+        },
+        "runner": {
+          "submit_us": 19.005,
+          "end_to_end_us": 29.219
+        }
+      },
+      "diagnostic_without_record_function": {
+        "public": {
+          "submit_us": 53.319,
+          "end_to_end_us": 60.651
+        },
+        "eager": {
+          "submit_us": 30.757,
+          "end_to_end_us": 38.122
+        },
+        "runner": {
+          "submit_us": 17.694,
+          "end_to_end_us": 27.919
+        }
+      },
+      "public_reduction_us": 27.175
+    }
+  }
+}

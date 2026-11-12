@@ -1,0 +1,11 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+AUDIT {"kind": "mul_sum", "keepdim": false, "eager_fx": "\n\n\ndef forward(self, a, b):\n    mul = a * b;  a = b = None\n    sum_1 = mul.sum(-1, keepdim = False);  mul = None\n    return sum_1\n    ", "eager_dtype": "torch.float16", "result_dtype": "torch.float32", "shape": [64], "inner_route": "sdnn_dsa", "value_valid": true}
+AUDIT {"kind": "mul_sum", "keepdim": true, "eager_fx": "\n\n\ndef forward(self, a, b):\n    mul = a * b;  a = b = None\n    sum_1 = mul.sum(-1, keepdim = True);  mul = None\n    return sum_1\n    ", "eager_dtype": "torch.float16", "result_dtype": "torch.float32", "shape": [64, 1], "inner_route": "sdnn_dsa", "value_valid": true}
+AUDIT {"kind": "add_softmax", "eager_fx": "\n\n\ndef forward(self, a, b):\n    add = a + b;  a = b = None\n    softmax = torch.softmax(add, dim = -1);  add = None\n    return softmax\n    "}
+[reduce] TLE failed: AttributeError module 'triton._C.libtriton.xpu.passes.ttxpuir' has no attribute 'add_tritonxpu_reconcile_layouts_pass'
+AUDIT {"kind": "softmax_check", "m": 64, "tag": "original", "tiles": {"r": 16, "c": 1024, "warps": 8, "us": 21.45}, "max_abs": 1.4901161193847656e-08, "valid": true}
+Traceback (most recent call last):
+  File "/tmp/probe.py", line 84, in <module>
+    assert proofs[tag]['tiles'].get('route')=='tle' and torch.allclose(out,ref,atol=3e-4,rtol=3e-4)
+AssertionError

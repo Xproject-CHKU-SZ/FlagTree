@@ -1,0 +1,85 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>F06 v14 与 FlagTree 官方的 P800 性能回退复核</title>
+<style>body{font:16px/1.65 system-ui,sans-serif;color:#18212b;max-width:1180px;margin:auto;padding:35px 24px 60px}h1{font-size:30px}h2{font-size:22px;margin-top:35px}p{max-width:100ch}a{color:#075d79}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}td,th{text-align:left;border-bottom:1px solid #d7e2e8;padding:6px 9px;white-space:nowrap}thead{background:#eaf3f6}code{font-size:.94em}</style><h1>F06 v14 与 FlagTree 官方的 P800 性能回退复核</h1>
+<p>2026-11-09，在 P800 OAM 个人 Docker 中测量。官方基线为 <a href="https://github.com/flagos-ai/FlagTree/tree/d65b6d70511e4d9aaeb3bf52ae762a96212def0a">FlagTree main d65b6d7</a>，运行时导入的 XPU 编译器文件 SHA-256 与该提交逐字节一致。工作区为 feaf3f9 加本地改动。官方树没有 F06 graph_fusion，因此同时测了纯原生 Inductor 和挂载同一份 v14 F06 的官方编译器。</p>
+<h2>MatMul + Bias + 激活的回退来自本地 F06 接入</h2>
+<p>既有 v13、v14 的 117 项记录中，FP32 和 FP16 的 ReLU、exact GELU 在三个尺寸上共 12 项，都由 v13 的整段 SDNN 换成 eager 或分段，正式入口相对直接 eager 的加速比全部下降。此次在相同 v14 镜像中只接回激活降层，12 项全部通过原有数值、特殊值、输入不可变、图重放新数据与资源校验，正式入口全部选到有一份绑定内核证据的整段 SDNN。</p>
+<p>在本次有完整同卡对照的 11 项中，接回激活后的正式入口比 v14 当前路由快 1.36–1.71 倍，逐项比值的几何平均为 1.49 倍。下面的耗时是正式入口热调用中位数，单位为 µs。每个独立进程分别测直接 eager，最后一列使用接回激活组自己的 eager 基准。</p>
+<div class="table"><table><thead><tr><th>MatMul + Bias 后处理</th><th>精度</th><th>输出尺寸</th><th>官方编译器 + F06</th><th>v13 编译器 + F06</th><th>生产 v14</th><th>仅接回激活</th><th>该组直接 eager</th><th>对 eager 加速比</th></tr></thead><tbody>
+<tr><td>exact GELU</td><td>FP32</td><td>64×1024</td><td>55.4 · sdnn</td><td>51.0 · sdnn</td><td>83.8 · eager</td><td>51.6 · sdnn</td><td>73.1</td><td>1.42×</td></tr>
+<tr><td>exact GELU</td><td>FP32</td><td>512×1024</td><td>65.3 · sdnn</td><td>63.0 · sdnn</td><td>84.7 · 切分 2</td><td>61.6 · sdnn</td><td>99.4</td><td>1.61×</td></tr>
+<tr><td>exact GELU</td><td>FP32</td><td>2048×2048</td><td>242.7 · 切分 1</td><td>325.4 · eager</td><td>235.8 · 切分 1</td><td>137.9 · sdnn</td><td>318.1</td><td>2.31×</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>64×1024</td><td>54.7 · sdnn</td><td>56.6 · sdnn</td><td>74.7 · eager</td><td>51.8 · sdnn</td><td>74.8</td><td>1.45×</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>512×1024</td><td>66.2 · sdnn</td><td>62.4 · sdnn</td><td>85.6 · 切分 2</td><td>62.6 · sdnn</td><td>92.5</td><td>1.48×</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>2048×2048</td><td>227.0 · 切分 2</td><td>140.2 · sdnn</td><td>230.5 · 切分 2</td><td>136.7 · sdnn</td><td>314.8</td><td>2.30×</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>64×1024</td><td>52.9 · sdnn</td><td>75.4 · eager</td><td>76.1 · eager</td><td>52.5 · sdnn</td><td>64.3</td><td>1.22×</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>512×1024</td><td>51.9 · sdnn</td><td>53.4 · sdnn</td><td>70.8 · 切分 2</td><td>50.0 · sdnn</td><td>63.9</td><td>1.28×</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>2048×2048</td><td>69.8 · sdnn</td><td>71.5 · sdnn</td><td>106.8 · 切分 2</td><td>67.6 · sdnn</td><td>87.6</td><td>1.29×</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>64×1024</td><td>53.6 · sdnn</td><td>54.9 · sdnn</td><td>70.9 · eager</td><td>52.0 · sdnn</td><td>66.6</td><td>1.28×</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>512×1024</td><td>54.6 · sdnn</td><td>67.5 · sdnn</td><td>未取得计时</td><td>53.6 · sdnn</td><td>71.9</td><td>1.34×</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>2048×2048</td><td>66.5 · sdnn</td><td>104.4 · 切分 1</td><td>95.5 · 切分 2</td><td>66.3 · sdnn</td><td>67.0</td><td>1.01×</td></tr>
+</tbody></table></div>
+<p>切分 1 或 2 表示在相应 FX 节点位置切开，前段交给 SDNN，后段交给 cluster。表内不同提供方可能在各自冷编译时选出不同的 Inductor 内核。上表的 v13 列同样使用 v14 选路器，发布版 v13 与 v14 的原始 117 项比较见文末链接。</p>
+<p>上轮 v14 的 12 个整段 SDNN 候选中，9 个因 NaN 校验被拒、2 个触发单核限制、1 个编译失败。本地 <a href="../../../python/triton/experimental/graph_fusion/_p800_compiler.py">_p800_compiler.py</a> 探测到原生 resource_scope 后，跳过 install_stage 和 activation_scope。<a href="../../../python/triton/experimental/graph_fusion/_p800_native_activation.py">prepare</a> 因开关关闭而直接返回，SDNN 的 ReLU 处理及 exact GELU 查表恢复与细化没有执行。现版 FP32 64×1024 exact GELU 单核在注入特殊值后有 64 / 65,536 项与 eager 不一致，首次差异在 (0, 2)。接回后各组复测保留原容差与 NaN 校验，exact GELU 二进制元数据重新包含 GELU 查表恢复记录。</p>
+<p>官方编译器 + F06 的 2048×2048 exact GELU 在 FP32 和 FP16 的整段 SDNN 候选中，普通输入分别有 74.8% 和 71.4% 元素超差，最终有效路径走分段；表内计时均来自通过校验的最终路径。</p>
+<h2>原生 Inductor 的官方对照</h2>
+<p>去掉 F06 后，官方与工作区两组都用原生 max-autotune-no-cudagraphs，仅统一 Torch 兼容层传给 Triton 的 P800 target。12 项在两个版本均通过独立数值检查。本地/官方的正式入口耗时比为 0.970–1.031，几何平均 0.996。这组对照涵盖实际 Inductor 调用，不能据此推断每一条后端指令的耗时。</p>
+<div class="table"><table><thead><tr><th>后处理</th><th>精度</th><th>输出尺寸</th><th>官方原生 µs</th><th>本地原生 µs</th></tr></thead><tbody>
+<tr><td>exact GELU</td><td>FP32</td><td>64×1024</td><td>147.9</td><td>148.2</td></tr>
+<tr><td>exact GELU</td><td>FP32</td><td>512×1024</td><td>148.8</td><td>153.4</td></tr>
+<tr><td>exact GELU</td><td>FP32</td><td>2048×2048</td><td>318.3</td><td>317.4</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>64×1024</td><td>148.5</td><td>148.2</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>512×1024</td><td>150.0</td><td>145.6</td></tr>
+<tr><td>exact GELU</td><td>FP16</td><td>2048×2048</td><td>348.4</td><td>345.6</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>64×1024</td><td>144.2</td><td>146.9</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>512×1024</td><td>147.6</td><td>145.6</td></tr>
+<tr><td>ReLU</td><td>FP32</td><td>2048×2048</td><td>188.5</td><td>183.1</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>64×1024</td><td>145.2</td><td>146.4</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>512×1024</td><td>148.0</td><td>145.6</td></tr>
+<tr><td>ReLU</td><td>FP16</td><td>2048×2048</td><td>214.5</td><td>213.9</td></tr>
+</tbody></table></div>
+<h2>显式 SDNN 下的广播子核仍有编译问题</h2>
+<p>本地 <a href="../../../python/triton/experimental/graph_fusion/_p800_precision.py">精度降层</a>只看旧 is_sdnn 和自动识别的 dot。<a href="../../../third_party/xpu/backend/compiler.py">XPU 编译器</a>随后还会依据显式 resource_kind=sdnn 选择 SDNN。独立逐元素 bias + 激活子核没有 dot，两处对同一请求可作出不同判定。</p>
+<p>第二个诊断版本同时接回激活并让精度降层识别显式 SDNN。6 组 exact GELU 形状和精度的编译日志中出现 rank-1 wrap requires exactly one DMA for load 0。出错位置是重读 gelu-lut-refined.mlir 后的 Rank1Wrap 修复步骤。出错的是编译器试编的子核，整段融合仍可用。此项尚未得到可单独归因的热调用损失。</p>
+<p>最小复现使用 period=2048、tile=1024 的 FP32 周期加载。四组都从相同 MLIR 输入运行同一 SDNN 降层到修复点。文本里仍有模块级 wrap 规格与一条输入 DMA，打印结果里缺少传递到 DMA 的 NameLoc。<a href="../../../third_party/xpu/lib/Dialect/TritonXPU/Transforms/Rank1Wrap.cpp">Rank1Wrap.cpp</a> 依靠该标记对应到原加载。</p>
+<div class="table"><table><thead><tr><th>进入修复前的唯一变化</th><th>输入 DMA 数</th><th>修复结果</th></tr></thead><tbody>
+<tr><td>直接在内存中传递 IR</td><td>1</td><td>通过</td></tr>
+<tr><td>只把原文写出再读入</td><td>1</td><td>找不到对应的 DMA</td></tr>
+<tr><td>经激活辅助函数写出、读入和清理</td><td>1</td><td>找不到对应的 DMA</td></tr>
+<tr><td>只在内存执行规范化和 CSE</td><td>1</td><td>通过</td></tr>
+</tbody></table></div>
+<p>修复方向是用一致的实际资源判定选择精度降层，并让激活改写在内存中保留操作位置或可传递的来源属性。DMA 唯一性校验负责保护周期广播寻址，应保留。</p>
+<h2>正式入口的 eager 基准与用户直接调用的区别</h2>
+<p>在已有 v14 的 117 项全量结果中，42 项选择了融合，其中 14 项正式入口仍慢于直接 eager。另有 75 项选回 eager，正式入口相对原模块的同步延迟增量中位数为 11.33 µs。<a href="../../../python/triton/experimental/graph_fusion/_resource_autotune.py">time_public</a> 让包括 eager 分支在内的每个候选都经同一 OptimizedModule，验收的 3% 提升相对包裹后的 eager。</p>
+<p>不带激活的 FP32 512×1024 MatMul + Bias 也是上一轮明显下降的一项。v13 的 SDNN 为 51.86 µs，v14 的 native_mm 为 62.42 µs，相对直接 eager 的加速比由 1.16× 降至 0.95×。该项 v14 原始候选计分为包裹 eager 84.86 µs、SDNN 65.00 µs、native_mm 62.66 µs；独立直接 eager 为 59.60 µs。下表给出同一形状在两张物理卡上的独立冷编译重测。</p>
+<div class="table"><table><thead><tr><th>试验</th><th>卡</th><th>编译器 + 同一 v14 F06</th><th>选中路由</th><th>正式入口 µs</th><th>直接 eager µs</th><th>整段 SDNN 候选</th></tr></thead><tbody>
+<tr><td>bias0</td><td>0</td><td>current</td><td>sdnn</td><td>48.0</td><td>60.4</td><td>passed</td></tr>
+<tr><td>bias0</td><td>0</td><td>official</td><td>sdnn</td><td>52.3</td><td>58.9</td><td>passed</td></tr>
+<tr><td>bias0</td><td>0</td><td>v13</td><td>sdnn</td><td>49.1</td><td>54.4</td><td>passed</td></tr>
+<tr><td>bias4</td><td>4</td><td>current</td><td>—</td><td>未取得计时</td><td>—</td><td>—</td></tr>
+<tr><td>bias4</td><td>4</td><td>official</td><td>native_mm</td><td>59.6</td><td>54.9</td><td>numeric</td></tr>
+<tr><td>bias4</td><td>4</td><td>v13</td><td>—</td><td>未取得计时</td><td>—</td><td>—</td></tr>
+<tr><td>confirm4</td><td>4</td><td>current</td><td>—</td><td>未取得计时</td><td>—</td><td>—</td></tr>
+<tr><td>confirm4</td><td>4</td><td>v13</td><td>sdnn</td><td>52.6</td><td>61.3</td><td>passed</td></tr>
+</tbody></table></div>
+<p>卡 0 的新冷编译中，本地、v13 与官方均选 SDNN，分别为 48.0、49.1、52.3 µs。卡 4 上 v14 的一次冷编译因堆分配器报告 unaligned tcache chunk 而中止，v13 也有一次超时。日志中的 uni_sram allocation overflow 同时出现在官方及本地的若干试编配置。现有证据足以确认冷启动存在波动，堆异常的根因待定位。</p>
+<p>直接 eager 与包裹 eager 应分别记录。要判断用户能否获得加速，应比较该融合正式入口与同进程原模块的同步耗时。要判断编译器是否退化，应固定实际路由与二进制后再比。</p>
+<h2>FP16 512×1024 ReLU 的独立成对复验</h2>
+<p>卡 3 的当前 v14 两次冷编译均未取得计时，另在空闲的卡 2 依次运行当前 v14 与只接回激活的版本。该表单独展示。发布版 v14 的历史记录中，这一项走切分 2，正式入口 70.79 µs，整段 SDNN 在特殊值输入上有 1,024 / 524,288 项与 eager 不一致。</p>
+<div class="table"><table><thead><tr><th>环境</th><th>物理卡</th><th>冷编译退出码</th><th>整段 SDNN 候选</th><th>最终路由</th><th>独立直接 eager µs</th><th>正式入口 µs</th></tr></thead><tbody>
+<tr><td>current</td><td>2</td><td>124</td><td>—</td><td>—</td><td>—</td><td>未取得计时</td></tr>
+<tr><td>stage</td><td>2</td><td>0</td><td>passed</td><td>sdnn</td><td>68.6</td><td>52.5</td></tr>
+</tbody></table></div>
+<h2>测量与归档</h2>
+<div class="table"><table><thead><tr><th>环境</th><th>组合数</th><th>冷编译与热计时完成</th><th>整段 SDNN 校验通过</th><th>整段 SDNN 胜出</th><th>含广播修复报错的日志数</th></tr></thead><tbody>
+<tr><td>current</td><td>12</td><td>11</td><td>—</td><td>—</td><td>0</td></tr>
+<tr><td>stage</td><td>12</td><td>12</td><td>12</td><td>12</td><td>0</td></tr>
+<tr><td>full</td><td>12</td><td>11</td><td>11</td><td>10</td><td>6</td></tr>
+<tr><td>v13</td><td>12</td><td>12</td><td>11</td><td>9</td><td>6</td></tr>
+<tr><td>official</td><td>12</td><td>12</td><td>10</td><td>10</td><td>0</td></tr>
+<tr><td>current_native</td><td>12</td><td>12</td><td>—</td><td>—</td><td>0</td></tr>
+<tr><td>official_native</td><td>12</td><td>12</td><td>—</td><td>—</td><td>0</td></tr>
+</tbody></table></div>
+<p>P800 个人环境在主实验及补测开始前均检查八张卡空闲，每张卡同一时间只测一组。每一形状在各实验臂固定同一卡、相同 CPU 核组、独立冷缓存；MatMul 的 K=64。F06 两轮各 128 次交错正式入口选路；另外 8 对预热后用 48 对交替顺序的同步调用取中位数，并检查两组普通输入与特殊值。主实验 60 项首次冷编译限时 104 秒，其中 9 项超时后以 175 秒限额独立重试，重试仍未完成 2 项。原生路径、无激活的附加对照与补充成对复验限时 110 秒。缺失计时不参与比值。</p>
+<p>本次新上卡的主实验聚焦 FP32/FP16 两个激活模板，另测原生 Inductor 及无激活对照。BF16 和其余模板引用发布版的全量矩阵。诊断改动仅在个人 Docker 中只读挂载，生产 v14 镜像与 F06 源码没有改动。</p>
+<p><a href="results.json">逐项原始数值、路由、校验错误与二进制元数据</a> · <a href="evidence.tar.gz">实验脚本、源代码差异、冷编译与计时日志</a> · <a href="../f06-v14-public-routing/F06-v14正式路由与加速比.html">既有 v14 全量 117 项</a> · <a href="../f06-upstream-performance/F06官方与工作区性能对照.html">前一轮固定源内核的官方对照</a></p>
+</html>

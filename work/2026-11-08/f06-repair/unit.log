@@ -1,0 +1,25 @@
+......F.............................................................. [ 49%]
+.......................................................................  [100%]
+=================================== FAILURES ===================================
+_ P800MatchGuardTests.test_reduce_mul_sum_requires_last_axis_and_terminal_sum __
+
+self = <test_graph_fusion_p800_match.P800MatchGuardTests testMethod=test_reduce_mul_sum_requires_last_axis_and_terminal_sum>
+
+    def test_reduce_mul_sum_requires_last_axis_and_terminal_sum(self):
+        def good(g, a, b):
+            product = g.call_function(torch.mul, (a, b))
+            return g.call_function(torch.sum, (product, -1))
+    
+>       self.assertEqual(self.reduce.match(self._gm(good), self._inputs())["kind"], "mul_sum")
+E       TypeError: 'NoneType' object is not subscriptable
+
+/tmp/checks/python/test/unit/runtime/test_graph_fusion_p800_match.py:96: TypeError
+=============================== warnings summary ===============================
+python/test/unit/runtime/test_graph_fusion_resource_autotune.py::ResourceAutotuneTests::test_context_changes_with_shape_stride_dtype_environment
+  /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+    return torch._C._get_cublas_allow_tf32()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../../tmp/checks/python/test/unit/runtime/test_graph_fusion_p800_match.py::P800MatchGuardTests::test_reduce_mul_sum_requires_last_axis_and_terminal_sum
+1 failed, 139 passed, 1 warning, 3 subtests passed in 6.88s

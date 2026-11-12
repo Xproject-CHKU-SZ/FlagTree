@@ -1,0 +1,125 @@
+        uint64_t code_addr,
+        uint32_t code_byte_size,
+        uint32_t code_pc,
+        uint32_t param_dword_size,
+        uint64_t hash,
+#if defined(__cplusplus)
+        const char* name = NULL,
+#else
+        const char* name,
+#endif
+#if defined(__cplusplus)
+        bool on_xpu = false
+#else
+        bool on_xpu
+#endif
+        );
+
+/// \brief  设定函数调用配置。
+///
+///         调用配置是传给XPURT的参数，运行时会解析配置信息，并根据配置进行函数调用。
+/// \note   调用 \ref xpu_launch_async 之前需要先调用本函数
+/// \param[in] nclusters  Number of Clusters needed to compute this kernel
+/// \param[in] ncores     Number of Cores needed in each Cluster
+/// \param[in] stream     Stream to launch this kernel on
+DLL_PUBLIC int xpu_launch_config(
+        int nclusters,
+        int ncores,
+#if defined(__cplusplus)
+        XPUStream stream = NULL
+#else
+        XPUStream stream
+#endif
+        );
+
+struct xpu_dim3
+{
+    unsigned int x, y, z;
+#if defined(__cplusplus)
+#if __cplusplus >= 201103L
+    constexpr xpu_dim3(unsigned int vx = 1, unsigned int vy = 1, unsigned int vz = 1) : x(vx), y(vy), z(vz) {}
+    //__host__ __device__ constexpr xpu_dim3(uint3 v) : x(v.x), y(v.y), z(v.z) {}
+    //__host__ __device__ constexpr operator uint3(void) const { return uint3{x, y, z}; }
+#else
+    xpu_dim3(unsigned int vx = 1, unsigned int vy = 1, unsigned int vz = 1) : x(vx), y(vy), z(vz) {}
+    //__host__ __device__ xpu_dim3(uint3 v) : x(v.x), y(v.y), z(v.z) {}
+    //__host__ __device__ operator uint3(void) const { uint3 t; t.x = x; t.y = y; t.z = z; return t; }
+#endif
+#endif /* __cplusplus */
+};
+
+typedef struct xpu_dim3 xpu_dim3;
+
+// sharedMem保持类型为int
+DLL_PUBLIC int xpu_launch_config_v2(
+        xpu_dim3 gridDim,
+        xpu_dim3 blockDim,
+#if defined(__cplusplus)
+        int sharedMem = 0,
+        XPUStream stream = NULL
+#else
+        int sharedMem,
+        XPUStream stream
+#endif
+        );
+
+/// \brief  设定下一次函数调用的参数。
+///
+///         XPURT不会解析函数参数，而是直接将其透传给被调用的XPU函数。本函数会将 \p arg
+///         指向的内容拷贝到参数 \p offset 偏移的位置，拷贝大小为 \p size ，这里
+///         \p offset 要求4字节对齐，\p size 无此限制，但是该函数会将 \p size 向上
+///         对齐到4，并将参数对齐部分补0。
+/// \note   调用 \ref xpu_launch_async 之前需要先调用本函数
+/// \param[in] arg     存储参数的CPU内存地址
+/// \param[in] size    需要拷贝的参数字节数
+/// \param[in] offset  目标参数的偏移字节数
+DLL_PUBLIC int xpu_launch_argument_set(const void *arg, size_t size, size_t offset);
+
+/// \brief  调用一个XPU函数。
+///
+  // triton/compiler/compiler.py via an `is_xpu_backend` branch:
+  //   load_binary(name, kernel_bytes, is_sdnn, printf_buf_offset)
+  // Both fields come from backend/compiler.py metadata and must be honored:
+  // - is_sdnn distinguishes KT_CLUSTER vs KT_SDCDNN at __xpu_create_func
+  // - printf_buf_offset is required for kernels using device-side printf
+  const char *name;
+  const char *data;
+  Py_ssize_t data_size;
+  int is_sdnn_kernel;
+  uint64_t printf_buf_offset;
+  if (!PyArg_ParseTuple(args, "ss#iK", &name, &data, &data_size,
+                        &is_sdnn_kernel, &printf_buf_offset)) {
+    return NULL;
+  }
+
+  // Create XPUFunc
+  XPUFunc pfunc;
+  int type = is_sdnn_kernel ? KT_SDCDNN : KT_CLUSTER;
+  uint64_t code_addr = reinterpret_cast<uint64_t>(data);
+  uint32_t code_byte_size = static_cast<uint32_t>(data_size);
+  uint32_t code_pc = 0;
+  uint32_t param_dword_size = 0;
+  uint32_t hash = checksum(data, data_size);
+  bool on_xpu = false;
+
+  XPU_CHECK(__xpu_create_func(&pfunc, type, code_addr, code_byte_size, code_pc,
+                              param_dword_size, hash, name, on_xpu,
+                              printf_buf_offset));
+
+  // Build Output Value
+  const void *mod = static_cast<const void *>(data);
+  int32_t n_regs = 0;
+  int32_t n_spills = 0;
+  // Triton 3.6 expects (mod, func, n_regs, n_spills, n_max_threads).
+  // XPU has no fine-grained thread limit; use a large sentinel so the
+  // num_warps*warp_size check always passes.
+  int32_t n_max_threads = 1 << 30;
+  return Py_BuildValue("(KKiii)", (uint64_t)mod, (uint64_t)pfunc, n_regs,
+                       n_spills, n_max_threads);
+/opt/hsp/triton/backends/xpu/xpu3/so/libxpurt.so
+/opt/hsp/triton/backends/xpu/xpu3/so/libxpurt.so.1
+/opt/hsp/triton/backends/xpu/xpu3/so/libxpurt.so.12.9.1.kunlun
+/opt/hsp/triton/backends/xpu/xpu3/so/libxpurt.so.2
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/triton/backends/xpu/xpu3/so/libxpurt.so
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/triton/backends/xpu/xpu3/so/libxpurt.so.1
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/triton/backends/xpu/xpu3/so/libxpurt.so.12.9.1.kunlun

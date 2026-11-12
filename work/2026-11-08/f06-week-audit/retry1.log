@@ -1,0 +1,1507 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+MODULO {"bad": 1047552, "sentinel": 130048, "n": 1048576, "first4": [0.0, 1.0, 2.0, 3.0], "row2": [-1.5273298025131226, 1.0164562463760376, -0.9531526565551758, 0.8317739963531494]}
+NORM {"kind": "add_layernorm", "nonfinite_eager": 21504, "nonfinite_candidate": 28672, "bad": 47093}
+NORM {"kind": "add_layernorm_affine", "nonfinite_eager": 21504, "nonfinite_candidate": 32768, "bad": 46480}
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+RECORD {"event": "start", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "64x1024", "plans": ["eager", "inductor", "native_mm", "sdnn", "sdnn_cluster_at_1", "sdnn_cluster_at_2"], "eager_us": 43.077024817466736}
+RECORD {"event": "try", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "64x1024", "route": "sdnn"}
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/compile_fx.py:312: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+  warnings.warn(
+Autotune Choices Stats:
+{"num_choices": 17, "num_triton_choices": 17, "best_kernel": "triton_mm_4", "best_kernel_desc": "ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=4", "best_time": 0.018208999186754227, "best_triton_pos": 0}
+AUTOTUNE mm(64x64, 64x1024)
+strides: [64, 1], [1024, 1]
+dtypes: torch.float32, torch.float32
+  triton_mm_4 0.0182 ms 100.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=4
+  triton_mm_1 0.0183 ms 99.4% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=32, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=4
+  triton_mm_14 0.0203 ms 89.8% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_16 0.0205 ms 89.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8
+  triton_mm_13 0.0207 ms 87.8% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_12 0.0208 ms 87.4% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=4
+  triton_mm_15 0.0209 ms 87.1% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=8
+  triton_mm_11 0.0209 ms 87.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_9 0.0209 ms 87.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_10 0.0210 ms 86.9% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+SingleProcess AUTOTUNE benchmarking takes 5.5293 seconds and 0.0001 seconds precompiling for 17 choices
+RECORD {"event": "pass", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "64x1024", "route": "sdnn", "inner": [[null, "sdnn", null]], "kernel_count": 1, "us": 20.22625058889389, "eager_us": 49.49890077114105, "samples": [20.948325097560883, 19.2563995718956, 20.22625058889389, 18.552349507808685, 20.372800529003143], "base_samples": [68.47574710845947, 49.83989894390106, 49.49890077114105, 48.30012619495392, 47.973400354385376], "elapsed": 14.283262499957345}
+END ["matmul_bias_gelu_exact", "float32", "64x1024", "sdnn", 0]
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+RECORD {"event": "start", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "512x1024", "plans": ["eager", "inductor", "native_mm", "sdnn", "sdnn_cluster_at_1", "sdnn_cluster_at_2"], "eager_us": 50.79370141029358}
+RECORD {"event": "try", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "512x1024", "route": "native_mm"}
+RECORD {"event": "pass", "kind": "matmul_bias_gelu_exact", "dtype": "float32", "shape": "512x1024", "route": "native_mm", "inner": [], "kernel_count": 2, "us": 41.38154983520508, "eager_us": 51.71017646789551, "samples": [42.08827614784241, 40.918099880218506, 41.73499941825867, 40.357398986816406, 41.38154983520508], "base_samples": [56.929051876068115, 51.71017646789551, 51.19232535362244, 51.86929702758789, 50.91645121574402], "elapsed": 2.6914253319846466}
+END ["matmul_bias_gelu_exact", "float32", "512x1024", "native_mm", 0]
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+RECORD {"event": "start", "kind": "add_softmax", "dtype": "float32", "shape": "64x1024", "plans": ["eager", "inductor", "cluster"], "eager_us": 20.069000124931335}
+RECORD {"event": "try", "kind": "add_softmax", "dtype": "float32", "shape": "64x1024", "route": "cluster"}
+END ["add_softmax", "float32", "64x1024", "cluster", 124]
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+RECORD {"event": "start", "kind": "matmul_bias_silu", "dtype": "float16", "shape": "64x1024", "plans": ["eager", "inductor", "native_mm"], "eager_us": 42.57889986038208}
+RECORD {"event": "try", "kind": "matmul_bias_silu", "dtype": "float16", "shape": "64x1024", "route": "inductor"}
+/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/backends/cuda/__init__.py:131: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  return torch._C._get_cublas_allow_tf32()
+/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py:78:20: error: uni_sram allocation overflow: current offset 1622016 exceeds capacity 1605632 (bufferSize=8192, bufferNum=92)
+        a = tl.load(A + (xindex))
+                   ^
+/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py:78:20: error: failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+        a = tl.load(A + (xindex))
+                   ^
+python: /ssd4/dongjibin/llvm22-build/llvm-project-22.1.8.src/llvm/include/llvm/ADT/ilist_iterator.h:168: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Operation, true, false, void, false, void>; bool IsReverse = false; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Operation&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+#map = affine_map<(d0, d1) -> (d0 * 128 + d1)>
+#map1 = affine_map<(d0, d1) -> (d0 * 32 + d1)>
+#map2 = affine_map<(d0, d1) -> (d0 * 64 + d1)>
+#map3 = affine_map<(d0, d1, d2) -> (d0, d2)>
+#map4 = affine_map<(d0, d1, d2) -> (d2, d1)>
+#map5 = affine_map<(d0, d1, d2) -> (d0, d1)>
+module {
+  func.func @triton_mm(%arg0: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg1: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg2: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg3: i32, %arg4: i32, %arg5: i32) {
+    %c64_i32 = arith.constant 64 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %c128_i32 = arith.constant 128 : i32
+    %c8_i32 = arith.constant 8 : i32
+    %c65536 = arith.constant 65536 : index
+    %c32768 = arith.constant 32768 : index
+    %c4096 = arith.constant 4096 : index
+    %c32 = arith.constant 32 : index
+    %c128 = arith.constant 128 : index
+    %c1024 = arith.constant 1024 : index
+    %c64 = arith.constant 64 : index
+    %c2_i32 = arith.constant 2 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %c1 = arith.constant 1 : index
+    %c0 = arith.constant 0 : index
+    "sdnn.init"() {signal = [array<i32: 11, 5, 3, 9, 7>], signal_num = array<i64: 3, 192, 92, 160, 92>} : () -> ()
+    %0 = sdnn.get_sdnn_id : i32
+    %1 = sdnn.get_num_sdnn : i32
+    %2 = arith.muli %arg3, %arg4 : i32
+    %3 = arith.muli %2, %arg5 : i32
+    %4 = arith.subi %1, %c1_i32 : i32
+    %5 = arith.addi %3, %4 : i32
+    %6 = arith.divsi %5, %1 : i32
+    %7 = arith.muli %0, %6 : i32
+    %8 = arith.addi %7, %6 : i32
+    %9 = arith.minsi %8, %3 : i32
+    %10 = arith.index_cast %7 : i32 to index
+    %11 = arith.index_cast %9 : i32 to index
+    %12 = sdnn.counter {bufferNum = 92 : i32} : memref<1xi32, 6>
+    %13 = sdnn.counter {bufferNum = 160 : i32} : memref<1xi32, 6>
+    %14 = sdnn.counter {bufferNum = 92 : i32} : memref<1xi32, 6>
+    %15 = sdnn.counter {bufferNum = 192 : i32} : memref<1xi32, 6>
+    %16 = sdnn.counter {bufferNum = 3 : i32} : memref<1xi32, 6>
+    scf.for %arg6 = %10 to %11 step %c1 {
+      %17 = arith.index_cast %arg6 : index to i32
+      %18 = arith.divsi %17, %arg5 : i32
+      %19 = arith.divsi %18, %arg4 : i32
+      %20 = arith.divsi %19, %c64_i32 : i32
+      %21 = arith.muli %20, %c8_i32 : i32
+      %22 = arith.subi %c1_i32, %21 : i32
+      %23 = arith.minsi %22, %c8_i32 : i32
+      %24 = arith.remsi %19, %23 : i32
+      %25 = arith.addi %21, %24 : i32
+      %26 = arith.remsi %19, %c64_i32 : i32
+      %27 = arith.divsi %26, %23 : i32
+      %28 = arith.cmpi sge, %25, %c0_i32 : i32
+      llvm.intr.assume %28 : i1
+      %29 = arith.cmpi sge, %27, %c0_i32 : i32
+      llvm.intr.assume %29 : i1
+      %30 = arith.muli %25, %c64_i32 : i32
+      %31 = arith.index_cast %25 : i32 to index
+      %32 = arith.muli %27, %c128_i32 : i32
+      %33 = arith.index_cast %27 : i32 to index
+      %34 = arith.muli %33, %c128 : index
+      %alloca = memref.alloca() : memref<1xi32>
+      memref.store %c0_i32, %alloca[%c0] : memref<1xi32>
+      %alloc = memref.alloc() {bufferNum = 3 : index, bufferSize = 32768 : index, init_signal = 11 : i64, pingpong_single, processed, sram = "uni_sram"} : memref<64x128xf32, #map>
+      %35 = sdnn.get_fifo_buffer %alloc, %16, {bufferNum = 3 : i32, bufferSize = 32768 : i32} : memref<64x128xf32, #map> memref<1xi32, 6> to memref<64x128xf32, #map>
+      sdnn.core_wait(4, 11) {core_name = "mma"}
+      scf.for %arg7 = %c0_i32 to %c2_i32 step %c1_i32  : i32 {
+        %50 = arith.index_cast %arg7 : i32 to index
+        %51 = arith.muli %50, %c32 : index
+        %52 = arith.muli %31, %c4096 : index
+        %53 = arith.addi %52, %51 : index
+        %54 = arith.cmpi sge, %53, %c4096 : index
+        %55 = arith.divsi %53, %c4096 : index
+        %56 = arith.muli %55, %c4096 : index
+        %57 = arith.subi %53, %56 : index
+        %58 = arith.select %54, %57, %53 : index
+        %59 = arith.divsi %58, %c64 : index
+        %60 = arith.addi %59, %c64 : index
+        %61 = arith.minsi %60, %c64 : index
+        %62 = arith.subi %61, %59 : index
+        %reinterpret_cast_1 = memref.reinterpret_cast %arg0 to offset: [%53], sizes: [%62, 32], strides: [64, 1] : memref<*xf16, 1> to memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %cast_2 = memref.cast %reinterpret_cast_1 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_3 = memref.alloc() {bufferNum = 192 : index, bufferSize = 4096 : index, init_signal = 5 : i64, processed, sram = "l1d"} : memref<64x32xf16, #map1, 3>
+        %63 = sdnn.get_fifo_buffer %alloc_3, %15, {bufferNum = 192 : i32, bufferSize = 4096 : i32} : memref<64x32xf16, #map1, 3> memref<1xi32, 6> to memref<64x32xf16, #map1, 3>
+        %alloc_4 = memref.alloc() {bufferNum = 92 : index, bufferSize = 8192 : index, init_signal = 3 : i64, processed, sram = "uni_sram", trans = false} : memref<64x32xf16, #map2>
+        %64 = sdnn.get_fifo_buffer %alloc_4, %14, {bufferNum = 92 : i32, bufferSize = 8192 : i32} : memref<64x32xf16, #map2> memref<1xi32, 6> to memref<64x32xf16, #map2>
+        %dim = memref.dim %reinterpret_cast_1, %c0 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %subview_5 = memref.subview %64[0, 0] [%dim, 32] [1, 1] : memref<64x32xf16, #map2> to memref<?x32xf16, strided<[64, 1]>>
+        %cast_6 = memref.cast %subview_5 : memref<?x32xf16, strided<[64, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_2, %cast_6 {core_id = 1 : i32, signal = array<i32: 2>, wait = array<i32: 3>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %64, %63 mask_dims[%c64, %c32] {sdnn.layout = "CR_RowMajor", signal = array<i32: 3, 4>, signal_cached = array<i32: 4>, wait = array<i32: 2, 5>, wait_cached = array<i32: 5>} : memref<64x32xf16, #map2> memref<64x32xf16, #map1, 3> -> 
+        %65 = arith.muli %50, %c32768 : index
+        %66 = arith.addi %65, %34 : index
+        %67 = arith.remsi %66, %c1024 : index
+        %68 = arith.addi %67, %c128 : index
+        %69 = arith.minsi %68, %c1024 : index
+        %70 = arith.subi %69, %67 : index
+        %reinterpret_cast_7 = memref.reinterpret_cast %arg1 to offset: [%66], sizes: [32, %70], strides: [1024, 1] : memref<*xf16, 1> to memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %cast_8 = memref.cast %reinterpret_cast_7 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_9 = memref.alloc() {bufferNum = 160 : index, bufferSize = 8192 : index, init_signal = 9 : i64, processed, sram = "l1w"} : memref<32x128xf16, #map, 4>
+        %71 = sdnn.get_fifo_buffer %alloc_9, %13, {bufferNum = 160 : i32, bufferSize = 8192 : i32} : memref<32x128xf16, #map, 4> memref<1xi32, 6> to memref<32x128xf16, #map, 4>
+        %alloc_10 = memref.alloc() {bufferNum = 92 : index, bufferSize = 8192 : index, init_signal = 7 : i64, processed, sram = "uni_sram", trans = false} : memref<32x128xf16, #map>
+        %72 = sdnn.get_fifo_buffer %alloc_10, %12, {bufferNum = 92 : i32, bufferSize = 8192 : i32} : memref<32x128xf16, #map> memref<1xi32, 6> to memref<32x128xf16, #map>
+        %dim_11 = memref.dim %reinterpret_cast_7, %c1 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %subview_12 = memref.subview %72[0, 0] [32, %dim_11] [1, 1] : memref<32x128xf16, #map> to memref<32x?xf16, strided<[128, 1]>>
+        %cast_13 = memref.cast %subview_12 : memref<32x?xf16, strided<[128, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_8, %cast_13 {core_id = 6 : i32, signal = array<i32: 6>, wait = array<i32: 7>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %72, %71 mask_dims[%c32, %c128] {sdnn.layout = "CR_RowMajor", signal = array<i32: 7, 8>, signal_cached = array<i32: 8>, wait = array<i32: 6, 9>, wait_cached = array<i32: 9>} : memref<32x128xf16, #map> memref<32x128xf16, #map, 4> -> 
+        %73 = memref.load %alloca[%c0] : memref<1xi32>
+        sdnn.mma %63, %71, %35 acc %73 mask_dims[%c64, %c128, %c32] {indexing_maps = [#map3, #map4, #map5], rcOut = false, sdnn.layout = "CR_RowMajor", signal = array<i32: 5, 9>, wait = array<i32: 4, 8>} : (memref<64x32xf16, #map1, 3>, memref<32x128xf16, #map, 4>, memref<64x128xf32, #map>, i32, index, index, index) -> ()
+        %74 = arith.addi %73, %c1_i32 : i32
+        memref.store %74, %alloca[%c0] : memref<1xi32>
+      } {mac_acc = true, sdnn.arg_layout.1 = "CR_RowMajor", sdnn.layout = "CR_RowMajor"}
+      sdnn.core_arrive(4, 10) {core_name = "mma"}
+      %36 = arith.muli %31, %c65536 : index
+      %37 = arith.addi %36, %34 : index
+      %reinterpret_cast = memref.reinterpret_cast %arg2 to offset: [%37], sizes: [64, 128], strides: [1024, 1] : memref<*xf16, 1> to memref<64x128xf16, strided<[1024, 1], offset: ?>, 1>
+      %38 = arith.index_cast %30 : i32 to index
+      %39 = arith.addi %38, %c64 : index
+      %40 = arith.minsi %39, %c64 : index
+      %41 = arith.maxsi %40, %38 : index
+      %42 = arith.subi %41, %38 : index
+      %43 = arith.index_cast %32 : i32 to index
+      %44 = arith.addi %43, %c128 : index
+      %45 = arith.minsi %44, %c1024 : index
+      %46 = arith.maxsi %45, %43 : index
+      %47 = arith.subi %46, %43 : index
+      %48 = arith.minsi %42, %c64 : index
+      %49 = arith.minsi %47, %c128 : index
+      %subview = memref.subview %reinterpret_cast[0, 0] [%48, %49] [1, 1] : memref<64x128xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[1024, 1], offset: ?>, 1>
+      %cast = memref.cast %subview : memref<?x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, 1], offset: ?>, 1>
+      %subview_0 = memref.subview %35[0, 0] [%48, %49] [1, 1] : memref<64x128xf32, #map> to memref<?x?xf32, strided<[128, 1]>>
+      sdnn.dma out %subview_0, %cast {signal = array<i32: 11>, wait = array<i32: 10>} : memref<?x?xf32, strided<[128, 1]>> memref<?x?xf16, strided<[?, 1], offset: ?>, 1> -> 
+    } {loop_grid}
+    "sdnn.end"() : () -> ()
+    return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(convert-scf-to-cf{allow-pattern-rollback=true}, expand-strided-metadata, convert-tritonsdnn-to-llvm{xpu_arch=3}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, symbol-dce, enable-line-info, llvm.func(llvmxpu-mfence-check))",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py:19:0: error: Failures have been detected while processing an MLIR pass pipeline
+/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py:19:0: note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+<unknown>:0: error: uni_sram allocation overflow: current offset 1646592 exceeds capacity 1605632 (bufferSize=8192, bufferNum=5)
+<unknown>:0: error: failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+python: /ssd4/dongjibin/llvm22-build/llvm-project-22.1.8.src/llvm/include/llvm/ADT/ilist_iterator.h:168: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Operation, true, false, void, false, void>; bool IsReverse = false; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Operation&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+#map = affine_map<(d0, d1) -> (d0 * 32 + d1)>
+#map1 = affine_map<(d0, d1) -> (d0 * 64 + d1)>
+#map2 = affine_map<(d0, d1, d2) -> (d0, d2)>
+#map3 = affine_map<(d0, d1, d2) -> (d2, d1)>
+#map4 = affine_map<(d0, d1, d2) -> (d0, d1)>
+module {
+  func.func @triton_mm(%arg0: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg1: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg2: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg3: i32, %arg4: i32, %arg5: i32) {
+    %c64_i32 = arith.constant 64 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %c32_i32 = arith.constant 32 : i32
+    %c8_i32 = arith.constant 8 : i32
+    %c65536 = arith.constant 65536 : index
+    %c32768 = arith.constant 32768 : index
+    %c4096 = arith.constant 4096 : index
+    %c32 = arith.constant 32 : index
+    %c1024 = arith.constant 1024 : index
+    %c64 = arith.constant 64 : index
+    %c2_i32 = arith.constant 2 : i32
+    %c256_i32 = arith.constant 256 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %c1 = arith.constant 1 : index
+    %c0 = arith.constant 0 : index
+    "sdnn.init"() {signal = [array<i32: 11, 5, 3, 9, 7>], signal_num = array<i64: 5, 192, 127, 255, 128>} : () -> ()
+    %0 = sdnn.get_sdnn_id : i32
+    %1 = sdnn.get_num_sdnn : i32
+    %2 = arith.muli %arg3, %arg4 : i32
+    %3 = arith.muli %2, %arg5 : i32
+    %4 = arith.subi %1, %c1_i32 : i32
+    %5 = arith.addi %3, %4 : i32
+    %6 = arith.divsi %5, %1 : i32
+    %7 = arith.muli %0, %6 : i32
+    %8 = arith.addi %7, %6 : i32
+    %9 = arith.minsi %8, %3 : i32
+    %10 = arith.index_cast %7 : i32 to index
+    %11 = arith.index_cast %9 : i32 to index
+    %12 = sdnn.counter {bufferNum = 128 : i32} : memref<1xi32, 6>
+    %13 = sdnn.counter {bufferNum = 255 : i32} : memref<1xi32, 6>
+    %14 = sdnn.counter {bufferNum = 127 : i32} : memref<1xi32, 6>
+    %15 = sdnn.counter {bufferNum = 192 : i32} : memref<1xi32, 6>
+    %16 = sdnn.counter {bufferNum = 5 : i32} : memref<1xi32, 6>
+    scf.for %arg6 = %10 to %11 step %c1 {
+      %17 = arith.index_cast %arg6 : index to i32
+      %18 = arith.divsi %17, %arg5 : i32
+      %19 = arith.divsi %18, %arg4 : i32
+      %20 = arith.divsi %19, %c256_i32 : i32
+      %21 = arith.muli %20, %c8_i32 : i32
+      %22 = arith.subi %c1_i32, %21 : i32
+      %23 = arith.minsi %22, %c8_i32 : i32
+      %24 = arith.remsi %19, %23 : i32
+      %25 = arith.addi %21, %24 : i32
+      %26 = arith.remsi %19, %c256_i32 : i32
+      %27 = arith.divsi %26, %23 : i32
+      %28 = arith.cmpi sge, %25, %c0_i32 : i32
+      llvm.intr.assume %28 : i1
+      %29 = arith.cmpi sge, %27, %c0_i32 : i32
+      llvm.intr.assume %29 : i1
+      %30 = arith.muli %25, %c64_i32 : i32
+      %31 = arith.index_cast %25 : i32 to index
+      %32 = arith.muli %27, %c32_i32 : i32
+      %33 = arith.index_cast %27 : i32 to index
+      %34 = arith.muli %33, %c32 : index
+      %alloca = memref.alloca() : memref<1xi32>
+      memref.store %c0_i32, %alloca[%c0] : memref<1xi32>
+      %alloc = memref.alloc() {bufferNum = 5 : index, bufferSize = 8192 : index, init_signal = 11 : i64, pingpong_single, processed, sram = "uni_sram"} : memref<64x32xf32, #map>
+      %35 = sdnn.get_fifo_buffer %alloc, %16, {bufferNum = 5 : i32, bufferSize = 8192 : i32} : memref<64x32xf32, #map> memref<1xi32, 6> to memref<64x32xf32, #map>
+      sdnn.core_wait(4, 11) {core_name = "mma"}
+      scf.for %arg7 = %c0_i32 to %c2_i32 step %c1_i32  : i32 {
+        %50 = arith.index_cast %arg7 : i32 to index
+        %51 = arith.muli %50, %c32 : index
+        %52 = arith.muli %31, %c4096 : index
+        %53 = arith.addi %52, %51 : index
+        %54 = arith.cmpi sge, %53, %c4096 : index
+        %55 = arith.divsi %53, %c4096 : index
+        %56 = arith.muli %55, %c4096 : index
+        %57 = arith.subi %53, %56 : index
+        %58 = arith.select %54, %57, %53 : index
+        %59 = arith.divsi %58, %c64 : index
+        %60 = arith.addi %59, %c64 : index
+        %61 = arith.minsi %60, %c64 : index
+        %62 = arith.subi %61, %59 : index
+        %reinterpret_cast_1 = memref.reinterpret_cast %arg0 to offset: [%53], sizes: [%62, 32], strides: [64, 1] : memref<*xf16, 1> to memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %cast_2 = memref.cast %reinterpret_cast_1 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_3 = memref.alloc() {bufferNum = 192 : index, bufferSize = 4096 : index, init_signal = 5 : i64, processed, sram = "l1d"} : memref<64x32xf16, #map, 3>
+        %63 = sdnn.get_fifo_buffer %alloc_3, %15, {bufferNum = 192 : i32, bufferSize = 4096 : i32} : memref<64x32xf16, #map, 3> memref<1xi32, 6> to memref<64x32xf16, #map, 3>
+        %alloc_4 = memref.alloc() {bufferNum = 127 : index, bufferSize = 8192 : index, init_signal = 3 : i64, processed, sram = "uni_sram", trans = false} : memref<64x32xf16, #map1>
+        %64 = sdnn.get_fifo_buffer %alloc_4, %14, {bufferNum = 127 : i32, bufferSize = 8192 : i32} : memref<64x32xf16, #map1> memref<1xi32, 6> to memref<64x32xf16, #map1>
+        %dim = memref.dim %reinterpret_cast_1, %c0 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %subview_5 = memref.subview %64[0, 0] [%dim, 32] [1, 1] : memref<64x32xf16, #map1> to memref<?x32xf16, strided<[64, 1]>>
+        %cast_6 = memref.cast %subview_5 : memref<?x32xf16, strided<[64, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_2, %cast_6 {core_id = 1 : i32, signal = array<i32: 2>, wait = array<i32: 3>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %64, %63 mask_dims[%c64, %c32] {sdnn.layout = "CR_RowMajor", signal = array<i32: 3, 4>, signal_cached = array<i32: 4>, wait = array<i32: 2, 5>, wait_cached = array<i32: 5>} : memref<64x32xf16, #map1> memref<64x32xf16, #map, 3> -> 
+        %65 = arith.muli %50, %c32768 : index
+        %66 = arith.addi %65, %34 : index
+        %67 = arith.remsi %66, %c1024 : index
+        %68 = arith.addi %67, %c32 : index
+        %69 = arith.minsi %68, %c1024 : index
+        %70 = arith.subi %69, %67 : index
+        %reinterpret_cast_7 = memref.reinterpret_cast %arg1 to offset: [%66], sizes: [32, %70], strides: [1024, 1] : memref<*xf16, 1> to memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %cast_8 = memref.cast %reinterpret_cast_7 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_9 = memref.alloc() {bufferNum = 255 : index, bufferSize = 2048 : index, init_signal = 9 : i64, processed, sram = "l1w"} : memref<32x32xf16, #map, 4>
+        %71 = sdnn.get_fifo_buffer %alloc_9, %13, {bufferNum = 255 : i32, bufferSize = 2048 : i32} : memref<32x32xf16, #map, 4> memref<1xi32, 6> to memref<32x32xf16, #map, 4>
+        %alloc_10 = memref.alloc() {bufferNum = 128 : index, bufferSize = 4096 : index, init_signal = 7 : i64, processed, sram = "uni_sram", trans = false} : memref<32x32xf16, #map1>
+        %72 = sdnn.get_fifo_buffer %alloc_10, %12, {bufferNum = 128 : i32, bufferSize = 4096 : i32} : memref<32x32xf16, #map1> memref<1xi32, 6> to memref<32x32xf16, #map1>
+        %dim_11 = memref.dim %reinterpret_cast_7, %c1 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %subview_12 = memref.subview %72[0, 0] [32, %dim_11] [1, 1] : memref<32x32xf16, #map1> to memref<32x?xf16, strided<[64, 1]>>
+        %cast_13 = memref.cast %subview_12 : memref<32x?xf16, strided<[64, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_8, %cast_13 {core_id = 6 : i32, signal = array<i32: 6>, wait = array<i32: 7>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %72, %71 mask_dims[%c32, %c32] {sdnn.layout = "CR_RowMajor", signal = array<i32: 7, 8>, signal_cached = array<i32: 8>, wait = array<i32: 6, 9>, wait_cached = array<i32: 9>} : memref<32x32xf16, #map1> memref<32x32xf16, #map, 4> -> 
+        %73 = memref.load %alloca[%c0] : memref<1xi32>
+        sdnn.mma %63, %71, %35 acc %73 mask_dims[%c64, %c32, %c32] {indexing_maps = [#map2, #map3, #map4], rcOut = false, sdnn.layout = "CR_RowMajor", signal = array<i32: 5, 9>, wait = array<i32: 4, 8>} : (memref<64x32xf16, #map, 3>, memref<32x32xf16, #map, 4>, memref<64x32xf32, #map>, i32, index, index, index) -> ()
+        %74 = arith.addi %73, %c1_i32 : i32
+        memref.store %74, %alloca[%c0] : memref<1xi32>
+      } {mac_acc = true, sdnn.arg_layout.1 = "CR_RowMajor", sdnn.layout = "CR_RowMajor"}
+      sdnn.core_arrive(4, 10) {core_name = "mma"}
+      %36 = arith.muli %31, %c65536 : index
+      %37 = arith.addi %36, %34 : index
+      %reinterpret_cast = memref.reinterpret_cast %arg2 to offset: [%37], sizes: [64, 32], strides: [1024, 1] : memref<*xf16, 1> to memref<64x32xf16, strided<[1024, 1], offset: ?>, 1>
+      %38 = arith.index_cast %30 : i32 to index
+      %39 = arith.addi %38, %c64 : index
+      %40 = arith.minsi %39, %c64 : index
+      %41 = arith.maxsi %40, %38 : index
+      %42 = arith.subi %41, %38 : index
+      %43 = arith.index_cast %32 : i32 to index
+      %44 = arith.addi %43, %c32 : index
+      %45 = arith.minsi %44, %c1024 : index
+      %46 = arith.maxsi %45, %43 : index
+      %47 = arith.subi %46, %43 : index
+      %48 = arith.minsi %42, %c64 : index
+      %49 = arith.minsi %47, %c32 : index
+      %subview = memref.subview %reinterpret_cast[0, 0] [%48, %49] [1, 1] : memref<64x32xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[1024, 1], offset: ?>, 1>
+      %cast = memref.cast %subview : memref<?x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, 1], offset: ?>, 1>
+      %subview_0 = memref.subview %35[0, 0] [%48, %49] [1, 1] : memref<64x32xf32, #map> to memref<?x?xf32, strided<[32, 1]>>
+      sdnn.dma out %subview_0, %cast {signal = array<i32: 11>, wait = array<i32: 10>} : memref<?x?xf32, strided<[32, 1]>> memref<?x?xf16, strided<[?, 1], offset: ?>, 1> -> 
+    } {loop_grid}
+    "sdnn.end"() : () -> ()
+    return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(convert-scf-to-cf{allow-pattern-rollback=true}, expand-strided-metadata, convert-tritonsdnn-to-llvm{xpu_arch=3}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, symbol-dce, enable-line-info, llvm.func(llvmxpu-mfence-check))",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py:19:0: error: Failures have been detected while processing an MLIR pass pipeline
+/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py:19:0: note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py:83:20: error: uni_sram allocation overflow: current offset 1671168 exceeds capacity 1605632 (bufferSize=4096, bufferNum=191)
+        b = tl.load(B + (xindex))
+                   ^
+/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py:86/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py::2583: :error: 20l1d allocation overflow: current offset 1308672 exceeds capacity 786432 (bufferSize=4096, bufferNum=192): 
+error:         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+
+         b = tl.load(B + (xindex)) 
+                                        ^ 
+^
+/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py:86:25: error: failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+        acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+                        ^
+python: /ssd4/dongjibin/llvm22-build/llvm-project-22.1.8.src/llvm/include/llvm/ADT/ilist_iterator.h:168: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Operation, true, false, void, false, void>; bool IsReverse = false; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Operation&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+python: /ssd4/dongjibin/llvm22-build/llvm-project-22.1.8.src/llvm/include/llvm/ADT/ilist_iterator.h:168: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Operation, true, false, void, false, void>; bool IsReverse = false; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Operation&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+#map = affine_map<(d0, d1) -> (d0 * 64 + d1)>#
+#mapmap = 1affine_map< = affine_map<(d(0d, 0d, 1d)1 -> ()d -> (0d * 064 *  + 32d + 1d1))>>
+
+##mapmap12 =  = affine_map<affine_map<((dd00, , dd11),  -> (dd20) *  -> (32d + 0d, 1d)2>)
+>#
+map#2map = 3affine_map< = affine_map<((dd00, , dd11, , d2d)2 -> ()d -> (2d, 0d, 1d)2>)
+>#
+map#4map = 3affine_map< = affine_map<(d(0d, 0d1, , dd12, )d -> (2d)0 -> (, dd21, )d>1
+)module> 
+{#
+map  4func.func =  affine_map<@(triton_mmd(0%, arg0d: 1memref<*x, f16d, 21>) { -> (tt.divisibilityd = 016,  : di132)}>, 
+%arg1module:  memref<*xf16{, 
+1  >func.func { tt.divisibility@ = 16triton_mm : (i%32arg0}: , memref<*x%f16arg2, : 1memref<*x>f16,  {1tt.divisibility> =  {16tt.divisibility :  = i1632 : i}32, }%, arg1%: arg3memref<*x: f16i, 321, >% {arg4tt.divisibility:  = i1632 : , i%32arg5}: , i%32arg2): memref<*x f16{, 
+1    >% {c64_i32tt.divisibility =  = arith.constant16  : 64i32} : , i%32arg3
+:     i%32c0_i32,  = %arith.constantarg4 : 0i : 32i, 32%
+arg5    : %ic32_i3232 = )arith.constant 32 : i 32{
+
+        %%c8_i32c64_i32 =  = arith.constantarith.constant  864 :  : ii32
+32    
+%    c32768% = c0_i32arith.constant =  arith.constant32768  : 0index : 
+i    32%
+c4096     = %arith.constantc8_i32  = 4096arith.constant :  index8
+ :     i%32c2048
+ =     arith.constant% c655362048 =  : arith.constantindex 
+65536     : %c32index = 
+arith.constant     %32c32768 :  = indexarith.constant
+     32768% : c1024index = 
+arith.constant     %1024c4096 :  = indexarith.constant
+     4096% : c64index = 
+arith.constant     %64c32 :  = indexarith.constant
+     32% : c1_i32index = arith.constant
+     1% : c1024i = 32
+arith.constant     %1024c128_i32 :  = indexarith.constant
+     128% : c64i = 32arith.constant
+     64%c2_i32 :  = indexarith.constant
+     2% : c2_i32i = 32arith.constant
+     2% : c1i = 32arith.constant
+     1% : c128_i32index = 
+arith.constant     %128c0 :  = iarith.constant32 
+0     : %indexc1_i32
+ =     arith.constant" s1d : nni.32i
+n    i%tc1" = (arith.constant)  {1signal :  = index[array<
+i    32: %11c0,  = 5arith.constant,  30, 9 : , index7>
+]    , "signal_nums = darray<nin64.: i5n, i255t, "191(, )255 {, signal191 = >[}array< : i(32) -> : ()
+11    , %50,  = 3sdnn.get_sdnn_id,  9:,  7i>32]
+    , %signal_num1 =  = array<sdnn.get_num_sdnni 64::  4i, 32192
+,     %1252,  = 255arith.muli,  126%>arg3}, :  (%) -> arg4( ):
+     i%320
+ =     sdnn.get_sdnn_id% 3: =  arith.mulii 32%
+2    ,% 1% = arg5sdnn.get_num_sdnn  ::  ii3232
+
+        %%42 =  = arith.subiarith.muli  %%1arg3, ,% c1_i32% arg4:  :i 32i
+32    
+%    5% = 3arith.addi =  arith.muli% 3%,2 ,% 4% arg5:  :i 32i
+32    
+%    6% = 4arith.divsi =  arith.subi% 5%,1 ,% 1% c1_i32:  :i 32i
+32    
+%    7% = 5arith.muli =  arith.addi% 0%,3 ,% 6% 4:  :i 32i
+32    
+%    8% = 6arith.addi =  arith.divsi% 7%,5 ,% 6% 1:  i:32 
+i    32%
+9     = %arith.minsi7  = %arith.muli8 ,% 0%,3  %:6  i:32 
+i    32%
+10     = %arith.index_cast8  = %arith.addi7  %:7 ,i 32% 6to  :index 
+i    32%
+11     = %arith.index_cast9  = %arith.minsi9  %:8 ,i 32% 3to  :index 
+i    32%
+12     = %sdnn.counter10 { = bufferNumarith.index_cast =  191% : 7i 32:}  i:32  memref<to1 xindexi
+32,     6%>11
+ =     %arith.index_cast13  = %sdnn.counter9 { bufferNum: =  255i : 32i 32to}  index:
+     memref<%112x = isdnn.counter32 {, bufferNum6 = >126
+ :     i%3214} =  sdnn.counter: { bufferNummemref< = 1191x : ii3232, }6 >:
+     memref<%113x = isdnn.counter32 {, bufferNum6 = >255
+ :     i%3215} =  sdnn.counter: { bufferNummemref< = 1255x : ii3232, }6 >:
+     memref<1%x14i = 32sdnn.counter,  {6bufferNum> = 
+    125% : 16i = 32sdnn.counter} { bufferNum: =  5memref< : 1ix32i}32 , :6 >memref<
+1    x%i1532 = , sdnn.counter6> {
+bufferNum     = scf.for192  : %iarg632 = }% 10: to  %memref<111 step x%ic132 , {6
+>      
+%    17% = 16arith.index_cast =  sdnn.counter% {arg6bufferNum  = :4  : indexi 32to}  i:32 
+memref<      1%x18i = 32arith.divsi,  6%>17
+,     scf.for% arg5% arg6: =  %i1032 to 
+%      11% step 19% = c1arith.divsi  {%
+18,       %%17arg4 =  arith.index_cast:  %iarg632 
+:       %index20  = toarith.divsi  i%3219
+,       %%c128_i3218  = :arith.divsi  i%3217
+,       %%21arg5 =  arith.muli:  %i2032,
+       %%c8_i3219  = :arith.divsi  i%3218
+,       %%22arg4 =  arith.subi:  %ic2_i3232,
+       %%2120  = :arith.divsi  i%3219
+,       %%23c128_i32 =  arith.minsi: % 22i,32 
+%      c8_i32% 21: =  arith.mulii 32%
+20      ,% 24% = c8_i32arith.remsi  :% 19i, 32%
+23       %:22  = iarith.subi32 
+%      c1_i32%,25  = %arith.addi21  %:21 ,i 32%
+24       %:23  = iarith.minsi32 
+%      22%,26  = %arith.remsic8_i32  %:19 ,i 32%
+c128_i32       %:24  = iarith.remsi32 
+%      19%,27  = %arith.divsi23  %:26 ,i 32%
+23       %:25  = iarith.addi32 
+%      21%,28  = %arith.cmpi24  sge:,  i%3225
+,       %26% = c0_i32arith.remsi  :% 19i,32 
+%      c128_i32llvm.intr.assume  :% 28i 32:
+       i%127
+ =       arith.divsi% 29% = 26arith.cmpi,  sge%,23  %:27 ,i 32%
+c0_i32       %:28  = iarith.cmpi32 
+sge      ,llvm.intr.assume  %%2529,  :% c0_i32i 1:
+       %i3032 = 
+arith.muli       llvm.intr.assume% 25%,28  %:c32_i32  i:1 
+i      32%
+29       = %arith.cmpi31  = sgearith.index_cast,  %%2527 ,:  i%32c0_i32  to:  indexi
+32      
+%      32llvm.intr.assume =  arith.muli% 29% 27:,  i%1c64_i32
+       :% 30i = 32arith.muli
+       %%2533, =  arith.index_cast% c64_i32% 27:  :i 32i
+32       %to31  = indexarith.index_cast
+       %%2534  = :arith.muli  i%3233 ,to  %indexc64
+       :% 32index = 
+arith.muli       %%alloca27 = ,memref.alloca (%)c64_i32  ::  imemref<321
+x      i%3233> = 
+arith.index_cast       memref.store% 27% c0_i32:,  i%32alloca [to% c0index]
+       :% 34memref< = 1arith.mulix i%3233>,
+       %%c64alloc  = :memref.alloc( )index
+ {      bufferNum% = alloca5 =  : memref.allocaindex(, )bufferSize  = :8192  : memref<index1, xinit_signali = 3211> : 
+i      64memref.store,  %pingpong_singlec0_i32, ,processed , %sramalloca = ["%uc0n]i _:s rmemref<a1mx"i}32 >:
+       memref<%32allocx = 64memref.allocx(f32), #map {>bufferNum
+ =       4% : 35 = indexsdnn.get_fifo_buffer,  bufferSize% = alloc16384, :  index%, 16,init_signal {bufferNum =  = 115 :  : ii6432, , pingpong_singlebufferSize,  = processed8192,  : srami = 32"} u:n imemref<_32sxr64axmf32", }# map:>  memref<memref<641xx64ix32f32, , 6#>map >to
+       memref<%3235x = 64sdnn.get_fifo_bufferx f32%, #allocmap,> 
+%      16sdnn.core_wait,( {4bufferNum, =  411 : )i {32core_name,  = bufferSize" = m16384m : ai32"}} 
+:       scf.formemref< %64arg7x = 64%c0_i32x to f32%, c2_i32# step map%>c1_i32  memref< : 1ix32i 32{, 
+6        >% 50to =  arith.index_castmemref< 64%xarg764 x:f32 , i#32map >to
+ index      
+sdnn.core_wait        %(514 = ,arith.muli  %1150), % {c32core_name  = :" mindexm
+a        "%}52
+ =       arith.muliscf.for  %%31arg7, =  %%c0_i32c2048 to  %:c2_i32  step index%
+c1_i32         % : 53i = 32arith.addi  {%
+52,         %%5051 =  arith.index_cast:  index%
+arg7         %:54  = iarith.cmpi32  sgeto,  index%
+53        ,% 51% = c4096arith.muli  :% 50index,
+         %%c3255  = :arith.divsi  index%
+53        ,%52  = %arith.mulic4096  %:31 ,index 
+%        c4096% 56: =  arith.muliindex 
+%        55%,53  = %arith.addic4096  %:52 ,index 
+%        51% 57: =  arith.subiindex 
+%        53%,54  = %arith.cmpi56 sge ,:  %index53
+,         %%58c4096 =  arith.select:  %index54
+,         %%5755,  = %arith.divsi53  : %index53
+,         %%59c4096 =  arith.divsi:  %index58
+,         %%56c64  = :arith.muli  index%
+55        ,% 60% = c4096arith.addi  :% 59index,
+         %%c3257  = :arith.subi index 
+%        53%,61  = %arith.minsi56 % 60:,  %indexc64
+         :% 58index = 
+arith.select         %62% = 54arith.subi,  %%5761, ,% 53% : 59index 
+:         %index59
+ =         arith.divsi% reinterpret_cast_1% = 58memref.reinterpret_cast,  %%arg0c64  to:  offsetindex:
+         [%%5360] = ,arith.addi  sizes%:59 ,[ %%62c64, 32 ]:,  indexstrides
+:         %[6164 = , arith.minsi1 ]%60 ,:  %memref<*xc64f16 , :1 >index 
+to         memref<%?62x = 32arith.subix f16%, 61strided<[,64 , %159], offset:  ?:> , index1
+>        
+%        reinterpret_cast_1% = cast_2memref.reinterpret_cast =  memref.cast% arg0%reinterpret_cast_1  to:  offsetmemref<:? x32[x%f1653, ]strided<[,64 , sizes1:] , offset: [?%>62, , 132>] ,to  stridesmemref<:? x[?64xf16, , 1strided<[]?, ? ]:, offset:  ?memref<*x>f16, , 11>>
+         to% alloc_3memref< = ?memref.allocx(32)xf16 {, bufferNumstrided<[ = 64255,  : 1index], , offset: bufferSize? = >2048,  : 1index>, 
+init_signal         = %5cast_2 :  = imemref.cast64 , %processedreinterpret_cast_1, sram  = :" lmemref<1?dx"32}x f16:,  strided<[memref<6432, x132]x, offset: f16?, >#, map11>,  3>to
+         memref<%?63x = ?sdnn.get_fifo_buffer x%f16alloc_3, ,strided<[ ?%, 15?,] {, offset: bufferNum? = >255,  : 1i>32
+, bufferSize = 2048 :         i%32alloc_3} =  memref.alloc:( )memref<32 {xbufferNum32 = x192f16 : , index#, mapbufferSize1 = , 40963 : >index , memref<init_signal1 = x5i : 32i, 646, >processed , tosram  = memref<"32lx132dx"f16},  #:map 1memref<, 643x>
+32        x%f16alloc_4,  = #memref.allocmap(1), 3 {>bufferNum
+ =         191% : 63index = , bufferSizesdnn.get_fifo_buffer =  4096% : alloc_3index,,  init_signal% = 153, :  {ibufferNum64 = , 192processed : , isram32 = , "bufferSizeu = n4096i : _is32r}a m:" , memref<trans64 = xfalse32}x f16: , memref<#32mapx132, x3f16>,  #memref<map1>x
+i        32%, 646 = >sdnn.get_fifo_buffer  to% alloc_4memref<,64 x%3214x,f16 {, bufferNum# = map1911 : , i332>, 
+bufferSize         = %4096alloc_4 :  = imemref.alloc32(}) : { bufferNummemref< = 32125x : 32indexx, f16bufferSize,  = #8192map : >index , memref<init_signal1 = x3i : 32i, 646, >processed , tosram  = memref<"32uxn32ix_f16s, r#amapm>"
+,         trans% = dimfalse = }memref.dim  :% reinterpret_cast_1memref<,64 x%32c0x f16:,  #memref<map?x>32
+x        f16%, 64strided<[ = 64, sdnn.get_fifo_buffer1 ]%, offset: alloc_4?,> , %114>,
+ {        bufferNum% = subview_5125 =  : memref.subviewi 32%, 64bufferSize[ = 08192,  : 0i]32 }[ %:dim , memref<3264]x 32[x1f16, , 1#]map>  :memref< 1memref<x32ix3232, x6f16>,  #tomap>  memref<to64 xmemref<32?xxf1632, x#f16map, >strided<[
+64        , %1dim] = >memref.dim> 
+%        reinterpret_cast_1%,cast_6  = %memref.castc0  :% subview_5memref< ?:x 32memref<x?f16x, 32strided<[x64f16, , 1strided<[]64, offset: , ?1>], >1>> 
+to         %memref<subview_5? = xmemref.subview? x%f1664, [strided<[0?, , 0?]] , offset: [?%>dim>, 
+        32sdnn.dma]  in[ 1%, cast_21,] %cast_6  {:core_id  = memref<164 : xi3232x, f16signal,  = #array<mapi>32 : to2 >memref<, ?waitx = 32array<xif1632, : strided<[364>, }1 ]:> >memref<
+?        x%?cast_6x = f16memref.cast,  strided<[%?subview_5,  ?:] , offset: ?memref<>?, x132>x f16memref<, ?strided<[x64?, x1f16, ]strided<[>?>,  ?to] , offset: memref<??>x>? x->f16 , 
+strided<[        ?sdnn.ds,  ?%]64, offset: ,? >%>63
+         mask_dimssdnn.dma[ %c32in,  %%c32cast_2],  {%sdnn.layoutcast_6 = " {Ccore_idR = _1R : oiw32M, asignalj = oarray<ri"32, : signal2 = >array<i, 32wait: 3 = , array<4i>32, : signal_cached3 = array<>i}32 : :4 >memref<, ?waitx = ?array<xif1632, : strided<[2?, , 5?>], , offset: wait_cached? = >array<, i132>:  5>memref<}? x:? xmemref<f1632, xstrided<[32x?f16, , ?#]map, offset: >? >memref<>32 x->32 x
+f16        , sdnn.ds# map%164, ,3 >% 63->  mask_dims
+[        %%c6465,  = %arith.mulic32 ]%50 {,sdnn.layout  = %"c32768C R:_ Rindexo
+w        M%a66j = oarith.addir "%, 65signal, =  array<%i3432 : :3 , index4
+>        , %signal_cached67 =  = array<arith.remsii 32%: 664,> , %waitc1024 =  array<: iindex32
+:         2%, 685 = >arith.addi,  wait_cached% = 67array<,i 32%: c645 >:}  index:
+         memref<%6469x = 32arith.minsix f16%, 68#,map >% c1024memref<64 x:32 xindexf16
+,         #%map701 = , arith.subi3 >% 69->,  
+%        67% 65: =  arith.muliindex 
+%        50%,reinterpret_cast_7  = %memref.reinterpret_castc32768  %:arg1  indexto
+         offset%:66  = [arith.addi% 66%]65,, sizes :% 34[ 32:,  %index70
+]        ,% 67strides = :arith.remsi  [%102466, ,1 ]%c1024  ::  memref<*xindexf16
+,         1%>68  = toarith.addi  memref<%3267x, ?%xc64f16 , : strided<[index1024
+,         1%]69, offset:  = ?arith.minsi> , %168>,
+         %%c1024cast_8  = :memref.cast  index%
+reinterpret_cast_7         %:70  = memref<arith.subi32 x%?69x,f16,  strided<[%102467,  1:] , offset: index?
+>        , %1reinterpret_cast_7> =  memref.reinterpret_castto  %memref<arg1? xto? xoffsetf16:,  strided<[[?%, 66?]],, offset: ? >sizes, :1 >[
+32        , %%alloc_970 = ]memref.alloc,( )strides: { bufferNum[ = 1024255,  : 1index],  bufferSize: =  4096memref<*x : f16index, , init_signal1 = >9  : toi 64memref<, processed32, xsram? = x"f16l, 1strided<[w1024", }1 ]:, offset:  ?memref<>32, x164>x
+f16        , %#cast_8map = , memref.cast4 >%
+reinterpret_cast_7         %:71  = memref<sdnn.get_fifo_buffer32 x%?alloc_9x,f16 , %strided<[131024,,  {1bufferNum] = , offset: 255? : >i, 321, >bufferSize  = to4096  : memref<i?32x}? x:f16 , memref<strided<[32x?64, x?f16], , offset: #?map>, , 41>> 
+memref<        1%xalloc_9i = 32memref.alloc, (6)> { bufferNumto =  255memref< : 32indexx, 64bufferSizex = f164096,  : #indexmap, , init_signal4 = >9
+         : %ialloc_1064 = , memref.allocprocessed(),  {srambufferNum =  = "191 : lindex1, wbufferSize" = }4096  : :index , memref<init_signal32 = x764 : xif1664, #, mapprocessed, , 4sram> = 
+"        u%n71i = _sdnn.get_fifo_buffers ra%malloc_9",,  trans% = 13false,} { bufferNum: =  255memref< : 32ix3264, xbufferSizef16 = , #4096map : >i
+32        }% 72: =  sdnn.get_fifo_buffermemref< 32%xalloc_1064,x f16%, 12#,map {, bufferNum4 = >191  : memref<i132x, ibufferSize32 = , 40966 : >i 32to}  memref<:32 xmemref<6432xxf1664, x#f16map, , #4map>>
+         memref<%1alloc_10x = imemref.alloc32(, )6> { bufferNumto =  memref<12632 : xindex64, xbufferSizef16 = 4096,  : #indexmap, >init_signal
+ =         7% : dim_11i = 64memref.dim,  processed%, reinterpret_cast_7sram, =  "%uc1n i:_ smemref<r32axm?"x, f16trans,  = strided<[false1024},  1:] , offset: memref<?32>x, 641x>f16
+,         #%mapsubview_12> = 
+memref.subview         %%7272 = [sdnn.get_fifo_buffer0 , %0alloc_10],  [%3212, ,% {dim_11bufferNum] =  126[ : i132, , 1bufferSize] = 4096  : :i 32memref<}32 x:64 xmemref<f1632, x#64mapx>f16 , to# mapmemref<>32 xmemref<?x1f16x, istrided<[3264, , 61>] >to> 
+memref<        32%xcast_1364 = xmemref.castf16 , %#subview_12map >:
+         memref<%32dim_11x = ?memref.dimx f16%, reinterpret_cast_7strided<[,64 , %1c1] >:>  memref<to32 xmemref<??xxf16?, xstrided<[f161024, , strided<[1?], , offset: ??]>, offset: , ?>1>>
+
+                sdnn.dma% subview_12in =  memref.subview% cast_8%,72 [%0cast_13,  {0core_id] =  6[ : 32i, 32%, dim_11signal] = array< i[321: , 61>], wait =  array<:i 32memref<: 327x64>x}f16 , :# mapmemref<>? xto? xmemref<f1632, xstrided<[??x, f16?, ]strided<[, offset: 64?, >1, ]1>>> 
+memref<        ?%xcast_13? = xmemref.castf16 , %strided<[subview_12? , :? ]memref<, offset: 32?x>?>x f16->,  strided<[
+64        , sdnn.ds1 ]%>72>,  %to71  memref<mask_dims?[x%?c32x, f16%, c64strided<[]?,  {?sdnn.layout] = , offset: "?C>R>_
+R        osdnn.dmaw Mina j%ocast_8r," , %signalcast_13 = array< {icore_id32 = : 67 : , i832>, , signalsignal_cached =  = array<array<ii3232: : 68>>, , waitwait =  = array<array<ii3232: : 76>, }9 >:,  wait_cachedmemref< = ?array<xi?32x: f169, >strided<[}? :,  ?memref<]32, offset: x?64>x, f161, ># mapmemref<>? xmemref<?32xxf1664, xstrided<[f16?, , #?map], 4, offset: >? >->>  
+->         %
+73         = sdnn.dsmemref.load  %%72alloca,[ %%c071]  mask_dims:[ %memref<c321, x%ic6432]>
+         {sdnn.mmasdnn.layout  = %"63C,R _%R71o,w M%a35j oaccr "%, 73signal  = mask_dimsarray<[i%32c32: , 7%, c648, >%, c32signal_cached] =  {array<indexing_mapsi = 32[: #8map>2, , wait# = maparray<3i, 32#: map64, ]9, >rcOut,  = wait_cachedfalse = , array<sdnn.layouti = 32": C9R>_}R o:w Mamemref<j32oxr64"x, f16signal,  = #array<mapi>32 : memref<532, x964>x, f16wait,  = #array<mapi, 324: >4 , ->8 >
+}         %:73  = (memref.loadmemref< 32%xalloca32[x%f16c0, ]# map:1 , memref<31>x, imemref<3232>x
+64        xsdnn.mmaf16 , %#63map,,  4%>71, ,memref< 32x%6435x f32acc,  #%map73> , mask_dimsi[32%, c64index, , %indexc64, , index%c32)] -> ( {)
+indexing_maps         = %[74# = maparith.addi2 , %#73map,3 , %#c1_i32map 4:] , i32rcOut
+ =         falsememref.store,  sdnn.layout% = 74",C R%_allocaR[o%wc0]M a:j omemref<r1"x, isignal32 = >array<
+i      32}: 5 {, mac_acc9 = >true, , waitsdnn.arg_layout.1 =  = array<"iC32R: _4R, o8w>M}a j:o r("memref<, 64sdnn.layoutx = 32"xCf16R, _R#omapw1M, a3j>o, rmemref<"32}x
+64      xsdnn.core_arrivef16(, 4#,map , 104)> {, core_namememref< = 64"xm64max"f32}, 
+#      map%>36,  = iarith.muli32 , %index31, index,,  index%)c32768 ->  (:) 
+index        
+%      74% = 37arith.addi =  arith.addi% 73%,36 ,% c1_i32% 34:  :i 32index
+
+              memref.store% reinterpret_cast% = 74memref.reinterpret_cast,  %%arg2alloca [to% c0offset]:  :[ %memref<371]x,i 32sizes>:
+       [}32 {, mac_acc64 = ]true,,  sdnn.arg_layout.1strides = :" C[R1024, _1R]ow M:a jmemref<*xof16r, "1, >sdnn.layout  = to" Cmemref<R32_xR64oxwf16M, astrided<[j1024o, r1"]}, offset: 
+?      >sdnn.core_arrive, (14>,
+       10%)38 =  {arith.index_castcore_name  = %"30m m:a "i}32
+       to% 36index = 
+arith.muli       %%3931 = ,arith.addi  %%c6553638 ,:  %indexc32
+       :% 37index = 
+arith.addi       %%4036 = ,arith.minsi  %%3439 ,: % c64index 
+:       %indexreinterpret_cast
+ =       memref.reinterpret_cast% 41% = arg2arith.maxsi  to% 40offset,: % 38[ %:37 ]index,
+       sizes%:42  = [arith.subi64 %, 4164,] ,% 38strides ::  [index1024
+,       1%]43 = arith.index_cast  :% 32memref<*x f16:,  i132>  toto  indexmemref<
+64      x%6444x = f16arith.addi,  %strided<[43,1024 , %1c64] , offset: :? >index, 
+1      >%
+45 =       arith.minsi% 38% = 44arith.index_cast,  %%30c1024  ::  iindex32
+       to%46  = indexarith.maxsi
+       %%45,39  = %arith.addi43  %:38 ,index 
+%      %c6447  = :arith.subi  index%
+46      , %%4043 =  arith.minsi:  index%
+39      ,% 48% = c64arith.minsi  :% 42index,
+ %      c32% 41: =  arith.maxsiindex 
+%      40,% 49% = 38arith.minsi  :% 47index,
+       %%c6442  = :arith.subi  index%
+41      ,% subview% = 38memref.subview  :% reinterpret_castindex[
+0      , %043] =  arith.index_cast[% 48%, 32% 49:]  i[321 , to1 ]index
+       :% 44memref< = 32arith.addix 64%x43f16,,  strided<[%1024c64,  1:] , offset: index?
+>      , %145> =  arith.minsito  %memref<44?,x ?%xc1024f16 , :strided<[ 1024index, 
+1      ]%, offset: 46? = >arith.maxsi,  1%>45
+,       %%cast43 =  memref.cast:  %indexsubview
+       :% 47memref< = ?arith.subix ?x%f1646, ,strided<[ 1024%, 431 ]:, offset:  index?
+>      , %148> =  arith.minsito  %memref<42?,x ?%xc64f16 , :strided<[ ?index, 
+1      ]%, offset: 49? = >arith.minsi,  1%>47
+,       %%subview_0c64 =  memref.subview:  %index35
+[      0%, subview0 = ]memref.subview  [%%reinterpret_cast48[, 0%, 490]]  [[1%, 481, ]%49 ]:  [memref<132, x164]xf32 , :# map>memref< 64tox 64memref<x?f16x, ?strided<[x1024f32, , strided<[164], , offset: 1?]>>, >1
+>       sdnn.dmato  outmemref< ?%xsubview_0?,x f16%, caststrided<[ {signal1024 = , array<1i]32, offset: : ?11>>, , 1wait> = 
+array<      i%32cast:  = 10memref.cast> }% subview:  :memref< ?memref<x??xx?f32x, f16strided<[, 64strided<[, 11024], >1>] , offset: memref<??>x, ?1xf16>,  strided<[to? , memref<1?]x, offset: ??xf16>, , strided<[1?>,  1->] , offset: 
+?    >},  {1loop_grid>}
+
+          %"subview_0s = dmemref.subviewn n%.35e[n0d, "0(])  : [(%) -> 48(, )%
+49    ]return [
+1  , }1
+]}
+ 
+:{-# 
+memref<  64externalx_resources: {64
+x    f32mlir_reproducer, : {#
+map      >pipeline : to" bumemref<i?lxt?ixnf32., mstrided<[o64du, l1e](>c>o
+n      vsdnn.dmae routt -%ssubview_0c,f -%tcasto- {csignalf = {array<ail32l: o11w>-, pwaita = tarray<tie32rn: -10r>o}l l:b amemref<c?kx=?txrf32u, estrided<[}64,,  1ex]p>a>n dmemref<-?sxt?rxif16d, estrided<[d?-, m1e]ta, offset: d?a>t, a1,>  c->o n
+v    e}r {tloop_grid-}t
+r    i"tsodnnsdnn.ne-ndt"o(-)l : l(v) -> m({)x
+p    ureturn_
+a  r}c
+}h
+=3
+}{-#,
+   cexternala_resources: {n
+o    nmlir_reproduceri: {c
+a      lpipelinei: z"eb{ u imlatxi-ni.tmeroadtuiloen(sc=o1n0v emratx--sncufm--rteow-rcift{eas=l-l1o wr-epgaitotne-rsni-mrpollilfbya=cnko=rtmraule }t,es te-xcpoannvde-rsgternicde=efda-lmsee ttaodpa-dtoaw,n =ctornuvee}r,t -ctsrei,t osnysmdbnonl--tdoc-el,l vemna{bxlpeu-_lairnceh-i=n3f}o,,  clalnvomn.ifcuanlci(zlel{v m xmpaux--mifteencrea-tcihoencsk=)1)0" ,m
+a      xdisable_threading-: ntrueu,m
+-      rverify_eache: wtruer
+i    }t
+e  }s
+=#-}-
+1 region-simplify=normal /opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py:19:0t: eserror: tFailures have been detected while processing an MLIR pass pipeline
+-/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py:19:0c: onote: nPipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`v
+ergence=false top-down=true}, cse, symbol-dce, enable-line-info, llvm.func(llvmxpu-mfence-check))",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py:19:0: error: Failures have been detected while processing an MLIR pass pipeline
+/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py:19:0: note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+<unknown>:0: error: uni_sram allocation overflow: current offset 1638400 exceeds capacity 1605632 (bufferSize=16384, bufferNum=2)
+<unknown>:0: error: failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+python: /ssd4/dongjibin/llvm22-build/llvm-project-22.1.8.src/llvm/include/llvm/ADT/ilist_iterator.h:168: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Operation, true, false, void, false, void>; bool IsReverse = false; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Operation&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+#map = affine_map<(d0, d1) -> (d0 * 64 + d1)>
+#map1 = affine_map<(d0, d1) -> (d0 * 32 + d1)>
+#map2 = affine_map<(d0, d1, d2) -> (d0, d2)>
+#map3 = affine_map<(d0, d1, d2) -> (d2, d1)>
+#map4 = affine_map<(d0, d1, d2) -> (d0, d1)>
+module {
+  func.func @triton_mm(%arg0: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg1: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg2: memref<*xf16, 1> {tt.divisibility = 16 : i32}, %arg3: i32, %arg4: i32, %arg5: i32) {
+    %c64_i32 = arith.constant 64 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %c8_i32 = arith.constant 8 : i32
+    %c65536 = arith.constant 65536 : index
+    %c32768 = arith.constant 32768 : index
+    %c4096 = arith.constant 4096 : index
+    %c32 = arith.constant 32 : index
+    %c1024 = arith.constant 1024 : index
+    %c64 = arith.constant 64 : index
+    %c2_i32 = arith.constant 2 : i32
+    %c128_i32 = arith.constant 128 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %c1 = arith.constant 1 : index
+    %c0 = arith.constant 0 : index
+    "sdnn.init"() {signal = [array<i32: 11, 5, 3, 9, 7>], signal_num = array<i64: 2, 192, 128, 255, 128>} : () -> ()
+    %0 = sdnn.get_sdnn_id : i32
+    %1 = sdnn.get_num_sdnn : i32
+    %2 = arith.muli %arg3, %arg4 : i32
+    %3 = arith.muli %2, %arg5 : i32
+    %4 = arith.subi %1, %c1_i32 : i32
+    %5 = arith.addi %3, %4 : i32
+    %6 = arith.divsi %5, %1 : i32
+    %7 = arith.muli %0, %6 : i32
+    %8 = arith.addi %7, %6 : i32
+    %9 = arith.minsi %8, %3 : i32
+    %10 = arith.index_cast %7 : i32 to index
+    %11 = arith.index_cast %9 : i32 to index
+    %12 = sdnn.counter {bufferNum = 128 : i32} : memref<1xi32, 6>
+    %13 = sdnn.counter {bufferNum = 255 : i32} : memref<1xi32, 6>
+    %14 = sdnn.counter {bufferNum = 128 : i32} : memref<1xi32, 6>
+    %15 = sdnn.counter {bufferNum = 192 : i32} : memref<1xi32, 6>
+    %16 = sdnn.counter {bufferNum = 2 : i32} : memref<1xi32, 6>
+    scf.for %arg6 = %10 to %11 step %c1 {
+      %17 = arith.index_cast %arg6 : index to i32
+      %18 = arith.divsi %17, %arg5 : i32
+      %19 = arith.divsi %18, %arg4 : i32
+      %20 = arith.divsi %19, %c128_i32 : i32
+      %21 = arith.muli %20, %c8_i32 : i32
+      %22 = arith.subi %c1_i32, %21 : i32
+      %23 = arith.minsi %22, %c8_i32 : i32
+      %24 = arith.remsi %19, %23 : i32
+      %25 = arith.addi %21, %24 : i32
+      %26 = arith.remsi %19, %c128_i32 : i32
+      %27 = arith.divsi %26, %23 : i32
+      %28 = arith.cmpi sge, %25, %c0_i32 : i32
+      llvm.intr.assume %28 : i1
+      %29 = arith.cmpi sge, %27, %c0_i32 : i32
+      llvm.intr.assume %29 : i1
+      %30 = arith.muli %25, %c64_i32 : i32
+      %31 = arith.index_cast %25 : i32 to index
+      %32 = arith.muli %27, %c64_i32 : i32
+      %33 = arith.index_cast %27 : i32 to index
+      %34 = arith.muli %33, %c64 : index
+      %alloca = memref.alloca() : memref<1xi32>
+      memref.store %c0_i32, %alloca[%c0] : memref<1xi32>
+      %alloc = memref.alloc() {bufferNum = 2 : index, bufferSize = 16384 : index, init_signal = 11 : i64, pingpong_single, processed, sram = "uni_sram"} : memref<64x64xf32, #map>
+      %35 = sdnn.get_fifo_buffer %alloc, %16, {bufferNum = 2 : i32, bufferSize = 16384 : i32} : memref<64x64xf32, #map> memref<1xi32, 6> to memref<64x64xf32, #map>
+      sdnn.core_wait(4, 11) {core_name = "mma"}
+      scf.for %arg7 = %c0_i32 to %c2_i32 step %c1_i32  : i32 {
+        %50 = arith.index_cast %arg7 : i32 to index
+        %51 = arith.muli %50, %c32 : index
+        %52 = arith.muli %31, %c4096 : index
+        %53 = arith.addi %52, %51 : index
+        %54 = arith.cmpi sge, %53, %c4096 : index
+        %55 = arith.divsi %53, %c4096 : index
+        %56 = arith.muli %55, %c4096 : index
+        %57 = arith.subi %53, %56 : index
+        %58 = arith.select %54, %57, %53 : index
+        %59 = arith.divsi %58, %c64 : index
+        %60 = arith.addi %59, %c64 : index
+        %61 = arith.minsi %60, %c64 : index
+        %62 = arith.subi %61, %59 : index
+        %reinterpret_cast_1 = memref.reinterpret_cast %arg0 to offset: [%53], sizes: [%62, 32], strides: [64, 1] : memref<*xf16, 1> to memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %cast_2 = memref.cast %reinterpret_cast_1 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_3 = memref.alloc() {bufferNum = 192 : index, bufferSize = 4096 : index, init_signal = 5 : i64, processed, sram = "l1d"} : memref<64x32xf16, #map1, 3>
+        %63 = sdnn.get_fifo_buffer %alloc_3, %15, {bufferNum = 192 : i32, bufferSize = 4096 : i32} : memref<64x32xf16, #map1, 3> memref<1xi32, 6> to memref<64x32xf16, #map1, 3>
+        %alloc_4 = memref.alloc() {bufferNum = 128 : index, bufferSize = 8192 : index, init_signal = 3 : i64, processed, sram = "uni_sram", trans = false} : memref<64x32xf16, #map>
+        %64 = sdnn.get_fifo_buffer %alloc_4, %14, {bufferNum = 128 : i32, bufferSize = 8192 : i32} : memref<64x32xf16, #map> memref<1xi32, 6> to memref<64x32xf16, #map>
+        %dim = memref.dim %reinterpret_cast_1, %c0 : memref<?x32xf16, strided<[64, 1], offset: ?>, 1>
+        %subview_5 = memref.subview %64[0, 0] [%dim, 32] [1, 1] : memref<64x32xf16, #map> to memref<?x32xf16, strided<[64, 1]>>
+        %cast_6 = memref.cast %subview_5 : memref<?x32xf16, strided<[64, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_2, %cast_6 {core_id = 1 : i32, signal = array<i32: 2>, wait = array<i32: 3>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %64, %63 mask_dims[%c64, %c32] {sdnn.layout = "CR_RowMajor", signal = array<i32: 3, 4>, signal_cached = array<i32: 4>, wait = array<i32: 2, 5>, wait_cached = array<i32: 5>} : memref<64x32xf16, #map> memref<64x32xf16, #map1, 3> -> 
+        %65 = arith.muli %50, %c32768 : index
+        %66 = arith.addi %65, %34 : index
+        %67 = arith.remsi %66, %c1024 : index
+        %68 = arith.addi %67, %c64 : index
+        %69 = arith.minsi %68, %c1024 : index
+        %70 = arith.subi %69, %67 : index
+        %reinterpret_cast_7 = memref.reinterpret_cast %arg1 to offset: [%66], sizes: [32, %70], strides: [1024, 1] : memref<*xf16, 1> to memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %cast_8 = memref.cast %reinterpret_cast_7 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, ?], offset: ?>, 1>
+        %alloc_9 = memref.alloc() {bufferNum = 255 : index, bufferSize = 4096 : index, init_signal = 9 : i64, processed, sram = "l1w"} : memref<32x64xf16, #map, 4>
+        %71 = sdnn.get_fifo_buffer %alloc_9, %13, {bufferNum = 255 : i32, bufferSize = 4096 : i32} : memref<32x64xf16, #map, 4> memref<1xi32, 6> to memref<32x64xf16, #map, 4>
+        %alloc_10 = memref.alloc() {bufferNum = 128 : index, bufferSize = 4096 : index, init_signal = 7 : i64, processed, sram = "uni_sram", trans = false} : memref<32x64xf16, #map>
+        %72 = sdnn.get_fifo_buffer %alloc_10, %12, {bufferNum = 128 : i32, bufferSize = 4096 : i32} : memref<32x64xf16, #map> memref<1xi32, 6> to memref<32x64xf16, #map>
+        %dim_11 = memref.dim %reinterpret_cast_7, %c1 : memref<32x?xf16, strided<[1024, 1], offset: ?>, 1>
+        %subview_12 = memref.subview %72[0, 0] [32, %dim_11] [1, 1] : memref<32x64xf16, #map> to memref<32x?xf16, strided<[64, 1]>>
+        %cast_13 = memref.cast %subview_12 : memref<32x?xf16, strided<[64, 1]>> to memref<?x?xf16, strided<[?, ?], offset: ?>>
+        sdnn.dma in %cast_8, %cast_13 {core_id = 6 : i32, signal = array<i32: 6>, wait = array<i32: 7>} : memref<?x?xf16, strided<[?, ?], offset: ?>, 1> memref<?x?xf16, strided<[?, ?], offset: ?>> -> 
+        sdnn.ds %72, %71 mask_dims[%c32, %c64] {sdnn.layout = "CR_RowMajor", signal = array<i32: 7, 8>, signal_cached = array<i32: 8>, wait = array<i32: 6, 9>, wait_cached = array<i32: 9>} : memref<32x64xf16, #map> memref<32x64xf16, #map, 4> -> 
+        %73 = memref.load %alloca[%c0] : memref<1xi32>
+        sdnn.mma %63, %71, %35 acc %73 mask_dims[%c64, %c64, %c32] {indexing_maps = [#map2, #map3, #map4], rcOut = false, sdnn.layout = "CR_RowMajor", signal = array<i32: 5, 9>, wait = array<i32: 4, 8>} : (memref<64x32xf16, #map1, 3>, memref<32x64xf16, #map, 4>, memref<64x64xf32, #map>, i32, index, index, index) -> ()
+        %74 = arith.addi %73, %c1_i32 : i32
+        memref.store %74, %alloca[%c0] : memref<1xi32>
+      } {mac_acc = true, sdnn.arg_layout.1 = "CR_RowMajor", sdnn.layout = "CR_RowMajor"}
+      sdnn.core_arrive(4, 10) {core_name = "mma"}
+      %36 = arith.muli %31, %c65536 : index
+      %37 = arith.addi %36, %34 : index
+      %reinterpret_cast = memref.reinterpret_cast %arg2 to offset: [%37], sizes: [64, 64], strides: [1024, 1] : memref<*xf16, 1> to memref<64x64xf16, strided<[1024, 1], offset: ?>, 1>
+      %38 = arith.index_cast %30 : i32 to index
+      %39 = arith.addi %38, %c64 : index
+      %40 = arith.minsi %39, %c64 : index
+      %41 = arith.maxsi %40, %38 : index
+      %42 = arith.subi %41, %38 : index
+      %43 = arith.index_cast %32 : i32 to index
+      %44 = arith.addi %43, %c64 : index
+      %45 = arith.minsi %44, %c1024 : index
+      %46 = arith.maxsi %45, %43 : index
+      %47 = arith.subi %46, %43 : index
+      %48 = arith.minsi %42, %c64 : index
+      %49 = arith.minsi %47, %c64 : index
+      %subview = memref.subview %reinterpret_cast[0, 0] [%48, %49] [1, 1] : memref<64x64xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[1024, 1], offset: ?>, 1>
+      %cast = memref.cast %subview : memref<?x?xf16, strided<[1024, 1], offset: ?>, 1> to memref<?x?xf16, strided<[?, 1], offset: ?>, 1>
+      %subview_0 = memref.subview %35[0, 0] [%48, %49] [1, 1] : memref<64x64xf32, #map> to memref<?x?xf32, strided<[64, 1]>>
+      sdnn.dma out %subview_0, %cast {signal = array<i32: 11>, wait = array<i32: 10>} : memref<?x?xf32, strided<[64, 1]>> memref<?x?xf16, strided<[?, 1], offset: ?>, 1> -> 
+    } {loop_grid}
+    "sdnn.end"() : () -> ()
+    return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(convert-scf-to-cf{allow-pattern-rollback=true}, expand-strided-metadata, convert-tritonsdnn-to-llvm{xpu_arch=3}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, symbol-dce, enable-line-info, llvm.func(llvmxpu-mfence-check))",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py:19:0: error: Failures have been detected while processing an MLIR pass pipeline
+/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py:19:0: note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: Placeholder.DESCRIPTIVE_NAME
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_mm(arg_A, arg_B, out_ptr0):
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     EVEN_K : tl.constexpr = True
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ALLOW_TF32 : tl.constexpr = False
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     USE_FAST_ACCUM : tl.constexpr = False
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ACC_TYPE : tl.constexpr = tl.float32
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_M : tl.constexpr = 64
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_N : tl.constexpr = 128
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_K : tl.constexpr = 32
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     GROUP_M : tl.constexpr = 8
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     INDEX_DTYPE : tl.constexpr = tl.int32
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     A = arg_A
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     B = arg_B
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     M = 64
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     N = 1024
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     K = 64
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if M * N == 0:
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         # early exit due to zero-size input(s)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         return
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_am = 64
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_ak = 1
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bk = 1024
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bn = 1
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # based on triton.ops.matmul
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid = tl.program_id(0)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_m = (M + BLOCK_M - 1) // BLOCK_M
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_n = (N + BLOCK_N - 1) // BLOCK_N
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # re-order program ID for better L2 performance
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     width = GROUP_M * grid_n
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_id = pid // width
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_size = min(grid_m - group_id * GROUP_M, GROUP_M)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_m = group_id * GROUP_M + (pid % group_size)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_n = (pid % width) // (group_size)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_m >= 0)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_n >= 0)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_am == 1 and stride_ak == M) or (stride_am == K and stride_ak == 1)) and (M >= BLOCK_M and K > 1):
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = tl.max_contiguous(tl.multiple_of(rm % M, BLOCK_M), BLOCK_M)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = rm % M
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_bk == 1 and stride_bn == K) or (stride_bk == N and stride_bn == 1)) and (N >= BLOCK_N and K > 1):
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = tl.max_contiguous(tl.multiple_of(rn % N, BLOCK_N), BLOCK_N)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = rn % N
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     offs_k = tl.arange(0, BLOCK_K)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=ACC_TYPE)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for k_idx in range(0, tl.cdiv(K, BLOCK_K)):
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a_k_idx_vals = offs_k[None, :] + (k_idx * BLOCK_K)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b_k_idx_vals = offs_k[:, None] + (k_idx * BLOCK_K)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = offs_a_m[:, None]
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = a_k_idx_vals
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 64*idx_m
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a = tl.load(A + (xindex))
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = b_k_idx_vals
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = offs_b_n[None, :]
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 1024*idx_m
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b = tl.load(B + (xindex))
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # rematerialize rm and rn to save registers
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_m = rm[:, None]
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_n = rn[None, :]
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     mask = (idx_m < M) & (idx_n < N)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # inductor generates a suffix
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = idx_n + 1024*idx_m
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr0 + (tl.broadcast_to(xindex, acc.shape)), acc, mask)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'arg_A': '*fp16', 'arg_B': '*fp16', 'out_ptr0': '*fp16'}, 'device': 0, 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 4, 'num_stages': 3, 'debug': True, 'cc': 86}
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original(source, **kwargs)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pm.run(mod, 'make_llir')
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): uni_sram allocation overflow: current offset 1622016 exceeds capacity 1605632 (bufferSize=8192, bufferNum=92)
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:33.507000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: Placeholder.DESCRIPTIVE_NAME
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_mm(arg_A, arg_B, out_ptr0):
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     EVEN_K : tl.constexpr = True
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ALLOW_TF32 : tl.constexpr = False
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     USE_FAST_ACCUM : tl.constexpr = False
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ACC_TYPE : tl.constexpr = tl.float32
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_M : tl.constexpr = 64
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_N : tl.constexpr = 32
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_K : tl.constexpr = 32
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     GROUP_M : tl.constexpr = 8
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     INDEX_DTYPE : tl.constexpr = tl.int32
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     A = arg_A
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     B = arg_B
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     M = 64
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     N = 1024
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     K = 64
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if M * N == 0:
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         # early exit due to zero-size input(s)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         return
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_am = 64
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_ak = 1
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bk = 1024
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bn = 1
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # based on triton.ops.matmul
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid = tl.program_id(0)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_m = (M + BLOCK_M - 1) // BLOCK_M
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_n = (N + BLOCK_N - 1) // BLOCK_N
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # re-order program ID for better L2 performance
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     width = GROUP_M * grid_n
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_id = pid // width
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_size = min(grid_m - group_id * GROUP_M, GROUP_M)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_m = group_id * GROUP_M + (pid % group_size)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_n = (pid % width) // (group_size)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_m >= 0)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_n >= 0)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_am == 1 and stride_ak == M) or (stride_am == K and stride_ak == 1)) and (M >= BLOCK_M and K > 1):
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = tl.max_contiguous(tl.multiple_of(rm % M, BLOCK_M), BLOCK_M)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = rm % M
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_bk == 1 and stride_bn == K) or (stride_bk == N and stride_bn == 1)) and (N >= BLOCK_N and K > 1):
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = tl.max_contiguous(tl.multiple_of(rn % N, BLOCK_N), BLOCK_N)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = rn % N
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     offs_k = tl.arange(0, BLOCK_K)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=ACC_TYPE)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for k_idx in range(0, tl.cdiv(K, BLOCK_K)):
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a_k_idx_vals = offs_k[None, :] + (k_idx * BLOCK_K)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b_k_idx_vals = offs_k[:, None] + (k_idx * BLOCK_K)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = offs_a_m[:, None]
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = a_k_idx_vals
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 64*idx_m
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a = tl.load(A + (xindex))
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = b_k_idx_vals
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = offs_b_n[None, :]
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 1024*idx_m
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b = tl.load(B + (xindex))
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # rematerialize rm and rn to save registers
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_m = rm[:, None]
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_n = rn[None, :]
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     mask = (idx_m < M) & (idx_n < N)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # inductor generates a suffix
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = idx_n + 1024*idx_m
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr0 + (tl.broadcast_to(xindex, acc.shape)), acc, mask)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'arg_A': '*fp16', 'arg_B': '*fp16', 'out_ptr0': '*fp16'}, 'device': 0, 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 8, 'num_stages': 5, 'debug': True, 'cc': 86}
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original(source, **kwargs)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pm.run(mod, 'make_llir')
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1646592 exceeds capacity 1605632 (bufferSize=8192, bufferNum=5)
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:33.581000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: Placeholder.DESCRIPTIVE_NAME
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_mm(arg_A, arg_B, out_ptr0):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     EVEN_K : tl.constexpr = True
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ALLOW_TF32 : tl.constexpr = False
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     USE_FAST_ACCUM : tl.constexpr = False
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ACC_TYPE : tl.constexpr = tl.float32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_M : tl.constexpr = 32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_N : tl.constexpr = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_K : tl.constexpr = 32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     GROUP_M : tl.constexpr = 8
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     INDEX_DTYPE : tl.constexpr = tl.int32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     A = arg_A
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     B = arg_B
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     M = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     N = 1024
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     K = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if M * N == 0:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         # early exit due to zero-size input(s)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         return
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_am = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_ak = 1
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bk = 1024
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bn = 1
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # based on triton.ops.matmul
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid = tl.program_id(0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_m = (M + BLOCK_M - 1) // BLOCK_M
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_n = (N + BLOCK_N - 1) // BLOCK_N
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # re-order program ID for better L2 performance
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     width = GROUP_M * grid_n
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_id = pid // width
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_size = min(grid_m - group_id * GROUP_M, GROUP_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_m = group_id * GROUP_M + (pid % group_size)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_n = (pid % width) // (group_size)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_m >= 0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_n >= 0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_am == 1 and stride_ak == M) or (stride_am == K and stride_ak == 1)) and (M >= BLOCK_M and K > 1):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = tl.max_contiguous(tl.multiple_of(rm % M, BLOCK_M), BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = rm % M
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_bk == 1 and stride_bn == K) or (stride_bk == N and stride_bn == 1)) and (N >= BLOCK_N and K > 1):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = tl.max_contiguous(tl.multiple_of(rn % N, BLOCK_N), BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = rn % N
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     offs_k = tl.arange(0, BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=ACC_TYPE)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for k_idx in range(0, tl.cdiv(K, BLOCK_K)):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a_k_idx_vals = offs_k[None, :] + (k_idx * BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b_k_idx_vals = offs_k[:, None] + (k_idx * BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = offs_a_m[:, None]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = a_k_idx_vals
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 64*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a = tl.load(A + (xindex))
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = b_k_idx_vals
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = offs_b_n[None, :]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 1024*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b = tl.load(B + (xindex))
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # rematerialize rm and rn to save registers
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_m = rm[:, None]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_n = rn[None, :]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     mask = (idx_m < M) & (idx_n < N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # inductor generates a suffix
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = idx_n + 1024*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr0 + (tl.broadcast_to(xindex, acc.shape)), acc, mask)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'arg_A': '*fp16', 'arg_B': '*fp16', 'out_ptr0': '*fp16'}, 'device': 0, 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 8, 'num_stages': 5, 'debug': True, 'cc': 86}
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original(source, **kwargs)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pm.run(mod, 'make_llir')
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): uni_sram allocation overflow: current offset 1671168 exceeds capacity 1605632 (bufferSize=4096, bufferNum=191)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: Placeholder.DESCRIPTIVE_NAME
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_mm(arg_A, arg_B, out_ptr0):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     EVEN_K : tl.constexpr = True
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ALLOW_TF32 : tl.constexpr = False
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     USE_FAST_ACCUM : tl.constexpr = False
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ACC_TYPE : tl.constexpr = tl.float32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_M : tl.constexpr = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_N : tl.constexpr = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_K : tl.constexpr = 32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     GROUP_M : tl.constexpr = 8
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     INDEX_DTYPE : tl.constexpr = tl.int32
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     A = arg_A
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     B = arg_B
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     M = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     N = 1024
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     K = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if M * N == 0:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         # early exit due to zero-size input(s)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         return
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_am = 64
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_ak = 1
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bk = 1024
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bn = 1
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # based on triton.ops.matmul
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid = tl.program_id(0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_m = (M + BLOCK_M - 1) // BLOCK_M
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_n = (N + BLOCK_N - 1) // BLOCK_N
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # re-order program ID for better L2 performance
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     width = GROUP_M * grid_n
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_id = pid // width
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_size = min(grid_m - group_id * GROUP_M, GROUP_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_m = group_id * GROUP_M + (pid % group_size)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_n = (pid % width) // (group_size)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_m >= 0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_n >= 0)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_am == 1 and stride_ak == M) or (stride_am == K and stride_ak == 1)) and (M >= BLOCK_M and K > 1):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = tl.max_contiguous(tl.multiple_of(rm % M, BLOCK_M), BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = rm % M
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_bk == 1 and stride_bn == K) or (stride_bk == N and stride_bn == 1)) and (N >= BLOCK_N and K > 1):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = tl.max_contiguous(tl.multiple_of(rn % N, BLOCK_N), BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = rn % N
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     offs_k = tl.arange(0, BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=ACC_TYPE)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for k_idx in range(0, tl.cdiv(K, BLOCK_K)):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a_k_idx_vals = offs_k[None, :] + (k_idx * BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b_k_idx_vals = offs_k[:, None] + (k_idx * BLOCK_K)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = offs_a_m[:, None]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = a_k_idx_vals
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 64*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a = tl.load(A + (xindex))
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = b_k_idx_vals
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = offs_b_n[None, :]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 1024*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b = tl.load(B + (xindex))
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # rematerialize rm and rn to save registers
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_m = rm[:, None]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_n = rn[None, :]
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     mask = (idx_m < M) & (idx_n < N)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # inductor generates a suffix
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = idx_n + 1024*idx_m
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr0 + (tl.broadcast_to(xindex, acc.shape)), acc, mask)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'arg_A': '*fp16', 'arg_B': '*fp16', 'out_ptr0': '*fp16'}, 'device': 0, 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 8, 'num_stages': 4, 'debug': True, 'cc': 86}
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original(source, **kwargs)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pm.run(mod, 'make_llir')
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): l1d allocation overflow: current offset 1308672 exceeds capacity 786432 (bufferSize=4096, bufferNum=192)
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:33.708000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: Placeholder.DESCRIPTIVE_NAME
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_mm(arg_A, arg_B, out_ptr0):
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     EVEN_K : tl.constexpr = True
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ALLOW_TF32 : tl.constexpr = False
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     USE_FAST_ACCUM : tl.constexpr = False
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     ACC_TYPE : tl.constexpr = tl.float32
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_M : tl.constexpr = 64
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_N : tl.constexpr = 64
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     BLOCK_K : tl.constexpr = 32
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     GROUP_M : tl.constexpr = 8
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     INDEX_DTYPE : tl.constexpr = tl.int32
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     A = arg_A
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     B = arg_B
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     M = 64
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     N = 1024
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     K = 64
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if M * N == 0:
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         # early exit due to zero-size input(s)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         return
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_am = 64
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_ak = 1
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bk = 1024
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stride_bn = 1
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # based on triton.ops.matmul
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid = tl.program_id(0)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_m = (M + BLOCK_M - 1) // BLOCK_M
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     grid_n = (N + BLOCK_N - 1) // BLOCK_N
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # re-order program ID for better L2 performance
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     width = GROUP_M * grid_n
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_id = pid // width
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     group_size = min(grid_m - group_id * GROUP_M, GROUP_M)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_m = group_id * GROUP_M + (pid % group_size)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pid_n = (pid % width) // (group_size)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_m >= 0)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.assume(pid_n >= 0)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_am == 1 and stride_ak == M) or (stride_am == K and stride_ak == 1)) and (M >= BLOCK_M and K > 1):
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = tl.max_contiguous(tl.multiple_of(rm % M, BLOCK_M), BLOCK_M)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_a_m = rm % M
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     if ((stride_bk == 1 and stride_bn == K) or (stride_bk == N and stride_bn == 1)) and (N >= BLOCK_N and K > 1):
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = tl.max_contiguous(tl.multiple_of(rn % N, BLOCK_N), BLOCK_N)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     else:
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         offs_b_n = rn % N
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     offs_k = tl.arange(0, BLOCK_K)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=ACC_TYPE)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for k_idx in range(0, tl.cdiv(K, BLOCK_K)):
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a_k_idx_vals = offs_k[None, :] + (k_idx * BLOCK_K)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b_k_idx_vals = offs_k[:, None] + (k_idx * BLOCK_K)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = offs_a_m[:, None]
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = a_k_idx_vals
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 64*idx_m
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         a = tl.load(A + (xindex))
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_m = b_k_idx_vals
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         idx_n = offs_b_n[None, :]
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         xindex = idx_n + 1024*idx_m
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         b = tl.load(B + (xindex))
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         acc += tl.dot(a, b, allow_tf32=ALLOW_TF32, out_dtype=ACC_TYPE)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # rematerialize rm and rn to save registers
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_m = rm[:, None]
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     idx_n = rn[None, :]
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     mask = (idx_m < M) & (idx_n < N)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     # inductor generates a suffix
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = idx_n + 1024*idx_m
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr0 + (tl.broadcast_to(xindex, acc.shape)), acc, mask)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'arg_A': '*fp16', 'arg_B': '*fp16', 'out_ptr0': '*fp16'}, 'device': 0, 'constants': {}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 4, 'num_stages': 2, 'debug': True, 'cc': 86}
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original(source, **kwargs)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     pm.run(mod, 'make_llir')
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1638400 exceeds capacity 1605632 (bufferSize=16384, bufferNum=2)
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.129000 4555 site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Exception PassManager::run failed: loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): uni_sram allocation overflow: current offset 1622016 exceeds capacity 1605632 (bufferSize=8192, bufferNum=92)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.` for benchmark choice TritonTemplateCaller(/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Traceback (most recent call last):
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     result = self.fn(*self.args, **self.kwargs)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2739, in precompile_with_captured_stdout
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     choice.precompile()
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 1994, in precompile
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self.bmreq.precompile()
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/autotune_process.py", line 659, in precompile
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     getattr(mod, self.kernel_name).precompile()
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self._precompile_worker()
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     compile_results.append(self._precompile_config(c))
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     return original(source, **kwargs)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     pm.run(mod, 'make_llir')
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] RuntimeError: PassManager::run failed: loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): uni_sram allocation overflow: current offset 1622016 exceeds capacity 1605632 (bufferSize=8192, bufferNum=92)
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("a"("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":78:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/oh/cohsxen5b3thi5ugbqkgi25dxpakpvef6gz4bmbnbphmgfvkmou3.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.239000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Exception PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1646592 exceeds capacity 1605632 (bufferSize=8192, bufferNum=5)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.` for benchmark choice TritonTemplateCaller(/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Traceback (most recent call last):
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     result = self.fn(*self.args, **self.kwargs)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2739, in precompile_with_captured_stdout
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     choice.precompile()
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 1994, in precompile
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self.bmreq.precompile()
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/autotune_process.py", line 659, in precompile
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     getattr(mod, self.kernel_name).precompile()
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self._precompile_worker()
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     compile_results.append(self._precompile_config(c))
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     return original(source, **kwargs)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     pm.run(mod, 'make_llir')
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] RuntimeError: PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1646592 exceeds capacity 1605632 (bufferSize=8192, bufferNum=5)
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/6w/c6wm6jzsxs3hqmkje66cvxwg5dyokeyrlpb5qxvtvax7kvhfscpy.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.293000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Exception PassManager::run failed: loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): uni_sram allocation overflow: current offset 1671168 exceeds capacity 1605632 (bufferSize=4096, bufferNum=191)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.` for benchmark choice TritonTemplateCaller(/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=32, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=8)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Traceback (most recent call last):
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     result = self.fn(*self.args, **self.kwargs)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2739, in precompile_with_captured_stdout
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     choice.precompile()
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 1994, in precompile
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self.bmreq.precompile()
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/autotune_process.py", line 659, in precompile
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     getattr(mod, self.kernel_name).precompile()
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self._precompile_worker()
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     compile_results.append(self._precompile_config(c))
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     return original(source, **kwargs)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     pm.run(mod, 'make_llir')
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] RuntimeError: PassManager::run failed: loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): uni_sram allocation overflow: current offset 1671168 exceeds capacity 1605632 (bufferSize=4096, bufferNum=191)
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("b"("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":83:20)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/bo/cbobn5thlulkgdqhyuelbv5ikngnrsvsofkfx5k4zlhwdsf6xhyn.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.295000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Exception PassManager::run failed: loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): l1d allocation overflow: current offset 1308672 exceeds capacity 786432 (bufferSize=4096, bufferNum=192)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.` for benchmark choice TritonTemplateCaller(/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Traceback (most recent call last):
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     result = self.fn(*self.args, **self.kwargs)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2739, in precompile_with_captured_stdout
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     choice.precompile()
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 1994, in precompile
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self.bmreq.precompile()
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/autotune_process.py", line 659, in precompile
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     getattr(mod, self.kernel_name).precompile()
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self._precompile_worker()
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     compile_results.append(self._precompile_config(c))
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     return original(source, **kwargs)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     pm.run(mod, 'make_llir')
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] RuntimeError: PassManager::run failed: loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): l1d allocation overflow: current offset 1308672 exceeds capacity 786432 (bufferSize=4096, bufferNum=192)
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("acc"("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":86:25)): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/ut/cutakzb2au4mja6rcchrvablg2krc4frdvdiupregd2o2c57z3nu.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.296000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Exception PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1638400 exceeds capacity 1605632 (bufferSize=16384, bufferNum=2)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.` for benchmark choice TritonTemplateCaller(/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py, ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=4)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] Traceback (most recent call last):
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     result = self.fn(*self.args, **self.kwargs)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2739, in precompile_with_captured_stdout
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     choice.precompile()
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 1994, in precompile
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self.bmreq.precompile()
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/autotune_process.py", line 659, in precompile
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     getattr(mod, self.kernel_name).precompile()
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     self._precompile_worker()
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     compile_results.append(self._precompile_config(c))
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_compiler.py", line 143, in compile_actual
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     return original(source, **kwargs)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     next_module = compile_ir(module, metadata)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 901, in <lambda>
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     stages["llir"] = lambda src, metadata: self.make_llir(src, metadata, options)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   File "/opt/hsp/triton/backends/xpu/compiler.py", line 725, in make_llir
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]     pm.run(mod, 'make_llir')
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] RuntimeError: PassManager::run failed: loc(unknown): uni_sram allocation overflow: current offset 1638400 exceeds capacity 1605632 (bufferSize=16384, bufferNum=2)
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc(unknown): failed to legalize operation 'memref.alloc' that was explicitly marked illegal
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820] loc("/opt/f06/cache/inductor/zm/czmls2uft66t2mugo5b4puoxfwituwqbxo7yrvcu42tzktwk3wda.py":19:0): Failures have been detected while processing an MLIR pass pipeline
+E1108 21:08:34.302000 4555 site-packages/torch/_inductor/select_algorithm.py:2820]   note: Pipeline failed while executing [`ConvertTritonSDNNToLLVM` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+Autotune Choices Stats:
+{"num_choices": 18, "num_triton_choices": 17, "best_kernel": "triton_mm_12", "best_kernel_desc": "ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=4", "best_time": 0.01564200036227703, "best_triton_pos": 0}
+AUTOTUNE mm(64x64, 64x1024)
+strides: [64, 1], [1024, 1]
+dtypes: torch.float16, torch.float16
+  triton_mm_12 0.0156 ms 100.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=4
+  triton_mm_13 0.0175 ms 89.3% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_11 0.0177 ms 88.2% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_10 0.0178 ms 87.8% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=4, num_warps=8
+  triton_mm_6 0.0181 ms 86.3% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=4
+  triton_mm_9 0.0181 ms 86.3% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=32, BLOCK_M=64, BLOCK_N=128, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=4
+  triton_mm_7 0.0183 ms 85.7% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=3, num_warps=8
+  triton_mm_8 0.0183 ms 85.6% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=64, BLOCK_N=64, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=5, num_warps=4
+  triton_mm_1 0.0184 ms 85.1% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=64, BLOCK_M=32, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=2, num_warps=4
+  triton_mm_0 0.0186 ms 84.0% ACC_TYPE='tl.float32', ALLOW_TF32=False, BLOCK_K=16, BLOCK_M=32, BLOCK_N=32, EVEN_K=True, GROUP_M=8, USE_FAST_ACCUM=False, num_stages=1, num_warps=2
+SingleProcess AUTOTUNE benchmarking takes 1.5556 seconds and 2.0384 seconds precompiling for 18 choices
+RECORD {"event": "pass", "kind": "matmul_bias_silu", "dtype": "float16", "shape": "64x1024", "route": "inductor", "inner": [], "kernel_count": null, "us": 39.928749203681946, "eager_us": 49.17604923248291, "samples": [46.053698658943176, 38.13974857330322, 39.928749203681946, 38.55380117893219, 40.74277579784393], "base_samples": [64.68024849891663, 49.17604923248291, 47.64780104160309, 49.34217631816864, 47.82567620277405], "elapsed": 9.980394792975858}
+END ["matmul_bias_silu", "float16", "64x1024", "inductor", 0]

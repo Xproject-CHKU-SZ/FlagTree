@@ -3,12 +3,17 @@
 The legacy backend bridge is needed by the deployed P800 runtime. Newer XPU
 backends carry an explicit resource context and do not need that bridge.
 """
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from contextvars import ContextVar
 import hashlib
 from pathlib import Path
 
 _RESOURCE = ContextVar("flagtree_p800_compile_resource", default=None)
+_REJECTIONS = []
+
+
+def rejections():
+    return list(_REJECTIONS)
 
 
 def policy_key():
@@ -23,6 +28,9 @@ def resource_scope(resource):
     if resource not in ("sdnn", "cluster"):
         raise ValueError("explicit resource required")
     from torch._dynamo.convert_frame import compile_lock
+    import triton
+    import triton.language as tl
+    from triton.language.extra.xpu import libdevice as xpu_libdevice
     from triton.backends.xpu.compiler import XPUBackend
     from triton._C.libtriton import xpu
     from ._p800_precision import compilation_scope
@@ -38,8 +46,25 @@ def resource_scope(resource):
             raise RuntimeError("nested P800 binary compilation is unsupported")
         token = _RESOURCE.set(resource)
         original_parse, original_ttxir = XPUBackend.parse_options, XPUBackend.make_ttxir
+        original_compile = triton.compile
+        original_math = {name: getattr(xpu_libdevice, name) for name in ('exp', 'rsqrt')}
 
-        candidate_ttxir = original_ttxir
+        def compile_for_actual_target(source, *args, **kwargs):
+            # Torch 2.9 passes the CUDA compatibility capability (8.6) to
+            # Triton. The confirmed XPU driver owns the actual hardware target.
+            if _RESOURCE.get() is not None:
+                driver = triton.runtime.driver.active
+                if type(driver).__module__ != 'triton.backends.xpu.driver':
+                    raise RuntimeError('P800 target normalization requires the actual XPU driver')
+                actual_target = driver.get_current_target()
+                if actual_target.arch != 3 or actual_target.warp_size != 1:
+                    raise RuntimeError('unexpected target in P800 resource compilation')
+                if args:
+                    raise RuntimeError('unrecognized positional Triton compile target')
+                kwargs['target'] = actual_target
+            from ._p800_inductor_softmax import configure_row_kernel
+            configure_row_kernel(source, kwargs)
+            return original_compile(source, **kwargs)
 
         def parse_options(backend, options):
             requested = _RESOURCE.get()
@@ -50,6 +75,8 @@ def resource_scope(resource):
         def make_ttxir(mod, metadata, options):
             requested = _RESOURCE.get() if options.arch == 3 else None
             if requested == "cluster" and xpu.is_sdnn_kernel(mod):
+                _REJECTIONS.append(dict(requested=requested, reason='native dot/MMA requires SDNN',
+                                        ttir_sha256=hashlib.sha256(str(mod).encode()).hexdigest()))
                 raise RuntimeError("unsupported_resource: native compiler requires SDNN for this dot/MMA kernel")
             result = candidate_ttxir(mod, metadata, options)
             if requested and ("sdnn" if metadata["is_sdnn"] else "cluster") != requested:
@@ -57,17 +84,29 @@ def resource_scope(resource):
             return result
 
         try:
+            triton.compile = compile_for_actual_target
+            # This SDK's libdevice.exp is an explicit "Unsupported" placeholder.
+            # Lower the same FP32 exponential through the native XPU builtin,
+            # shared by both resources; unchanged thresholds validate results.
+            xpu_libdevice.exp = tl.exp
+            # SDNN cannot call the external scalar rsqrt ABI; use the native
+            # tensor intrinsic for the identical operation on both resources.
+            xpu_libdevice.rsqrt = tl.rsqrt
+            # The native context supplies resource selection. Activation lowering
+            # also needs both its TTIR preparation and its matching SDNN stage.
+            candidate_ttxir = install_stage(original_ttxir)
             if native_scope is None:
-                candidate_ttxir = install_stage(original_ttxir)
-            if native_scope is not None:
-                with native_scope(resource), compilation_scope():
-                    yield
-            else:
                 XPUBackend.parse_options = parse_options
                 XPUBackend.make_ttxir = staticmethod(make_ttxir)
-                with activation_scope(), compilation_scope():
-                    yield
+            else:
+                XPUBackend.make_ttxir = staticmethod(candidate_ttxir)
+            selection = native_scope(resource) if native_scope is not None else nullcontext()
+            with selection, activation_scope(), compilation_scope():
+                yield
         finally:
+            for name, function in original_math.items():
+                setattr(xpu_libdevice, name, function)
+            triton.compile = original_compile
             XPUBackend.parse_options = original_parse
             XPUBackend.make_ttxir = staticmethod(original_ttxir)
             _RESOURCE.reset(token)
@@ -75,3 +114,42 @@ def resource_scope(resource):
 
 def active():
     return _RESOURCE.get() is not None
+
+
+@contextmanager
+def target_scope():
+    """Common native-Inductor ABI bridge; does not assign SDNN or cluster.
+
+    Apply identically to the max-autotune baseline and partition candidates.
+    The XPU driver owns the target, not the CUDA compatibility capability.
+    """
+    import triton
+    import triton.language as tl
+    from ._resource_codegen import baidu_target
+    if baidu_target() != {'driver': 'triton.backends.xpu.driver.XPUDriver', 'arch': 3,
+                          'warp_size': 1, 'backend_alias': 'cuda'}:
+        target = baidu_target()
+        if not target or target['arch'] != 3 or target['warp_size'] != 1:
+            raise RuntimeError('P800 target scope requires the actual XPU driver')
+    from torch._dynamo.convert_frame import compile_lock
+    from triton.language.extra.xpu import libdevice
+    with compile_lock:
+        original = triton.compile
+        functions = {name: getattr(libdevice, name) for name in ('exp', 'rsqrt')}
+
+        def compile_actual(source, *args, **kwargs):
+            if args:
+                raise RuntimeError('unrecognized positional Triton target')
+            kwargs['target'] = triton.runtime.driver.active.get_current_target()
+            from ._p800_inductor_softmax import configure_row_kernel
+            configure_row_kernel(source, kwargs)
+            return original(source, **kwargs)
+
+        try:
+            triton.compile = compile_actual
+            libdevice.exp, libdevice.rsqrt = tl.exp, tl.rsqrt
+            yield
+        finally:
+            triton.compile = original
+            for name, fn in functions.items():
+                setattr(libdevice, name, fn)

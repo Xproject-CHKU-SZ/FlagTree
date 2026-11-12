@@ -4,7 +4,52 @@ Profiling and plan acceptance happen offline. No tuning, graph analysis or
 resource decisions occur in the returned hot-path wrapper.
 """
 import hashlib
+import os
 import json
+
+
+def inference_entry(binary, proof=None):
+    """An instance-local Torch 2.9 entry; retain native math and cleanup.
+
+    A verified static SDNN wrapper can reuse its selected Inductor launcher.
+    Other layouts run the native callable. Profiling and debugging use the
+    complete CompiledFxGraph entry.
+    """
+    import torch
+    if torch.__version__.split('+')[0].split('.')[:2] != ['2', '9']:
+        return binary, False
+    from torch._inductor.output_code import CompiledFxGraph
+    if type(binary) is not CompiledFxGraph:
+        return binary, False
+    from torch._inductor import debug
+    from torch._dynamo.utils import get_runtime_metrics_context
+    from torch._inductor.runtime.autotune_cache import AutotuneCacheBundler
+    from torch.autograd import profiler
+    original_call = CompiledFxGraph.__call__
+    profiler_enabled = torch.autograd._profiler_enabled
+    grad_enabled = torch.is_grad_enabled
+
+    from . import _p800_generated
+    static = _p800_generated.prepare(binary, proof) if proof else None
+
+    def run(inputs):
+        if (grad_enabled() or profiler._is_profiler_enabled or profiler_enabled()
+                or debug.RECORD_GRAPH_EXECUTION or CompiledFxGraph.__call__ is not original_call):
+            return binary(inputs)
+        assert binary.current_callable is not None
+        try:
+            # The static entry owns only the layouts that its native wrapper checked.
+            return static(inputs) if static is not None else binary.current_callable(inputs)
+        finally:
+            # Native finish/end_compile are no-ops in the empty states. Keep
+            # their effects, including after exceptions and first-call tuning.
+            metrics = get_runtime_metrics_context()
+            if metrics._metrics:
+                metrics.finish()
+            if AutotuneCacheBundler._bundler is not None:
+                AutotuneCacheBundler.end_compile()
+
+    return run, True
 
 
 def plan_identity(plan, matmul_path):
@@ -17,9 +62,16 @@ def plan_identity(plan, matmul_path):
 
 def prepare_plan(gm, example_inputs, plan, *, matmul_path='template'):
     """Compile a proposed plan for offline full-graph acceptance, not deployment."""
+    fn, proof = prepare_regions(gm, example_inputs, plan.regions, matmul_path=matmul_path)
+    proof['plan_id'] = plan_identity(plan, matmul_path)
+    return fn, proof
+
+
+def prepare_regions(gm, example_inputs, regions, *, matmul_path='template', verified_tile=None):
+    """Compile proposed regions using Inductor; does not assert acceptance."""
     import torch.fx
     from torch.fx.node import map_arg
-    from ._resource_fx import build_region, collect_example_values
+    from ._resource_fx import build_region, collect_example_values, unsafe_sdnn_sum
     from ._resource_codegen import compile_region
     import operator
     # Fake values propagate through the original operators, without running
@@ -53,7 +105,7 @@ def prepare_plan(gm, example_inputs, plan, *, matmul_path='template'):
     evidence = []
     cursor = 0
     compute = [n for n in gm.graph.nodes if n.op in ('call_function', 'call_method')]
-    for item in plan.regions:
+    for item in regions:
         if item.start != cursor or item.end <= cursor or item.end > len(compute):
             raise ValueError('partition coverage is not contiguous/complete')
         region = build_region(gm, item.start, item.end)
@@ -67,10 +119,72 @@ def prepare_plan(gm, example_inputs, plan, *, matmul_path='template'):
         }
         region_path = matmul_path if any(n.op == 'call_function' and n.target in matrix_targets
                                          for n in region.gm.graph.nodes) else 'external'
-        compiled, proof = compile_region(region.gm, tuple(values[n] for n in region.input_names), item.resource,
-                                         matmul_path=region_path)
-        if not proof['resource_verified']:
-            raise RuntimeError('region lacks verified resource evidence; external calls remain barriers')
+        region_inputs = tuple(values[n] for n in region.input_names)
+        dsa_spec = None
+        if item.resource == 'sdnn' and unsafe_sdnn_sum(region.gm.graph.nodes, region_inputs):
+            raise RuntimeError('P800 SDNN low-precision sum has no safe native lowering')
+        # Match both dtypes and assign each shortcut to the resource it launches.
+        _dsa_dtypes = ('float32', 'float16')
+        if (os.environ.get('FLAGTREE_DSA_ENABLE', '1') == '1'
+                and item.resource in ('sdnn', 'cluster')
+                and region_inputs
+                and str(getattr(region_inputs[0], 'dtype', '')).removeprefix('torch.') in _dsa_dtypes):
+            from . import _p800_dsa
+            dsa_spec = _p800_dsa.match(region.gm, region_inputs)
+        if dsa_spec is not None:
+            actual = 'cluster' if dsa_spec['kind'] != 'ew' and _p800_dsa._is_plain(dsa_spec) else 'sdnn'
+            if item.resource != actual:
+                dsa_spec = None
+        if (dsa_spec is not None and item.resource == 'cluster' and dsa_spec['kind'] == 'mulsum'
+                and os.environ.get('FLAGTREE_FLAT_REDUCE', '1') == '1'):
+            from ._p800_vector_rows import configuration
+            if configuration('mul_sum', dsa_spec['dtype'], dsa_spec['m'], dsa_spec['n']) is not None:
+                # The generic DSA reduction does not preserve reduce_mt's compensation.
+                dsa_spec = None
+        if dsa_spec is not None:
+            # Whole-kernel replacement: the documented tle.dsa 2D-DMA form beats
+            # the native pointwise codegen for this region on the SDNN path.
+            try:
+                compiled, proof = _p800_dsa.compile(dsa_spec, region_inputs)
+                fast_entry = True
+            except RuntimeError:
+                # No tile passed validation (or an unsupported dtype slipped in):
+                # keep the native region rather than failing the whole plan.
+                dsa_spec = None
+        flat_spec = None
+        if item.resource == 'cluster' and dsa_spec is None and os.environ.get('FLAGTREE_FLAT_ADD', '1') == '1':
+            try:
+                from . import _p800_flat
+                flat_spec = _p800_flat.match(region.gm, region_inputs)
+            except Exception:
+                flat_spec = None
+        if flat_spec is not None:
+            try:
+                compiled, proof = _p800_flat.compile(flat_spec, region_inputs)
+                fast_entry = True
+            except Exception:
+                flat_spec = None
+        reduce_spec = None
+        if item.resource == 'cluster' and dsa_spec is None and flat_spec is None and os.environ.get('FLAGTREE_FLAT_REDUCE', '1') == '1':
+            try:
+                from . import _p800_reduce
+                reduce_spec = _p800_reduce.match(region.gm, region_inputs)
+            except Exception:
+                reduce_spec = None
+        if reduce_spec is not None:
+            try:
+                compiled, proof = _p800_reduce.compile(reduce_spec, region_inputs)
+                fast_entry = True
+            except Exception:
+                reduce_spec = None
+        if dsa_spec is None and flat_spec is None and reduce_spec is None:
+            compiled, proof = compile_region(region.gm, region_inputs, item.resource,
+                                             matmul_path=region_path, verified_tile=verified_tile if region_path == 'template' else None)
+            if not proof['resource_verified']:
+                raise RuntimeError('region lacks verified resource evidence; external calls remain barriers')
+            compiled, fast_entry = inference_entry(compiled, proof)
+        proof['inference_entry'] = dict(enabled=fast_entry, native_launchers=True,
+                                       profiling_debug_fallback=True, native_cleanup=True)
 
         def bind(binary, key):
 
@@ -90,9 +204,18 @@ def prepare_plan(gm, example_inputs, plan, *, matmul_path='template'):
     output = next(n for n in gm.graph.nodes if n.op == 'output')
     graph.output(map_arg(output.args[0], lambda n: env[n.name]))
     prepared = torch.fx.GraphModule(gm, graph)
-    return prepared.forward, {
-        'plan_id': plan_identity(plan, matmul_path), 'regions': evidence, 'wrapper': prepared.code
-    }
+    info = {'regions': evidence, 'wrapper': prepared.code}
+    # A whole-region identity wrapper only unpacks and repacks the region's
+    # tuple. Its existing bound entry already preserves output ownership.
+    public_outputs = output.args[0]
+    if (len(regions) == 1 and isinstance(public_outputs, tuple)
+            and all(isinstance(v, torch.fx.Node) for v in public_outputs)
+            and tuple(v.name for v in public_outputs) == tuple(region.output_names)
+            and tuple(call.args) == tuple(v for v in graph.nodes if v.op == 'placeholder')
+            and not any(v.op == 'get_attr' for v in gm.graph.nodes)):
+        info['direct_region_entry'] = True
+        return call.target, info
+    return prepared.forward, info
 
 
 def resource_backend(observations, *, environment_key, accepted_plan_ids=(), matmul_path='template', audit=None):
@@ -113,14 +236,26 @@ def resource_backend(observations, *, environment_key, accepted_plan_ids=(), mat
     accepted = frozenset(accepted_plan_ids)
 
     def backend(gm, inputs):
+        import torch
         from torch._inductor.compile_fx import compile_fx
+        from . import _p800_shared_fp32
 
         def fallback(reason):
             if audit is not None: audit.append({'status': 'native_fallback', 'reason': reason})
             return compile_fx(gm, inputs)
 
         if baidu_target() is None: return fallback('non_baidu_backend')
+        if (not torch.is_grad_enabled() and inputs and
+                getattr(inputs[0], 'dtype', None) in (torch.float16, torch.bfloat16)):
+            core = _p800_shared_fp32.region(gm, inputs, canonical=False)
+            if core is not None:
+                with torch.autocast('cuda', enabled=False):
+                    body = backend(core, tuple(x.float() for x in inputs))
+                output = next(n for n in gm.graph.nodes if n.op == 'output').args[0]
+                return _p800_shared_fp32.bind(body, inputs[0].dtype, output, torch.is_autocast_enabled('cuda'))
         try:
+            from ._p800_fp32_region import normalized
+            gm = normalized(gm, inputs)
             context = context_fingerprint(gm, inputs, environment_key)
             regions = build_all_regions(gm)
             nodes = next(r.node_ids for r in regions if r.start == 0 and r.end == max(x.end for x in regions))

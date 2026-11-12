@@ -1,0 +1,17 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "silu 65torch.float32", "passed": true, "count": 1}
+CHECK {"test": "silu specials 65torch.float32", "passed": true, "got": [Infinity, NaN, NaN, -0.008364611305296421], "ref": [Infinity, NaN, NaN, -0.008364018984138966]}
+CHECK {"test": "alpha reject", "passed": true}
+CHECK {"test": "silu 513torch.float32", "passed": true, "count": 1}
+CHECK {"test": "silu specials 513torch.float32", "passed": true, "got": [Infinity, NaN, NaN, 5.29529333114624], "ref": [Infinity, NaN, NaN, 5.2952961921691895]}
+CHECK {"test": "alpha reject", "passed": true}
+CHECK {"test": "silu 64torch.float16", "passed": true, "count": 2}
+CHECK {"test": "silu specials 64torch.float16", "passed": false, "got": [Infinity, NaN, 7.98046875, 5.19921875], "ref": [Infinity, NaN, NaN, 5.19921875]}
+Traceback (most recent call last):
+  File "/repair/regression.py", line 87, in <module>
+    check('silu specials '+str(m)+str(dt),torch.allclose(v,r,atol=tol,rtol=tol,equal_nan=True),got=v[0,:4].tolist(),ref=r[0,:4].tolist())
+  File "/repair/regression.py", line 18, in check
+    if not ok: raise AssertionError(label)
+AssertionError: silu specials 64torch.float16
+EXIT matrix 1

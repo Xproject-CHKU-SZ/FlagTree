@@ -1,0 +1,46 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/repair/regression.py:24:38: error: unexpected rank-1 wrap DMA views; refusing repair
+    tl.store(y+i,tl.load(x+i)+tl.load(b+i%1024))
+                                     ^
+module {
+  tt.func public @wrap(%arg0: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f32> {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %cst = arith.constant dense<1024> : tensor<8192xi32>
+    %c8192_i32 = arith.constant 8192 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c8192_i32 : i32
+    %2 = tt.make_range {end = 8192 : i32, start = 0 : i32} : tensor<8192xi32>
+    %3 = tt.splat %1 : i32 -> tensor<8192xi32>
+    %4 = arith.addi %3, %2 : tensor<8192xi32>
+    %5 = tt.splat %arg2 : !tt.ptr<f32> -> tensor<8192x!tt.ptr<f32>>
+    %6 = tt.addptr %5, %4 : tensor<8192x!tt.ptr<f32>>, tensor<8192xi32>
+    %7 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<8192x!tt.ptr<f32>>
+    %8 = tt.addptr %7, %4 : tensor<8192x!tt.ptr<f32>>, tensor<8192xi32>
+    %9 = tt.load %8 : tensor<8192x!tt.ptr<f32>>
+    %10 = arith.remsi %4, %cst : tensor<8192xi32>
+    %11 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<8192x!tt.ptr<f32>>
+    %12 = tt.addptr %11, %10 : tensor<8192x!tt.ptr<f32>>, tensor<8192xi32>
+    %13 = tt.load %12 : tensor<8192x!tt.ptr<f32>>
+    %14 = arith.addf %9, %13 : tensor<8192xf32>
+    tt.store %6, %14 : tensor<8192x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, strip-all-ir{xpu_arch=3}, triton-convert-type{mode=0 xpu_arch=3}, tritonxpu-capture-rank1-wrap, triton-to-linalg-experimental{load-tile-size=131072 xpu_arch=3}, triton-loop-aware-cse, linalg-to-tritonsdnn{xpu_arch=3}, triton-loop-aware-cse, tritonsdnn-legalize{xpu_arch=3}, tritonsdnn-merge-extern-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-resolve-layout-conflict, tritonsdnn-hoist-ds, tritonsdnn-transpose-mma, tritonsdnn-transpose-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-wrap-fallback, tritonsdnn-eliminate-mma-acc-zero{xpu_arch=3}, tritonsdnn-optimize-rc-layout{xpu_arch=3}, tritonsdnn-dsa-copy, func.func(tritonsdnn-bufferize{xpu_arch=3}), tritonsdnn-mx-scale-layout, tritonsdnn-fuse-relu-activation{xpu_arch=3}, tritonsdnn-ew-act-table{exp-range-max=0.000000e+00 exp-range-min=-1.598438e+01}, tritonxpu-repair-rank1-wrap, tritonsdnn-loop-grid, tritonsdnn-hoist-loop-invariant-dma{xpu_arch=3}, tritonsdnn-pipeline{defer-event-coloring=false test-event-limit=0 xpu_arch=3}, tritonsdnn-multi-buffer{num_stages=1 xpu_arch=3}, tritonsdnn-lower-rc-subview{xpu_arch=3}, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/repair/regression.py:22:0: error: Failures have been detected while processing an MLIR pass pipeline
+/repair/regression.py:22:0: note: Pipeline failed while executing [`{anonymous}::RepairRank1Wrap` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+CHECK {"test": "SDNN wrap fail-closed", "passed": true, "reason": "PassManager::run failed: loc(\"flagtree.rank1.wrap.0\"(\"/repair/regression.py\":24:38)): unexpected rank-1 wrap DMA views; refusing repair\nloc(\"/repair/regression.py\":22:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`{anonymous}::RepairRank1Wrap` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the repro"}
+EXIT wrap 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "BF16 roundtrip", "passed": true, "values": [1.0, 1.5, 1.0, 3.140625]}
+EXIT backend 0

@@ -19,6 +19,7 @@ def make_ewtable(mod, metadata, opt):
         'math.log2': np.log2,
         'tt.gelu': lambda x: torch.nn.functional.gelu(torch.tensor(x)).item(),
         'tt.tanh': np.tanh,
+        'tt.silu': lambda x: x / (1.0 + np.exp(-x)),
         # Native sigmoid instructions implement 0.5 * tanh(x/2) + 0.5 and
         # therefore consume a tanh table, not a logistic table.
         'tt.sigmoid': np.tanh,

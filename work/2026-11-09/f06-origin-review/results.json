@@ -1,0 +1,775 @@
+{
+  "date": "2026-11-09",
+  "image": "zhaoweiming/f06-p800:b2-512-call-compute-20261109-v12",
+  "image_id": "sha256:efd6e2d914c8e7e58472302ea354009e03ea0c7d59254952f8060539b3abac31",
+  "local": {
+    "head": "feaf3f96973da3ce605fc23ce45d2df178a91526",
+    "remote": "https://github.com/f-zhaoweiming/FlagTree.git",
+    "entry_path": "python/triton/experimental/graph_fusion/_resource_entry.py",
+    "entry_status": "?? python/triton/experimental/graph_fusion/_resource_entry.py",
+    "entry_in_head": false,
+    "entry_sha256": "be6067d6f50343d827a605f04a5ffc747bbe3973f81d66ae52dff449861a22e9"
+  },
+  "upstream": {
+    "remote": "https://github.com/flagos-ai/FlagTree.git",
+    "trees": {
+      "main": {
+        "commit": "d65b6d70511e4d9aaeb3bf52ae762a96212def0a",
+        "tree": "d65b6d70511e4d9aaeb3bf52ae762a96212def0a",
+        "paths": 8182,
+        "truncated": false,
+        "graph_fusion": false,
+        "entry": false,
+        "has_xpu": true
+      },
+      "0.7.0-rc2-triton3.6": {
+        "commit": "f51dde968f5694065e64796799117f54b4e0c4e5",
+        "tree": "f51dde968f5694065e64796799117f54b4e0c4e5",
+        "paths": 8202,
+        "truncated": false,
+        "graph_fusion": false,
+        "entry": false,
+        "has_xpu": true
+      },
+      "refactor/xpu-python-specialization-v1": {
+        "commit": "5f6fad218e34c1677beede494db0c0f5d5e0866b",
+        "tree": "5f6fad218e34c1677beede494db0c0f5d5e0866b",
+        "paths": 7983,
+        "truncated": false,
+        "graph_fusion": false,
+        "entry": false,
+        "has_xpu": true
+      }
+    },
+    "build_diff": "CMakeLists.txt              | 2 +-\n cmake/FlagTreeOptions.cmake | 6 +++---\n 2 files changed, 4 insertions(+), 4 deletions(-)",
+    "build_scope": "Official main compiler sources, local build-system changes. Same previously staged vendor bundle. Only the TTXIR stage was replayed."
+  },
+  "entry_ab_protocol": "Same compiled FP32 OptimizedModule, same selected eager plan, same full Dynamo guard. Randomized paired order, 2 discard blocks + 13 retained blocks per arm, 32 synchronized calls per block. Reported numbers are medians of block medians. Diagnostic arm alone permits the observed parameter load. Production route stays unchanged.",
+  "entry_ab": [
+    {
+      "shape": [
+        64,
+        1024
+      ],
+      "module_sha": "be6067d6f50343d827a605f04a5ffc747bbe3973f81d66ae52dff449861a22e9",
+      "route": "eager",
+      "baseline_replay": false,
+      "diagnostic_replay": true,
+      "parameter_mutation": true,
+      "parameter_replacement": true,
+      "samples": {
+        "v12": [
+          [
+            57.6085,
+            65.5135
+          ],
+          [
+            59.974000000000004,
+            68.039
+          ],
+          [
+            59.064,
+            67.3235
+          ],
+          [
+            59.713499999999996,
+            68.05850000000001
+          ],
+          [
+            59.884,
+            68.26849999999999
+          ],
+          [
+            58.564,
+            66.419
+          ],
+          [
+            58.714,
+            66.87899999999999
+          ],
+          [
+            57.843999999999994,
+            65.819
+          ],
+          [
+            59.189,
+            67.3135
+          ],
+          [
+            57.834,
+            65.619
+          ],
+          [
+            57.899,
+            65.7585
+          ],
+          [
+            57.9435,
+            65.619
+          ],
+          [
+            58.469,
+            66.209
+          ]
+        ],
+        "allow_parameter_read": [
+          [
+            43.459,
+            50.634
+          ],
+          [
+            43.964,
+            51.094
+          ],
+          [
+            45.344,
+            52.679
+          ],
+          [
+            45.153999999999996,
+            52.3485
+          ],
+          [
+            45.734,
+            53.464
+          ],
+          [
+            44.874,
+            52.283500000000004
+          ],
+          [
+            45.459,
+            52.6535
+          ],
+          [
+            45.189,
+            52.638999999999996
+          ],
+          [
+            46.209,
+            53.873999999999995
+          ],
+          [
+            44.233999999999995,
+            51.444
+          ],
+          [
+            44.259,
+            51.248999999999995
+          ],
+          [
+            44.974000000000004,
+            52.013999999999996
+          ],
+          [
+            43.939,
+            51.039
+          ]
+        ]
+      },
+      "medians_us": {
+        "v12": {
+          "host_submit": 58.564,
+          "synchronized": 66.419
+        },
+        "allow_parameter_read": {
+          "host_submit": 44.974000000000004,
+          "synchronized": 52.283500000000004
+        }
+      },
+      "submit_us_saved": 13.589999999999996,
+      "dynamo_bytecode": [
+        [
+          "LOAD_GLOBAL",
+          "__compiled_fn_1_5512cb6b_8ada_4b0c_a6ec_0bba91877509"
+        ],
+        [
+          "LOAD_GLOBAL",
+          "__import_torch_dot__dynamo_dot_utils"
+        ],
+        [
+          "LOAD_ATTR",
+          "record_pregraph_bytecode_enter"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_1"
+        ],
+        [
+          "CALL_FUNCTION",
+          0
+        ],
+        [
+          "STORE_FAST",
+          "tmp_2"
+        ],
+        [
+          "LOAD_FAST",
+          "a"
+        ],
+        [
+          "LOAD_FAST",
+          "b"
+        ],
+        [
+          "LOAD_FAST",
+          "self"
+        ],
+        [
+          "LOAD_ATTR",
+          "_parameters"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_3"
+        ],
+        [
+          "LOAD_CONST",
+          "weight"
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "LOAD_FAST",
+          "tmp_3"
+        ],
+        [
+          "LOAD_CONST",
+          "bias"
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "LOAD_GLOBAL",
+          "__import_torch_dot__dynamo_dot_utils"
+        ],
+        [
+          "LOAD_ATTR",
+          "record_pregraph_bytecode_exit"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_4"
+        ],
+        [
+          "LOAD_FAST",
+          "tmp_2"
+        ],
+        [
+          "CALL_FUNCTION",
+          1
+        ],
+        [
+          "POP_TOP",
+          null
+        ],
+        [
+          "CALL_FUNCTION",
+          4
+        ],
+        [
+          "STORE_FAST",
+          "graph_out_0"
+        ],
+        [
+          "LOAD_FAST",
+          "graph_out_0"
+        ],
+        [
+          "LOAD_CONST",
+          0
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "ROT_TWO",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "LIST_EXTEND",
+          2
+        ],
+        [
+          "POP_TOP",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          1
+        ],
+        [
+          "ROT_TWO",
+          null
+        ],
+        [
+          "DELETE_FAST",
+          "graph_out_0"
+        ],
+        [
+          "RETURN_VALUE",
+          null
+        ]
+      ]
+    },
+    {
+      "shape": [
+        2048,
+        2048
+      ],
+      "module_sha": "be6067d6f50343d827a605f04a5ffc747bbe3973f81d66ae52dff449861a22e9",
+      "route": "eager",
+      "baseline_replay": false,
+      "diagnostic_replay": true,
+      "parameter_mutation": true,
+      "parameter_replacement": true,
+      "samples": {
+        "v12": [
+          [
+            60.7485,
+            89.673
+          ],
+          [
+            61.294,
+            91.2185
+          ],
+          [
+            63.0935,
+            91.788
+          ],
+          [
+            67.4135,
+            95.5535
+          ],
+          [
+            66.6335,
+            95.7385
+          ],
+          [
+            60.5035,
+            89.9685
+          ],
+          [
+            62.119,
+            91.7785
+          ],
+          [
+            62.004000000000005,
+            91.7085
+          ],
+          [
+            60.804,
+            90.10300000000001
+          ],
+          [
+            59.9535,
+            89.41300000000001
+          ],
+          [
+            61.9135,
+            91.033
+          ],
+          [
+            64.384,
+            93.333
+          ],
+          [
+            62.854,
+            91.2885
+          ]
+        ],
+        "allow_parameter_read": [
+          [
+            45.419,
+            79.5435
+          ],
+          [
+            45.468999999999994,
+            79.9385
+          ],
+          [
+            46.1095,
+            79.879
+          ],
+          [
+            46.859,
+            80.3635
+          ],
+          [
+            46.263999999999996,
+            80.078
+          ],
+          [
+            45.754,
+            79.453
+          ],
+          [
+            46.134,
+            79.82900000000001
+          ],
+          [
+            44.358999999999995,
+            78.788
+          ],
+          [
+            46.834,
+            80.6485
+          ],
+          [
+            45.04900000000001,
+            79.44399999999999
+          ],
+          [
+            45.6845,
+            79.358
+          ],
+          [
+            44.714,
+            79.168
+          ],
+          [
+            45.629000000000005,
+            79.45349999999999
+          ]
+        ]
+      },
+      "medians_us": {
+        "v12": {
+          "host_submit": 62.004000000000005,
+          "synchronized": 91.2885
+        },
+        "allow_parameter_read": {
+          "host_submit": 45.6845,
+          "synchronized": 79.5435
+        }
+      },
+      "submit_us_saved": 16.319500000000005,
+      "dynamo_bytecode": [
+        [
+          "LOAD_GLOBAL",
+          "__compiled_fn_1_63ed826b_21d8_4a2c_8920_7402e45226f1"
+        ],
+        [
+          "LOAD_GLOBAL",
+          "__import_torch_dot__dynamo_dot_utils"
+        ],
+        [
+          "LOAD_ATTR",
+          "record_pregraph_bytecode_enter"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_1"
+        ],
+        [
+          "CALL_FUNCTION",
+          0
+        ],
+        [
+          "STORE_FAST",
+          "tmp_2"
+        ],
+        [
+          "LOAD_FAST",
+          "a"
+        ],
+        [
+          "LOAD_FAST",
+          "b"
+        ],
+        [
+          "LOAD_FAST",
+          "self"
+        ],
+        [
+          "LOAD_ATTR",
+          "_parameters"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_3"
+        ],
+        [
+          "LOAD_CONST",
+          "weight"
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "LOAD_FAST",
+          "tmp_3"
+        ],
+        [
+          "LOAD_CONST",
+          "bias"
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "LOAD_GLOBAL",
+          "__import_torch_dot__dynamo_dot_utils"
+        ],
+        [
+          "LOAD_ATTR",
+          "record_pregraph_bytecode_exit"
+        ],
+        [
+          "DUP_TOP",
+          null
+        ],
+        [
+          "STORE_FAST",
+          "tmp_4"
+        ],
+        [
+          "LOAD_FAST",
+          "tmp_2"
+        ],
+        [
+          "CALL_FUNCTION",
+          1
+        ],
+        [
+          "POP_TOP",
+          null
+        ],
+        [
+          "CALL_FUNCTION",
+          4
+        ],
+        [
+          "STORE_FAST",
+          "graph_out_0"
+        ],
+        [
+          "LOAD_FAST",
+          "graph_out_0"
+        ],
+        [
+          "LOAD_CONST",
+          0
+        ],
+        [
+          "BINARY_SUBSCR",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "ROT_TWO",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          0
+        ],
+        [
+          "LIST_EXTEND",
+          2
+        ],
+        [
+          "POP_TOP",
+          null
+        ],
+        [
+          "BUILD_LIST",
+          1
+        ],
+        [
+          "ROT_TWO",
+          null
+        ],
+        [
+          "DELETE_FAST",
+          "graph_out_0"
+        ],
+        [
+          "RETURN_VALUE",
+          null
+        ]
+      ]
+    }
+  ],
+  "eager_control": [
+    {
+      "dtype": "float32",
+      "affine": false,
+      "module_graph_fusion_loaded": false,
+      "functional_max_abs_vs_cpu64": 0.6262392997741699,
+      "aten_max_abs_vs_cpu64": 0.6262392997741699,
+      "functional_matches_aten": true
+    },
+    {
+      "dtype": "float32",
+      "affine": true,
+      "module_graph_fusion_loaded": false,
+      "functional_max_abs_vs_cpu64": 1.250335693359375,
+      "aten_max_abs_vs_cpu64": 1.250335693359375,
+      "functional_matches_aten": true
+    },
+    {
+      "dtype": "float16",
+      "affine": false,
+      "module_graph_fusion_loaded": false,
+      "functional_max_abs_vs_cpu64": 0.62109375,
+      "aten_max_abs_vs_cpu64": 0.62109375,
+      "functional_matches_aten": true
+    },
+    {
+      "dtype": "float16",
+      "affine": true,
+      "module_graph_fusion_loaded": false,
+      "functional_max_abs_vs_cpu64": 1.21875,
+      "aten_max_abs_vs_cpu64": 1.21875,
+      "functional_matches_aten": true
+    }
+  ],
+  "eager_control_protocol": "2048x2048, seed 61, eps=1e-3. Both P800 entry points see the same z; CPU oracle normalizes that same z in FP64 and rounds to the tested dtype. torch.compile and triton.compile raise on any call. No F06 resource entry loaded.",
+  "lowering": {
+    "v12": {
+      "build": {
+        "compiler_path": "/opt/hsp/triton/backends/xpu/compiler.py",
+        "compiler_sha256": "24b7457f3fc54252eaecebc51357f9701f06353bb390e47f3c16099818c2a82b",
+        "lib_path": "/opt/hsp/triton/_C/libtriton.so",
+        "lib_sha256": "98cda81772869a066237f11f38a9bc3d50759a402799ea45bcd4a841f60b9831"
+      },
+      "results": [
+        {
+          "compiler": "v12",
+          "ttir": "generic0.ttir",
+          "sha256": "eccb89f98c0546c142f25308584eda0af8ed1b1fa08be7daa3f509995080aa51",
+          "status": "compile_error",
+          "msg": "PassManager::run failed: loc(\"/repair/generic0.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<16x1024xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 8], groupsPerCluster = [8, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<8x1024xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 8], groupsPerCluster = [8, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic0.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "16x1024xf32",
+            "8x1024xf32"
+          ]
+        },
+        {
+          "compiler": "v12",
+          "ttir": "generic1.ttir",
+          "sha256": "a88f94e660d559978e063b27a08814ac3022ef5d34532cdb70abaca8d49b3ebe",
+          "status": "compile_error",
+          "msg": "PassManager::run failed: loc(\"/repair/generic1.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<32x512xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 4], groupsPerCluster = [16, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<16x512xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 4], groupsPerCluster = [16, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic1.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "32x512xf32",
+            "16x512xf32"
+          ]
+        },
+        {
+          "compiler": "v12",
+          "ttir": "generic2.ttir",
+          "sha256": "301810f3baf1a4de0dbe6f1c9dbbf922e0904e5c30aac20d8a207a2ec990dac7",
+          "status": "compile_error",
+          "msg": "PassManager::run failed: loc(\"/repair/generic2.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<4096x32xf32, #triton_xpu.cluster<{sizePerCore = [1, 32], coresPerGroup = [1, 1], groupsPerCluster = [64, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<64x32xf32, #triton_xpu.cluster<{sizePerCore = [1, 32], coresPerGroup = [1, 1], groupsPerCluster = [64, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic2.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "4096x32xf32",
+            "64x32xf32"
+          ]
+        }
+      ]
+    },
+    "upstream": {
+      "build": {
+        "compiler_path": "/rt/triton/backends/xpu/compiler.py",
+        "compiler_sha256": "a11cc16a42b26a0c51aa8001d4efd1bca2e83c1321cf23967debf3be956b632b",
+        "lib_path": "/rt/triton/_C/libtriton.so",
+        "lib_sha256": "f95a9cff9aa856fb24daa2347530d9df0bf52551705a705073d5de33691a1468"
+      },
+      "results": [
+        {
+          "compiler": "upstream",
+          "ttir": "generic0.ttir",
+          "sha256": "eccb89f98c0546c142f25308584eda0af8ed1b1fa08be7daa3f509995080aa51",
+          "status": "compile_error",
+          "msg": "out of resource: uni_sram PassManager::run failed: loc(\"/repair/generic0.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<16x1024xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 8], groupsPerCluster = [8, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<8x1024xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 8], groupsPerCluster = [8, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic0.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "16x1024xf32",
+            "8x1024xf32"
+          ]
+        },
+        {
+          "compiler": "upstream",
+          "ttir": "generic1.ttir",
+          "sha256": "a88f94e660d559978e063b27a08814ac3022ef5d34532cdb70abaca8d49b3ebe",
+          "status": "compile_error",
+          "msg": "out of resource: uni_sram PassManager::run failed: loc(\"/repair/generic1.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<32x512xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 4], groupsPerCluster = [16, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<16x512xf32, #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 4], groupsPerCluster = [16, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic1.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "32x512xf32",
+            "16x512xf32"
+          ]
+        },
+        {
+          "compiler": "upstream",
+          "ttir": "generic2.ttir",
+          "sha256": "301810f3baf1a4de0dbe6f1c9dbbf922e0904e5c30aac20d8a207a2ec990dac7",
+          "status": "compile_error",
+          "msg": "out of resource: uni_sram PassManager::run failed: loc(\"/repair/generic2.ttir\":44:15): 'scf.if' op along control flow edge from Operation scf.yield to parent: successor operand type #0 'tensor<4096x32xf32, #triton_xpu.cluster<{sizePerCore = [1, 32], coresPerGroup = [1, 1], groupsPerCluster = [64, 1], order = [0, 1]}>>' should match successor input type #0 'tensor<64x32xf32, #triton_xpu.cluster<{sizePerCore = [1, 32], coresPerGroup = [1, 1], groupsPerCluster = [64, 1], order = [0, 1]}>>'\n  note: region branch point\nloc(\"/repair/generic2.ttir\":1:1): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonXPULegalize` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+          "legalize": true,
+          "branch_shape": true,
+          "tensor_shapes": [
+            "4096x32xf32",
+            "64x32xf32"
+          ]
+        }
+      ]
+    }
+  }
+}

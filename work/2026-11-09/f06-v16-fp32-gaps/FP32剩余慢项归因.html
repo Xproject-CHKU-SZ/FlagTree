@@ -1,0 +1,119 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>F06 v16 中慢于直接 eager 的 FP32 用例</title><style>body{font:16px/1.65 system-ui,sans-serif;color:#192a33;max-width:1450px;margin:auto;padding:30px 24px 65px}p{max-width:105ch}h1{font-size:30px}h2{margin-top:34px;font-size:22px}div{overflow:auto}table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:6px 9px;text-align:left;border-bottom:1px solid #dae4e7;white-space:nowrap}th{background:#ebf3f4}a{color:#0b627b}</style><h1>F06 v16 中慢于直接 eager 的 FP32 用例</h1>
+<p>P800 OAM 个人 Docker，v16 镜像 <code>sha256:c2564771d50d</code>。原正式矩阵 39 项 FP32 中有 20 项同步加速比低于 1，13 项回退 eager，7 项选了融合。每项均在两张不同的物理卡上分别冷编译一次，18 项两次均慢超过 1 µs，1 项在 1 µs 内，1 项两次均更快。</p>
+<h2>逐项定位</h2>
+<p>差值均为同步端到端 µs。正值表示比直接调用原模块慢。裸计划包含真实运行时启动和独立输出分配。“入口增量”是同一计划经正式入口与直接调用该计划的配对差。各列为独立配对统计，不能直接相加。</p>
+<div><table><thead><tr><th>模板</th><th>尺寸</th><th>发布加速比</th><th>复测路由</th><th>正式入口 − 直接 eager</th><th>裸计划 − 直接 eager</th><th>入口增量</th><th>定位</th></tr></thead><tbody>
+<tr><td>add_gelu_exact</td><td>64×1024</td><td>0.95×</td><td>sdnn</td><td>1.43 至 2.66</td><td>-6.25 至 -5.76</td><td>7.61 至 8.18</td><td>已选融合的设备与裸计划均快于 eager，小形状的正式调用开销超过节省。</td></tr>
+<tr><td>add_gelu_tanh</td><td>64×1024</td><td>0.88×</td><td>cluster</td><td>3.29 至 3.64</td><td>-5.39 至 -5.10</td><td>8.43 至 8.57</td><td>已选融合的设备与裸计划均快于 eager，小形状的正式调用开销超过节省。</td></tr>
+<tr><td>add_layernorm</td><td>64×1024</td><td>0.75×</td><td>eager</td><td>10.19 至 10.37</td><td>-1.99 至 -1.80</td><td>12.13 至 12.16</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_layernorm</td><td>512×1024</td><td>0.76×</td><td>eager</td><td>11.00 至 12.49</td><td>-1.98 至 -1.77</td><td>13.06 至 14.50</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_layernorm</td><td>2048×2048</td><td>0.87×</td><td>eager</td><td>7.91 至 8.33</td><td>-1.61 至 -1.34</td><td>9.45 至 9.71</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_layernorm_affine</td><td>64×1024</td><td>0.82×</td><td>eager</td><td>8.00 至 8.00</td><td>-3.17 至 -3.07</td><td>10.98 至 11.13</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_layernorm_affine</td><td>512×1024</td><td>0.81×</td><td>eager</td><td>7.75 至 8.08</td><td>-3.29 至 -3.07</td><td>10.95 至 11.07</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048×2048</td><td>0.87×</td><td>eager</td><td>8.00 至 8.45</td><td>-1.65 至 -1.55</td><td>9.74 至 10.18</td><td>高偏置输入的 P800 eager 逆标准差与融合结果分歧，退回包裹 eager。</td></tr>
+<tr><td>add_silu</td><td>64×1024</td><td>0.89×</td><td>cluster</td><td>4.39 至 5.90</td><td>-4.22 至 -2.69</td><td>8.40 至 8.52</td><td>cluster 裸计划有收益，正式入口吃掉收益。SDNN 的 +Inf 语义不匹配。</td></tr>
+<tr><td>add_silu</td><td>512×1024</td><td>0.81×</td><td>eager</td><td>8.71 至 8.89</td><td>-1.54 至 -1.42</td><td>10.17 至 10.37</td><td>cluster 设备略快，裸计划接近直接 eager，包裹后无端到端收益。SDNN 遇 +Inf 失败。</td></tr>
+<tr><td>add_silu</td><td>2048×2048</td><td>0.91×</td><td>eager</td><td>8.01 至 9.31</td><td>-1.52 至 -1.42</td><td>9.31 至 10.73</td><td>原生 cluster 设备执行已慢于 eager。强制 flat_add 后端到端仍慢，SDNN 遇 +Inf 失败。</td></tr>
+<tr><td>add_softmax</td><td>2048×2048</td><td>0.99×</td><td>cluster</td><td>0.02 至 0.42</td><td>-9.06 至 -8.21</td><td>8.36 至 8.72</td><td>cluster 裸计划更快，入口抵消约 8–9 µs 的优势，整条路径接近持平。</td></tr>
+<tr><td>matmul_bias</td><td>2048×2048</td><td>0.95×</td><td>sdnn</td><td>-10.22 至 -7.40</td><td>-18.01 至 -17.21</td><td>8.27 至 9.59</td><td>原矩阵略慢。两张卡新冷编译均选择 SDNN 单核且端到端更快，原差距未稳定复现。</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64×1024</td><td>0.76×</td><td>eager</td><td>16.10 至 18.26</td><td>-4.30 至 -3.75</td><td>20.80 至 22.64</td><td>单核规则排除两核 native_mm，Inductor 遇 +Inf 输出 NaN。放开两核后仍慢于直接 eager。</td></tr>
+<tr><td>mul_sum</td><td>64×1024</td><td>0.75×</td><td>cluster</td><td>11.07 至 11.26</td><td>3.18 至 3.49</td><td>7.68 至 7.90</td><td>已选 cluster 的裸计划本身慢于直接 eager，再叠加正式入口。禁用尺寸回退后，flat_reduce 仍更慢。</td></tr>
+<tr><td>mul_sum</td><td>512×1024</td><td>0.74×</td><td>eager</td><td>7.89 至 9.85</td><td>-1.54 至 -1.44</td><td>9.37 至 11.36</td><td>特殊值触发 eager 跨行归约异常。融合在未污染行给出有限值，按 eager 契约被拒。</td></tr>
+<tr><td>mul_sum</td><td>2048×2048</td><td>0.87×</td><td>eager</td><td>7.76 至 8.43</td><td>-1.64 至 -1.45</td><td>9.08 至 9.93</td><td>SDNN DSA 设备归约略快，但 Triton 启动和正式入口抵消设备收益。独立 +Inf 还暴露准入漏测。</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64×1024</td><td>0.78×</td><td>cluster</td><td>11.14 至 12.29</td><td>2.64 至 2.86</td><td>8.49 至 9.53</td><td>已选 cluster 的裸计划本身慢于直接 eager，再叠加正式入口。禁用尺寸回退后，flat_reduce 仍更慢。</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512×1024</td><td>0.75×</td><td>eager</td><td>8.72 至 9.70</td><td>-1.35 至 -1.29</td><td>10.03 至 10.80</td><td>特殊值触发 eager 跨行归约异常。融合在未污染行给出有限值，按 eager 契约被拒。</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048×2048</td><td>0.86×</td><td>eager</td><td>7.53 至 8.34</td><td>-1.25 至 -1.17</td><td>8.88 至 9.42</td><td>SDNN DSA 设备归约略快，但 Triton 启动和正式入口抵消设备收益。独立 +Inf 还暴露准入漏测。</td></tr>
+</tbody></table></div>
+<h2>LayerNorm 的六项回退</h2>
+<p>普通输入与高偏置对照使用同一组权重、affine bias 和 eps=0.001。先在 P800 上执行加法，再将同一份 FP32 加法结果送 CPU FP64 LayerNorm。给行增加较大常数后，P800 eager 的倒标准差发生偏离。将同一行先减去 1000，再在 P800 调用 eager，误差大幅下降。候选必须匹配当前 eager，FP64 参考用于定位，未改正式契约。</p>
+<div><table><thead><tr><th>模板</th><th>尺寸</th><th>普通输入 cluster 对 eager 超差数</th><th>高偏置 eager 最大误差</th><th>cluster 最大误差</th><th>平移后的 eager 最大误差</th><th>cluster 对 FP64 超差数</th></tr></thead><tbody>
+<tr><td>add_layernorm</td><td>2048x2048</td><td>0</td><td>0.566588</td><td>0.000164747</td><td>7.15256e-07</td><td>0</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048x2048</td><td>0</td><td>0.104509</td><td>3.77297e-05</td><td>1.78814e-07</td><td>0</td></tr>
+<tr><td>add_layernorm</td><td>64x1024</td><td>0</td><td>0.44749</td><td>4.76837e-07</td><td>4.76837e-07</td><td>0</td></tr>
+<tr><td>add_layernorm_affine</td><td>64x1024</td><td>0</td><td>0.0654351</td><td>1.19209e-07</td><td>1.19209e-07</td><td>0</td></tr>
+<tr><td>add_layernorm</td><td>512x1024</td><td>0</td><td>0.525311</td><td>1.43051e-06</td><td>7.15256e-07</td><td>0</td></tr>
+<tr><td>add_layernorm_affine</td><td>512x1024</td><td>0</td><td>0.0778449</td><td>3.57628e-07</td><td>1.19209e-07</td><td>0</td></tr>
+</tbody></table></div>
+<p>纯 PyTorch 可复现。每行交替放入 999.875 和 1000.125，精确方差为 0.015625。P800 native_layer_norm 返回 rstd=31.622774，对应有效方差约为零。相同行减 1000 后为 7.755667，与 FP64 理论值相符。支持高偏置下方差消减的解释，具体厂商内部指令未据此确定。</p>
+<h2>Mul+Sum 的三个尺寸</h2>
+<p>512×1024 的失败缩小到了独立的 P800 torch.sum。构造全 1 的矩阵，只令 [0,0] 为 NaN，沿最后一维求和后，未修改的第 21 行也得到 NaN。单独求第 21 行为 1024。keepdim 开关都复现。进一步将非有限值放在 [1,0]、[21,0]，多出的 NaN 分别出现在第 22、42 行。两张卡的最小实验一致。相同数据上融合候选在未修改行给出有限的 CPU 参考值。</p>
+<p>64×1024 的两项已选 cluster，裸计划已经比直接 eager 慢，入口再增加耗时。2048×2048 的两项选回 eager。其 SDNN 候选的设备图计时约 31.5 µs，eager 约 35.5 µs。下表固定同一 _dsa_region_kernel 二进制、网格、实时执行流和新分配的输出，仅在隔离进程中用已绑定驱动入口替代每次 kernel[grid] 调用。</p>
+<div><table><thead><tr><th>模板</th><th>卡</th><th>直接 eager µs</th><th>原 SDNN 正式 µs</th><th>绑定后正式 µs</th><th>原裸计划 µs</th><th>绑定后裸计划 µs</th></tr></thead><tbody>
+<tr><td>mul_sum</td><td>0</td><td>49.23</td><td>68.37</td><td>51.71</td><td>57.63</td><td>44.38</td></tr>
+<tr><td>mul_sum</td><td>2</td><td>48.89</td><td>68.24</td><td>51.58</td><td>57.58</td><td>44.22</td></tr>
+<tr><td>mul_sum_keepdim</td><td>1</td><td>48.68</td><td>67.44</td><td>51.65</td><td>57.38</td><td>44.43</td></tr>
+<tr><td>mul_sum_keepdim</td><td>3</td><td>49.19</td><td>68.25</td><td>51.67</td><td>57.87</td><td>44.47</td></tr>
+</tbody></table></div>
+<p>即使单独压缩启动层，正式入口仍有约 2–3 µs 差距。额外逐个注入 ±Inf 时发现，2048×2048 的已通过原校验的融合候选仍可能与 P800 eager 不同。只在 [0,0] 放 +Inf 的全 1 张量，P800 批量 sum 第 0 行为 NaN，单行 sum 为 +Inf。带乘法的新测中，Inductor、cluster 和 SDNN 在首行给出 +Inf，eager 给出 NaN。原准入把 NaN、+Inf、−Inf 等同时放在开头，会掩盖这个区别。绑定启动器测量仅证明普通输入的开销。</p>
+<h2>激活与临界项</h2>
+<p>三种尺寸的 Add + SiLU 中，SDNN 在加法结果为 +Inf 时返回 NaN，P800 eager 和 CPU FP64 均为 +Inf。小尺寸使用通过校验的 cluster，较快的裸计划被正式入口开销抵消。512×1024 的 cluster 设备执行略快，但裸计划已接近直接 eager。2048×2048 的 cluster 设备执行也慢于 eager，禁用尺寸回退后新出现的 flat_add 仍不能胜出。</p>
+<p>64×1024 MatMul + Bias + GELU(tanh) 的 matmul K=64。偏置仅注入一个 +Inf 时，Inductor 对应的一列共 64 个元素输出 NaN，eager 与 CPU 参考均为 +Inf。默认小矩阵要求单核，已有 native_mm 使用两个内核。临时允许双核后，两张卡均通过原校验并选到 native_mm，正式入口仍比直接 eager 慢约 5 µs。</p>
+<p>两个大尺寸临界项应分别处理。2048×2048 MatMul + Bias 在新冷编译的两张卡上都更快，设备 SDNN 计时约 24–25 µs，原矩阵约 30 µs。具体哪一个编译配置引起变化尚未单变量确认。2048×2048 Add + Softmax 的 cluster 裸计划快约 8–9 µs，正式入口抵消了这部分收益。这里比较普通同步调用，显式长期图回放不参与。</p>
+<h2>验证候选筛选是否造成回退</h2>
+<div><table><thead><tr><th>诊断开关</th><th>模板</th><th>尺寸</th><th>卡</th><th>最终路由</th><th>正式 − 直接 eager µs</th><th>重点候选及正式差值 µs</th></tr></thead><tbody>
+<tr><td>heuristic_off</td><td>add_silu</td><td>2048x2048</td><td>0</td><td>eager</td><td>8.07</td><td>cluster 21.97</td></tr>
+<tr><td>heuristic_off</td><td>add_silu</td><td>2048x2048</td><td>4</td><td>eager</td><td>9.23</td><td>cluster 20.70</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum</td><td>512x1024</td><td>3</td><td>eager</td><td>7.86</td><td>附加候选未通过</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum</td><td>512x1024</td><td>7</td><td>eager</td><td>7.81</td><td>附加候选未通过</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum</td><td>64x1024</td><td>1</td><td>eager</td><td>9.53</td><td>cluster 24.62, sdnn 22.39</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum</td><td>64x1024</td><td>5</td><td>eager</td><td>9.82</td><td>cluster 23.12, sdnn 19.83</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum_keepdim</td><td>64x1024</td><td>2</td><td>eager</td><td>9.29</td><td>cluster 22.74, sdnn 14.79</td></tr>
+<tr><td>heuristic_off</td><td>mul_sum_keepdim</td><td>64x1024</td><td>6</td><td>eager</td><td>9.80</td><td>cluster 21.82, sdnn 16.08</td></tr>
+<tr><td>split</td><td>mul_sum</td><td>2048x2048</td><td>5</td><td>eager</td><td>8.64</td><td>cluster_cluster_at_1 73.09, cluster_sdnn_at_1 53.80, sdnn_cluster_at_1 61.31, sdnn_sdnn_at_1 36.08</td></tr>
+<tr><td>split</td><td>mul_sum</td><td>512x1024</td><td>6</td><td>eager</td><td>8.10</td><td>附加候选未通过</td></tr>
+<tr><td>split</td><td>mul_sum_keepdim</td><td>2048x2048</td><td>4</td><td>eager</td><td>8.23</td><td>cluster_cluster_at_1 74.52, cluster_sdnn_at_1 53.39, sdnn_cluster_at_1 62.98, sdnn_sdnn_at_1 35.53</td></tr>
+<tr><td>split</td><td>mul_sum_keepdim</td><td>512x1024</td><td>7</td><td>eager</td><td>8.09</td><td>附加候选未通过</td></tr>
+<tr><td>two_kernel</td><td>matmul_bias_gelu_tanh</td><td>64x1024</td><td>4</td><td>native_mm</td><td>5.25</td><td>native_mm 5.25</td></tr>
+<tr><td>two_kernel</td><td>matmul_bias_gelu_tanh</td><td>64x1024</td><td>6</td><td>native_mm</td><td>4.64</td><td>native_mm 4.64</td></tr>
+</tbody></table></div>
+<p>split 为单独编译生产已有的分段归约方案，heuristic_off 取消既有尺寸启发式筛选，two_kernel 允许小尺寸采用双核。它们与正式路由分开统计。</p>
+<h2>对应的修复方向</h2>
+<p>数值校验先补单独 NaN、+Inf 和 −Inf，分别覆盖张量输入与广播输入。LayerNorm 和 512×1024 的归约已取得纯 eager 复现，可据此核对厂商实现和项目要求的数值契约。</p>
+<p>大尺寸归约可复用已编译 SDNN 启动器，同时保留对执行流、输出分配和输入签名的处理。小尺寸激活的验收基线应补上用户直接调用的 eager，用完整入口决定加速是否成立。</p>
+<h2>独立冷编译与候选计时</h2>
+<p>每项两份生产冷编译，同一物理卡同一时刻一组。各已验证候选用同一正式模块、Dynamo 守卫、已编译 callable 和输入张量计时，同时测裸计划与直接 eager。输出保留与两组不同随机输入逐项检查。24 个随机正反序块，每块 7 次有效同步调用。设备图捕获计时来自正式校准，独立于主机墙钟计时。</p>
+<div><table><thead><tr><th>模板</th><th>尺寸</th><th>卡</th><th>所选路由</th><th>设备 eager µs</th><th>设备所选 µs</th><th>直接 eager µs</th><th>裸计划 µs</th><th>正式入口 µs</th></tr></thead><tbody>
+<tr><td>add_gelu_exact</td><td>64x1024</td><td>0</td><td>sdnn</td><td>11.35</td><td>6.38</td><td>29.38</td><td>23.12</td><td>30.58</td></tr>
+<tr><td>add_gelu_exact</td><td>64x1024</td><td>3</td><td>sdnn</td><td>11.32</td><td>6.23</td><td>29.53</td><td>23.77</td><td>32.12</td></tr>
+<tr><td>add_gelu_tanh</td><td>64x1024</td><td>1</td><td>cluster</td><td>10.21</td><td>4.12</td><td>28.74</td><td>23.32</td><td>32.03</td></tr>
+<tr><td>add_gelu_tanh</td><td>64x1024</td><td>4</td><td>cluster</td><td>10.32</td><td>4.09</td><td>28.49</td><td>23.39</td><td>32.01</td></tr>
+<tr><td>add_layernorm</td><td>2048x2048</td><td>3</td><td>eager</td><td>48.76</td><td>48.76</td><td>63.42</td><td>62.09</td><td>71.76</td></tr>
+<tr><td>add_layernorm</td><td>512x1024</td><td>0</td><td>eager</td><td>14.56</td><td>14.56</td><td>32.22</td><td>30.48</td><td>44.85</td></tr>
+<tr><td>add_layernorm</td><td>512x1024</td><td>3</td><td>eager</td><td>14.50</td><td>14.50</td><td>32.58</td><td>30.52</td><td>43.67</td></tr>
+<tr><td>add_layernorm</td><td>64x1024</td><td>3</td><td>eager</td><td>9.33</td><td>9.33</td><td>31.96</td><td>29.90</td><td>42.20</td></tr>
+<tr><td>add_layernorm</td><td>64x1024</td><td>6</td><td>eager</td><td>9.34</td><td>9.34</td><td>32.15</td><td>30.29</td><td>42.50</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048x2048</td><td>4</td><td>eager</td><td>51.14</td><td>51.14</td><td>65.32</td><td>63.66</td><td>73.87</td></tr>
+<tr><td>add_layernorm_affine</td><td>2048x2048</td><td>7</td><td>eager</td><td>51.40</td><td>51.40</td><td>65.32</td><td>63.66</td><td>73.41</td></tr>
+<tr><td>add_layernorm_affine</td><td>512x1024</td><td>1</td><td>eager</td><td>15.85</td><td>15.85</td><td>35.73</td><td>32.66</td><td>43.82</td></tr>
+<tr><td>add_layernorm_affine</td><td>512x1024</td><td>4</td><td>eager</td><td>16.31</td><td>16.31</td><td>36.15</td><td>32.89</td><td>43.91</td></tr>
+<tr><td>add_layernorm_affine</td><td>64x1024</td><td>4</td><td>eager</td><td>11.62</td><td>11.62</td><td>35.93</td><td>32.95</td><td>44.10</td></tr>
+<tr><td>add_layernorm_affine</td><td>64x1024</td><td>7</td><td>eager</td><td>11.78</td><td>11.78</td><td>35.95</td><td>32.87</td><td>43.81</td></tr>
+<tr><td>add_silu</td><td>2048x2048</td><td>2</td><td>eager</td><td>73.13</td><td>73.13</td><td>87.48</td><td>85.98</td><td>96.77</td></tr>
+<tr><td>add_silu</td><td>2048x2048</td><td>5</td><td>eager</td><td>72.94</td><td>72.94</td><td>87.30</td><td>85.93</td><td>95.08</td></tr>
+<tr><td>add_silu</td><td>512x1024</td><td>7</td><td>eager</td><td>18.54</td><td>18.54</td><td>32.36</td><td>30.92</td><td>41.33</td></tr>
+<tr><td>add_silu</td><td>512x1024</td><td>2</td><td>eager</td><td>18.59</td><td>18.59</td><td>32.44</td><td>30.91</td><td>41.15</td></tr>
+<tr><td>add_silu</td><td>64x1024</td><td>2</td><td>cluster</td><td>8.91</td><td>6.25</td><td>27.51</td><td>24.94</td><td>33.40</td></tr>
+<tr><td>add_silu</td><td>64x1024</td><td>5</td><td>cluster</td><td>9.01</td><td>4.25</td><td>27.58</td><td>23.31</td><td>32.04</td></tr>
+<tr><td>add_softmax</td><td>2048x2048</td><td>1</td><td>cluster</td><td>75.83</td><td>63.35</td><td>89.10</td><td>80.96</td><td>89.43</td></tr>
+<tr><td>add_softmax</td><td>2048x2048</td><td>4</td><td>cluster</td><td>75.78</td><td>63.37</td><td>89.53</td><td>80.40</td><td>89.22</td></tr>
+<tr><td>matmul_bias</td><td>2048x2048</td><td>0</td><td>sdnn</td><td>37.82</td><td>23.89</td><td>60.76</td><td>42.65</td><td>50.75</td></tr>
+<tr><td>matmul_bias</td><td>2048x2048</td><td>3</td><td>sdnn</td><td>37.76</td><td>25.27</td><td>61.60</td><td>44.13</td><td>53.90</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64x1024</td><td>7</td><td>eager</td><td>14.66</td><td>14.66</td><td>51.50</td><td>47.24</td><td>68.32</td></tr>
+<tr><td>matmul_bias_gelu_tanh</td><td>64x1024</td><td>2</td><td>eager</td><td>14.64</td><td>14.64</td><td>53.27</td><td>49.27</td><td>71.82</td></tr>
+<tr><td>mul_sum</td><td>2048x2048</td><td>5</td><td>eager</td><td>35.35</td><td>35.35</td><td>49.50</td><td>48.14</td><td>57.34</td></tr>
+<tr><td>mul_sum</td><td>2048x2048</td><td>0</td><td>eager</td><td>35.68</td><td>35.68</td><td>49.82</td><td>48.16</td><td>58.12</td></tr>
+<tr><td>mul_sum</td><td>512x1024</td><td>2</td><td>eager</td><td>13.07</td><td>13.07</td><td>26.64</td><td>25.03</td><td>36.49</td></tr>
+<tr><td>mul_sum</td><td>512x1024</td><td>5</td><td>eager</td><td>13.13</td><td>13.13</td><td>26.51</td><td>25.07</td><td>34.47</td></tr>
+<tr><td>mul_sum</td><td>64x1024</td><td>5</td><td>cluster</td><td>7.10</td><td>13.12</td><td>25.97</td><td>29.20</td><td>36.95</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048x2048</td><td>6</td><td>eager</td><td>35.40</td><td>35.40</td><td>48.85</td><td>47.73</td><td>57.14</td></tr>
+<tr><td>mul_sum_keepdim</td><td>2048x2048</td><td>1</td><td>eager</td><td>35.12</td><td>35.12</td><td>48.91</td><td>47.64</td><td>56.54</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512x1024</td><td>3</td><td>eager</td><td>13.14</td><td>13.14</td><td>26.29</td><td>25.05</td><td>35.87</td></tr>
+<tr><td>mul_sum_keepdim</td><td>512x1024</td><td>6</td><td>eager</td><td>12.93</td><td>12.93</td><td>26.65</td><td>25.27</td><td>35.44</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64x1024</td><td>6</td><td>cluster</td><td>7.06</td><td>12.95</td><td>26.62</td><td>29.42</td><td>37.86</td></tr>
+<tr><td>add_layernorm</td><td>2048x2048</td><td>2</td><td>eager</td><td>48.90</td><td>48.90</td><td>63.43</td><td>61.83</td><td>71.39</td></tr>
+<tr><td>mul_sum</td><td>64x1024</td><td>0</td><td>cluster</td><td>7.02</td><td>13.90</td><td>25.89</td><td>29.37</td><td>37.04</td></tr>
+<tr><td>mul_sum_keepdim</td><td>64x1024</td><td>1</td><td>cluster</td><td>6.97</td><td>13.28</td><td>26.56</td><td>29.42</td><td>38.99</td></tr>
+</tbody></table></div>
+<p>归档含 4 次未取得完整证据的尝试，原因和成功重试分别保留。初次有一项缺少预期的准入记录，其余失败为冷启动超时。生产镜像为 v16，本轮仅做定位。</p>
+<p><a href="eager_fp32_repro.py">纯 PyTorch 最小复现</a> · <a href="results.json">每项候选、计时与误差</a> · <a href="evidence.tar.gz">脚本、原始样本与日志</a> · <a href="../f06-v16-call-overhead/F06热入口开销复测.html">原 v16 基线</a> · <a href="../../../python/triton/experimental/graph_fusion/_resource_benchmark.py">数值校验</a> · <a href="../../../python/triton/experimental/graph_fusion/_resource_autotune.py">候选与正式选路</a> · <a href="../../../python/triton/experimental/graph_fusion/_p800_dsa.py">DSA 启动实现</a></p>
+</html>

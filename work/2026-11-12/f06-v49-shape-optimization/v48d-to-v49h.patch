@@ -1,0 +1,939 @@
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
+@@ -149,7 +149,10 @@
+ template<class T> static __device__ inline void promote_vector(const _global_ptr_ T *src, _shared_ptr_ float *dst, int n) {
+     __simd__ T small[32];
+     for (int i = core_id()*32; i < n; i += core_num()*32) {
+-        GM2LM(src+i,small,32*sizeof(T));
++        const int count = n - i < 32 ? n - i : 32;
++        GM2LM(src+i,small,count*sizeof(T));
++        for (int j = count; j < 32; ++j) small[j] = 0;
++        mfence_lm();
+         Pair v = ordered_pair(small);
+         vstore_sm_float32x16(dst+i,v.lo);
+         vstore_sm_float32x16(dst+i+16,v.hi);
+@@ -173,7 +176,10 @@
+ template<class IO,class T> static __device__ inline void stage_row(const _global_ptr_ IO *src,T *tile,int n) {
+     GM2LM(src,tile,n*sizeof(IO));
+     if (sizeof(T)>sizeof(IO)) {
+-        for (int i=n-32;i>=0;i-=32) {
++        const int end = (n + 31) & ~31;
++        for (int i = n; i < end; ++i) ((IO*)tile)[i] = 0;
++        mfence_lm();
++        for (int i=end-32;i>=0;i-=32) {
+             Pair v=ordered_pair((IO*)tile+i);
+             write_pair((float*)tile+i,v);
+         }
+@@ -221,10 +227,23 @@
+     __shared__ __simd__ T b[4096 / sizeof(T)], w[4096 / sizeof(T)], s[4096 / sizeof(T)];
+     __simd__ T tile[4096 / sizeof(T)];
+     stage_vectors<Affine>(bias, weight, shift, b, w, s, n);
++    const int padded = (n + 63) & ~63;
++    if (padded != n) {
++        if (core_id() == 0) {
++            for (int i = n; i < padded; ++i) {
++                b[i] = 0;
++                if (Affine) { w[i] = 0; s[i] = 0; }
++            }
++        }
++        mfence();
++        sync_cluster();
++    }
+     const int pieces = (n + segment - 1) / segment;
+     for (int row = core_id(); row < rows; row += core_num()) {
+         int base = (first + row) * n;
+         stage_row(a + base, tile, n);
++        for (int i = n; i < padded; ++i) tile[i] = 0;
++        mfence_lm();
+         float sum = 0.f, squares = 0.f;
+         for (int k = 0; k < pieces; ++k) {
+             int start = (segment == 256 ? k : pieces - 1 - k) * segment;
+--- a/python/triton/experimental/graph_fusion/_p800_bf16_gelu.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_bf16_gelu.xpu
+@@ -55,7 +55,7 @@
+     return (0.5f * x) * (1.f + erf);
+ }
+ 
+-template<bool FinalOnly> static __device__ inline void bias_gelu(const _global_ptr_ uint16_t *a,
++template<bool FinalOnly, bool Half=false> static __device__ inline void bias_gelu(const _global_ptr_ uint16_t *a,
+     const _global_ptr_ uint16_t *bias, _global_ptr_ uint16_t *out,
+     int pid, int programs, int total, int n, int width) {
+     #pragma clang fp contract(off)
+@@ -63,24 +63,41 @@
+     __simd__ uint16_t tile[512];
+     if (core_id() == 0) GM2SM_ASYNC(bias, shared_bias, n * sizeof(uint16_t));
+     mfence_sm_gm();
++    if (core_id() == 0) {
++        for (int i = n; i % 32; ++i) shared_bias[i] = 0;
++    }
+     sync_cluster();
+-    for (int first = (pid * core_num() + core_id()) * width; first < total;
+-         first += programs * core_num() * width) {
+-        GM2LM(a + first, tile, width * sizeof(uint16_t));
+-        for (int i = 0; i < width; i += 32) {
+-            U matrix_words = (U)vload_lm_float16x32(tile + i);
+-            U bias_words = (U)vload_sm_float16x32(shared_bias + first % n + i);
+-            F even = (F)(matrix_words << 16) + (F)(bias_words << 16);
+-            F odd = (F)(matrix_words & 0xffff0000u) + (F)(bias_words & 0xffff0000u);
+-            if (!FinalOnly) { even = (F)round_bf16(even); odd = (F)round_bf16(odd); }
+-            even = exact_gelu(even);
+-            odd = exact_gelu(odd);
+-            U packed = FinalOnly ? (sdk_bf16(even) >> 16) | sdk_bf16(odd)
+-                                  : (round_bf16(even) >> 16) | round_bf16(odd);
+-            vstore_lm_float16x32(tile + i, (float16x32_t)packed);
++    // No vector crosses the end of a bias row. The last DMA copies only
++    // live elements; padding is confined to the per-core and shared arrays.
++    const int chunks = (n + width - 1) / width;
++    const int tasks = (total / n) * chunks;
++    for (int task = pid * core_num() + core_id(); task < tasks; task += programs * core_num()) {
++        const int column = (task % chunks) * width;
++        const int count = n - column < width ? n - column : width;
++        const int first = (task / chunks) * n + column;
++        GM2LM(a + first, tile, count * sizeof(uint16_t));
++        for (int i = count; i % 32; ++i) tile[i] = 0;
++        for (int i = 0; i < count; i += 32) {
++            auto x = vload_lm_float16x32(tile + i);
++            auto b = vload_sm_float16x32(shared_bias + column + i);
++            if (Half) {
++                F lo = exact_gelu(vvadd_float32x16(vfp162float_l(x), vfp162float_l(b)));
++                F hi = exact_gelu(vvadd_float32x16(vfp162float_h(x), vfp162float_h(b)));
++                vstore_lm_float16x32(tile + i, vfloat2fp16_lh(lo, hi));
++            } else {
++                U matrix_words = (U)x, bias_words = (U)b;
++                F even = (F)(matrix_words << 16) + (F)(bias_words << 16);
++                F odd = (F)(matrix_words & 0xffff0000u) + (F)(bias_words & 0xffff0000u);
++                if (!FinalOnly) { even = (F)round_bf16(even); odd = (F)round_bf16(odd); }
++                even = exact_gelu(even);
++                odd = exact_gelu(odd);
++                U packed = FinalOnly ? (sdk_bf16(even) >> 16) | sdk_bf16(odd)
++                                     : (round_bf16(even) >> 16) | round_bf16(odd);
++                vstore_lm_float16x32(tile + i, (float16x32_t)packed);
++            }
+         }
+         mfence_lm();
+-        LM2GM(tile, out + first, width * sizeof(uint16_t));
++        LM2GM(tile, out + first, count * sizeof(uint16_t));
+     }
+ }
+ 
+@@ -91,6 +108,12 @@
+ }
+ BIAS_GELU(kl3_bf16_bias_gelu, false)
+ BIAS_GELU(kl3_bf16_bias_gelu_final, true)
++extern "C" __device__ void kl3_fp16_bias_gelu_final(const _global_ptr_ uint16_t *a,
++        const _global_ptr_ uint16_t *b, _global_ptr_ uint16_t *out, int pid, int programs,
++        int total, int n, int width) {
++    bias_gelu<true,true>(a,b,out,pid,programs,total,n,width);
++}
++
+ 
+ // Contiguous FP32 accumulator tiles use the same lane order as the SDK cast.
+ // RNE is complete before the two exact field-packing conversions below.
+--- a/python/triton/experimental/graph_fusion/_resource_runtime.py
++++ b/python/triton/experimental/graph_fusion/_resource_runtime.py
+@@ -71,7 +71,7 @@
+     """Compile proposed regions using Inductor; does not assert acceptance."""
+     import torch.fx
+     from torch.fx.node import map_arg
+-    from ._resource_fx import build_region, collect_example_values, low_precision_sdnn_sum
++    from ._resource_fx import build_region, collect_example_values, unsafe_sdnn_sum
+     from ._resource_codegen import compile_region
+     import operator
+     # Fake values propagate through the original operators, without running
+@@ -121,7 +121,7 @@
+                                          for n in region.gm.graph.nodes) else 'external'
+         region_inputs = tuple(values[n] for n in region.input_names)
+         dsa_spec = None
+-        if item.resource == 'sdnn' and low_precision_sdnn_sum(region.gm.graph.nodes, region_inputs):
++        if item.resource == 'sdnn' and unsafe_sdnn_sum(region.gm.graph.nodes, region_inputs):
+             raise RuntimeError('P800 SDNN low-precision sum has no safe native lowering')
+         # Match both dtypes and assign each shortcut to the resource it launches.
+         _dsa_dtypes = ('float32', 'float16')
+--- a/python/triton/experimental/graph_fusion/_resource_fx.py
++++ b/python/triton/experimental/graph_fusion/_resource_fx.py
+@@ -86,9 +86,12 @@
+ })
+ 
+ 
+-def low_precision_sdnn_sum(nodes, inputs):
+-    """P800 native SDNN sum can fault the device on low-precision input."""
+-    if not any(isinstance(x, torch.Tensor) and x.dtype in (torch.float16, torch.bfloat16) for x in inputs):
++def unsafe_sdnn_sum(nodes, inputs):
++    """The KL3 SDNN reduction launch faults on narrow inputs or a partial row pair."""
++    tensors = [x for x in inputs if isinstance(x, torch.Tensor)]
++    if not any(x.dtype in (torch.float16, torch.bfloat16) or
++               (x.ndim == 2 and type(x.shape[0]) is int and x.shape[0] % 2)
++               for x in tensors):
+         return False
+     targets = (torch.sum, torch.ops.aten.sum.dim_IntList, torch.ops.aten.sum.default)
+     return any((n.op == 'call_method' and n.target == 'sum') or
+--- a/python/triton/experimental/graph_fusion/_resource_autotune.py
++++ b/python/triton/experimental/graph_fusion/_resource_autotune.py
+@@ -14,7 +14,7 @@
+ import statistics
+ import threading
+ 
+-from ._resource_fx import build_region, context_fingerprint, low_precision_sdnn_sum
++from ._resource_fx import build_region, context_fingerprint, unsafe_sdnn_sum
+ 
+ 
+ @dataclass(frozen=True)
+@@ -143,7 +143,7 @@
+         # Current SDK cannot compile these SDNN reduction graphs reliably.
+         # Keep them on native Inductor/cluster; retain SDNN for Mul+Sum trials.
+         targets = ' '.join(str(n.target) for n in nodes)
+-        sdnn_sum_unsafe = low_precision_sdnn_sum(nodes, inputs)
++        sdnn_sum_unsafe = unsafe_sdnn_sum(nodes, inputs)
+         gelu_mode = _add_gelu_mode(nodes)
+         # P800's fused SDNN tanh-GELU and BF16 exact-GELU take much
+         # longer than eager. Keep SDNN's fast FP16/FP32 exact epilogue.
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.py
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.py
+@@ -81,6 +81,41 @@
+ 
+ 
+ @tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_soft_wide_half(a, b, out, first, rows, n, lanes):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_soft_wide_float(a, b, out, first, rows, n, lanes):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_short_soft_float(a, b, out, pid, grid, rows, cols, final_only):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_short_soft_half(a, b, out, pid, grid, rows, cols, final_only):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_short_soft_bf(a, b, out, pid, grid, rows, cols, final_only):
++    ...
++
++
++
++
++
++
++
++
++
++
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
+ def kl3_stream_soft_float(a, b, out, pid, grid, rows, cols, final_only):
+     ...
+ 
+@@ -97,14 +132,25 @@
+ 
+ @triton.jit(do_not_specialize=['A', 'B', 'OUT'], do_not_specialize_on_alignment=['A', 'B', 'OUT'])
+ def _stream_softmax(A, B, OUT, M: tl.constexpr, N: tl.constexpr, GRID: tl.constexpr, FINAL_ONLY: tl.constexpr):
+-    args = (A, B, OUT, tl.program_id(0), tl.full((), GRID, tl.int32), tl.full((), M, tl.int64),
+-            tl.full((), N, tl.int64), tl.full((), FINAL_ONLY, tl.int32))
+-    if A.dtype.element_ty == tl.float32:
+-        tle.raw.call(kl3_stream_soft_float, args)
+-    elif A.dtype.element_ty == tl.float16:
+-        tle.raw.call(kl3_stream_soft_half, args)
++    if N <= 1024 and N % 32 and M <= 0x7fffffff:
++        short = (A, B, OUT, tl.program_id(0), tl.full((), GRID, tl.int32),
++                 tl.full((), M, tl.int32), tl.full((), N, tl.int32), tl.full((), FINAL_ONLY, tl.int32))
++        if A.dtype.element_ty == tl.float32:
++            tle.raw.call(kl3_short_soft_float, short)
++        elif A.dtype.element_ty == tl.float16:
++            tle.raw.call(kl3_short_soft_half, short)
++        else:
++            tle.raw.call(kl3_short_soft_bf, short)
+     else:
+-        tle.raw.call(kl3_stream_soft_bf, args)
++        args = (A, B, OUT, tl.program_id(0), tl.full((), GRID, tl.int32), tl.full((), M, tl.int64),
++                tl.full((), N, tl.int64), tl.full((), FINAL_ONLY, tl.int32))
++        if A.dtype.element_ty == tl.float32:
++            tle.raw.call(kl3_stream_soft_float, args)
++        elif A.dtype.element_ty == tl.float16:
++            tle.raw.call(kl3_stream_soft_half, args)
++        else:
++            tle.raw.call(kl3_stream_soft_bf, args)
++
+ 
+ 
+ @triton.jit(do_not_specialize=['A', 'B', 'OUT'], do_not_specialize_on_alignment=['A', 'B', 'OUT'])
+@@ -159,7 +205,12 @@
+                 tle.raw.call(kl3_sum_float, (A, B, OUT, first, count, n))
+         elif KIND == 6:
+             args = (A, B, OUT, first, count, n, tl.full((), TILE, tl.int32))
+-            tle.raw.call(kl3_soft_wide_bf, args)
++            if A.dtype.element_ty == tl.bfloat16:
++                tle.raw.call(kl3_soft_wide_bf, args)
++            elif A.dtype.element_ty == tl.float16:
++                tle.raw.call(kl3_soft_wide_half, args)
++            else:
++                tle.raw.call(kl3_soft_wide_float, args)
+         else:
+             args = (A, B, OUT, first, count, n, tl.full((), TILE, tl.int32))
+             if A.dtype.element_ty == tl.bfloat16:
+@@ -190,8 +241,20 @@
+ 
+ 
+ def configuration(kind, dtype, m, n):
+-    if (m, n) not in _SHAPES or kind not in _KINDS:
+-        return None
++    if kind not in _KINDS:
++        return None
++    if (m, n) not in _SHAPES:
++        if kind != 'mul_sum' or not 0 < n <= 2048 or n % 64 or m <= 0 or m*n > 0x7fffffff:
++            return None
++        # The 1024-column cross-core sum has 64 scratch slots per cluster.
++        if n == 1024 and m > 12 * 64:
++            return None
++        from ._p800_layernorm import toolchain_available
++        if not toolchain_available():
++            return None
++        rows = min(m, 64)
++        grid = 12 if n == 1024 and dtype == 'float32' else (m + rows - 1) // rows
++        return _KINDS[kind], 64, rows, grid
+     # Default routing stays scoped to the measured layouts and vendor algorithms.
+     if kind == 'mul_sum':
+         supported = dtype in ('bfloat16', 'float16', 'float32')
+--- a/python/triton/experimental/graph_fusion/_p800_reduce.py
++++ b/python/triton/experimental/graph_fusion/_p800_reduce.py
+@@ -209,7 +209,7 @@
+                        or any(t.shape != (n,) or t.dtype != a.dtype or t.device != a.device
+                               or not t.is_contiguous() for t in tensors[2:])):
+             return None
+-        if _decline_layernorm(m, n, dt):
++        if _decline_layernorm(m, n, dt) and (a.device.type != 'cuda' or not (0 < n <= 2048 and m*n <= 0x7fffffff)):
+             return None
+         return dict(kind='add_layernorm_affine' if affine else 'add_layernorm',
+                     m=m, n=n, dtype=dt, eps=eps, keepdim=False, nparam=nparam)
+@@ -229,9 +229,10 @@
+     if _decline_mulsum(m, n, dt):
+         if a.device.type != 'cuda':
+             return None
+-        from ._p800_vector_rows import configuration
+-        if configuration('mul_sum', dt, m, n) is None:
+-            return None
++        if n > 2048 or m*n > 0x7fffffff:
++            from ._p800_vector_rows import configuration
++            if configuration('mul_sum', dt, m, n) is None:
++                return None
+     return dict(kind='mul_sum', m=m, n=n, dtype=dt, eps=0.0, keepdim=bool(kd),
+                 nparam=len([t for t in tensors[2:] if isinstance(t, torch.Tensor)]))
+ 
+@@ -286,6 +287,75 @@
+     return _flat_row_reduce
+ 
+ 
++def _masked_row_kernel():
++    import triton
++    import triton.language as tl
++
++    @triton.jit
++    def row(a, b, w, shift, out, N: tl.constexpr, BLOCK: tl.constexpr, SUM: tl.constexpr,
++            AFFINE: tl.constexpr, FINAL: tl.constexpr, EPS: tl.constexpr):
++        r = tl.program_id(0)
++        col = tl.arange(0, BLOCK)
++        pos = r * N + col
++        valid = col < N
++        x = tl.load(a + pos, mask=valid, other=0.).to(tl.float32)
++        bias = tl.load(b + col, mask=valid, other=0.).to(tl.float32)
++        if SUM:
++            prod = x * bias
++            if not FINAL:
++                prod = prod.to(a.dtype.element_ty).to(tl.float32)
++            value = tl.sum(prod, 0)
++            tl.store(out + r, value)
++        else:
++            z = x + bias
++            if not FINAL:
++                z = z.to(a.dtype.element_ty).to(tl.float32)
++            mean = tl.sum(z, 0) / N
++            delta = tl.where(valid, z - mean, 0.)
++            inv = 1. / tl.sqrt(tl.sum(delta * delta, 0) / N + EPS)
++            value = delta * inv
++            if AFFINE:
++                value = value * tl.load(w + col, mask=valid, other=0.).to(tl.float32)
++                value += tl.load(shift + col, mask=valid, other=0.).to(tl.float32)
++            tl.store(out + pos, value, mask=valid)
++
++    return row
++
++
++def _masked_rows(spec, proof):
++    import torch
++    from ._p800_bound_launch import bind
++    from ._resource_codegen import bind_evidence
++
++    m, n = spec['m'], spec['n']
++    is_sum = spec['kind'] == 'mul_sum'
++    affine = spec['kind'] == 'add_layernorm_affine'
++    shape = ((m, 1) if spec['keepdim'] else (m,)) if is_sum else (m, n)
++    block = 1 << (n - 1).bit_length()
++    args = n, block, is_sum, affine, spec.get('final_round_only', False), spec['eps']
++    grid = (m, 1, 1)
++    kernel = _masked_row_kernel()
++    bound = None
++
++    def run(xs):
++        nonlocal bound
++        a, b = xs[:2]
++        operands = (a, b, xs[2], xs[3]) if affine else (a, b, b, b)
++        if bound is not None:
++            value = bound(*operands)
++            if value is not None:
++                return (value,)
++        value = torch.empty(shape, device=a.device, dtype=a.dtype)
++        binary = kernel[grid](*operands, value, *args, num_warps=4, num_stages=1)
++        if not proof['resource_verified']:
++            bind_evidence(proof, binary)
++            bound = bind(kernel, binary, grid, operands, shape, (), 'cluster')
++            proof.update(tiles={'columns': block}, prepared_launch=bound is not None)
++        return (value,)
++
++    return run, proof
++
++
+ def _softmax_pointer_kernel():
+     import triton
+     import triton.language as tl
+@@ -664,7 +734,12 @@
+ 
+     final_only = spec.get('final_round_only', False)
+     compute_dtype = 'float32' if final_only else spec['dtype']
+-    if kind == 2 and final_only and spec['dtype'] == 'bfloat16':
++    # A full descriptor tile requires at least 32 rows, in multiples of eight.
++    # Use the guarded vector-row kernel for partial batches of any supported
++    # precision. The narrow-input variant adds in FP32 only for a final-only graph.
++    vector_rows = (spec['m'] < 32 or spec['m'] % 8 or spec['n'] not in (512, 1024, 2048))
++    if kind == 2 and (final_only and spec['dtype'] == 'bfloat16' or
++                      vector_rows and (final_only or spec['dtype'] == 'float32')):
+         from ._p800_vector_rows import wide_softmax_configuration, prepare as prepare_vector
+         config = wide_softmax_configuration(spec['m'], spec['n'])
+         if config is not None:
+@@ -709,6 +784,10 @@
+                 return (out,)
+ 
+             return run_ordered, proof
++
++    if kind != 2 and 0 < spec['n'] <= 2048 and spec['m'] * spec['n'] <= 0x7fffffff:
++        if final_only or spec['m'] % min(_ROWS) or spec['n'] % min(_CHUNKS):
++            return _masked_rows(spec, proof)
+ 
+     def launch(a, b, out, tile, w=None, bias=None):
+         grid = ((spec['m'] + tile['r'] - 1) // tile['r'],)
+@@ -854,9 +933,9 @@
+                 return out
+         m, n = spec['m'], spec['n']
+         out = torch.empty_like(a)
+-        if n > 8192:
++        from ._p800_layernorm import toolchain_available
++        if n > 8192 or (n % 32 and toolchain_available()):
+             from ._p800_vector_rows import _stream_softmax
+-            from ._p800_layernorm import toolchain_available
+             if not toolchain_available():
+                 raise RuntimeError('wide P800 row Softmax requires the XTDK kernel toolchain')
+             kernel = _stream_softmax
+--- a/python/triton/experimental/graph_fusion/_p800_native_mm.py
++++ b/python/triton/experimental/graph_fusion/_p800_native_mm.py
+@@ -115,7 +115,7 @@
+             silu_path = 'epilogue'
+         else:
+             silu_path = 'cluster'
+-    if not vendor_product and (act_code in (3, 4) or (act_code == 1 and silu_path != 'epilogue')) and (M * N) % 8192:
++    if min(M, N, K) <= 0 or max(M*N, M*K, K*N) > 0x7fffffff:
+         return None
+     # Only admit graphs whose whole computation is mm -> add -> (relu).
+     # Anything consuming the add (gelu/silu/cast/extra arithmetic) is declined:
+@@ -244,9 +244,12 @@
+     # which the native LUT pass lowers to a vector table lookup (45 us/2048^2
+     # vs 2290 us for the scalar extern epilogue).
+     @triton.jit(do_not_specialize=['x_ptr', 'o_ptr'])
+-    def ew_silu(x_ptr, o_ptr, N, XB: tl.constexpr):
++    def ew_silu(x_ptr, o_ptr, N, XB: tl.constexpr, TAIL: tl.constexpr = False):
+         i = tl.program_id(0) * XB + tl.arange(0, XB)
+-        z = tl.load(x_ptr + i).to(tl.float32)
++        if TAIL:
++            z = tl.load(x_ptr + i, mask=i < N, other=0.).to(tl.float32)
++        else:
++            z = tl.load(x_ptr + i).to(tl.float32)
+         # Exact form: canonicalises to tt.silu so the native LUT pass lowers it
+         # to a vector table lookup. Tail correction was measured: it does not
+         # reduce the mid-range LUT error and slows the kernel down, so it is
+@@ -254,36 +257,57 @@
+         value = z / (1.0 + tl.exp(-z))
+         nan = (z.to(tl.int32, bitcast=True) & 0x7fffffff) > 0x7f800000
+         y = tl.where(nan | (z == -float('inf')), float('nan'), tl.where(z == float('inf'), z, value))
+-        tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
++        if TAIL:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty), mask=i < N)
++        else:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
+ 
+     # Cluster EW activation: FlagTree's own vectorised lowering (VExpFOp), exact
+     # for f32. Used when the SDNN LUT window/tolerance is not acceptable.
+     @triton.jit(do_not_specialize=['x_ptr', 'o_ptr'])
+-    def ew_silu_cluster(x_ptr, o_ptr, N, XB: tl.constexpr):
++    def ew_silu_cluster(x_ptr, o_ptr, N, XB: tl.constexpr, TAIL: tl.constexpr = False):
+         i = tl.program_id(0) * XB + tl.arange(0, XB)
+-        z = tl.load(x_ptr + i).to(tl.float32)
++        if TAIL:
++            z = tl.load(x_ptr + i, mask=i < N, other=0.).to(tl.float32)
++        else:
++            z = tl.load(x_ptr + i).to(tl.float32)
+         value = z / (1.0 + tl.exp(-z))
+         nan = (z.to(tl.int32, bitcast=True) & 0x7fffffff) > 0x7f800000
+         y = tl.where(nan | (z == -float('inf')), float('nan'), tl.where(z == float('inf'), z, value))
+-        tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
++        if TAIL:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty), mask=i < N)
++        else:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
+ 
+     # Split GELU(tanh): x*sigmoid(2*sqrt(2/pi)*(x+0.044715 x^3)). The sigmoid
+     # canonicalises to the vector vsigmoidf intrinsic, 2.5x faster than the
+     # scalar tanh form and exact to ~5e-7 in f32.
+     @triton.jit(do_not_specialize=['x_ptr', 'o_ptr'])
+-    def ew_gelu_tanh(x_ptr, o_ptr, N, XB: tl.constexpr):
++    def ew_gelu_tanh(x_ptr, o_ptr, N, XB: tl.constexpr, TAIL: tl.constexpr = False):
+         i = tl.program_id(0) * XB + tl.arange(0, XB)
+-        z = tl.load(x_ptr + i).to(tl.float32)
++        if TAIL:
++            z = tl.load(x_ptr + i, mask=i < N, other=0.).to(tl.float32)
++        else:
++            z = tl.load(x_ptr + i).to(tl.float32)
+         a = 0.7978845608028654 * (z + 0.044715 * z * z * z)
+         y = z * tl.sigmoid(2.0 * a)
+-        tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
++        if TAIL:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty), mask=i < N)
++        else:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
+ 
+     @triton.jit(do_not_specialize=['x_ptr', 'o_ptr'])
+-    def ew_gelu_exact(x_ptr, o_ptr, N, XB: tl.constexpr):
++    def ew_gelu_exact(x_ptr, o_ptr, N, XB: tl.constexpr, TAIL: tl.constexpr = False):
+         i = tl.program_id(0) * XB + tl.arange(0, XB)
+-        z = tl.load(x_ptr + i).to(tl.float32)
++        if TAIL:
++            z = tl.load(x_ptr + i, mask=i < N, other=0.).to(tl.float32)
++        else:
++            z = tl.load(x_ptr + i).to(tl.float32)
+         y = 0.5 * z * (1.0 + tl.math.erf(z * 0.7071067811865476))
+-        tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
++        if TAIL:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty), mask=i < N)
++        else:
++            tl.store(o_ptr + i, y.to(o_ptr.dtype.element_ty))
+ 
+     return mm_act, ew_silu, ew_silu_cluster, ew_gelu_tanh, ew_gelu_exact
+ 
+@@ -392,8 +416,8 @@
+         tail = {3: ew_gelu_tanh, 4: ew_gelu_exact}.get(act)
+         if tail is None:
+             tail = ew_kernel if spec['silu_path'] == 'sdnn' else ew_cluster
+-        tail_grid = (total // 8192, 1, 1)
+-        second = tail[tail_grid](out, out, total, XB=8192, num_warps=8, num_stages=1, is_sdnn=tail is ew_kernel)
++        tail_grid = ((total + 8191) // 8192, 1, 1)
++        second = tail[tail_grid](out, out, total, XB=8192, TAIL=bool(total % 8192), num_warps=8, num_stages=1, is_sdnn=tail is ew_kernel)
+         if not proof['resource_verified']:
+             record(first, second)
+             warm_launch = bind(kernel, first, first_grid, (a, b, bias), (spec['M'], spec['N']), scalars, 'sdnn',
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.py
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.py
+@@ -17,12 +17,14 @@
+ def segment_width(m, n, dtype):
+     # KL3 stages 3072 input bytes per partial, except for the small FP32
+     # row, whose four 256-element partials are reduced independently.
+-    if (m, n) not in ((64, 1024), (512, 1024), (2048, 2048)):
++    # The one-core body has 4 KiB of FP32 scratch and consumes groups
++    # of 64 lanes. The two-core body handles two exact 1024-column halves.
++    if m <= 0 or n <= 0 or (n > 1024 and n != 2048) or m*n > 0x7fffffff:
+         return None
+     if dtype in ('bfloat16', 'float16'):
+         return min(n, 1536)
+     if dtype == 'float32':
+-        return 256 if m == 64 else 768
++        return 256 if m <= 128 else 768
+     return None
+ 
+ 
+--- a/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
++++ b/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
+@@ -9,7 +9,7 @@
+             and sum(n.op in ('call_function', 'call_method') for n in core.graph.nodes) == 2)
+ 
+ 
+-def compile_body(core, inputs, *, split=False, sdk_store=False):
++def compile_body(core, inputs, *, split=False, sdk_store=False, pointer_gelu=False):
+     from . import _p800_flat, _p800_fp32_mm, _p800_native_mm, _p800_reduce
+     if not inputs or inputs[0].dtype not in (torch.float16, torch.bfloat16, torch.float32):
+         return None
+@@ -27,7 +27,8 @@
+         layout = tuple(torch.empty_strided(t.shape, t.stride(), dtype=torch.float32, device=t.device) for t in inputs)
+         mm = _p800_native_mm.match(core, layout)
+         if mm is not None:
+-            if mm['K'] != 64 or (mm['M'], mm['N']) not in ((64, 1024), (512, 1024), (2048, 2048)):
++            m, n, k = mm['M'], mm['N'], mm['K']
++            if min(m, n, k) < 1 or max(m*n, m*k, k*n) > 0x7fffffff:
+                 return None
+             if sdk_store:
+                 if mm['act'] != 0 or dtype != 'bfloat16' or (mm['M'], mm['N']) != (2048, 2048):
+@@ -43,9 +44,8 @@
+             for module in (_p800_flat, _p800_reduce):
+                 spec = module.match(core, layout)
+                 if spec is not None:
+-                    if (spec['m'], spec['n']) not in ((64, 1024), (512, 1024), (2048, 2048)):
+-                        return None
+-                    kernel, proof = module.compile(dict(spec, dtype=dtype, final_round_only=True), inputs)
++                    kernel, proof = module.compile(dict(spec, dtype=dtype, final_round_only=True,
++                                                      pointer_gelu=pointer_gelu), inputs)
+                     break
+             else:
+                 return None
+@@ -73,6 +73,11 @@
+     candidates = {}
+     records = []
+     schedules = ['fp32_inline']
++    if not is_matrix:
++        from ._resource_autotune import _add_gelu_mode
++        ops = [n for n in core.graph.nodes if n.op in ('call_method', 'call_function')]
++        if _add_gelu_mode(ops) == 'none':
++            schedules.append('fp32_inline_pointer')
+     if is_matrix and not single_kernel:
+         schedules.append('fp32_inline_split')
+         if sdk_store_candidate(core, inputs):
+@@ -80,7 +85,10 @@
+     for name in schedules:
+         sdk_store = name == 'fp32_product_sdk_store'
+         try:
+-            compiled = compile_body(core, inputs, split=name != 'fp32_inline', sdk_store=sdk_store)
++            if name == 'fp32_inline_pointer':
++                compiled = compile_body(core, inputs, pointer_gelu=True)
++            else:
++                compiled = compile_body(core, inputs, split=name != 'fp32_inline', sdk_store=sdk_store)
+             if compiled is None:
+                 continue
+             fn, proof = compiled
+--- a/python/triton/experimental/graph_fusion/_p800_fp32_mm.py
++++ b/python/triton/experimental/graph_fusion/_p800_fp32_mm.py
+@@ -6,14 +6,26 @@
+ @triton.jit(do_not_specialize=['a', 'b', 'bias', 'out'],
+             do_not_specialize_on_alignment=['a', 'b', 'bias', 'out'])
+ def mm_bias(a, b, bias, out, M: tl.constexpr, N: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr,
+-            ACT: tl.constexpr = 0, FINAL_ONLY: tl.constexpr = False):
++            ACT: tl.constexpr = 0, FINAL_ONLY: tl.constexpr = False, K: tl.constexpr = 64):
+     rm = tl.program_id(0) * BM + tl.arange(0, BM)
+     rn = tl.program_id(1) * BN + tl.arange(0, BN)
+     rk = tl.arange(0, 64)
+-    lhs = tl.load(a + rm[:, None] * 64 + rk[None, :])
+-    rhs = tl.load(b + rk[:, None] * N + rn[None, :])
+-    product = tl.dot(lhs, rhs, input_precision='ieee', out_dtype=tl.float32)
+-    value = product + tl.load(bias + rn)[None, :].to(tl.float32)
++    if K == 64 and M % BM == 0 and N % BN == 0:
++        lhs = tl.load(a + rm[:, None] * 64 + rk[None, :])
++        rhs = tl.load(b + rk[:, None] * N + rn[None, :])
++        product = tl.dot(lhs, rhs, input_precision='ieee', out_dtype=tl.float32)
++        offset = tl.load(bias + rn)
++    else:
++        product = tl.zeros((BM, BN), tl.float32)
++        for step in range(tl.cdiv(K, 64)):
++            col = step * 64 + rk
++            lhs = tl.load(a + rm[:, None] * K + col[None, :],
++                          mask=(rm[:, None] < M) & (col[None, :] < K), other=0.)
++            rhs = tl.load(b + col[:, None] * N + rn[None, :],
++                          mask=(col[:, None] < K) & (rn[None, :] < N), other=0.)
++            product = tl.dot(lhs, rhs, product, input_precision='ieee', out_dtype=tl.float32)
++        offset = tl.load(bias + rn, mask=rn < N, other=0.)
++    value = product + offset[None, :].to(tl.float32)
+     if ACT == 1:
+         x = value
+         raw = value.to(tl.uint32, bitcast=True)
+@@ -35,7 +47,10 @@
+     index = rm[:, None] * N + rn[None, :]
+     # The SDNN precision pass handles the final FP32-to-BF16 truncation.
+     # Keeping the original output pointer type also preserves descriptor layout.
+-    tl.store(out + index, value)
++    if M % BM == 0 and N % BN == 0:
++        tl.store(out + index, value)
++    else:
++        tl.store(out + index, value, mask=(rm[:, None] < M) & (rn[None, :] < N))
+ 
+ 
+ 
+@@ -44,20 +59,20 @@
+     from ._p800_bound_launch import bind
+     from ._resource_codegen import bind_evidence
+ 
+-    m, n = spec['M'], spec['N']
++    m, n, k = spec['M'], spec['N'], spec['K']
+     bm, bn, warps = {(64, 1024): (64, 128, 4), (512, 1024): (128, 128, 8),
+-                     (2048, 2048): (64, 512, 8)}[m, n]
++                     (2048, 2048): (64, 512, 8)}.get((m, n), (64, 128, 4))
+     if final_only and spec['act'] in (1, 3, 4):
+         bm, bn, warps = 64, 64, 4
+-    grouped = (m, n) == (2048, 2048) and (not final_only or spec['act'] in (0, 2))
++    grouped = (m, n, k) == (2048, 2048, 64) and (not final_only or spec['act'] in (0, 2))
+     kernel = mm_bias
+     if grouped:
+         from ._p800_native_mm import _aligned_bias_kernel
+         kernel = _aligned_bias_kernel()
+         bm, bn, warps = 128, 256, 4
+-    grid = (m * n // (bm * bn), 1, 1) if grouped else (m // bm, n // bn, 1)
++    grid = (m * n // (bm * bn), 1, 1) if grouped else (triton.cdiv(m, bm), triton.cdiv(n, bn), 1)
+     proof = {'route': 'fp32_compute', 'resource': 'sdnn', 'resource_verified': False,
+-             'tiles': dict(bm=bm, bn=bn, k=64, warps=warps)}
++             'tiles': dict(bm=bm, bn=bn, k=k, bk=64, warps=warps)}
+     bound = None
+ 
+     def run(xs):
+@@ -78,7 +93,7 @@
+                                       num_warps=warps, num_stages=3, is_sdnn=True)
+             else:
+                 binary = kernel[grid](a, b, bias, out, m, n, bm, bn, ACT=spec['act'] if final_only else 0,
+-                                      FINAL_ONLY=final_only, num_warps=warps, num_stages=1, is_sdnn=True)
++                                      FINAL_ONLY=final_only, K=k, num_warps=warps, num_stages=1, is_sdnn=True)
+         if not proof['resource_verified']:
+             bind_evidence(proof, binary)
+             bound = bind(kernel, binary, grid, xs, (m, n), (), 'sdnn', output_dtype=dtype)
+@@ -88,9 +103,10 @@
+ 
+ 
+ @triton.jit(do_not_specialize=['src', 'out'], do_not_specialize_on_alignment=['src', 'out'])
+-def finish(src, out, ACT: tl.constexpr, BLOCK: tl.constexpr):
++def finish(src, out, ACT: tl.constexpr, BLOCK: tl.constexpr, TOTAL: tl.constexpr):
+     idx = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+-    value = tl.load(src + idx)
++    valid = idx < TOTAL
++    value = tl.load(src + idx, mask=valid, other=0.)
+     if ACT == 1:
+         bits = value.to(tl.uint32, bitcast=True)
+         y = value / (1.0 + tl.exp(-value))
+@@ -106,9 +122,9 @@
+     if out.dtype.element_ty == tl.bfloat16:
+         word = value.to(tl.uint32,bitcast=True)
+         hi = (word + 0x7fff + ((word >> 16) & 1)) >> 16
+-        tl.store(out.to(tl.pointer_type(tl.uint16))+idx, hi.to(tl.uint16))
++        tl.store(out.to(tl.pointer_type(tl.uint16))+idx, hi.to(tl.uint16), mask=valid)
+     else:
+-        tl.store(out+idx,value)
++        tl.store(out+idx,value,mask=valid)
+ 
+ 
+ def prepare_sdk_store(spec):
+@@ -133,8 +149,7 @@
+     proof = {'route':'mixed_mm_cluster_epilogue','resource_verified':False,'kernel_count':2}
+     m,n = spec['M'],spec['N']
+     block = 8192 if m * n >= 512 * 1024 else 2048
+-    assert (m*n)%block == 0
+-    grid = (m*n//block,1,1)
++    grid = (triton.cdiv(m*n, block),1,1)
+     bound = None
+ 
+     def run(inputs):
+@@ -146,14 +161,14 @@
+                 return (y,)
+         y = torch.empty((m,n),device=z.device,dtype=inputs[0].dtype)
+         from ._p800_layernorm import toolchain_available
+-        if spec['act'] in (0, 1, 2, 4) and toolchain_available():
+-            from ._p800_bf16_gelu import tile_width, vector_finish
++        from ._p800_bf16_gelu import tile_width, vector_finish
++        width = tile_width(m, n)
++        if width is not None and (m*n) % width == 0 and spec['act'] in (0, 1, 2, 4) and toolchain_available():
+             kernel, launch_grid = vector_finish, (12, 1, 1)
+-            width = tile_width(m, n)
+             binary = kernel[launch_grid](z, y, m*n, width, spec['act'], num_warps=4, num_stages=1)
+         else:
+             kernel, launch_grid = finish, grid
+-            binary = kernel[launch_grid](z, y, spec['act'], block, num_warps=4, num_stages=1)
++            binary = kernel[launch_grid](z, y, spec['act'], block, m*n, num_warps=4, num_stages=1)
+         if not proof['resource_verified']:
+             bind_evidence(epilogue,binary)
+             proof.update(resource_verified=first['resource_verified'] and epilogue['resource_verified'],
+--- a/python/triton/experimental/graph_fusion/_p800_flat.py
++++ b/python/triton/experimental/graph_fusion/_p800_flat.py
+@@ -83,9 +83,7 @@
+     m, n = int(a.shape[0]), int(a.shape[1])
+     if m <= 0 or n <= 0 or int(b.shape[0]) != n:
+         return None
+-    # The kernel indexes a flat [m*n] range without a mask; every launchable
+-    # XBLOCK must divide the range or the tail is read/written out of bounds.
+-    if not any((m * n) % xblock == 0 for xblock in _XBLOCKS):
++    if m * n > 0x7fffffff:
+         return None
+     dt = str(a.dtype).replace('torch.', '')
+     if dt not in ('float32', 'float16', 'bfloat16'):
+@@ -329,14 +327,17 @@
+     if final_only and (spec['dtype'] == 'bfloat16' and spec['kind'] in ('silu', 'gelu_tanh')
+                        or spec['dtype'] == 'float16' and spec['kind'] == 'silu' and spec['m'] >= 512):
+         from ._p800_layernorm import toolchain_available
+-        shape = spec['m'], spec['n']
+-        width = {(64, 1024): 64, (512, 1024): 128, (2048, 2048): 512}.get(shape)
+-        if width is not None and toolchain_available():
++        width = 64 if spec['total'] <= 128*1024 else 128 if spec['total'] <= 1024*1024 else 512
++        # Mixed activation reuses one aligned bias slice on successive tiles.
++        while width >= 32 and (spec['n'] % width or (12 * 64 * width) % spec['n']):
++            width //= 2
++        if width >= 32 and toolchain_available():
+             mode = 2 if spec['kind'] == 'silu' else 3
+             return _p800_vector_rows.prepare(spec, (mode, width, 1, 12), proof)
+     if config is not None and not final_only:
+         return _p800_vector_rows.prepare(spec, config, proof)
+-    if spec['dtype'] == 'bfloat16' and spec['kind'] == 'gelu_exact':
++    if (spec['kind'] == 'gelu_exact' and not spec.get('pointer_gelu')
++            and (spec['dtype'] == 'bfloat16' or final_only and spec['dtype'] == 'float16')):
+         from ._p800_layernorm import toolchain_available
+         if toolchain_available():
+             from . import _p800_bf16_gelu
+@@ -397,7 +398,7 @@
+         state['kernel'] = _kernel()
+         tile = _load(key)
+         cap = _XBLOCK_CAP.get(spec['kind'], 1024)
+-        blocks = [xb for xb in _XBLOCKS if xb <= cap and spec['total'] % xb == 0]
++        blocks = [xb for xb in _XBLOCKS if xb <= cap]
+         if tile is None or tile.get('xblock') not in blocks:
+             out = torch.empty_like(a)
+             best = None
+--- a/python/triton/experimental/graph_fusion/_p800_bf16_gelu.py
++++ b/python/triton/experimental/graph_fusion/_p800_bf16_gelu.py
+@@ -7,8 +7,10 @@
+ 
+ 
+ def tile_width(m, n):
+-    # Each core takes a complete, 32-lane-aligned slice of one bias row.
+-    return {(64, 1024): 128, (512, 1024): 256, (2048, 2048): 512}.get((m, n))
++    if m <= 0 or not 0 < n <= 2048 or m*n > 0x7fffffff:
++        return None
++    return 128 if m*n <= 128*1024 else 256 if m*n <= 1024*1024 else 512
++
+ 
+ 
+ @tle.raw.dialect('xpu3', file='_p800_bf16_gelu.xpu')
+@@ -21,11 +23,18 @@
+     ...
+ 
+ 
++@tle.raw.dialect('xpu3', file='_p800_bf16_gelu.xpu')
++def kl3_fp16_bias_gelu_final(a, bias, out, pid, programs, total, n, width):
++    ...
++
++
+ @triton.jit(do_not_specialize=['A', 'B', 'OUT'], do_not_specialize_on_alignment=['A', 'B', 'OUT'])
+ def _vector_bias_gelu(A, B, OUT, N: tl.constexpr, M: tl.constexpr, WIDTH: tl.constexpr, PROGS: tl.constexpr, FINAL_ONLY: tl.constexpr = False):
+     args = (A, B, OUT, tl.program_id(0), tl.full((), PROGS, tl.int32),
+             tl.full((), M * N, tl.int32), tl.full((), N, tl.int32), tl.full((), WIDTH, tl.int32))
+-    if FINAL_ONLY:
++    if A.dtype.element_ty == tl.float16:
++        tle.raw.call(kl3_fp16_bias_gelu_final, args)
++    elif FINAL_ONLY:
+         tle.raw.call(kl3_bf16_bias_gelu_final, args)
+     else:
+         tle.raw.call(kl3_bf16_bias_gelu, args)
+@@ -37,7 +46,7 @@
+     from ._resource_codegen import bind_evidence
+ 
+     m, n = spec['m'], spec['n']
+-    proof.update(emitted='bf16_vector_gelu', tiles=dict(width=width, programs=PROGRAMS), autotune='fixed')
++    proof.update(emitted='fp16_vector_gelu' if spec['dtype'] == 'float16' else 'bf16_vector_gelu', tiles=dict(width=width, programs=PROGRAMS), autotune='fixed')
+     bound = None
+ 
+     def run(xs):
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
+@@ -375,17 +375,25 @@
+ SUM(kl3_sum_bf, int16_t)
+ SUM(kl3_sum_half, uint16_t)
+ SUM(kl3_sum_float, float)
+-template <class T, bool FinalOnly = false>
++static __device__ inline void pad_soft(float *p) { *p = -__builtin_inff(); }
++static __device__ inline void pad_soft(uint16_t *p) { *p = 0xfc00u; }
++static __device__ inline void pad_soft(int16_t *p) { *p = (int16_t)0xff80u; }
++template <class T, bool FinalOnly = false, bool Tail = false>
+ static __device__ inline void row_softmax(const _global_ptr_ T *a, const _global_ptr_ T *bias,
+                                           _global_ptr_ T *o, int first, int rows, int n, int lanes) {
+     __shared__ __simd__ T b[2048];
+     __shared__ float maxima[64], sums[64];
+     __simd__ float workspace[1024];
+-    T *src = (T *)(workspace + 512);
++    T *src = (T *)(sizeof(T) == sizeof(float) ? workspace : workspace + 512);
+     T *dst = (T *)workspace;
+     if (core_id() == 0)
+         GM2SM_ASYNC(bias, b, n * sizeof(T));
+     mfence_sm_gm();
++    if (Tail && core_id() == 0) {
++        const int padded = (n + 31) & ~31;
++        for (int i = n; i < padded; ++i) b[i] = 0;
++        mfence();
++    }
+     sync_cluster();
+     int width = FinalOnly ? lanes : (n > 1024 ? n / 2 : n);
+     int core = core_id(), parts = n / width, begin = (core % parts) * width;
+@@ -395,6 +403,11 @@
+         float peak = -__builtin_inff();
+         if (row < rows) {
+             GM2LM(a + offset, src, width * sizeof(T));
++            if (Tail) {
++                const int padded = (width + 31) & ~31;
++                for (int i = width; i < padded; ++i) pad_soft(src + i);
++                mfence_lm();
++            }
+             F vmax = (F)peak;
+             for (int i = 0; i < width; i += 32) {
+                 Pair x = point_read(src + i), w = point_shared(b + begin + i);
+@@ -472,11 +485,19 @@
+     row_softmax<int16_t, true>(a, b, out, first, rows, n, lanes);
+ }
+ 
++extern "C" __device__ void kl3_soft_wide_half(const _global_ptr_ uint16_t *a,
++        const _global_ptr_ uint16_t *b, _global_ptr_ uint16_t *out,
++        int first, int rows, int n, int lanes) {
++    row_softmax<uint16_t, true>(a, b, out, first, rows, n, lanes);
++}
++extern "C" __device__ void kl3_soft_wide_float(const _global_ptr_ float *a,
++        const _global_ptr_ float *b, _global_ptr_ float *out,
++        int first, int rows, int n, int lanes) {
++    row_softmax<float, true>(a, b, out, first, rows, n, lanes);
++}
++
+ // Rows that do not fit the descriptor tile use bounded LM, including a
+ // final partial DMA. One core owns each complete output row.
+-static __device__ inline void pad_soft(float *p) { *p = -__builtin_inff(); }
+-static __device__ inline void pad_soft(uint16_t *p) { *p = 0xfc00u; }
+-static __device__ inline void pad_soft(int16_t *p) { *p = (int16_t)0xff80u; }
+ template<class T>
+ static __device__ inline Pair stream_logits(T *x, T *b, int i, int final_only) {
+     Pair a = point_read(x + i), h = point_read(b + i);
+@@ -520,6 +541,28 @@
+     if (Pass == 1) return serial_fold(sum);
+     return 0.f;
+ }
++// Short rows need one row of logits in LM. Keep this entry separate from
++// the three streaming tiles so the compiler can allocate their stacks independently.
++template<class T> static __device__ inline void short_softmax(const _global_ptr_ T *a,
++        const _global_ptr_ T *bias, _global_ptr_ T *out, int pid, int programs, int rows,
++        int cols, int final_only) {
++    const int base = rows / programs, extra = rows % programs;
++    const int first = pid * base + (pid < extra ? pid : extra);
++    const int count = base + (pid < extra);
++    if (sizeof(T) == sizeof(float) || final_only)
++        row_softmax<T,true,true>(a,bias,out,first,count,cols,cols);
++    else
++        row_softmax<T,false,true>(a,bias,out,first,count,cols,cols);
++}
++#define SHORT_SOFT(name, T) \
++extern "C" __device__ void name(const _global_ptr_ T *a, const _global_ptr_ T *b, _global_ptr_ T *out, \
++        int pid, int programs, int m, int n, int final_only) { \
++    short_softmax(a,b,out,pid,programs,m,n,final_only); \
++}
++SHORT_SOFT(kl3_short_soft_float,float)
++SHORT_SOFT(kl3_short_soft_half,uint16_t)
++SHORT_SOFT(kl3_short_soft_bf,int16_t)
++
+ template<class T>
+ static __device__ inline void stream_softmax(const _global_ptr_ T *a, const _global_ptr_ T *bias,
+         _global_ptr_ T *out, int pid, int programs, int64_t rows, int64_t cols, int final_only) {

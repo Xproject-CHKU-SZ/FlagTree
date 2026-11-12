@@ -1,0 +1,160 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "flat tail canary", "passed": true}
+CHECK {"test": "DSA rejects matrix", "passed": true}
+CHECK {"test": "DSA rejects mixed", "passed": true}
+CHECK {"test": "DSA rejects strided", "passed": true}
+CHECK {"test": "fp16 mulsum False", "passed": true, "dtype": "torch.float16", "route": "plain_reduce"}
+CHECK {"test": "fp16 mulsum True", "passed": true, "dtype": "torch.float16", "route": "plain_reduce"}
+EXIT bounds 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py:162:25: error: Buffer alloc failed in uni_sram: min required = 1967104 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (rerun with -debug-only=tritonsdnn-multi-buffer for the per-alloc layout)
+                av = tl.load(a_ptr + rm[:, None] * K + kk[None, :],
+                        ^
+module {
+  tt.func public @mm_act(%arg0: !tt.ptr<f32>, %arg1: !tt.ptr<f32>, %arg2: !tt.ptr<f32>, %arg3: !tt.ptr<f32>, %arg4: i32, %arg5: i32 {tt.divisibility = 16 : i32}, %arg6: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %cst = arith.constant dense<1.000000e+00> : tensor<256x256xf32>
+    %c64_i32 = arith.constant 64 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %cst_0 = arith.constant dense<0x7FC00000> : tensor<256x256xf32>
+    %cst_1 = arith.constant dense<0x7F800000> : tensor<256x256xf32>
+    %cst_2 = arith.constant dense<0xFF800000> : tensor<256x256xf32>
+    %cst_3 = arith.constant dense<0.000000e+00> : tensor<256xf32>
+    %cst_4 = arith.constant dense<0.000000e+00> : tensor<256x256xf32>
+    %cst_5 = arith.constant dense<0.000000e+00> : tensor<64x256xf32>
+    %cst_6 = arith.constant dense<0.000000e+00> : tensor<256x64xf32>
+    %c256_i32 = arith.constant 256 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c256_i32 : i32
+    %2 = tt.make_range {end = 256 : i32, start = 0 : i32} : tensor<256xi32>
+    %3 = tt.splat %1 : i32 -> tensor<256xi32>
+    %4 = arith.addi %3, %2 : tensor<256xi32>
+    %5 = tt.get_program_id y : i32
+    %6 = arith.muli %5, %c256_i32 : i32
+    %7 = tt.splat %6 : i32 -> tensor<256xi32>
+    %8 = arith.addi %7, %2 : tensor<256xi32>
+    %9 = tt.make_range {end = 64 : i32, start = 0 : i32} : tensor<64xi32>
+    %10 = tt.expand_dims %4 {axis = 1 : i32} : tensor<256xi32> -> tensor<256x1xi32>
+    %11 = tt.splat %arg4 : i32 -> tensor<256x1xi32>
+    %12 = arith.cmpi slt, %10, %11 : tensor<256x1xi32>
+    %13 = tt.splat %arg6 : i32 -> tensor<1x64xi32>
+    %14 = tt.broadcast %12 : tensor<256x1xi1> -> tensor<256x64xi1>
+    %15 = tt.splat %arg6 : i32 -> tensor<256x1xi32>
+    %16 = arith.muli %10, %15 : tensor<256x1xi32>
+    %17 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<256x1x!tt.ptr<f32>>
+    %18 = tt.addptr %17, %16 : tensor<256x1x!tt.ptr<f32>>, tensor<256x1xi32>
+    %19 = tt.broadcast %18 : tensor<256x1x!tt.ptr<f32>> -> tensor<256x64x!tt.ptr<f32>>
+    %20 = tt.splat %arg6 : i32 -> tensor<64x1xi32>
+    %21 = tt.expand_dims %8 {axis = 0 : i32} : tensor<256xi32> -> tensor<1x256xi32>
+    %22 = tt.splat %arg5 : i32 -> tensor<1x256xi32>
+    %23 = arith.cmpi slt, %21, %22 : tensor<1x256xi32>
+    %24 = tt.broadcast %23 : tensor<1x256xi1> -> tensor<64x256xi1>
+    %25 = tt.splat %arg5 : i32 -> tensor<64x1xi32>
+    %26 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<64x1x!tt.ptr<f32>>
+    %27 = tt.broadcast %21 : tensor<1x256xi32> -> tensor<64x256xi32>
+    %28 = scf.for %arg7 = %c0_i32 to %arg6 step %c64_i32 iter_args(%arg8 = %cst_4) -> (tensor<256x256xf32>)  : i32 {
+      %62 = tt.splat %arg7 : i32 -> tensor<64xi32>
+      %63 = arith.addi %62, %9 : tensor<64xi32>
+      %64 = tt.expand_dims %63 {axis = 0 : i32} : tensor<64xi32> -> tensor<1x64xi32>
+      %65 = arith.cmpi slt, %64, %13 : tensor<1x64xi32>
+      %66 = tt.broadcast %65 : tensor<1x64xi1> -> tensor<256x64xi1>
+      %67 = arith.andi %14, %66 : tensor<256x64xi1>
+      %68 = tt.broadcast %64 : tensor<1x64xi32> -> tensor<256x64xi32>
+      %69 = tt.addptr %19, %68 : tensor<256x64x!tt.ptr<f32>>, tensor<256x64xi32>
+      %70 = tt.load %69, %67, %cst_6 : tensor<256x64x!tt.ptr<f32>>
+      %71 = tt.expand_dims %63 {axis = 1 : i32} : tensor<64xi32> -> tensor<64x1xi32>
+      %72 = arith.cmpi slt, %71, %20 : tensor<64x1xi32>
+      %73 = tt.broadcast %72 : tensor<64x1xi1> -> tensor<64x256xi1>
+      %74 = arith.andi %73, %24 : tensor<64x256xi1>
+      %75 = arith.muli %71, %25 : tensor<64x1xi32>
+      %76 = tt.addptr %26, %75 : tensor<64x1x!tt.ptr<f32>>, tensor<64x1xi32>
+      %77 = tt.broadcast %76 : tensor<64x1x!tt.ptr<f32>> -> tensor<64x256x!tt.ptr<f32>>
+      %78 = tt.addptr %77, %27 : tensor<64x256x!tt.ptr<f32>>, tensor<64x256xi32>
+      %79 = tt.load %78, %74, %cst_5 : tensor<64x256x!tt.ptr<f32>>
+      %80 = tt.dot %70, %79, %arg8 : tensor<256x64xf32> * tensor<64x256xf32> -> tensor<256x256xf32>
+      scf.yield %80 : tensor<256x256xf32>
+    }
+    %29 = tt.splat %arg5 : i32 -> tensor<256xi32>
+    %30 = arith.cmpi slt, %8, %29 : tensor<256xi32>
+    %31 = tt.splat %arg2 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %32 = tt.addptr %31, %8 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    %33 = tt.load %32, %30, %cst_3 : tensor<256x!tt.ptr<f32>>
+    %34 = tt.expand_dims %33 {axis = 0 : i32} : tensor<256xf32> -> tensor<1x256xf32>
+    %35 = tt.broadcast %34 : tensor<1x256xf32> -> tensor<256x256xf32>
+    %36 = arith.addf %28, %35 : tensor<256x256xf32>
+    %37 = arith.cmpf oeq, %36, %cst_2 : tensor<256x256xf32>
+    %38 = arith.cmpf oeq, %36, %cst_1 : tensor<256x256xf32>
+    %39 = arith.subf %cst_4, %36 : tensor<256x256xf32>
+    %40 = math.exp %39 : tensor<256x256xf32>
+    %41 = arith.addf %40, %cst : tensor<256x256xf32>
+    %42 = arith.divf %cst, %41 : tensor<256x256xf32>
+    %43 = arith.mulf %36, %42 : tensor<256x256xf32>
+    %44 = arith.select %38, %36, %43 : tensor<256x256xi1>, tensor<256x256xf32>
+    %45 = arith.select %37, %cst_0, %44 : tensor<256x256xi1>, tensor<256x256xf32>
+    %46 = tt.expand_dims %4 {axis = 1 : i32} : tensor<256xi32> -> tensor<256x1xi32>
+    %47 = tt.splat %arg4 : i32 -> tensor<256x1xi32>
+    %48 = arith.cmpi slt, %46, %47 : tensor<256x1xi32>
+    %49 = tt.expand_dims %8 {axis = 0 : i32} : tensor<256xi32> -> tensor<1x256xi32>
+    %50 = tt.splat %arg5 : i32 -> tensor<1x256xi32>
+    %51 = arith.cmpi slt, %49, %50 : tensor<1x256xi32>
+    %52 = tt.broadcast %48 : tensor<256x1xi1> -> tensor<256x256xi1>
+    %53 = tt.broadcast %51 : tensor<1x256xi1> -> tensor<256x256xi1>
+    %54 = arith.andi %52, %53 : tensor<256x256xi1>
+    %55 = tt.splat %arg5 : i32 -> tensor<256x1xi32>
+    %56 = arith.muli %46, %55 : tensor<256x1xi32>
+    %57 = tt.splat %arg3 : !tt.ptr<f32> -> tensor<256x1x!tt.ptr<f32>>
+    %58 = tt.addptr %57, %56 : tensor<256x1x!tt.ptr<f32>>, tensor<256x1xi32>
+    %59 = tt.broadcast %58 : tensor<256x1x!tt.ptr<f32>> -> tensor<256x256x!tt.ptr<f32>>
+    %60 = tt.broadcast %49 : tensor<1x256xi32> -> tensor<256x256xi32>
+    %61 = tt.addptr %59, %60 : tensor<256x256x!tt.ptr<f32>>, tensor<256x256xi32>
+    tt.store %61, %45, %54 : tensor<256x256x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, strip-all-ir{xpu_arch=3}, triton-convert-type{mode=0 xpu_arch=3}, tritonxpu-capture-rank1-wrap, triton-to-linalg-experimental{load-tile-size=131072 xpu_arch=3}, triton-loop-aware-cse, linalg-to-tritonsdnn{xpu_arch=3}, triton-loop-aware-cse, tritonsdnn-legalize{xpu_arch=3}, tritonsdnn-merge-extern-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-resolve-layout-conflict, tritonsdnn-hoist-ds, tritonsdnn-transpose-mma, tritonsdnn-transpose-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-wrap-fallback, tritonsdnn-eliminate-mma-acc-zero{xpu_arch=3}, tritonsdnn-optimize-rc-layout{xpu_arch=3}, tritonsdnn-dsa-copy, func.func(tritonsdnn-bufferize{xpu_arch=3}), tritonsdnn-mx-scale-layout, tritonsdnn-fuse-relu-activation{xpu_arch=3}, tritonsdnn-ew-act-table{exp-range-max=0.000000e+00 exp-range-min=-1.598438e+01}, tritonxpu-repair-rank1-wrap, tritonsdnn-loop-grid, tritonsdnn-hoist-loop-invariant-dma{xpu_arch=3}, tritonsdnn-pipeline{defer-event-coloring=false test-event-limit=0 xpu_arch=3}, tritonsdnn-multi-buffer{num_stages=1 xpu_arch=3}, tritonsdnn-lower-rc-subview{xpu_arch=3}, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py:146:0: error: Failures have been detected while processing an MLIR pass pipeline
+/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py:146:0: note: Pipeline failed while executing [`TritonSDNNMultiBuffer` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+Traceback (most recent call last):
+  File "/opt/hsp/triton/backends/xpu/compiler.py", line 579, in make_ttxir
+    pm.run(mod, 'make_ttxir')
+RuntimeError: PassManager::run failed: loc("av"("/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py":162:25)): Buffer alloc failed in uni_sram: min required = 1967104 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (rerun with -debug-only=tritonsdnn-multi-buffer for the per-alloc layout)
+loc("/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py":146:0): Failures have been detected while processing an MLIR pass pipeline
+  note: Pipeline failed while executing [`TritonSDNNMultiBuffer` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/repair/regression.py", line 82, in <module>
+    fn,proof=mm.compile(spec,xs);r=g(*xs);v=one(fn(*xs))
+  File "/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py", line 252, in run
+    binary = kernel[grid](a, b, bias, out, spec['M'], spec['N'], spec['K'],
+  File "/opt/hsp/triton/runtime/jit.py", line 837, in launch
+    return fallback(*args, **kwargs)
+  File "/opt/hsp/triton/runtime/jit.py", line 807, in <lambda>
+    fallback = lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)  # noqa: E731
+  File "/opt/hsp/triton/runtime/jit.py", line 752, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+  File "/opt/hsp/triton/runtime/jit.py", line 979, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+  File "/opt/hsp/triton/compiler/compiler.py", line 428, in compile
+    cur_module = run_stage(ext, compile_ir, cur_module)
+  File "/opt/hsp/triton/compiler/compiler.py", line 349, in run_stage
+    next_module = compile_ir(module, metadata)
+  File "/opt/hsp/triton/backends/xpu/compiler.py", line 900, in <lambda>
+    stages["ttxir"] = lambda src, metadata: self.make_ttxir(src, metadata, options)
+  File "/opt/hsp/triton/backends/xpu/compiler.py", line 585, in make_ttxir
+    raise OutOfResources(0, 0, f"uni_sram {e}") from e
+triton.runtime.errors.OutOfResources: out of resource: uni_sram PassManager::run failed: loc("av"("/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py":162:25)): Buffer alloc failed in uni_sram: min required = 1967104 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (rerun with -debug-only=tritonsdnn-multi-buffer for the per-alloc layout)
+loc("/opt/f06/code/python/triton/experimental/graph_fusion/_p800_native_mm.py":146:0): Failures have been detected while processing an MLIR pass pipeline
+  note: Pipeline failed while executing [`TritonSDNNMultiBuffer` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.
+EXIT matrix 1

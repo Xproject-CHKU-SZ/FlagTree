@@ -1,0 +1,1358 @@
+	.text
+	.file	"LLVMDialectModule"
+	.section	.text.triton_unk_fused_0,"ax",@progbits
+	.globl	triton_unk_fused_0              # -- Begin function triton_unk_fused_0
+	.type	triton_unk_fused_0,@function
+triton_unk_fused_0:                     # @triton_unk_fused_0
+.Lfunc_begin0:
+	.file	1 "/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-e3ud08bu" "ieee-multiply.mlir"
+	.loc	1 2 0                           # ieee-multiply.mlir:2:0
+	.cfi_startproc
+# %bb.0:
+	addli sp, sp, -192
+	addli r1, zero, 1
+.Ltmp0:
+	.loc	1 25 11 prologue_end            # ieee-multiply.mlir:25:11
+	core_id r28
+	addli r30, sp, 128
+	xsignal_mode_cfg r1
+	beq r28, zero, .LBB0_2
+# %bb.1:                                # %.critedge
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	lui r1, 1048575
+	ori r1, r1, 4095
+	csr_set csr3, r1
+	sync_group
+	j .LBB0_3
+.LBB0_2:
+	addli r2, zero, 2
+	uni_sram_cfg r1, r1
+	lui r3, 1048575
+	lock zero, r2
+	ew_cfg r1, zero, zero, 16
+	ori r1, r3, 4095
+	unlock r2
+	addli r2, zero, 4
+	csr_set csr3, r1
+	addli r1, zero, 3
+	sync_group
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 7
+	addli r2, zero, 10
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 15
+	addli r2, zero, 23
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 29
+	addli r2, zero, 35
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 39
+	addli r2, zero, 37
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 43
+	addli r2, zero, 41
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 46
+	addli r2, zero, 50
+	xsignal r1, 0
+	xsignal r2, 0
+	addli r1, zero, 52
+	addli r2, zero, 54
+	xsignal r1, 0
+	xsignal r2, 0
+.LBB0_3:
+	loadli.w r1,  32(r30)
+	loadli.w r2,  36(r30)
+	load_param_i r4, 1
+	loadli.w r3,  40(r30)
+	mul.s r1, r2, r1
+	addli r2, r4, 0
+	fmac.s r2, r1, r3
+	mul.s r5, r1, r3
+	addli r3, zero, 1
+	addli r2, r2, -1
+	div.s r2, r2, r4
+	load_param_i r4, 0
+	mul.s r1, r2, r4
+	fmac.s r2, r2, r4
+	min.s r2, r2, r5
+	.loc	1 25 11                         # ieee-multiply.mlir:25:11
+	bneq r28, r3, .LBB0_5
+# %bb.4:                                # %.thread
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r6, zero, 3
+	addli r7, zero, 4
+	load.d r[4:5], 8(r30)
+	addli r21, zero, 0
+	.loc	1 25 11                         # ieee-multiply.mlir:25:11
+	xwait r6, 0
+	lock zero, r7
+	addli r6, zero, 1024
+	dma_cfg zero, zero, zero, 0
+	dma_cfg zero, r5, zero, 2
+	dma_cfg zero, r4, r6, 3
+	dma_cfg r6, r6, r3, 4
+	addli r3, zero, 2
+	dma_run zero
+	unlock r7
+	xsignal r3, 0
+	ble.s r2, r1, .LBB0_103
+	j .LBB0_8
+.LBB0_5:
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r3, zero, 5
+	bneq r28, r3, .LBB0_7
+# %bb.6:
+	addli r3, zero, 2
+	addli r21, zero, 1
+	xwait r3, 0
+	ble.s r2, r1, .LBB0_103
+	j .LBB0_8
+.LBB0_7:
+	addli r21, zero, 0
+	ble.s r2, r1, .LBB0_103
+.LBB0_8:                                # %.lr.ph
+	sext_int2long r[3:4], r1
+	sext_int2long r[1:2], r2
+	zext_int2long r[5:6], zero
+	addli r22, zero, 2
+	addli r9, zero, 1
+	addli r10, zero, 3
+	lui r23, 260096
+	addli r25, zero, 256
+	lui r13, 17
+	lui r26, 522240
+	storeli.w r21, -60(r30)                 # 4-byte Folded Spill
+	store.d r[1:2], -72(r30)                # 8-byte Folded Spill
+	lui r1, 239665
+	store.d r[3:4], -24(r30)                # 8-byte Folded Spill
+	addli r4, zero, 255
+	lui r2, 524287
+	addli r3, zero, 31
+	store.d r[5:6], -80(r30)                # 8-byte Folded Spill
+	ori r1, r1, 623
+	ori r24, r2, 4095
+	zext_int2long r[11:12], r4
+	zext_int2long r[2:3], r3
+	storeli.w r1, -92(r30)                  # 4-byte Folded Spill
+	lui r1, 9
+	store.d r[2:3], -88(r30)                # 8-byte Folded Spill
+	store.d r[11:12], -40(r30)              # 8-byte Folded Spill
+	ori r1, r1, 384
+	storeli.w r1, -28(r30)                  # 4-byte Folded Spill
+	j .LBB0_11
+.LBB0_9:                                # %.thread35
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 71 11 is_stmt 1               # ieee-multiply.mlir:71:11
+	addli r1, zero, 22
+	mfence { sm }
+	addli r9, zero, 1
+	addli r10, zero, 3
+	lui r13, 17
+	xsignal r1, 0
+	addli r1, zero, 46
+	xsignal r1, 0
+	addli r1, zero, 50
+	xsignal r1, 0
+	addli r1, zero, 54
+	xsignal r1, 0
+	load.d r[11:12], -40(r30)               # 8-byte Folded Reload
+.LBB0_10:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	load.d r[1:2], -24(r30)                 # 8-byte Folded Reload
+	load.d r[3:4], -72(r30)                 # 8-byte Folded Reload
+	addli.d r[1:2], r[1:2], 1
+	store.d r[1:2], -24(r30)                # 8-byte Folded Spill
+	setlt.sl r1, r[1:2], r[3:4]
+	beq r1, zero, .LBB0_103
+.LBB0_11:                               # =>This Loop Header: Depth=1
+                                        #     Child Loop BB0_15 Depth 2
+                                        #     Child Loop BB0_29 Depth 2
+                                        #     Child Loop BB0_54 Depth 2
+                                        #     Child Loop BB0_62 Depth 2
+                                        #     Child Loop BB0_90 Depth 2
+	.loc	1 4 14 is_stmt 1                # ieee-multiply.mlir:4:14
+	beq r21, zero, .LBB0_13
+# %bb.12:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 4
+	xwait r1, 0
+	lock zero, r22
+	lui r1, 276480
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r1, zero, zero, 0
+	addli r1, zero, 31
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 1024
+	ew_cfg r9, zero, zero, 3
+	ssaux r1, 0
+	.loc	1 5 14                          # ieee-multiply.mlir:5:14
+	addli r1, zero, 7
+	.loc	1 4 14                          # ieee-multiply.mlir:4:14
+	unlock r22
+	.loc	1 5 14                          # ieee-multiply.mlir:5:14
+	xwait r1, 0
+	lock zero, r22
+	addli r1, zero, 255
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg zero, zero, zero, 0
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 1152
+	ew_cfg r9, zero, zero, 3
+	ssaux r1, 0
+	addli r1, zero, 5
+	unlock r22
+	xsignal r1, 0
+.LBB0_13:                               # %.critedge2
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 14 is_stmt 0                # ieee-multiply.mlir:0:14
+	loadli.w r1,  40(r30)
+	load.d r[2:3], -24(r30)                 # 8-byte Folded Reload
+	.loc	1 16 10 is_stmt 1               # ieee-multiply.mlir:16:10
+	addli r4, zero, 8
+	div.s r1, r2, r1
+	loadli.w r2,  36(r30)
+	div.s r3, r1, r2
+	.loc	1 73 11                         # ieee-multiply.mlir:73:11
+	sext_int2long r[1:2], r3
+	.loc	1 16 10                         # ieee-multiply.mlir:16:10
+	sll.d r[4:5], r[1:2], r4
+	.loc	1 21 11                         # ieee-multiply.mlir:21:11
+	store.d r[4:5], -48(r30)                # 8-byte Folded Spill
+	bneq r28, r10, .LBB0_18
+# %bb.14:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r4, zero, 10
+	xwait r4, 0
+	xfence
+	setlti r4, r3, 32
+	mfence { lm, sm, gm }
+	load.d r[5:6], -80(r30)                 # 8-byte Folded Reload
+.LBB0_15:                               #   Parent Loop BB0_11 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	setlt.ul r7, r[5:6], r[11:12]
+	addli r8, r5, 2176
+	addli.d r[5:6], r[5:6], 1
+	stores.b r4, 0(r8)
+	bneq r7, zero, .LBB0_15
+# %bb.16:                               # %.thread32
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 22 11                         # ieee-multiply.mlir:22:11
+	load.d r[4:5], -88(r30)                 # 8-byte Folded Reload
+	.loc	1 21 11                         # ieee-multiply.mlir:21:11
+	mfence { sm }
+	.loc	1 22 11                         # ieee-multiply.mlir:22:11
+	min.sl r[4:5], r[1:2], r[4:5]
+	addli.d r[4:5], r[4:5], 1
+	max.sl r[1:2], r[4:5], r[1:2]
+	sub.s r2, r1, r3
+	.loc	1 21 11                         # ieee-multiply.mlir:21:11
+	addli r1, zero, 8
+.LBB0_17:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 0 is_stmt 0                 # ieee-multiply.mlir:0:0
+	xsignal r1, 0
+	j .LBB0_24
+.LBB0_18:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 22 11 is_stmt 1               # ieee-multiply.mlir:22:11
+	load.d r[3:4], -88(r30)                 # 8-byte Folded Reload
+	min.sl r[3:4], r[1:2], r[3:4]
+	addli.d r[3:4], r[3:4], 1
+	max.sl r[3:4], r[3:4], r[1:2]
+	sub.sl r[2:3], r[3:4], r[1:2]
+	bneq r28, r9, .LBB0_22
+# %bb.19:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	addli.d r[5:6], r[2:3], 0
+	zext_int2long r[1:2], zero
+	.loc	1 22 11                         # ieee-multiply.mlir:22:11
+	setlt.sl r1, r[1:2], r[5:6]
+	addli.d r[3:4], r[5:6], 0
+	addli r2, zero, 15
+	xwait r2, 0
+	bneq r1, zero, .LBB0_21
+# %bb.20:                               #   in Loop: Header=BB0_11 Depth=1
+	lock zero, r22
+	addli r1, zero, 255
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg zero, zero, zero, 0
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 2432
+	ew_cfg r9, zero, zero, 3
+	ssaux r1, 0
+	unlock r22
+.LBB0_21:                               # %.thread21
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 11
+	addli.d r[2:3], r[3:4], 0
+	xsignal r1, 0
+	j .LBB0_24
+.LBB0_22:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 6
+	bneq r28, r1, .LBB0_24
+# %bb.23:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli.d r[6:7], r[2:3], 0
+	.loc	1 22 11                         # ieee-multiply.mlir:22:11
+	load.d r[1:2], -48(r30)                 # 8-byte Folded Reload
+	addli r3, zero, 11
+	addli r5, zero, 2432
+	xwait r3, 0
+	load.d r[3:4], 0(r30)
+	sll.d r[1:2], r[1:2], r22
+	add.ul r[1:2], r[3:4], r[1:2]
+	addli r3, zero, 4
+	addli r4, zero, 1024
+	lock zero, r3
+	dma_cfg zero, zero, zero, 0
+	dma_cfg zero, r2, zero, 2
+	dma_cfg r5, r1, r4, 3
+	addli r1, zero, 12
+	dma_cfg r4, r4, r6, 4
+	dma_run zero
+	unlock r3
+	addli.d r[2:3], r[6:7], 0
+	j .LBB0_17
+.LBB0_24:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	store.d r[2:3], -56(r30)                # 8-byte Folded Spill
+	.loc	1 26 11 is_stmt 1               # ieee-multiply.mlir:26:11
+	beq r21, zero, .LBB0_26
+# %bb.25:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 12
+	xwait r1, 0
+	lock zero, r22
+	addli r1, zero, 255
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r23, r23, zero, 0
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 2432
+	ew_cfg r9, zero, zero, 3
+	dsmadd r1, r1, zero, 0
+	addli r1, zero, 13
+	unlock r22
+	xsignal r1, 0
+.LBB0_26:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	zext_int2long r[1:2], r25
+	.loc	1 27 11 is_stmt 1               # ieee-multiply.mlir:27:11
+	store.d r[1:2], -8(r30)                 # 8-byte Folded Spill
+	bneq r28, r10, .LBB0_45
+# %bb.27:                               # %vector.ph46
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 5
+	xwait r1, 0
+	addli r1, zero, 8
+	xwait r1, 0
+	addli r1, zero, 13
+	xwait r1, 0
+	addli r1, zero, 23
+	xwait r1, 0
+	xfence
+	mfence { lm, sm, gm }
+	load.d r[1:2], -80(r30)                 # 8-byte Folded Reload
+	j .LBB0_29
+.LBB0_28:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	addli r12, r3, 3468
+	addli.d r[1:2], r[1:2], 8
+	addli r11, r3, 3456
+	addli r14, r3, 3472
+	stores.w r10, 0(r12)
+	addli r10, r3, 3464
+	addli r12, r3, 3460
+	stores.w r13, 0(r11)
+	stores.w r5, 0(r14)
+	stores.w r8, 0(r10)
+	stores.w r9, 0(r12)
+	load.d r[9:10], -8(r30)                 # 8-byte Folded Reload
+	addli r8, r3, 3484
+	stores.w r4, 0(r8)
+	addli r4, r3, 3480
+	addli r3, r3, 3476
+	setneq.d r9, r[1:2], r[9:10]
+	stores.w r7, 0(r4)
+	stores.w r6, 0(r3)
+	beq r9, zero, .LBB0_47
+.LBB0_29:                               # %vector.body47
+                                        #   Parent Loop BB0_11 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	addli r3, r1, 2176
+	addli r4, r1, 2177
+	addli r6, r1, 2179
+	addli r8, r1, 2181
+	addli r10, r1, 2183
+	addli r5, r1, 2178
+	addli r9, r1, 2182
+	addli r7, r1, 2180
+	loads.bu r13, 0(r3)
+	slli r3, r1, 2
+	loads.bu r20, 0(r4)
+	loads.bu r16, 0(r6)
+	loads.bu r14, 0(r8)
+	loads.bu r11, 0(r10)
+	loads.bu r18, 0(r5)
+	loads.bu r12, 0(r9)
+	loads.bu r15, 0(r7)
+	addli r4, r3, 2444
+	addli r6, r3, 2440
+	addli r5, r3, 2448
+	addli r17, r3, 2452
+	loads.w r19, 1164(r3)
+	loads.w r25, 1160(r3)
+	loads.w r27, 1156(r3)
+	loads.w r21, 1176(r3)
+	loads.w r22, 1172(r3)
+	loads.w r23, 1168(r3)
+	loads.w r10, 0(r4)
+	loads.w r8, 0(r6)
+	addli r4, r3, 2436
+	addli r6, r3, 2460
+	loads.w r5, 0(r5)
+	loads.w r9, 0(r4)
+	loads.w r4, 0(r6)
+	addli r6, r3, 2456
+	loads.w r7, 0(r6)
+	loads.w r6, 0(r17)
+	loads.w r17, 1180(r3)
+	bneq r13, zero, .LBB0_31
+# %bb.30:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	loads.w r13, 1152(r3)
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	beq r20, zero, .LBB0_32
+	j .LBB0_33
+.LBB0_31:                               #   in Loop: Header=BB0_29 Depth=2
+	addli r13, r3, 2432
+	loads.w r13, 0(r13)
+	bneq r20, zero, .LBB0_33
+.LBB0_32:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r9, r27, 0
+.LBB0_33:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	beq r18, zero, .LBB0_39
+# %bb.34:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	beq r16, zero, .LBB0_40
+.LBB0_35:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	beq r15, zero, .LBB0_41
+.LBB0_36:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	beq r14, zero, .LBB0_42
+.LBB0_37:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	beq r12, zero, .LBB0_43
+.LBB0_38:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	bneq r11, zero, .LBB0_28
+	j .LBB0_44
+.LBB0_39:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r8, r25, 0
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	bneq r16, zero, .LBB0_35
+.LBB0_40:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r10, r19, 0
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	bneq r15, zero, .LBB0_36
+.LBB0_41:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r5, r23, 0
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	bneq r14, zero, .LBB0_37
+.LBB0_42:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r6, r22, 0
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	bneq r12, zero, .LBB0_38
+.LBB0_43:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r7, r21, 0
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	bneq r11, zero, .LBB0_28
+.LBB0_44:                               # %vector.body47
+                                        #   in Loop: Header=BB0_29 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r4, r17, 0
+	j .LBB0_28
+.LBB0_45:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 28 11 is_stmt 1               # ieee-multiply.mlir:28:11
+	bneq r28, r22, .LBB0_48
+# %bb.46:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 16
+	addli r2, zero, 3456
+	xwait r1, 0
+	addli r1, zero, 29
+	xwait r1, 0
+	lock zero, zero
+	addli r1, zero, 4480
+	ds_cfg r22, zero, 0
+	ds_cfg r9, zero, 1
+	ds_cfg r25, zero, 14
+	ds_cfg zero, zero, 11
+	ds_cfg r9, zero, 13
+	shuffle_coa r1, r2, r25, 4
+	addli r1, zero, 17
+	unlock zero
+	xsignal r1, 0
+	addli r1, zero, 24
+	xsignal r1, 0
+	j .LBB0_48
+.LBB0_47:                               # %.thread33
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 27 11                         # ieee-multiply.mlir:27:11
+	addli r1, zero, 6
+	mfence { sm }
+	addli r22, zero, 2
+	addli r9, zero, 1
+	addli r10, zero, 3
+	lui r23, 260096
+	addli r25, zero, 256
+	lui r13, 17
+	xsignal r1, 0
+	addli r1, zero, 9
+	xsignal r1, 0
+	addli r1, zero, 14
+	xsignal r1, 0
+	addli r1, zero, 16
+	xsignal r1, 0
+	loadli.w r21,  -60(r30)                 # 4-byte Folded Reload
+	load.d r[11:12], -40(r30)               # 8-byte Folded Reload
+.LBB0_48:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 28 11                         # ieee-multiply.mlir:28:11
+	beq r21, zero, .LBB0_50
+# %bb.49:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 24
+	addli r3, zero, 4480
+	xwait r1, 0
+	addli r1, zero, 35
+	xwait r1, 0
+	lock zero, r22
+	addli r1, zero, 31
+	ew_cfg zero, zero, zero, 1
+	ew_cfg zero, r1, zero, 2
+	ew_cfg r25, zero, zero, 3
+	loadli.w r2,  -28(r30)                  # 4-byte Folded Reload
+	ssreduce r2, r3, 0
+	addli r3, zero, 25
+	unlock r22
+	xsignal r3, 0
+	.loc	1 34 11                         # ieee-multiply.mlir:34:11
+	lock zero, r22
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r23, zero, zero, 0
+	ew_cfg r9, zero, zero, 3
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 1024
+	ewcoeff_cfg zero, zero, zero, 0
+	ewcoeff_nlf_cfg r1, 4
+	addli r1, zero, 30
+	hp_ssmul r2, r2, r2, 0
+	unlock r22
+	xsignal r1, 0
+.LBB0_50:                               # %.critedge4
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	lui r1, 25
+	ori r27, r13, 1792
+	ori r1, r1, 1792
+	.loc	1 35 11 is_stmt 1               # ieee-multiply.mlir:35:11
+	storeli.w r1, -12(r30)                  # 4-byte Folded Spill
+	bneq r28, r22, .LBB0_52
+# %bb.51:                               # %.critedge6.thread
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 14
+	addli r2, zero, 2432
+	xwait r1, 0
+	addli r1, zero, 37
+	xwait r1, 0
+	lock zero, zero
+	ori r1, r13, 512
+	ds_cfg r22, zero, 0
+	ds_cfg r25, zero, 1
+	ds_cfg r9, zero, 14
+	ds_cfg zero, zero, 11
+	ds_cfg r25, zero, 13
+	shuffle_coa r1, r2, r9, 4
+	addli r1, zero, 15
+	unlock zero
+	xsignal r1, 0
+	addli r1, zero, 36
+	xsignal r1, 0
+	addli r1, zero, 30
+	xwait r1, 0
+	addli r1, zero, 41
+	xwait r1, 0
+	lock zero, zero
+	ori r1, r13, 1664
+	ds_cfg r22, zero, 0
+	ds_cfg r9, zero, 1
+	ds_cfg r9, zero, 14
+	ds_cfg zero, zero, 11
+	ds_cfg r9, zero, 13
+	loadli.w r2,  -28(r30)                  # 4-byte Folded Reload
+	shuffle_coa r1, r2, r9, 4
+	addli r1, zero, 31
+	unlock zero
+	xsignal r1, 0
+	addli r1, zero, 40
+	xsignal r1, 0
+	.loc	1 37 11                         # ieee-multiply.mlir:37:11
+	addli r1, zero, 25
+	xwait r1, 0
+	addli r1, zero, 44
+	xwait r1, 0
+	lock zero, zero
+	addli r1, zero, 32
+	ds_cfg r22, zero, 0
+	ds_cfg r1, zero, 1
+	addli r1, zero, 4480
+	ds_cfg r25, zero, 14
+	ds_cfg zero, zero, 11
+	ds_cfg r9, zero, 13
+	shuffle_coa r1, r27, r25, 4
+	addli r1, zero, 26
+	unlock zero
+	xsignal r1, 0
+	addli r1, zero, 45
+	j .LBB0_56
+.LBB0_52:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 35 11                         # ieee-multiply.mlir:35:11
+	bneq r28, r10, .LBB0_57
+# %bb.53:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r2, zero, 36
+	ori r3, r13, 512
+	addli r5, zero, 38
+	ori r4, r13, 1664
+	addli r1, zero, 0
+	lui r6, 8
+	xwait r2, 0
+	addli r2, zero, 39
+	xwait r2, 0
+	lui r2, 9
+	lock zero, r10
+	rs_cfg zero, r9, r9, 1
+	ori r2, r2, 512
+	rs_cfg zero, r9, zero, 3
+	rs_col r2, r3, r25, 0
+	addli r3, zero, 37
+	unlock r10
+	xsignal r3, 0
+	addli r3, zero, 40
+	xsignal r5, 0
+	xwait r3, 0
+	addli r3, zero, 43
+	xwait r3, 0
+	lock zero, r10
+	ori r3, r13, 1536
+	rs_cfg zero, r9, r9, 1
+	rs_cfg zero, r9, zero, 3
+	rs_col r3, r4, r9, 0
+	addli r4, zero, 41
+	unlock r10
+	xsignal r4, 0
+	addli r4, zero, 42
+	xsignal r4, 0
+	xwait r5, 0
+	xwait r4, 0
+	addli r4, zero, 46
+	xwait r4, 0
+	lock zero, r22
+	lui r4, 784384
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r23, r4, zero, 0
+	ew_cfg zero, zero, zero, 2
+	ew_cfg r9, zero, zero, 3
+.LBB0_54:                               #   Parent Loop BB0_11 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	add.s r4, r1, r27
+	add.s r5, r1, r2
+	addli r1, r1, 128
+	dsmadd r4, r5, r3, 0
+	bneq r1, r6, .LBB0_54
+# %bb.55:                               # %.critedge6
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 39
+	unlock r22
+	xsignal r1, 0
+	addli r1, zero, 43
+	xsignal r1, 0
+	addli r1, zero, 44
+	xsignal r1, 0
+	.loc	1 37 11                         # ieee-multiply.mlir:37:11
+	addli r1, zero, 26
+	xwait r1, 0
+	addli r1, zero, 50
+	xwait r1, 0
+	addli r1, zero, 8
+	lock zero, r10
+	rs_cfg zero, r25, r1, 1
+	addli r1, zero, 4480
+	rs_cfg zero, r25, zero, 3
+	loadli.w r2,  -12(r30)                  # 4-byte Folded Reload
+	rs_col r2, r1, r9, 0
+	addli r1, zero, 27
+	unlock r10
+	xsignal r1, 0
+	addli r1, zero, 49
+	xsignal r1, 0
+	addli r1, zero, 47
+.LBB0_56:                               # %.thread28
+                                        #   in Loop: Header=BB0_11 Depth=1
+	xsignal r1, 0
+.LBB0_57:                               # %.thread28
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	lui r1, 25
+	ori r1, r1, 2816
+	.loc	1 37 11                         # ieee-multiply.mlir:37:11
+	storeli.w r1, -16(r30)                  # 4-byte Folded Spill
+	beq r21, zero, .LBB0_59
+# %bb.58:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 47
+	xwait r1, 0
+	addli r1, zero, 52
+	xwait r1, 0
+	lock zero, r22
+	addli r1, zero, 255
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg zero, zero, r23, 0
+	ew_cfg zero, r1, zero, 2
+	ew_cfg r9, zero, zero, 3
+	loadli.w r1,  -12(r30)                  # 4-byte Folded Reload
+	loadli.w r2,  -16(r30)                  # 4-byte Folded Reload
+	dsmul r2, r1, r1, 0
+	addli r1, zero, 51
+	unlock r22
+	xsignal r1, 0
+.LBB0_59:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 38 11 is_stmt 1               # ieee-multiply.mlir:38:11
+	bneq r28, r10, .LBB0_78
+# %bb.60:                               # %vector.ph37
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 6
+	zext_int2long r[2:3], zero
+	xwait r1, 0
+	addli r1, zero, 9
+	xwait r1, 0
+	addli r1, zero, 17
+	xwait r1, 0
+	addli r1, zero, 51
+	xwait r1, 0
+	xfence
+	mfence { lm, sm, gm }
+	j .LBB0_62
+.LBB0_61:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	addli r9, r4, 3460
+	addli.d r[2:3], r[2:3], 8
+	addli r5, r4, 3468
+	addli r1, r4, 3456
+	addli r6, r4, 3472
+	stores.w r22, 0(r9)
+	load.d r[9:10], -8(r30)                 # 8-byte Folded Reload
+	stores.w r12, 0(r5)
+	addli r5, r4, 3464
+	stores.w r11, 0(r1)
+	addli r1, r4, 3480
+	stores.w r25, 0(r6)
+	stores.w r21, 0(r5)
+	addli r5, r4, 3484
+	addli r4, r4, 3476
+	stores.w r7, 0(r1)
+	setneq.d r9, r[2:3], r[9:10]
+	stores.w r8, 0(r5)
+	stores.w r19, 0(r4)
+	beq r9, zero, .LBB0_80
+.LBB0_62:                               # %vector.body38
+                                        #   Parent Loop BB0_11 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	addli r5, r2, 2177
+	addli r4, r2, 2176
+	addli r7, r2, 2179
+	addli r8, r2, 2180
+	addli r9, r2, 2181
+	addli r10, r2, 2182
+	addli r12, r2, 2183
+	addli r6, r2, 2178
+	addli r26, r27, 0
+	loads.bu r23, 0(r5)
+	loadli.w r5,  -16(r30)                  # 4-byte Folded Reload
+	loads.bu r1, 0(r4)
+	slli r4, r2, 2
+	loads.bu r27, 0(r6)
+	loads.bu r15, 0(r9)
+	loads.bu r14, 0(r10)
+	loads.bu r18, 0(r7)
+	loads.bu r17, 0(r8)
+	loads.bu r13, 0(r12)
+	loads.w r28, 1164(r4)
+	loads.w r10, 1160(r4)
+	loads.w r9, 1156(r4)
+	loads.w r16, 1180(r4)
+	loads.w r20, 1176(r4)
+	loads.w r6, 1172(r4)
+	add.s r11, r4, r5
+	loads.w r5, 1168(r4)
+	loads.w r12, 12(r11)
+	loads.w r21, 8(r11)
+	loads.w r22, 4(r11)
+	loads.w r8, 28(r11)
+	loads.w r7, 24(r11)
+	loads.w r19, 20(r11)
+	loads.w r25, 16(r11)
+	bneq r1, zero, .LBB0_64
+# %bb.63:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	loads.w r11, 1152(r4)
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	beq r23, zero, .LBB0_65
+	j .LBB0_66
+.LBB0_64:                               #   in Loop: Header=BB0_62 Depth=2
+	loads.w r11, 0(r11)
+	bneq r23, zero, .LBB0_66
+.LBB0_65:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r22, r9, 0
+.LBB0_66:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	beq r27, zero, .LBB0_72
+# %bb.67:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	beq r18, zero, .LBB0_73
+.LBB0_68:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r27, r26, 0
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	beq r17, zero, .LBB0_74
+.LBB0_69:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	lui r26, 522240
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	beq r15, zero, .LBB0_75
+.LBB0_70:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	beq r14, zero, .LBB0_76
+.LBB0_71:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	bneq r13, zero, .LBB0_61
+	j .LBB0_77
+.LBB0_72:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r21, r10, 0
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	bneq r18, zero, .LBB0_68
+.LBB0_73:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r12, r28, 0
+	addli r27, r26, 0
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	bneq r17, zero, .LBB0_69
+.LBB0_74:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r25, r5, 0
+	lui r26, 522240
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	bneq r15, zero, .LBB0_70
+.LBB0_75:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r19, r6, 0
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	bneq r14, zero, .LBB0_71
+.LBB0_76:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r7, r20, 0
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	bneq r13, zero, .LBB0_61
+.LBB0_77:                               # %vector.body38
+                                        #   in Loop: Header=BB0_62 Depth=2
+	.loc	1 0 11                          # ieee-multiply.mlir:0:11
+	addli r8, r16, 0
+	j .LBB0_61
+.LBB0_78:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 39 11 is_stmt 1               # ieee-multiply.mlir:39:11
+	bneq r28, r22, .LBB0_81
+# %bb.79:                               #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 18
+	addli r2, zero, 3456
+	xwait r1, 0
+	addli r1, zero, 27
+	xwait r1, 0
+	lock zero, zero
+	addli r1, zero, 4480
+	ds_cfg r22, zero, 0
+	ds_cfg r9, zero, 1
+	ds_cfg r25, zero, 14
+	ds_cfg zero, zero, 11
+	ds_cfg r9, zero, 13
+	shuffle_coa r1, r2, r25, 4
+	addli r1, zero, 19
+	unlock zero
+	xsignal r1, 0
+	addli r1, zero, 28
+	xsignal r1, 0
+	j .LBB0_81
+.LBB0_80:                               # %.thread34
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	addli r1, zero, 7
+	mfence { sm }
+	.loc	1 25 11                         # ieee-multiply.mlir:25:11
+	core_id r28
+	addli r22, zero, 2
+	addli r9, zero, 1
+	addli r10, zero, 3
+	lui r23, 260096
+	addli r25, zero, 256
+	.loc	1 38 11                         # ieee-multiply.mlir:38:11
+	xsignal r1, 0
+	addli r1, zero, 10
+	xsignal r1, 0
+	addli r1, zero, 18
+	xsignal r1, 0
+	addli r1, zero, 52
+	xsignal r1, 0
+	loadli.w r21,  -60(r30)                 # 4-byte Folded Reload
+	load.d r[11:12], -40(r30)               # 8-byte Folded Reload
+.LBB0_81:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 39 11                         # ieee-multiply.mlir:39:11
+	beq r21, zero, .LBB0_83
+# %bb.82:                               # %.critedge8
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r1, zero, 28
+	addli r3, zero, 4480
+	.loc	1 47 11                         # ieee-multiply.mlir:47:11
+	addli r4, zero, 1
+	addli r5, zero, 1
+	addli r6, zero, 1
+	.loc	1 39 11                         # ieee-multiply.mlir:39:11
+	xwait r1, 0
+	addli r1, zero, 31
+	xwait r1, 0
+	lock zero, r22
+	ew_cfg zero, zero, zero, 1
+	ew_cfg zero, r1, zero, 2
+	ew_cfg r25, zero, zero, 3
+	loadli.w r2,  -28(r30)                  # 4-byte Folded Reload
+	ssreduce r2, r3, 0
+	addli r3, zero, 29
+	unlock r22
+	xsignal r3, 0
+	.loc	1 45 11                         # ieee-multiply.mlir:45:11
+	lock zero, r22
+	.loc	1 47 11                         # ieee-multiply.mlir:47:11
+	addli r3, r2, 0
+	.loc	1 45 11                         # ieee-multiply.mlir:45:11
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r23, zero, zero, 0
+	ew_cfg r9, zero, zero, 3
+	ew_cfg zero, r1, zero, 2
+	addli r1, zero, 1024
+	ewcoeff_cfg zero, zero, zero, 0
+	ewcoeff_nlf_cfg r1, 4
+	addli r1, zero, 4
+	hp_ssmul r2, r2, r2, 0
+	unlock r22
+	xsignal r1, 0
+	.loc	1 46 11                         # ieee-multiply.mlir:46:11
+	lock zero, r22
+	ew_cfg zero, zero, zero, 1
+	loadli.w r1,  -92(r30)                  # 4-byte Folded Reload
+	ewcoeff_cfg r23, zero, r1, 0
+	addli r1, zero, 32
+	ew_cfg zero, zero, zero, 2
+	ew_cfg r9, zero, zero, 3
+	dsmadd r2, r2, r2, 0
+	unlock r22
+	xsignal r1, 0
+	.loc	1 47 11                         # ieee-multiply.mlir:47:11
+	xwait r1, 0
+	xfence
+	jal _ZN3xpu10math_rsqrtEPU3AS2fS1_iii
+	load.d r[11:12], -40(r30)               # 8-byte Folded Reload
+	addli r1, zero, 33
+	addli r10, zero, 3
+	addli r9, zero, 1
+	xsignal r1, 0
+.LBB0_83:                               # %.critedge10
+                                        #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 0 11 is_stmt 0                # ieee-multiply.mlir:0:11
+	lui r1, 25
+	lui r13, 17
+	ori r1, r1, 3840
+	.loc	1 48 11 is_stmt 1               # ieee-multiply.mlir:48:11
+	bneq r28, r22, .LBB0_85
+# %bb.84:                               # %.thread29
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r2, zero, 19
+	addli r3, zero, 3456
+	xwait r2, 0
+	addli r2, zero, 33
+	xwait r2, 0
+	lock zero, zero
+	ds_cfg r22, zero, 0
+	ds_cfg zero, zero, 1
+	ds_cfg zero, zero, 11
+	ds_cfg r25, zero, 13
+	ds_cfg r9, zero, 14
+	loadli.w r2,  -28(r30)                  # 4-byte Folded Reload
+	shuffle_batch r3, r2, r9, 4
+	addli r2, zero, 20
+	unlock zero
+	xsignal r2, 0
+	addli r2, zero, 34
+	j .LBB0_99
+.LBB0_85:                               #   in Loop: Header=BB0_11 Depth=1
+	beq r28, r10, .LBB0_98
+# %bb.86:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 49 23                         # ieee-multiply.mlir:49:23
+	bneq r21, zero, .LBB0_100
+.LBB0_87:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 71 11                         # ieee-multiply.mlir:71:11
+	bneq r28, r10, .LBB0_101
+.LBB0_88:                               # %vector.ph
+                                        #   in Loop: Header=BB0_11 Depth=1
+	addli r2, zero, 21
+	xwait r2, 0
+	addli r2, zero, 45
+	xwait r2, 0
+	addli r2, zero, 48
+	xwait r2, 0
+	addli r2, zero, 53
+	xwait r2, 0
+	xfence
+	zext_int2long r[2:3], zero
+	mfence { lm, sm, gm }
+	j .LBB0_90
+.LBB0_89:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	load.d r[8:9], -8(r30)                  # 8-byte Folded Reload
+	addli.d r[2:3], r[2:3], 4
+	addli r5, r4, 3468
+	stores.w r7, 0(r5)
+	addli r5, r4, 3464
+	setneq.d r8, r[2:3], r[8:9]
+	addli r9, r4, 3456
+	addli r4, r4, 3460
+	stores.w r12, 0(r5)
+	stores.w r10, 0(r4)
+	stores.w r6, 0(r9)
+	beq r8, zero, .LBB0_9
+.LBB0_90:                               # %vector.body
+                                        #   Parent Loop BB0_11 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	slli r5, r2, 7
+	slli r4, r2, 2
+	loadli.w r8,  -12(r30)                  # 4-byte Folded Reload
+	add.s r6, r4, r1
+	add.s r5, r5, r27
+	add.s r15, r4, r8
+	loads.w r7, 0(r5)
+	loads.w r11, 0(r6)
+	loads.w r14, 4(r6)
+	loads.w r13, 8(r6)
+	loads.w r9, 12(r6)
+	loads.w r10, 128(r5)
+	loads.w r12, 256(r5)
+	loads.w r8, 384(r5)
+	loads.w r5, 12(r15)
+	loads.w r16, 4(r15)
+	.loc	1 56 24                         # ieee-multiply.mlir:56:24
+	and r6, r7, r24
+	.loc	1 57 24                         # ieee-multiply.mlir:57:24
+	and r7, r11, r24
+	.loc	1 71 11                         # ieee-multiply.mlir:71:11
+	loads.w r11, 8(r15)
+	.loc	1 60 24                         # ieee-multiply.mlir:60:24
+	seteq r17, r6, r26
+	.loc	1 62 25                         # ieee-multiply.mlir:62:25
+	seteq r20, r6, zero
+	.loc	1 63 25                         # ieee-multiply.mlir:63:25
+	seteq r18, r7, zero
+	.loc	1 61 24                         # ieee-multiply.mlir:61:24
+	seteq r19, r7, r26
+	.loc	1 67 27                         # ieee-multiply.mlir:67:27
+	max.u r6, r6, r7
+	setlt.u r6, r26, r6
+	.loc	1 64 29                         # ieee-multiply.mlir:64:29
+	and r7, r17, r18
+	.loc	1 65 29                         # ieee-multiply.mlir:65:29
+	and r17, r20, r19
+	.loc	1 66 27                         # ieee-multiply.mlir:66:27
+	or r7, r7, r17
+	.loc	1 68 23                         # ieee-multiply.mlir:68:23
+	or r17, r6, r7
+	lui r7, 523264
+	lui r6, 523264
+	.loc	1 70 25                         # ieee-multiply.mlir:70:25
+	bneq r17, zero, .LBB0_92
+# %bb.91:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	.loc	1 0 25 is_stmt 0                # ieee-multiply.mlir:0:25
+	loads.w r6, 0(r15)
+.LBB0_92:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	and r10, r10, r24
+	and r14, r14, r24
+	seteq r15, r10, r26
+	seteq r19, r10, zero
+	seteq r17, r14, zero
+	seteq r18, r14, r26
+	max.u r10, r10, r14
+	setlt.u r10, r26, r10
+	and r14, r15, r17
+	and r15, r19, r18
+	or r14, r14, r15
+	or r14, r10, r14
+	lui r10, 523264
+	.loc	1 70 25                         # ieee-multiply.mlir:70:25
+	bneq r14, zero, .LBB0_94
+# %bb.93:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	.loc	1 0 25                          # ieee-multiply.mlir:0:25
+	addli r10, r16, 0
+.LBB0_94:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	and r12, r12, r24
+	and r13, r13, r24
+	seteq r14, r12, r26
+	seteq r17, r12, zero
+	seteq r15, r13, zero
+	seteq r16, r13, r26
+	max.u r12, r12, r13
+	setlt.u r12, r26, r12
+	and r13, r14, r15
+	and r14, r17, r16
+	or r13, r13, r14
+	or r13, r12, r13
+	lui r12, 523264
+	.loc	1 70 25                         # ieee-multiply.mlir:70:25
+	bneq r13, zero, .LBB0_96
+# %bb.95:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	.loc	1 0 25                          # ieee-multiply.mlir:0:25
+	addli r12, r11, 0
+.LBB0_96:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	and r8, r8, r24
+	and r9, r9, r24
+	seteq r11, r8, r26
+	seteq r15, r8, zero
+	seteq r13, r9, zero
+	seteq r14, r9, r26
+	max.u r8, r8, r9
+	setlt.u r8, r26, r8
+	and r9, r11, r13
+	and r11, r15, r14
+	or r9, r9, r11
+	or r8, r8, r9
+	.loc	1 70 25                         # ieee-multiply.mlir:70:25
+	bneq r8, zero, .LBB0_89
+# %bb.97:                               # %vector.body
+                                        #   in Loop: Header=BB0_90 Depth=2
+	.loc	1 0 25                          # ieee-multiply.mlir:0:25
+	addli r7, r5, 0
+	j .LBB0_89
+.LBB0_98:                               #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 48 11 is_stmt 1               # ieee-multiply.mlir:48:11
+	addli r2, zero, 20
+	xwait r2, 0
+	addli r2, zero, 54
+	xwait r2, 0
+	addli r2, zero, 8
+	lock zero, r10
+	rs_cfg zero, r9, r2, 0
+	addli r2, zero, 3456
+	rs_cfg zero, r9, zero, 2
+	rs_row r1, r2, r25, 0
+	addli r2, zero, 21
+	unlock r10
+	xsignal r2, 0
+	addli r2, zero, 53
+.LBB0_99:                               #   in Loop: Header=BB0_11 Depth=1
+	xsignal r2, 0
+	.loc	1 49 23                         # ieee-multiply.mlir:49:23
+	beq r21, zero, .LBB0_87
+.LBB0_100:                              #   in Loop: Header=BB0_11 Depth=1
+	addli r2, zero, 34
+	xwait r2, 0
+	addli r2, zero, 49
+	xwait r2, 0
+	xfence
+	addli r2, zero, 255
+	mfence { lm, sm, gm }
+	lock zero, r22
+	ew_cfg zero, zero, zero, 1
+	ewcoeff_cfg r23, zero, zero, 0
+	ew_cfg zero, r2, zero, 2
+	ew_cfg r9, zero, zero, 3
+	loadli.w r2,  -28(r30)                  # 4-byte Folded Reload
+	loads.w r2, 0(r2)
+	ewcoeff_cfg r2, zero, zero, 0
+	loadli.w r2,  -12(r30)                  # 4-byte Folded Reload
+	hp_ssmul r2, r2, r2, 0
+	addli r2, zero, 35
+	unlock r22
+	xsignal r2, 0
+	addli r2, zero, 48
+	xsignal r2, 0
+	.loc	1 71 11                         # ieee-multiply.mlir:71:11
+	beq r28, r10, .LBB0_88
+.LBB0_101:                              #   in Loop: Header=BB0_11 Depth=1
+	.loc	1 74 5                          # ieee-multiply.mlir:74:5
+	bneq r28, zero, .LBB0_10
+# %bb.102:                              #   in Loop: Header=BB0_11 Depth=1
+	load.d r[1:2], -48(r30)                 # 8-byte Folded Reload
+	addli r3, zero, 22
+	addli r5, zero, 3456
+	xwait r3, 0
+	load.d r[3:4], 16(r30)
+	sll.d r[1:2], r[1:2], r22
+	add.ul r[1:2], r[3:4], r[1:2]
+	addli r4, zero, 5
+	addli r3, zero, 1024
+	lock zero, r4
+	dma_cfg zero, zero, zero, 0
+	dma_cfg zero, r9, zero, 1
+	dma_cfg r2, zero, zero, 2
+	dma_cfg r1, r5, r3, 3
+	load.d r[1:2], -56(r30)                 # 8-byte Folded Reload
+	dma_cfg r3, r3, r1, 4
+	addli r1, zero, 23
+	dma_run zero
+	unlock r4
+	xsignal r1, 0
+	j .LBB0_10
+.LBB0_103:                              # %._crit_edge
+	.loc	1 0 5 is_stmt 0                 # ieee-multiply.mlir:0:5
+	beq r21, zero, .LBB0_105
+# %bb.104:
+	addli r1, zero, 3
+	xsignal r1, 0
+.LBB0_105:
+	.loc	1 2 3 is_stmt 1                 # ieee-multiply.mlir:2:3
+	xsignal zero, 0
+	bneq r28, zero, .LBB0_107
+# %bb.106:
+	.loc	1 0 3 is_stmt 0                 # ieee-multiply.mlir:0:3
+	addli r1, zero, 2
+	.loc	1 2 3                           # ieee-multiply.mlir:2:3
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	xwait zero, 0
+	lock zero, r1
+	ew_cfg zero, zero, zero, 16
+	unlock r1
+	xsignal_mode_cfg zero
+.LBB0_107:
+	.loc	1 2 3 epilogue_begin            # ieee-multiply.mlir:2:3
+	addli sp, sp, 128
+	mfence { lm, sm, gm }
+	exit
+.Ltmp1:
+.Lfunc_end0:
+	.size	triton_unk_fused_0, .Lfunc_end0-triton_unk_fused_0
+	.cfi_endproc
+                                        # -- End function
+	.type	XPU_KERNEL_PARAM_SIZE_triton_unk_fused_0,@object # @XPU_KERNEL_PARAM_SIZE_triton_unk_fused_0
+	.section	.XPU.KERNEL_PARAM_SIZE.triton_unk_fused_0,"a",@progbits
+	.globl	XPU_KERNEL_PARAM_SIZE_triton_unk_fused_0
+	.p2align	2, 0x0
+XPU_KERNEL_PARAM_SIZE_triton_unk_fused_0:
+	.long	44                              # 0x2c
+	.size	XPU_KERNEL_PARAM_SIZE_triton_unk_fused_0, 4
+
+	.type	XPU_KERNEL_STACK_SIZE_triton_unk_fused_0,@object # @XPU_KERNEL_STACK_SIZE_triton_unk_fused_0
+	.section	.XPU.KERNEL_STACK_SIZE.triton_unk_fused_0,"a",@progbits
+	.globl	XPU_KERNEL_STACK_SIZE_triton_unk_fused_0
+	.p2align	2, 0x0
+XPU_KERNEL_STACK_SIZE_triton_unk_fused_0:
+	.long	192                             # 0xc0
+	.size	XPU_KERNEL_STACK_SIZE_triton_unk_fused_0, 4
+
+	.type	XPU_KERNEL_DYNAMIC_LM_triton_unk_fused_0,@object # @XPU_KERNEL_DYNAMIC_LM_triton_unk_fused_0
+	.section	.XPU.KERNEL_DYNAMIC_LM.triton_unk_fused_0,"a",@progbits
+	.globl	XPU_KERNEL_DYNAMIC_LM_triton_unk_fused_0
+	.p2align	2, 0x0
+XPU_KERNEL_DYNAMIC_LM_triton_unk_fused_0:
+	.long	0                               # 0x0
+	.size	XPU_KERNEL_DYNAMIC_LM_triton_unk_fused_0, 4
+
+	.section	.debug_abbrev,"",@progbits
+	.byte	1                               # Abbreviation Code
+	.byte	17                              # DW_TAG_compile_unit
+	.byte	0                               # DW_CHILDREN_no
+	.byte	37                              # DW_AT_producer
+	.byte	14                              # DW_FORM_strp
+	.byte	19                              # DW_AT_language
+	.byte	5                               # DW_FORM_data2
+	.byte	3                               # DW_AT_name
+	.byte	14                              # DW_FORM_strp
+	.byte	16                              # DW_AT_stmt_list
+	.byte	23                              # DW_FORM_sec_offset
+	.byte	27                              # DW_AT_comp_dir
+	.byte	14                              # DW_FORM_strp
+	.byte	17                              # DW_AT_low_pc
+	.byte	1                               # DW_FORM_addr
+	.byte	18                              # DW_AT_high_pc
+	.byte	6                               # DW_FORM_data4
+	.byte	0                               # EOM(1)
+	.byte	0                               # EOM(2)
+	.byte	0                               # EOM(3)
+	.section	.debug_info,"",@progbits
+.Lcu_begin0:
+	.long	.Ldebug_info_end0-.Ldebug_info_start0 # Length of Unit
+.Ldebug_info_start0:
+	.short	4                               # DWARF version number
+	.long	.debug_abbrev                   # Offset Into Abbrev. Section
+	.byte	4                               # Address Size (in bytes)
+	.byte	1                               # Abbrev [1] 0xb:0x1b DW_TAG_compile_unit
+	.long	.Linfo_string0                  # DW_AT_producer
+	.short	2                               # DW_AT_language
+	.long	.Linfo_string1                  # DW_AT_name
+	.long	.Lline_table_start0             # DW_AT_stmt_list
+	.long	.Linfo_string2                  # DW_AT_comp_dir
+	.long	.Lfunc_begin0                   # DW_AT_low_pc
+	.long	.Lfunc_end0-.Lfunc_begin0       # DW_AT_high_pc
+.Ldebug_info_end0:
+	.section	.debug_str,"MS",@progbits,1
+.Linfo_string0:
+.asciz	"triton"                        # string offset=0
+.Linfo_string1:
+.asciz	"ieee-multiply.mlir"            # string offset=7
+.Linfo_string2:
+.asciz	"/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-e3ud08bu" # string offset=26
+	.ident	"KUNLUNXIN XPU C/C++ Compiler Version 4.0.0, based on clang version 22.1.8 (ssh://zhangzhuangzhuang01@icode.baidu.com:8235/baidu/xpu/llvm 2579dbaec939a3e7e5a0f46f43a0a00255c03f1f)"
+	.section	".note.GNU-stack","",@progbits
+	.eabi_attribute	4, 1	# TAG_CDNN_Inst_Is_Used
+	.section	.debug_line,"",@progbits
+.Lline_table_start0:

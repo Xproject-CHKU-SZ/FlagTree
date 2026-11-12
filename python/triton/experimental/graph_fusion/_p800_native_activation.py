@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 import json
 import tempfile
+from functools import lru_cache
 from contextlib import contextmanager
 from contextvars import ContextVar
 
@@ -337,6 +338,7 @@ def retune_gelu(mod, metadata):
         return result
 
 
+@lru_cache(maxsize=4)
 def install_stage(native):
     """Split the native pass pipeline once, before its activation table pass.
 
@@ -350,11 +352,29 @@ def install_stage(native):
     tree = ast.parse(textwrap.dedent(inspect.getsource(native)))
     tree.body[0].decorator_list = []
 
+    # Identify the real backend's guarded repair. Official releases without
+    # rank-1 capture have no such step. Keep its original architecture guard.
+    repairs = [node for node in ast.walk(tree) if isinstance(node, ast.If)
+               and len(node.body) == 1 and not node.orelse
+               and ast.unparse(node.body[0]) == 'xpu.passes.ttsdnnir.add_repair_rank1_wrap_pass(pm)']
+    capture_count = sum(isinstance(node, ast.Attribute) and node.attr == 'add_capture_rank1_wrap_pass'
+                        for node in ast.walk(tree))
+    repair_count = sum(isinstance(node, ast.Attribute) and node.attr == 'add_repair_rank1_wrap_pass'
+                       for node in ast.walk(tree))
+    if not (len(repairs) == repair_count == capture_count <= 1):
+        raise RuntimeError('unknown rank-1 wrap capture/repair pipeline')
+
     class InsertStage(ast.NodeTransformer):
         count = 0
         table_count = 0
 
         def visit_If(self, node):
+            if repairs and node is repairs[0]:
+                # Activated kernels already consumed their wrap specs before
+                # the text rewrite. All other kernels use the original order.
+                late = ast.parse("if not _restore_needed: pass").body[0]
+                late.body = [node]
+                return late
             self.generic_visit(node)
             if ast.unparse(node.test) == "opt.exp_range != ':0'":
                 self.table_count += 1
@@ -367,14 +387,25 @@ def install_stage(native):
             if (isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute)
                     and node.value.func.attr == 'add_tritonsdnn_fuse_relu_activation_pass'):
                 self.count += 1
-                return [node] + ast.parse(
-                    "if metadata.get('native_exact_gelu', '[]') != '[]' or metadata.get('native_relu', '[]') != '[]':\n    pm.run(mod, 'before_native_activation')\n    mod = _native_restore_activation(mod, metadata)\n    pm = ir.pass_manager(mod.context)\n    pm.enable_debug()"
+                needed, restore = ast.parse(
+                    "_restore_needed = (metadata.get('native_exact_gelu', '[]') != '[]' or "
+                    "metadata.get('native_relu', '[]') != '[]')\n"
+                    "if _restore_needed:\n"
+                    "    pm.run(mod, 'before_native_activation')\n"
+                    "    mod = _native_restore_activation(mod, metadata)\n"
+                    "    pm = ir.pass_manager(mod.context)\n"
+                    "    pm.enable_debug()"
                 ).body
+                # DMA NameLocs survive vendor fusion in memory. Resolve them
+                # there, before activation restoration serializes the module.
+                restore.body[:0] = repairs
+                return [node, needed, restore]
             return node
 
     patch = InsertStage()
     tree = patch.visit(tree)
-    assert (patch.count, patch.table_count) == (1, 1), 'unknown native SDNN activation pipeline'
+    if (patch.count, patch.table_count) != (1, 1):
+        raise RuntimeError('unknown native SDNN activation pipeline')
 
     def restore(mod, metadata):
         with tempfile.TemporaryDirectory(prefix='native-gelu-', dir=os.environ['TRITON_CACHE_DIR']) as directory:

@@ -1,0 +1,24 @@
+<!doctype html><html lang=zh-CN><meta charset=utf-8><title>F06 原生 Inductor 与 FlagTree 官方对照</title><style>
+body{font:16px/1.65 system-ui,sans-serif;color:#182735;background:#fff;max-width:1120px;margin:36px auto;padding:0 22px}
+h1{font-size:29px}h2{margin-top:30px;font-size:21px}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #d2dbe1}th{background:#eaf2f4}code,pre{font-size:.91em}pre{padding:12px;background:#eff3f4;overflow:auto}a{color:#1b5973}
+</style><h1>P800 上的 F06 原生 Inductor 与官方对照</h1>
+<p>官方 main 为 <code>6b1549dd</code>，P800 上的官方二进制构建自 <code>d65b6d70</code>。两次提交之间只改了四个 CI 文件，整个 XPU 子树具有同一 Git 对象 ID <code>6d1f001e</code>。同一套 Torch 2.9 SDK 分别加载官方和本地编译器，记录实际加载路径和哈希。<a href="https://github.com/flagos-ai/FlagTree/compare/d65b6d70511e4d9aaeb3bf52ae762a96212def0a...6b1549dda9a24939c8d8098187d91bed7d8f514e">官方提交对照</a></p>
+<h2>三个编译复现</h2><table><tr><th>触发条件</th><th>官方</th><th>本地 v23</th><th>本次实验路径</th></tr>
+<tr><td>Torch 传入 CUDA 兼容目标 86、warp 32</td><td>LLVM 无法生成 xpu86</td><td>资源校验提前拒绝 arch 86</td><td>确认活动驱动后写入真实目标 XPU3、warp 1</td></tr>
+<tr><td>在核内构造描述符用于 TLE DMA</td><td colspan=2>ConvertTritonXPUToLLVM 将 tt.make_tensor_descriptor 标为非法</td><td>使用 GM 基址和 copy 自带的尺寸、步长。带行距及非零双向偏移用例通过</td></tr>
+<tr><td>BF16 LM 中转后由普通 tt.store 写 GM</td><td colspan=2>同一 TTIR 的第 64 行在 TritonXPUTLEDtypeConvert 中指针和值类型不一致</td><td>最终模板在 LM 舍入后通过描述符 DMA 回写。原混合路径仍可独立复现</td></tr></table>
+<h2>本地代码造成的计算成本</h2>
+<p>在 64 × 1024 BF16 Add + GELU tanh 的普通 Inductor 核上，仅在冷编译时向两边传入真实 XPU 目标。ABBA 的两次官方设备耗时为 39.66、39.60 µs，本地为 43.62、44.26 µs。反汇编中两边各有两条静态 exp.f.rn。本地增加 tanh 输入限幅和输出 BF16 软件舍入。以下消融只改传给 LLVM 19 的两处 IR，保留本地编译器、启动器、硬件和输入。</p>
+<table><tr><th>64 × 1024 tanh 实验</th><th>机器码字节</th><th>设备 µs</th><th>65,536 种 BF16 编码中超差数</th><th>机器码 SHA-256 前缀</th></tr><tr><td>官方</td><td>1196</td><td>39.66</td><td>31,842</td><td><code>688e3ee54f3f</code></td></tr><tr><td>本地 v23</td><td>1448</td><td>43.62</td><td>0</td><td><code>a6ad0323d8c5</code></td></tr><tr><td>只恢复硬件 BF16 写回</td><td>1340</td><td>42.08</td><td>0</td><td><code>b7bf26db5205</code></td></tr><tr><td>只取消 tanh 限幅</td><td>1308</td><td>43.03</td><td>31,842</td><td><code>c560f11f674d</code></td></tr><tr><td>两项都恢复官方写法</td><td>1196</td><td>41.33</td><td>31,842</td><td><code>688e3ee54f3f</code></td></tr></table>
+<p>遍历全部 BF16 编码时 bias 为零。容差为绝对 0.03、相对 0.003，并比较 NaN 位置。去掉限幅可复现官方的 31,842 个错误。单独恢复硬件写回在本用例通过，仍有 28 个有限结果与 eager 数值不完全相等。两处设置同时恢复后机器码与官方逐字节一致。其他算子的舍入行为尚未用这个消融验证。</p>
+<h2>六项正式入口与实际启动</h2>
+<p>普通 torch.compile 的选项在编译时启用 F06 模板。四个小尺寸用 cluster 多核并行，每次前向实际提交一个设备核。2048 × 2048 保留双核。表内单位为 µs，每格依次是 eager 和原生 Inductor。加速比为 eager 端到端耗时除以原生入口耗时。</p>
+<table><tr><th>形状</th><th>GELU</th><th>实际路由</th><th>核数</th><th>纯设备</th><th>端到端</th><th>加速比</th></tr><tr><td>64 × 1024</td><td>tanh</td><td>Inductor TLE cluster</td><td>1</td><td>12.36 / 9.97</td><td>41.23 / 90.04</td><td>0.458×</td></tr><tr><td>64 × 1024</td><td>exact</td><td>Inductor TLE cluster</td><td>1</td><td>13.41 / 11.76</td><td>43.31 / 89.23</td><td>0.485×</td></tr><tr><td>512 × 1024</td><td>tanh</td><td>Inductor TLE cluster</td><td>1</td><td>39.15 / 37.19</td><td>61.87 / 100.82</td><td>0.614×</td></tr><tr><td>512 × 1024</td><td>exact</td><td>Inductor TLE cluster</td><td>1</td><td>47.56 / 50.73</td><td>68.54 / 114.20</td><td>0.600×</td></tr><tr><td>2048 × 2048</td><td>tanh</td><td>vendor Add + Inductor cluster GELU</td><td>2</td><td>220.84 / 171.59</td><td>239.99 / 247.49</td><td>0.970×</td></tr><tr><td>2048 × 2048</td><td>exact</td><td>vendor Add + vendor GELU</td><td>2</td><td>260.08 / 259.81</td><td>275.98 / 325.08</td><td>0.849×</td></tr></table>
+<p>以上端到端在 P800 卡 6 串行测试，无启动跟踪器，预热 24 轮再交替采集 128 轮。设备列用 8 次调用的图重放计时。另起进程在相同输入上拦截启动并校验机器码 SHA-256。六项都验证了更换输入、输出独立、NaN、正负 Inf、近舍入边界及全部 BF16 编码。容差通过，小尺寸 tanh 在 65,536 个不同编码上有 150 个与 eager 数值不完全相等，exact 有 3 个。</p>
+<h2>缓存命中和调用分层</h2>
+<p>旧 F06 在四个小尺寸选中 eager。独立诊断固定这条已测路由，只校准一次。单测 Dynamo guard 为 1.56–1.58 µs，包含模块检查和重放的整个热入口相对直接 eager 多 7.45–7.91 µs。v23 完整选路记录也显示额外时间主要在主机提交。</p>
+<p>同一次 64 × 1024 tanh 分层实验中，eager、原生公开调用、生成的 Runner.call 与固定输出的 kernel.run 的同步中位数分别为 28.88、73.47、23.30 和 19.85 µs。其提交中位数分别为 22.23、65.29、14.19、8.90 µs。分层实验逐层连续采样，六项正式入口实验交替采样。编译期 pass 未出现在热调用栈，公开调用经过 Dynamo、AOTAutograd 和 CompiledFxGraph，后者在当前 SDK 每次都进入 record_function。</p>
+<pre>from triton.experimental import graph_fusion
+compiled = torch.compile(model, backend="inductor", fullgraph=True, dynamic=False,
+                         options=graph_fusion.p800_inductor_options())</pre>
+<p>该入口仅按选项启用。六项的端到端均慢于相应 eager 基线。完整验收覆盖 52 项回归测试，本次没有扩展到其他 F06 模板或重新测量 117 项。<a href="results.json">逐项结果</a> · <a href="evidence.tar.gz">复现输入、机器码与原始记录</a></p></html>

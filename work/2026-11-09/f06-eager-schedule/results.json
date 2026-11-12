@@ -1,0 +1,287 @@
+{
+  "image": "zhaoweiming/f06-p800:f06-eager-schedule-20261109-v8",
+  "image_id": "sha256:c391fe3b7a4767a011389fb746d201a5a35d75c57e74e8ca5d3e53aa1b9a0c5f",
+  "target": "Dense 2048x2048 FP32 add + last-axis softmax with a 2048-element bias, out-of-place",
+  "public_runs": [
+    {
+      "dtype": "float32",
+      "shape": "2048x2048",
+      "route": "cluster",
+      "stages": [
+        {
+          "route": "flat_reduce",
+          "resource": "cluster",
+          "kernels": [
+            [
+              "_tle_row_softmax",
+              "cluster",
+              "166268587e87c86db7bbe5bfc0b56d4ca79e0913216286286ecbd2fc4330e560"
+            ]
+          ]
+        }
+      ],
+      "event_us": {
+        "eager": 75.10247230529785,
+        "compiled": 64.52080011367798
+      },
+      "speedup": 1.164004044788289,
+      "host_us": {
+        "eager": 93.65299999999999,
+        "compiled": 98.753
+      },
+      "host_speedup": 0.9483559993114132
+    },
+    {
+      "dtype": "float32",
+      "shape": "512x1024",
+      "route": "eager",
+      "stages": [],
+      "event_us": {
+        "eager": 23.064124584197998,
+        "compiled": 34.592050313949585
+      },
+      "speedup": 0.6667463875333566,
+      "host_us": {
+        "eager": 36.730000000000004,
+        "compiled": 48.649
+      },
+      "host_speedup": 0.7550001027770356
+    },
+    {
+      "dtype": "float32",
+      "shape": "64x1024",
+      "route": "eager",
+      "stages": [],
+      "event_us": {
+        "eager": 20.389024913311005,
+        "compiled": 31.747901439666748
+      },
+      "speedup": 0.6422164612063576,
+      "host_us": {
+        "eager": 31.6045,
+        "compiled": 44.259
+      },
+      "host_speedup": 0.7140807519374591
+    },
+    {
+      "dtype": "float16",
+      "shape": "2048x2048",
+      "route": "eager",
+      "stages": [],
+      "event_us": {
+        "eager": 69.31970119476318,
+        "compiled": 69.97904777526855
+      },
+      "speedup": 0.9905779429491124,
+      "host_us": {
+        "eager": 83.983,
+        "compiled": 96.838
+      },
+      "host_speedup": 0.867252524835292
+    },
+    {
+      "dtype": "float16",
+      "shape": "512x1024",
+      "route": "eager",
+      "stages": [],
+      "event_us": {
+        "eager": 24.348774552345276,
+        "compiled": 31.101951003074646
+      },
+      "speedup": 0.7828696839609267,
+      "host_us": {
+        "eager": 38.334,
+        "compiled": 50.679
+      },
+      "host_speedup": 0.7564079796365358
+    },
+    {
+      "dtype": "float16",
+      "shape": "64x1024",
+      "route": "eager",
+      "stages": [],
+      "event_us": {
+        "eager": 20.586824417114258,
+        "compiled": 32.158175110816956
+      },
+      "speedup": 0.640173901229536,
+      "host_us": {
+        "eager": 32.299,
+        "compiled": 45.7745
+      },
+      "host_speedup": 0.7056112027438858
+    }
+  ],
+  "large_fp32_acceptance": {
+    "protocol": "randomized_ab_ba_v1",
+    "baseline": "eager",
+    "minimum_gain": 0.03,
+    "round_medians_us": {
+      "eager": [
+        101.543,
+        101.223
+      ],
+      "inductor": [
+        137.2825,
+        137.497
+      ],
+      "cluster": [
+        89.15799999999999,
+        89.4485
+      ]
+    },
+    "accepted": [
+      "cluster",
+      "eager"
+    ]
+  },
+  "captured_medians_us_v7_reference": {
+    "native": 155.5349975824356,
+    "tle": 88.1199985742569,
+    "eager": 77.92537659406662,
+    "eager_softmax": 55.40812388062477,
+    "eager_add": 24.65437538921833
+  },
+  "captured_medians_us_v8": {
+    "native": 93.66674721240997,
+    "tle": 64.78224694728851,
+    "eager": 76.27175003290176,
+    "eager_softmax": 54.83825132250786,
+    "eager_add": 24.841999635100365
+  },
+  "linked_kernels": [
+    {
+      "route": "tle",
+      "sha": "347ee89b6861665a5d75f315a17328865f50a522a7f7f7136884db8b2e44d5f1",
+      "instructions": {
+        "vsrl.p": 8,
+        "vmax.f.mz": 35,
+        "vadd.f.mz.rn": 99,
+        "vextracti.f": 2,
+        "exp.f.rn": 512,
+        "l_gm2lm": 2,
+        "vor.u.mh": 0
+      },
+      "dma_before_grid": 1,
+      "dma_in_grid": 1
+    },
+    {
+      "route": "native",
+      "sha": "0376165026a8b3277f783733342e80223c824f7295a0ac91d7f24faad2c87b59",
+      "instructions": {
+        "vsrl.p": 8,
+        "vmax.f.mz": 11,
+        "vadd.f.mz.rn": 27,
+        "vextracti.f": 2,
+        "exp.f.rn": 128,
+        "l_gm2lm": 2,
+        "vor.u.mh": 0
+      },
+      "dma_before_grid": 1,
+      "dma_in_grid": 1
+    }
+  ],
+  "dma_geometry": {
+    "native": {
+      "clusters": 12,
+      "cores_per_cluster": 64,
+      "bytes_per_bias_dma": 512,
+      "bias_dma_bytes_requested_per_launch": 393216
+    },
+    "tle": {
+      "clusters": 12,
+      "cores_per_cluster": 64,
+      "bytes_per_bias_dma": 2048,
+      "bias_dma_bytes_requested_per_launch": 1572864
+    }
+  },
+  "correctness": [
+    {
+      "route": "native",
+      "case": "lanes",
+      "max_abs": 0.0,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "lanes",
+      "max_abs": 0.0,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "aliased_input",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "aliased_input",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "seed61",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "seed61",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "new",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "new",
+      "max_abs": 7.450580596923828e-09,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "wide",
+      "max_abs": 2.384185791015625e-07,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "wide",
+      "max_abs": 2.384185791015625e-07,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "shift",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "tle",
+      "case": "shift",
+      "max_abs": 1.4901161193847656e-08,
+      "nan_rows": 0
+    },
+    {
+      "route": "native",
+      "case": "special",
+      "max_abs": 1.1175870895385742e-08,
+      "nan_rows": 3
+    },
+    {
+      "route": "tle",
+      "case": "special",
+      "max_abs": 5.587935447692871e-09,
+      "nan_rows": 3
+    }
+  ],
+  "scope_tests": "10 passed, 8 subtests passed",
+  "device_regression": "2 passed (non-default stream, updated bias, retained outputs)",
+  "measurement": "Public device-event time is per call in 40 back-to-back calls. Host time includes synchronization on every call. Captured path medians are a separate run."
+}

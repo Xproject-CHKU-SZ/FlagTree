@@ -1,0 +1,253 @@
+imports
+XCCL /home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+build_inputs
+compile
+/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir:59:11: error: expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)
+module {
+  tt.func public @triton_unk_fused_0(%arg0: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg4: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg5: i32 {tt.divisibility = 16 : i32}, %arg6: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %cst = arith.constant dense<2143289344> : tensor<1x2048xi32>
+    %cst_0 = arith.constant dense<0> : tensor<1x2048xi32>
+    %cst_1 = arith.constant dense<2139095040> : tensor<1x2048xi32>
+    %cst_2 = arith.constant dense<2147483647> : tensor<1x2048xi32>
+    %cst_3 = arith.constant 0.000000e+00 : f32
+    %cst_4 = arith.constant dense<1.000000e+00> : tensor<1x2048xf32>
+    %cst_5 = arith.constant dense<1.000000e-03> : tensor<1x1xf32>
+    %cst_6 = arith.constant dense<2.048000e+03> : tensor<1x1xf32>
+    %cst_7 = arith.constant dense<0.000000e+00> : tensor<1x2048xf32>
+    %cst_8 = arith.constant dense<2048> : tensor<1x2048xi32>
+    %cst_9 = arith.constant dense<2048> : tensor<1x1xi32>
+    %0 = tt.get_program_id x : i32
+    %1 = tt.make_range {end = 1 : i32, start = 0 : i32} : tensor<1xi32>
+    %2 = tt.expand_dims %1 {axis = 1 : i32} : tensor<1xi32> -> tensor<1x1xi32>
+    %3 = tt.splat %0 : i32 -> tensor<1x1xi32>
+    %4 = arith.addi %3, %2 : tensor<1x1xi32>
+    %5 = arith.cmpi slt, %4, %cst_9 : tensor<1x1xi32>
+    %6 = tt.make_range {end = 2048 : i32, start = 0 : i32} : tensor<2048xi32>
+    %7 = tt.expand_dims %6 {axis = 0 : i32} : tensor<2048xi32> -> tensor<1x2048xi32>
+    %8 = arith.cmpi slt, %7, %cst_8 : tensor<1x2048xi32>
+    %9 = arith.muli %4, %cst_9 : tensor<1x1xi32>
+    %10 = tt.broadcast %9 : tensor<1x1xi32> -> tensor<1x2048xi32>
+    %11 = arith.addi %7, %10 : tensor<1x2048xi32>
+    %12 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<1x2048x!tt.ptr<f32>>
+    %13 = tt.addptr %12, %11 : tensor<1x2048x!tt.ptr<f32>>, tensor<1x2048xi32>
+    %14 = tt.broadcast %5 : tensor<1x1xi1> -> tensor<1x2048xi1>
+    %15 = arith.andi %8, %14 : tensor<1x2048xi1>
+    %16 = tt.load %13, %15, %cst_7 evictionPolicy = evict_last : tensor<1x2048x!tt.ptr<f32>>
+    %17 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<1x2048x!tt.ptr<f32>>
+    %18 = tt.addptr %17, %7 : tensor<1x2048x!tt.ptr<f32>>, tensor<1x2048xi32>
+    %19 = tt.load %18, %8, %cst_7 evictionPolicy = evict_last : tensor<1x2048x!tt.ptr<f32>>
+    %20 = arith.addf %16, %19 : tensor<1x2048xf32>
+    %21 = arith.select %15, %20, %cst_7 : tensor<1x2048xi1>, tensor<1x2048xf32>
+    %22 = arith.select %15, %cst_4, %cst_7 : tensor<1x2048xi1>, tensor<1x2048xf32>
+    %23:3 = "tt.reduce"(%21, %cst_7, %22) <{axis = 1 : i32}> ({
+    ^bb0(%arg7: f32, %arg8: f32, %arg9: f32, %arg10: f32, %arg11: f32, %arg12: f32):
+      %80 = arith.subf %arg10, %arg7 : f32
+      %81 = arith.addf %arg9, %arg12 : f32
+      %82 = arith.cmpf oeq, %81, %cst_3 : f32
+      %83 = arith.divf %arg12, %81 : f32
+      %84 = arith.select %82, %cst_3, %83 : f32
+      %85 = arith.mulf %80, %84 : f32
+      %86 = arith.addf %arg7, %85 : f32
+      %87 = arith.addf %arg8, %arg11 : f32
+      %88 = arith.mulf %80, %80 : f32
+      %89 = arith.mulf %88, %arg9 : f32
+      %90 = arith.mulf %89, %84 : f32
+      %91 = arith.addf %87, %90 : f32
+      tt.reduce.return %86, %91, %81 : f32, f32, f32
+    }) : (tensor<1x2048xf32>, tensor<1x2048xf32>, tensor<1x2048xf32>) -> (tensor<1xf32>, tensor<1xf32>, tensor<1xf32>)
+    %24 = tt.expand_dims %23#0 {axis = 1 : i32} : tensor<1xf32> -> tensor<1x1xf32>
+    %25 = tt.expand_dims %23#1 {axis = 1 : i32} : tensor<1xf32> -> tensor<1x1xf32>
+    %26 = tt.load %13, %15, %cst_7 evictionPolicy = evict_first : tensor<1x2048x!tt.ptr<f32>>
+    %27 = tt.splat %arg2 : !tt.ptr<f32> -> tensor<1x2048x!tt.ptr<f32>>
+    %28 = tt.addptr %27, %7 : tensor<1x2048x!tt.ptr<f32>>, tensor<1x2048xi32>
+    %29 = tt.load %28, %8, %cst_7 evictionPolicy = evict_last : tensor<1x2048x!tt.ptr<f32>>
+    %30 = tt.splat %arg3 : !tt.ptr<f32> -> tensor<1x2048x!tt.ptr<f32>>
+    %31 = tt.addptr %30, %7 : tensor<1x2048x!tt.ptr<f32>>, tensor<1x2048xi32>
+    %32 = tt.load %31, %8, %cst_7 evictionPolicy = evict_last : tensor<1x2048x!tt.ptr<f32>>
+    %33 = arith.addf %26, %19 : tensor<1x2048xf32>
+    %34 = tt.broadcast %24 : tensor<1x1xf32> -> tensor<1x2048xf32>
+    %35 = arith.subf %33, %34 : tensor<1x2048xf32>
+    %36 = arith.divf %25, %cst_6 : tensor<1x1xf32>
+    %37 = arith.addf %36, %cst_5 : tensor<1x1xf32>
+    %38 = math.rsqrt %37 : tensor<1x1xf32>
+    %39 = tt.broadcast %38 : tensor<1x1xf32> -> tensor<1x2048xf32>
+    %40 = arith.mulf %35, %39 : tensor<1x2048xf32>
+    %41 = arith.bitcast %35 : tensor<1x2048xf32> to tensor<1x2048xi32>
+    %42 = arith.bitcast %39 : tensor<1x2048xf32> to tensor<1x2048xi32>
+    %43 = arith.andi %41, %cst_2 : tensor<1x2048xi32>
+    %44 = arith.andi %42, %cst_2 : tensor<1x2048xi32>
+    %45 = arith.cmpi ugt, %43, %cst_1 : tensor<1x2048xi32>
+    %46 = arith.cmpi ugt, %44, %cst_1 : tensor<1x2048xi32>
+    %47 = arith.cmpi eq, %43, %cst_1 : tensor<1x2048xi32>
+    %48 = arith.cmpi eq, %44, %cst_1 : tensor<1x2048xi32>
+    %49 = arith.cmpi eq, %43, %cst_0 : tensor<1x2048xi32>
+    %50 = arith.cmpi eq, %44, %cst_0 : tensor<1x2048xi32>
+    %51 = arith.andi %47, %50 : tensor<1x2048xi1>
+    %52 = arith.andi %48, %49 : tensor<1x2048xi1>
+    %53 = arith.ori %51, %52 : tensor<1x2048xi1>
+    %54 = arith.ori %45, %46 : tensor<1x2048xi1>
+    %55 = arith.ori %53, %54 : tensor<1x2048xi1>
+    %56 = arith.bitcast %40 : tensor<1x2048xf32> to tensor<1x2048xi32>
+    %57 = arith.select %55, %cst, %56 : tensor<1x2048xi1>, tensor<1x2048xi32>
+    %58 = arith.bitcast %57 : tensor<1x2048xi32> to tensor<1x2048xf32>
+    %59 = arith.mulf %58, %29 : tensor<1x2048xf32>
+    %60 = arith.bitcast %29 : tensor<1x2048xf32> to tensor<1x2048xi32>
+    %61 = arith.andi %57, %cst_2 : tensor<1x2048xi32>
+    %62 = arith.andi %60, %cst_2 : tensor<1x2048xi32>
+    %63 = arith.cmpi ugt, %61, %cst_1 : tensor<1x2048xi32>
+    %64 = arith.cmpi ugt, %62, %cst_1 : tensor<1x2048xi32>
+    %65 = arith.cmpi eq, %61, %cst_1 : tensor<1x2048xi32>
+    %66 = arith.cmpi eq, %62, %cst_1 : tensor<1x2048xi32>
+    %67 = arith.cmpi eq, %61, %cst_0 : tensor<1x2048xi32>
+    %68 = arith.cmpi eq, %62, %cst_0 : tensor<1x2048xi32>
+    %69 = arith.andi %65, %68 : tensor<1x2048xi1>
+    %70 = arith.andi %66, %67 : tensor<1x2048xi1>
+    %71 = arith.ori %69, %70 : tensor<1x2048xi1>
+    %72 = arith.ori %63, %64 : tensor<1x2048xi1>
+    %73 = arith.ori %71, %72 : tensor<1x2048xi1>
+    %74 = arith.bitcast %59 : tensor<1x2048xf32> to tensor<1x2048xi32>
+    %75 = arith.select %73, %cst, %74 : tensor<1x2048xi1>, tensor<1x2048xi32>
+    %76 = arith.bitcast %75 : tensor<1x2048xi32> to tensor<1x2048xf32>
+    %77 = arith.addf %76, %32 : tensor<1x2048xf32>
+    %78 = tt.splat %arg4 : !tt.ptr<f32> -> tensor<1x2048x!tt.ptr<f32>>
+    %79 = tt.addptr %78, %11 : tensor<1x2048x!tt.ptr<f32>>, tensor<1x2048xi32>
+    tt.store %79, %77, %15 : tensor<1x2048x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, strip-all-ir{xpu_arch=3}, triton-convert-type{mode=0 xpu_arch=3}, triton-to-linalg-experimental{load-tile-size=131072 xpu_arch=3}, triton-loop-aware-cse, linalg-to-tritonsdnn{xpu_arch=3}, triton-loop-aware-cse, tritonsdnn-legalize{xpu_arch=3}, tritonsdnn-merge-extern-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-resolve-layout-conflict, tritonsdnn-hoist-ds, tritonsdnn-transpose-mma, tritonsdnn-transpose-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-wrap-fallback, tritonsdnn-eliminate-mma-acc-zero{xpu_arch=3}, tritonsdnn-optimize-rc-layout{xpu_arch=3}, tritonsdnn-dsa-copy, func.func(tritonsdnn-bufferize{xpu_arch=3}), tritonsdnn-mx-scale-layout, tritonsdnn-fuse-relu-activation{xpu_arch=3}, tritonsdnn-ew-act-table{exp-range-max=0.000000e+00 exp-range-min=-1.598438e+01}, tritonsdnn-loop-grid, tritonsdnn-hoist-loop-invariant-dma{xpu_arch=3}, tritonsdnn-pipeline{defer-event-coloring=false test-event-limit=0 xpu_arch=3}, tritonsdnn-multi-buffer{num_stages=1 xpu_arch=3}, tritonsdnn-lower-rc-subview{xpu_arch=3}, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir:2:3: error: Failures have been detected while processing an MLIR pass pipeline
+/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir:2:3: note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: triton_unk_fused_0
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_unk_fused_0(in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xnumel = 2048
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_numel = 2048
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rnumel = r0_numel
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     RBLOCK: tl.constexpr = R0_BLOCK
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xoffset = tl.program_id(0) * XBLOCK
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xmask = xindex < xnumel
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_base = tl.arange(0, R0_BLOCK)[None, :]
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rbase = r0_base
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     x0 = xindex
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp4_mean = tl.zeros([XBLOCK, R0_BLOCK], tl.float32)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp4_m2 = tl.zeros([XBLOCK, R0_BLOCK], tl.float32)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp4_weight = tl.zeros([XBLOCK, R0_BLOCK], tl.float32)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for r0_offset in range(0, r0_numel, R0_BLOCK):
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_index = r0_offset + r0_base
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_mask = r0_index < r0_numel
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         roffset = r0_offset
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         rindex = r0_index
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_1 = r0_index
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp0 = tl.load(in_ptr0 + (r0_1 + 2048*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp1 = tl.load(in_ptr1 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp2 = tmp0 + tmp1
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp3 = tl.broadcast_to(tmp2, [XBLOCK, R0_BLOCK])
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp4_mean_next, tmp4_m2_next, tmp4_weight_next = triton_helpers.welford_reduce(
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]             tmp3, tmp4_mean, tmp4_m2, tmp4_weight, roffset == 0
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         )
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp4_mean = tl.where(r0_mask & xmask, tmp4_mean_next, tmp4_mean)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp4_m2 = tl.where(r0_mask & xmask, tmp4_m2_next, tmp4_m2)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp4_weight = tl.where(r0_mask & xmask, tmp4_weight_next, tmp4_weight)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp5, tmp6, tmp7 = triton_helpers.welford(tmp4_mean, tmp4_m2, tmp4_weight, 1)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp4 = tmp5[:, None]
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp8 = tmp6[:, None]
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp9 = tmp7[:, None]
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     for r0_offset in range(0, r0_numel, R0_BLOCK):
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_index = r0_offset + r0_base
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_mask = r0_index < r0_numel
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         roffset = r0_offset
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         rindex = r0_index
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         r0_1 = r0_index
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp10 = tl.load(in_ptr0 + (r0_1 + 2048*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp11 = tl.load(in_ptr1 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp20 = tl.load(in_ptr2 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp22 = tl.load(in_ptr3 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp12 = tmp10 + tmp11
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp13 = tmp12 - tmp4
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp14 = 2048.0
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp15 = (tmp8 / tmp14)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp16 = 0.001
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp17 = tmp15 + tmp16
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp18 = libdevice.rsqrt(tmp17)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp19 = tmp13 * tmp18
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp21 = tmp19 * tmp20
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tmp23 = tmp21 + tmp22
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]         tl.store(out_ptr2 + (r0_1 + 2048*x0), tmp23, r0_mask & xmask)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'in_ptr0': '*fp32', 'in_ptr1': '*fp32', 'in_ptr2': '*fp32', 'in_ptr3': '*fp32', 'out_ptr2': '*fp32', 'xnumel': 'i32', 'r0_numel': 'i32', 'XBLOCK': 'constexpr', 'R0_BLOCK': 'constexpr'}, 'device': 0, 'constants': {'XBLOCK': 1, 'R0_BLOCK': 2048}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]], (3,): [['tt.divisibility', 16]], (4,): [['tt.divisibility', 16]], (5,): [['tt.divisibility', 16]], (6,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 16, 'num_stages': 1, 'debug': True, 'cc': 86}
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "<native_sdnn_activation_stage>", line 258, in make_ttxir
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: PassManager::run failed: loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":59:11): expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":2:3): Failures have been detected while processing an MLIR pass pipeline
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] During handling of the above exception, another exception occurred:
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_p800_compiler.py", line 65, in compile_for_actual_target
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original_compile(source, **kwargs)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 428, in compile
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     cur_module = run_stage(ext, compile_ir, cur_module)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 349, in run_stage
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 881, in <lambda>
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["ttxir"] = lambda src, metadata: self.make_ttxir(src, metadata, options)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_p800_compiler.py", line 81, in make_ttxir
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     result = candidate_ttxir(mod, metadata, options)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "<native_sdnn_activation_stage>", line 261, in make_ttxir
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] triton.runtime.errors.OutOfResources: out of resource: uni_sram PassManager::run failed: loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":59:11): expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":2:3): Failures have been detected while processing an MLIR pass pipeline
+E1102 19:01:33.109000 3233445 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.
+Traceback (most recent call last):
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 248, in <module>
+    main()
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 128, in main
+    compiled, proof = codegen.compile_region(
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py", line 404, in compile_region
+    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 782, in compile_fx_inner
+    return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py", line 144, in debug_wrapper
+    inner_compiled_fn = compiler_fn(gm, example_inputs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 963, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1695, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1505, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2319, in compile_to_module
+    return self._compile_to_module()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2329, in _compile_to_module
+    mod = self._compile_to_module_lines(wrapper_code)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2397, in _compile_to_module_lines
+    mod = PyCodeCache.load_by_key_path(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/codecache.py", line 3548, in load_by_key_path
+    mod = _reload_python_module(key, path, set_sys_modules=in_toplevel)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/compile_tasks.py", line 33, in _reload_python_module
+    exec(code, mod.__dict__, mod.__dict__)
+  File "/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/inductor/ov/covaz6mdmy56x5qltiy5slvjoofpaipfm4du7zfltvgvabzxjrt3.py", line 55, in <module>
+    triton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/async_compile.py", line 500, in triton
+    kernel.precompile(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+    self._precompile_worker()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 474, in _precompile_worker
+    raise NoTritonConfigsError(
+torch._inductor.runtime.triton_heuristics.NoTritonConfigsError: No valid triton configs. OutOfResources: out of resource: uni_sram PassManager::run failed: loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":59:11): expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)
+loc("/home/zhaoweiming/f06-resources-20261102/results/full-gpu7/cache/triton-p800-ops-5134b460d69771aa/native-activation-ww7q88ql/ieee-multiply.mlir":2:3): Failures have been detected while processing an MLIR pass pipeline
+  note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.

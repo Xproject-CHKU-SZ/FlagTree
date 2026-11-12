@@ -1,0 +1,105 @@
+{
+  "status": "error",
+  "route": "sdnn",
+  "ordinal": 20,
+  "repeat": 0,
+  "timing": "graph",
+  "started_at": 1793616382.6460335,
+  "stage": "compile",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "ordinal": 20,
+    "case_id": "report117:add_softmax:float32:64x1024",
+    "kind": "add_softmax",
+    "dtype": "float32",
+    "M": 64,
+    "N": 1024,
+    "K": null,
+    "inputs": [
+      {
+        "shape": [
+          64,
+          1024
+        ],
+        "sha256": "b2654e7d312d8857e29e4d48075e35af7d52167fedf0fd324f79a1d95451c84f"
+      },
+      {
+        "shape": [
+          1024
+        ],
+        "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+      }
+    ],
+    "parameters": {},
+    "tolerance": {
+      "atol": 0.0003,
+      "rtol": 0.0003
+    },
+    "seed": 61,
+    "status": "not_started",
+    "candidate_us": null,
+    "separate_calls_us": null,
+    "inductor_original_us": null,
+    "speedup_vs_separate_calls": null,
+    "speedup_vs_inductor_original": null,
+    "original_ordinal": 20,
+    "input_builder": "historical_small"
+  },
+  "physical_device": 4,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:46:27 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:84:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3098018\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 166 MiB\n\n",
+  "input_binding": {
+    "source_sha256": "c82c698a35b879a39e9278e313d0c26f432ddaaffeff1d372e1ceb50fbd84000",
+    "definition_ast_sha256": {
+      "Module": "49e5ec1e04a2ef032d2941bfe82be82b2d75b0d99c5a0bf8a8f04ddf17e8775e",
+      "Binary": "48e993c89f96845c941204f027d1c00ccffd4a1f0a3850e87adeaecedec2c640",
+      "rand": "abae7eb1b7beef0c4f99044b641316013c6e1f3eb79b60b2c957185a575e8a64"
+    },
+    "inputs": [
+      {
+        "shape": [
+          64,
+          1024
+        ],
+        "sha256": "b2654e7d312d8857e29e4d48075e35af7d52167fedf0fd324f79a1d95451c84f"
+      },
+      {
+        "shape": [
+          1024
+        ],
+        "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+      }
+    ],
+    "parameters": {},
+    "graph": "graph():\n    %a : [num_users=1] = placeholder[target=a]\n    %b : [num_users=1] = placeholder[target=b]\n    %add : [num_users=1] = call_function[target=operator.add](args = (%a, %b), kwargs = {})\n    %softmax : [num_users=1] = call_function[target=torch.softmax](args = (%add,), kwargs = {dim: -1})\n    return softmax"
+  },
+  "resource_rejections": [],
+  "error": "NoTritonConfigsError: No valid triton configs. OutOfResources: out of resource: uni_sram PassManager::run failed: loc(\"tmp7\"(\"/home/zhaoweiming/f06-resources-20261102/results/full-gpu4/cache/inductor/bc/cbc2jjkxg7wqmdzw4f5mlca6i34rqffj4fksjirtv77lchk3k62z.py\":44:18)): expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)\nloc(\"/home/zhaoweiming/f06-resources-20261102/results/full-gpu4/cache/inductor/bc/cbc2jjkxg7wqmdzw4f5mlca6i34rqffj4fksjirtv77lchk3k62z.py\":22:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/zhaoweiming/f06-resources-20261102/resource_worker.py\", line 128, in main\n    compiled, proof = codegen.compile_region(\n  File \"/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py\", line 404, in compile_region\n    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 782, in compile_fx_inner\n    return wrap_compiler_debug(_compile_fx_inner, compiler_name=\"inductor\")(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py\", line 144, in debug_wrapper\n    inner_compiled_fn = compiler_fn(gm, example_inputs)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 963, in _compile_fx_inner\n    mb_compiled_graph = fx_codegen_and_compile(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 1695, in fx_codegen_and_compile\n    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 1505, in codegen_and_compile\n    compiled_module = graph.compile_to_module()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2319, in compile_to_module\n    return self._compile_to_module()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2329, in _compile_to_module\n    mod = self._compile_to_module_lines(wrapper_code)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2397, in _compile_to_module_lines\n    mod = PyCodeCache.load_by_key_path(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/codecache.py\", line 3548, in load_by_key_path\n    mod = _reload_python_module(key, path, set_sys_modules=in_toplevel)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/compile_tasks.py\", line 33, in _reload_python_module\n    exec(code, mod.__dict__, mod.__dict__)\n  File \"/home/zhaoweiming/f06-resources-20261102/results/full-gpu4/cache/inductor/g6/cg6rff4ycoumteagk7mymv253dklwsqu57fisgq3qgpvn33b655y.py\", line 51, in <module>\n    triton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/async_compile.py\", line 500, in triton\n    kernel.precompile(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py\", line 448, in precompile\n    self._precompile_worker()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py\", line 474, in _precompile_worker\n    raise NoTritonConfigsError(\ntorch._inductor.runtime.triton_heuristics.NoTritonConfigsError: No valid triton configs. OutOfResources: out of resource: uni_sram PassManager::run failed: loc(\"tmp7\"(\"/home/zhaoweiming/f06-resources-20261102/results/full-gpu4/cache/inductor/bc/cbc2jjkxg7wqmdzw4f5mlca6i34rqffj4fksjirtv77lchk3k62z.py\":44:18)): expected the number of 'strides' to match the number of dynamic entries in 'static_strides' (0 vs 2)\nloc(\"/home/zhaoweiming/f06-resources-20261102/results/full-gpu4/cache/inductor/bc/cbc2jjkxg7wqmdzw4f5mlca6i34rqffj4fksjirtv77lchk3k62z.py\":22:0): Failures have been detected while processing an MLIR pass pipeline\n  note: Pipeline failed while executing [`TritonSDNNBufferize` on 'func.func' operation: @triton_unk_fused_0]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`, Required: 0, Hardware limit: 0. Reducing block sizes or `num_stages` may help.\n"
+}

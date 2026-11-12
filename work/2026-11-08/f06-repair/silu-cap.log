@@ -1,0 +1,114 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/tmp/silu_silu_plus.py:162:42: error: Buffer alloc failed in uni_sram: min required = 1704960 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (rerun with -debug-only=tritonsdnn-multi-buffer for the per-alloc layout)
+        z = (acc.to(a_ptr.dtype.element_ty) + bias[None, :]).to(a_ptr.dtype.element_ty).to(tl.float32)
+                                         ^
+module {
+  tt.func public @mm_act(%arg0: !tt.ptr<f32>, %arg1: !tt.ptr<f32>, %arg2: !tt.ptr<f32>, %arg3: !tt.ptr<f32>, %arg4: i32, %arg5: i32 {tt.divisibility = 16 : i32}, %arg6: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %cst = arith.constant dense<1.000000e+00> : tensor<256x256xf32>
+    %c64_i32 = arith.constant 64 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %cst_0 = arith.constant dense<1.000000e+02> : tensor<256x256xf32>
+    %cst_1 = arith.constant dense<0.000000e+00> : tensor<256xf32>
+    %cst_2 = arith.constant dense<0.000000e+00> : tensor<256x256xf32>
+    %cst_3 = arith.constant dense<0.000000e+00> : tensor<64x256xf32>
+    %cst_4 = arith.constant dense<0.000000e+00> : tensor<256x64xf32>
+    %c256_i32 = arith.constant 256 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c256_i32 : i32
+    %2 = tt.make_range {end = 256 : i32, start = 0 : i32} : tensor<256xi32>
+    %3 = tt.splat %1 : i32 -> tensor<256xi32>
+    %4 = arith.addi %3, %2 : tensor<256xi32>
+    %5 = tt.get_program_id y : i32
+    %6 = arith.muli %5, %c256_i32 : i32
+    %7 = tt.splat %6 : i32 -> tensor<256xi32>
+    %8 = arith.addi %7, %2 : tensor<256xi32>
+    %9 = tt.make_range {end = 64 : i32, start = 0 : i32} : tensor<64xi32>
+    %10 = tt.expand_dims %4 {axis = 1 : i32} : tensor<256xi32> -> tensor<256x1xi32>
+    %11 = tt.splat %arg4 : i32 -> tensor<256x1xi32>
+    %12 = arith.cmpi slt, %10, %11 : tensor<256x1xi32>
+    %13 = tt.splat %arg6 : i32 -> tensor<256x1xi32>
+    %14 = arith.muli %10, %13 : tensor<256x1xi32>
+    %15 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<256x1x!tt.ptr<f32>>
+    %16 = tt.addptr %15, %14 : tensor<256x1x!tt.ptr<f32>>, tensor<256x1xi32>
+    %17 = tt.broadcast %16 : tensor<256x1x!tt.ptr<f32>> -> tensor<256x64x!tt.ptr<f32>>
+    %18 = tt.broadcast %12 : tensor<256x1xi1> -> tensor<256x64xi1>
+    %19 = tt.expand_dims %8 {axis = 0 : i32} : tensor<256xi32> -> tensor<1x256xi32>
+    %20 = tt.splat %arg5 : i32 -> tensor<1x256xi32>
+    %21 = arith.cmpi slt, %19, %20 : tensor<1x256xi32>
+    %22 = tt.splat %arg5 : i32 -> tensor<64x1xi32>
+    %23 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<64x1x!tt.ptr<f32>>
+    %24 = tt.broadcast %19 : tensor<1x256xi32> -> tensor<64x256xi32>
+    %25 = tt.broadcast %21 : tensor<1x256xi1> -> tensor<64x256xi1>
+    %26 = scf.for %arg7 = %c0_i32 to %arg6 step %c64_i32 iter_args(%arg8 = %cst_2) -> (tensor<256x256xf32>)  : i32 {
+      %64 = tt.splat %arg7 : i32 -> tensor<64xi32>
+      %65 = arith.addi %64, %9 : tensor<64xi32>
+      %66 = tt.expand_dims %65 {axis = 0 : i32} : tensor<64xi32> -> tensor<1x64xi32>
+      %67 = tt.broadcast %66 : tensor<1x64xi32> -> tensor<256x64xi32>
+      %68 = tt.addptr %17, %67 : tensor<256x64x!tt.ptr<f32>>, tensor<256x64xi32>
+      %69 = tt.load %68, %18, %cst_4 : tensor<256x64x!tt.ptr<f32>>
+      %70 = tt.expand_dims %65 {axis = 1 : i32} : tensor<64xi32> -> tensor<64x1xi32>
+      %71 = arith.muli %70, %22 : tensor<64x1xi32>
+      %72 = tt.addptr %23, %71 : tensor<64x1x!tt.ptr<f32>>, tensor<64x1xi32>
+      %73 = tt.broadcast %72 : tensor<64x1x!tt.ptr<f32>> -> tensor<64x256x!tt.ptr<f32>>
+      %74 = tt.addptr %73, %24 : tensor<64x256x!tt.ptr<f32>>, tensor<64x256xi32>
+      %75 = tt.load %74, %25, %cst_3 : tensor<64x256x!tt.ptr<f32>>
+      %76 = tt.dot %69, %75, %arg8 : tensor<256x64xf32> * tensor<64x256xf32> -> tensor<256x256xf32>
+      scf.yield %76 : tensor<256x256xf32>
+    }
+    %27 = tt.splat %arg5 : i32 -> tensor<256xi32>
+    %28 = arith.cmpi slt, %8, %27 : tensor<256xi32>
+    %29 = tt.splat %arg2 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %30 = tt.addptr %29, %8 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    %31 = tt.load %30, %28, %cst_1 : tensor<256x!tt.ptr<f32>>
+    %32 = tt.expand_dims %31 {axis = 0 : i32} : tensor<256xf32> -> tensor<1x256xf32>
+    %33 = tt.broadcast %32 : tensor<1x256xf32> -> tensor<256x256xf32>
+    %34 = arith.addf %26, %33 : tensor<256x256xf32>
+    %35 = arith.maxnumf %34, %cst_2 : tensor<256x256xf32>
+    %36 = arith.minnumf %34, %cst_2 : tensor<256x256xf32>
+    %37 = math.absf %34 : tensor<256x256xf32>
+    %38 = arith.subf %cst_2, %37 : tensor<256x256xf32>
+    %39 = arith.subf %cst_2, %38 : tensor<256x256xf32>
+    %40 = math.exp %39 : tensor<256x256xf32>
+    %41 = arith.addf %40, %cst : tensor<256x256xf32>
+    %42 = arith.divf %cst, %41 : tensor<256x256xf32>
+    %43 = arith.mulf %36, %42 : tensor<256x256xf32>
+    %44 = arith.addf %35, %43 : tensor<256x256xf32>
+    %45 = arith.minnumf %35, %cst_0 : tensor<256x256xf32>
+    %46 = arith.mulf %45, %42 : tensor<256x256xf32>
+    %47 = arith.subf %44, %46 : tensor<256x256xf32>
+    %48 = tt.expand_dims %4 {axis = 1 : i32} : tensor<256xi32> -> tensor<256x1xi32>
+    %49 = tt.splat %arg4 : i32 -> tensor<256x1xi32>
+    %50 = arith.cmpi slt, %48, %49 : tensor<256x1xi32>
+    %51 = tt.expand_dims %8 {axis = 0 : i32} : tensor<256xi32> -> tensor<1x256xi32>
+    %52 = tt.splat %arg5 : i32 -> tensor<1x256xi32>
+    %53 = arith.cmpi slt, %51, %52 : tensor<1x256xi32>
+    %54 = tt.broadcast %50 : tensor<256x1xi1> -> tensor<256x256xi1>
+    %55 = tt.broadcast %53 : tensor<1x256xi1> -> tensor<256x256xi1>
+    %56 = arith.andi %54, %55 : tensor<256x256xi1>
+    %57 = tt.splat %arg5 : i32 -> tensor<256x1xi32>
+    %58 = arith.muli %48, %57 : tensor<256x1xi32>
+    %59 = tt.splat %arg3 : !tt.ptr<f32> -> tensor<256x1x!tt.ptr<f32>>
+    %60 = tt.addptr %59, %58 : tensor<256x1x!tt.ptr<f32>>, tensor<256x1xi32>
+    %61 = tt.broadcast %60 : tensor<256x1x!tt.ptr<f32>> -> tensor<256x256x!tt.ptr<f32>>
+    %62 = tt.broadcast %51 : tensor<1x256xi32> -> tensor<256x256xi32>
+    %63 = tt.addptr %61, %62 : tensor<256x256x!tt.ptr<f32>>, tensor<256x256xi32>
+    tt.store %63, %47, %56 : tensor<256x256x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, strip-all-ir{xpu_arch=3}, triton-convert-type{mode=0 xpu_arch=3}, tritonxpu-capture-rank1-wrap, triton-to-linalg-experimental{load-tile-size=131072 xpu_arch=3}, triton-loop-aware-cse, linalg-to-tritonsdnn{xpu_arch=3}, triton-loop-aware-cse, tritonsdnn-legalize{xpu_arch=3}, tritonsdnn-merge-extern-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-resolve-layout-conflict, tritonsdnn-hoist-ds, tritonsdnn-transpose-mma, tritonsdnn-transpose-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-wrap-fallback, tritonsdnn-eliminate-mma-acc-zero{xpu_arch=3}, tritonsdnn-optimize-rc-layout{xpu_arch=3}, tritonsdnn-dsa-copy, func.func(tritonsdnn-bufferize{xpu_arch=3}), tritonsdnn-mx-scale-layout, tritonsdnn-fuse-relu-activation{xpu_arch=3}, tritonsdnn-ew-act-table{exp-range-max=0.000000e+00 exp-range-min=-1.598438e+01}, tritonxpu-repair-rank1-wrap, tritonsdnn-loop-grid, tritonsdnn-hoist-loop-invariant-dma{xpu_arch=3}, tritonsdnn-pipeline{defer-event-coloring=false test-event-limit=0 xpu_arch=3}, tritonsdnn-multi-buffer{num_stages=1 xpu_arch=3}, tritonsdnn-lower-rc-subview{xpu_arch=3}, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/tmp/silu_silu_plus.py:140:0: error: Failures have been detected while processing an MLIR pass pipeline
+/tmp/silu_silu_plus.py:140:0: note: Pipeline failed while executing [`TritonSDNNMultiBuffer` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+EPILOGUE {"m": 65, "n": 1024, "us": {"eager": 48.20681810379028, "shipped": 1121.6752370198567, "cap_sigmoid": 24.37266707420349, "cap_sigmoid16": 22.370600700378418, "division": 22.254433234532673, "cap_division": 22.312017281850178}, "checks": {"shipped": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 3.359842300415039], "expected": [Infinity, NaN, NaN, 3.3598475456237793]}, "cap_sigmoid": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 3.359842300415039], "expected": [Infinity, NaN, NaN, 3.3598475456237793]}, "cap_sigmoid16": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 3.359842300415039], "expected": [Infinity, NaN, NaN, 3.3598475456237793]}, "division": {"finite": false, "special": false, "got": [Infinity, NaN, 7.981655120849609, 3.359846591949463], "expected": [Infinity, NaN, NaN, 3.3598475456237793]}, "cap_division": {"finite": false, "special": false, "got": [Infinity, NaN, NaN, 3.3598453998565674], "expected": [Infinity, NaN, NaN, 3.3598475456237793]}, "silu_plus": {"error": "out of resource: uni_sram PassManager::run failed: loc(\"z\"(\"/tmp/silu_silu_plus.py\":162:42)): Buffer alloc failed in uni_sram: min required = 1704960 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (re"}}}
+EPILOGUE {"m": 513, "n": 1024, "us": {"eager": 46.74805005391439, "shipped": 3352.9736836751304, "cap_sigmoid": 24.41646655400594, "cap_sigmoid16": 22.125017642974854, "division": 22.13176687558492, "cap_division": 22.100083033243816, "silu_plus": 361.8125279744466}, "checks": {"shipped": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, -0.04154565557837486], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}, "cap_sigmoid": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, -0.04154565557837486], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}, "cap_sigmoid16": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, -0.04154565557837486], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}, "division": {"finite": false, "special": false, "got": [Infinity, NaN, 7.981655120849609, -0.04154310002923012], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}, "cap_division": {"finite": false, "special": false, "got": [Infinity, NaN, NaN, -2.362548828125], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}, "silu_plus": {"finite": true, "special": false, "got": [NaN, NaN, NaN, -0.04154565557837486], "expected": [Infinity, NaN, NaN, -0.0415424220263958]}}}
+EPILOGUE {"m": 2048, "n": 2048, "us": {"eager": 92.93270111083984, "shipped": 24547.772216796875, "cap_sigmoid": 54.13773457209269, "cap_sigmoid16": 49.54305092493693, "division": 38.87928326924642, "cap_division": 70.43388684590657, "silu_plus": 1955.4978688557942}, "checks": {"shipped": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 0.6576515436172485], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}, "cap_sigmoid": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 0.6576515436172485], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}, "cap_sigmoid16": {"finite": true, "special": true, "got": [Infinity, NaN, NaN, 0.6576515436172485], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}, "division": {"finite": false, "special": false, "got": [Infinity, NaN, 7.981655120849609, 0.6576661467552185], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}, "cap_division": {"finite": false, "special": false, "got": [Infinity, NaN, NaN, 0.657658576965332], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}, "silu_plus": {"finite": true, "special": false, "got": [NaN, NaN, NaN, 0.6576515436172485], "expected": [Infinity, NaN, NaN, 0.6576611995697021]}}}

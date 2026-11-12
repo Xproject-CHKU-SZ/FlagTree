@@ -5,6 +5,7 @@ function body and native configs remain unchanged. Scoped P800 backend repairs
 are implemented separately in _p800_compiler and its lowering helpers.
 """
 import ast
+import os
 from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
@@ -14,7 +15,7 @@ _REQUEST = ContextVar("flagtree_inductor_resource", default=None)
 _SCALAR_REDUCTION = ContextVar("flagtree_p800_scalar_reduction", default=False)
 _LOCK = threading.RLock()
 _EVIDENCE = []
-_FACTORIES = frozenset(("pointwise", "reduction", "persistent_reduction", "split_scan", "template", "foreach"))
+_FACTORIES = frozenset(("pointwise", "reduction", "persistent_reduction", "split_scan", "template", "foreach", "fixed_config"))
 
 
 def baidu_target():
@@ -72,6 +73,8 @@ def annotate_source(source, resource):
     # resource literal in the generated module also separates code-cache keys.
     prefix = ("from triton.experimental.graph_fusion._resource_codegen import ResourceHeuristics\n"
               "_flagtree_resource_heuristics = ResourceHeuristics(" + repr(resource) + ")\n")
+    if _MAX_XBLOCK.get() is not None:
+        prefix += "_flagtree_resource_heuristics.max_xblock = " + repr(_MAX_XBLOCK.get()) + "\n"
     from ._p800_compiler import policy_key
     prefix += "# P800 compiler policy: " + policy_key() + "\n"
     changed = source
@@ -85,11 +88,14 @@ def annotate_source(source, resource):
 
 def _record_binary(binary, requested):
     meta = binary.metadata
-    actual = "sdnn" if meta.is_sdnn else "cluster"
-    # Deployed legacy P800 binaries expose is_sdnn but not resource_kind.
-    # Still require an actual boolean; never infer resource from the request.
-    if (type(meta.is_sdnn) is not bool or actual != requested
-            or getattr(meta, "resource_kind", requested if getattr(meta, "arch", None) == 3 else None) != requested):
+    sdnn = getattr(meta, "is_sdnn", None)
+    actual = "sdnn" if sdnn else "cluster"
+    # resource_kind is a compile-time preference. effective_resource_kind and
+    # is_sdnn describe the emitted binary. Older P800 metadata only has is_sdnn.
+    preference = getattr(meta, "resource_kind", actual if getattr(meta, "arch", None) == 3 else None)
+    effective = getattr(meta, "effective_resource_kind", None if preference == "auto" else actual)
+    if (type(sdnn) is not bool or requested != actual or effective != actual
+            or preference not in ("auto", actual)):
         raise RuntimeError("compiled resource metadata does not match request")
     entry = {
         "requested": requested, "effective": actual, "kernel_name": meta.name, "binary_hash":
@@ -99,21 +105,54 @@ def _record_binary(binary, requested):
             for name, value in binary.asm.items()
         }
     }
+    entry['native_metadata'] = {key: getattr(meta, key) for key in
+                                ('arch', 'is_sdnn', 'resource_kind', 'effective_resource_kind', 'num_warps',
+                                 'num_ctas', 'shared', 'core_num', 'cluster_num')
+                                if hasattr(meta, key)}
     _EVIDENCE.append(entry)
     return entry
 
 
-def _bound_kernel_evidence(compiled, resource):
+def bind_evidence(proof, binary):
+    """Bind a shortcut's evidence to the binary returned by its real launch."""
+    proof['kernel_evidence'] = [_record_binary(binary, proof['resource'])]
+    proof['external_calls'] = 0
+    proof['resource_verified'] = True
+
+
+def _bound_module(compiled):
     """Inspect binaries actually bound by the wrapper, also on cache reuse.
 
     A cache hit need not call _precompile_config again. Conversely, newly
     benchmarked candidates do not prove which binaries the final wrapper uses.
     """
     from pathlib import Path
+    import inspect
     from torch._inductor.codecache import PyCodeCache
-    module = PyCodeCache.cache.get(compiled.cache_key)
+    if hasattr(PyCodeCache, 'cache'):
+        module = PyCodeCache.cache.get(compiled.cache_key)
+    else:
+        # Torch 2.9 keeps loaded modules in a list. Match the actual callable,
+        # not an arbitrary autotuning candidate with similar generated text.
+        current = inspect.unwrap(compiled.current_callable)
+        if (getattr(current, '__module__', '') == 'torch._inductor.utils'
+                and getattr(current, '__qualname__', '') == 'align_inputs_from_check_idxs.<locals>.run'):
+            current = inspect.getclosurevars(current).nonlocals['model']
+        matches = [m for m in PyCodeCache.modules
+                   if (getattr(m, 'call', None) is current
+                       or (inspect.ismethod(current) and inspect.ismethod(getattr(m, 'call', None))
+                           and m.call.__self__ is current.__self__ and m.call.__func__ is current.__func__))
+                   and Path(m.__file__).stem == compiled.cache_key]
+        if len(matches) != 1:
+            raise RuntimeError('cannot uniquely identify native wrapper callable module')
+        module = matches[0]
     if module is None or Path(module.__file__).read_text() != compiled.source_code:
         raise RuntimeError("native wrapper cache/source identity could not be verified")
+    return module
+
+
+def _bound_kernel_evidence(compiled, resource):
+    module = _bound_module(compiled)
     proofs = []
     for node in ast.walk(ast.parse(compiled.source_code)):
         if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)
@@ -138,12 +177,20 @@ def _bound_kernel_evidence(compiled, resource):
     return proofs
 
 
+# bf16 pointwise codegen corrupts results at XBLOCK >= 4096 (measured: 61k
+# non-finite at 4096, 80k at 8192, clean at <= 2048; f32/f16 are fine).
+# Serialize the per-compilation cap into the generated heuristics instance
+# because a worker thread does not inherit the caller’s context.
+_MAX_XBLOCK = ContextVar("flagtree_xblock_cap", default=None)
+
+
 class ResourceHeuristics:
 
     def __init__(self, resource):
         if resource not in ("cluster", "sdnn"):
             raise ValueError("unknown resource")
         self.resource = resource
+        self.max_xblock = _MAX_XBLOCK.get()
 
     def __getattr__(self, name):
         if name not in _FACTORIES:
@@ -157,9 +204,52 @@ class ResourceHeuristics:
 
             def wrapped(fn):
                 tuner = decorate(fn)
+                cap = self.max_xblock
+                if cap is not None and getattr(tuner, 'configs', None):
+                    kept = [c for c in tuner.configs if int(c.kwargs.get('XBLOCK', 0)) <= cap]
+                    if not kept:
+                        raise RuntimeError("no valid BF16 kernel config within XBLOCK limit")
+                    tuner.configs = kept
+                    if name == 'pointwise' and not kwargs.get('inductor_meta', {}).get('autotune_pointwise', True):
+                        tuner.configs = kept[:1]
+                # P800: Inductor's pointwise heuristic defaults to a small XBLOCK
+                # (1024), which is 2-3x below the best measured block for flat
+                # elementwise/reduction kernels (4096-16384). Expand the candidate
+                # list so the tuner can pick the faster block instead of inheriting
+                # the default.
+                forced = os.environ.get('FLAGTREE_FORCE_XBLOCK')
+                if name != 'fixed_config' and cap is None and forced and getattr(tuner, 'configs', None):
+                    import copy as _copy
+                    xb = int(forced)
+                    tuner.configs = [_copy.deepcopy(c) for c in tuner.configs]
+                    for c in tuner.configs:
+                        if 'XBLOCK' in c.kwargs:
+                            c.kwargs['XBLOCK'] = xb
+                if name != 'fixed_config' and cap is None and kwargs.get('inductor_meta', {}).get('max_autotune') \
+                        and os.environ.get('FLAGTREE_WIDE_XBLOCK', '1') == '1' \
+                        and getattr(tuner, 'configs', None):
+                    import copy as _copy
+                    wide = []
+                    for cfg in list(tuner.configs):
+                        base_block = cfg.kwargs.get('XBLOCK')
+                        if not isinstance(base_block, int) or base_block <= 0:
+                            continue
+                        for xb in (4096, 8192, 16384):
+                            if xb <= base_block:
+                                continue
+                            clone = _copy.deepcopy(cfg)
+                            clone.kwargs['XBLOCK'] = xb
+                            wide.append(clone)
+                    if wide:
+                        tuner.configs = list(tuner.configs) + wide
+                        if os.environ.get('FLAGTREE_DEBUG_WIDE'):
+                            print('[wide-res] configs', [c.kwargs.get('XBLOCK') for c in tuner.configs], flush=True)
                 compile_config = tuner._precompile_config
 
                 def compile_for_resource(*a, **kw):
+                    cfg = a[0] if a else kw.get('cfg')
+                    if cap is not None and cfg is not None and cfg.kwargs.get('XBLOCK', 0) > cap:
+                        raise RuntimeError("unsafe BF16 XBLOCK for P800 native launcher")
                     target = baidu_target()
                     if target and target['arch'] == 3 and target['warp_size'] == 1:
                         from ._p800_compiler import resource_scope
@@ -167,7 +257,9 @@ class ResourceHeuristics:
                         from triton.backends.xpu.resource_context import resource_scope
                     with resource_scope(resource):
                         result = compile_config(*a, **kw)
-                    binary = result[0] if isinstance(result, tuple) else result
+                    # Torch 2.9 wraps the unchanged CompiledKernel in
+                    # TritonCompileResult; legacy Torch returned a tuple.
+                    binary = result[0] if isinstance(result, tuple) else getattr(result, 'kernel', result)
                     _record_binary(binary, resource)
                     return result
 
@@ -185,8 +277,24 @@ def _annotate_partial_render(rendered, resource):
     finalize_hook = rendered.finalize_hook
     annotated = False
 
+    def annotate_final():
+        nonlocal annotated
+        if annotated:
+            return rendered.code
+        changed = annotate_source(rendered.code, resource)
+        descriptor = getattr(type(rendered), 'code', None)
+        if isinstance(descriptor, property) and descriptor.fset is None:
+            # Torch 2.9 makes code read-only; its native backing field remains
+            # the string used by finalize_hook/finalize_remaining.
+            rendered._code = changed
+        else:
+            rendered.code = changed
+        annotated = True
+        return changed
+
     def finalize_resource():
-        return annotate_source(finalize(), resource)
+        finalize()
+        return annotate_final()
 
     def finalize_hook_resource(*args, **kwargs):
         nonlocal annotated
@@ -194,17 +302,40 @@ def _annotate_partial_render(rendered, resource):
         # The final template path reads .code after individual hooks, without
         # calling finalize_all. Wait until every native substitution finishes.
         if not annotated and all(fn is None for fn in rendered.replacement_hooks.values()):
-            rendered.code = annotate_source(rendered.code, resource)
-            annotated = True
+            annotate_final()
         return result
 
     rendered.finalize_all = finalize_resource
     rendered.finalize_hook = finalize_hook_resource
+    if all(fn is None for fn in rendered.replacement_hooks.values()):
+        annotate_final()
     return rendered
 
 
+_WIDE_IMPORT = ('from triton.experimental.graph_fusion._resource_codegen import '
+                'ResourceHeuristics as _flagtree_resource_heuristics')
+
+
+def _widen_pointwise(source):
+    """Route native pointwise kernels through the resource heuristic class so the
+    wider XBLOCK candidates also apply to kernels compiled in worker processes."""
+    if os.environ.get('FLAGTREE_WIDE_XBLOCK', '1') != '1':
+        return source
+    if '@triton_heuristics.pointwise(' not in source:
+        return source
+    source = source.replace('@triton_heuristics.pointwise(',
+                            '@_flagtree_resource_heuristics.pointwise(')
+    if _WIDE_IMPORT not in source:
+        marker = 'from torch._inductor.runtime import triton_helpers, triton_heuristics'
+        if marker in source:
+            source = source.replace(marker, marker + '\n' + _WIDE_IMPORT, 1)
+        else:
+            source = _WIDE_IMPORT + '\n' + source
+    return source
+
+
 @contextmanager
-def generated_resource(resource, *, native_template_eligibility=False, scalar_reduction=False):
+def generated_resource(resource, *, native_template_eligibility=False, scalar_reduction=False, verified_tile=None):
     if resource not in ("cluster", "sdnn"):
         raise ValueError("explicit resource required")
     if baidu_target() is None:
@@ -217,6 +348,7 @@ def generated_resource(resource, *, native_template_eligibility=False, scalar_re
     from torch._inductor import config
     from torch._inductor import utils
     from torch._dynamo.convert_frame import compile_lock
+    from torch._inductor.runtime.coordinate_descent_tuner import CoordescTuner
     # Scoped codegen change is context-local for unrelated compiler threads;
     # explicit resource decorators survive async module loading. Disable the
     # graph cache so a previously compiled unannotated graph cannot bypass this.
@@ -228,6 +360,7 @@ def generated_resource(resource, *, native_template_eligibility=False, scalar_re
         original_render = TritonTemplateKernel.render
         original_big_gpu = utils.is_big_gpu
         original_select = AlgorithmSelectorCache.__call__
+        original_neighbour = CoordescTuner.get_neighbour_values
         token = _REQUEST.set(resource)
         reduction_token = _SCALAR_REDUCTION.set(scalar_reduction)
         target = baidu_target()
@@ -242,6 +375,18 @@ def generated_resource(resource, *, native_template_eligibility=False, scalar_re
             if repair_reduction and _REQUEST.get() is not None:
                 import inspect
                 bound = inspect.signature(original_select).bind(selector, *args, **kwargs)
+                if verified_tile is not None and bound.arguments.get('name') in ('mm', 'addmm'):
+                    choices = []
+                    for choice in bound.arguments['choices']:
+                        info = choice.info_dict()
+                        shape = info.get('tile_shape', ())
+                        if isinstance(shape, str):
+                            shape = ast.literal_eval(shape)
+                        if (*shape, info.get('num_stages'), info.get('num_warps')) == verified_tile:
+                            choices.append(choice)
+                    if not choices:
+                        raise RuntimeError(f'verified P800 FP32 GEMM tile unavailable: {verified_tile}')
+                    bound.arguments['choices'] = choices[:1]
                 if 'precompilation_timeout_seconds' not in inspect.signature(original_select).parameters:
                     raise RuntimeError('P800 native precompilation API is unavailable')
                 bound.arguments['precompilation_timeout_seconds'] = 0
@@ -282,10 +427,69 @@ def generated_resource(resource, *, native_template_eligibility=False, scalar_re
             return _annotate_partial_render(rendered, requested) if requested else rendered
 
         TritonTemplateKernel.render = render
+
+        # Torch's own pointwise heuristic picks XBLOCK=1024 on P800, which is
+        # 2-3x below the best measured block for flat elementwise kernels
+        # (4096-16384). Wrap the decorator so those kernels get the wider
+        # candidates too; the tuner still benchmarks and picks the fastest.
+        from torch._inductor.runtime import triton_heuristics as _th
+
+        def _expand_wide(tuner):
+            if _MAX_XBLOCK.get() is not None:
+                return tuner
+            if os.environ.get('FLAGTREE_WIDE_XBLOCK', '1') != '1':
+                return tuner
+            configs = getattr(tuner, 'configs', None)
+            if not configs:
+                return tuner
+            import copy as _copy
+            wide = []
+            for cfg in list(configs):
+                base = cfg.kwargs.get('XBLOCK')
+                if not isinstance(base, int) or base <= 0:
+                    continue
+                for xb in (4096, 8192, 16384):
+                    if xb <= base:
+                        continue
+                    clone = _copy.deepcopy(cfg)
+                    clone.kwargs['XBLOCK'] = xb
+                    wide.append(clone)
+            if wide:
+                tuner.configs = list(configs) + wide
+            if os.environ.get('FLAGTREE_DEBUG_WIDE'):
+                print('[wide] configs', [c.kwargs.get('XBLOCK') for c in tuner.configs],
+                      'num_warps', [c.num_warps for c in tuner.configs], flush=True)
+            return tuner
+
+        _original_pointwise = _th.pointwise
+
+        def _wide_pointwise(*args, **kwargs):
+            decorate = _original_pointwise(*args, **kwargs)
+
+            def _wrapped(fn):
+                return _expand_wide(decorate(fn))
+
+            return _wrapped
+
+        _th.pointwise = _wide_pointwise
+
+        # Cap the coordinate-descent tile search: bf16 pointwise codegen is
+        # corrupt at XBLOCK >= 4096 and the tuner has no correctness gate.
+        def capped_neighbours(tuner_self, prefix, cur_val, *args, **kwargs):
+            values = original_neighbour(tuner_self, prefix, cur_val, *args, **kwargs)
+            cap = _MAX_XBLOCK.get()
+            if cap is not None and str(prefix).startswith(('XBLOCK', 'YBLOCK', 'ZBLOCK')):
+                values = [v for v in values if v is None or int(v) <= cap]
+            return values
+        CoordescTuner.get_neighbour_values = capped_neighbours
         try:
             with config.patch({"compile_threads": 1, "fx_graph_cache": False, "fx_graph_remote_cache": False}):
                 yield
         finally:
+            if _th.pointwise is _wide_pointwise:
+                _th.pointwise = _original_pointwise
+            if CoordescTuner.get_neighbour_values is capped_neighbours:
+                CoordescTuner.get_neighbour_values = original_neighbour
             if AlgorithmSelectorCache.__call__ is select_algorithm:
                 AlgorithmSelectorCache.__call__ = original_select
             if TritonKernel.want_no_x_dim is want_no_x_dim:
@@ -326,13 +530,14 @@ def audit_wrapper(source, resource):
     return {"generated_kernel_sources": kernels, "external_call_targets": external}
 
 
-def compile_region(gm, inputs, resource, *, matmul_path="external"):
+def compile_region(gm, inputs, resource, *, matmul_path="external", verified_tile=None):
     """Use native decomposition and Inductor; caller validates the result.
 
     External-library calls remain a hard, unverified boundary. They are not
     assigned SDNN based on an operator name. The optional template path uses
     native Inductor templates/configs, without editing generated computation.
     """
+    from ._p800_inductor_softmax import native_softmax_scope
     from torch._inductor.compile_fx import compile_fx_inner, BoxedBool
     from torch._inductor.decomposition import select_decomp_table
     from torch.fx.experimental.proxy_tensor import make_fx
@@ -351,8 +556,14 @@ def compile_region(gm, inputs, resource, *, matmul_path="external"):
     # hand-pick tile/warp configs. Autotuning is offline, before graph capture.
     options = {
         "max_autotune_gemm": matmul_path == "template", "max_autotune_gemm_backends":
-        "TRITON" if matmul_path == "template" else "ATEN", "max_autotune": False, "autotune_in_subproc": False
+        "TRITON" if matmul_path == "template" else "ATEN", "max_autotune": config.max_autotune, "autotune_in_subproc": False
     }
+    # P800 bf16 pointwise kernels come back with scattered non-finite values when
+    # Inductor's coordinate-descent search runs; the same kernels are exact with
+    # every forced config. Keep the plain autotune for bf16 inputs.
+    bf16_inputs = any(isinstance(x, torch.Tensor) and x.dtype == torch.bfloat16 for x in inputs)
+    if bf16_inputs and not os.environ.get('FLAGTREE_ALLOW_BF16_CD'):
+        options["coordinate_descent_tuning"] = False
     # Only scalar-output reductions need the P800 ownership repair. Softmax
     # and LayerNorm write full rows and should keep native reduction layouts.
     output_node = next(n for n in lowered.graph.nodes if n.op == 'output')
@@ -360,9 +571,26 @@ def compile_region(gm, inputs, resource, *, matmul_path="external"):
     scalar_reduction = (any(n.target == torch.ops.aten.sum.dim_IntList for n in lowered.graph.nodes) and all(
         isinstance(n, torch.fx.Node) and isinstance(n.meta.get('val'), torch.Tensor) and n.meta['val'].numel() < max(
             (x.numel() for x in inputs if isinstance(x, torch.Tensor)), default=0) for n in outputs))
-    with generated_resource(resource, native_template_eligibility=matmul_path == "template",
-                            scalar_reduction=scalar_reduction), config.patch(options):
-        compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+    # On KL3 the cold pointwise sweep can stall in native do_bench for the
+    # 64x1024 FP32 bias broadcast and its exact GELU. These are also suffixes
+    # of matrix plans. Keep one native configuration for these two graphs.
+    calls = {n.target for n in lowered.graph.nodes if n.op == 'call_function'}
+    narrow_broadcast = (
+        len(inputs) == 2 and all(x.dtype == torch.float32 for x in inputs)
+        and sorted(tuple(x.shape) for x in inputs) == [(64, 1024), (1024,)]
+        and torch.ops.aten.add.Tensor in calls
+        and calls <= {torch.ops.aten.add.Tensor, torch.ops.aten.mul.Tensor, torch.ops.aten.erf.default}
+    )
+    if narrow_broadcast:
+        options.update({'triton.autotune_pointwise': False, 'max_autotune': False,
+                        'max_autotune_pointwise': False, 'coordinate_descent_tuning': False})
+    cap_token = _MAX_XBLOCK.set(1024 if bf16_inputs or narrow_broadcast else None)
+    try:
+        with generated_resource(resource, native_template_eligibility=matmul_path == "template",
+                                scalar_reduction=scalar_reduction, verified_tile=verified_tile), config.patch(options), native_softmax_scope(gm, inputs):
+            compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+    finally:
+        _MAX_XBLOCK.reset(cap_token)
     source = compiled.source_code
     wrapper_audit = audit_wrapper(source, resource)
     external = len(wrapper_audit['external_call_targets'])

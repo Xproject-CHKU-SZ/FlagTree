@@ -1,0 +1,414 @@
+{
+  "arguments": {
+    "name": "smoke-large-v1",
+    "device": 0,
+    "ordinals": "122,158,194,203",
+    "routes": [
+      "eager",
+      "cluster",
+      "sdnn"
+    ],
+    "rounds": 1,
+    "timeout": 600,
+    "timing": "graph"
+  },
+  "cases": [
+    {
+      "ordinal": 122,
+      "case_id": "large:matmul_bias_relu:float16:2048x2048x2048",
+      "kind": "matmul_bias_relu",
+      "dtype": "float16",
+      "M": 2048,
+      "N": 2048,
+      "K": 2048,
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "input_builder": "historical_large_matmul"
+    },
+    {
+      "case_id": "large:add_softmax:float16:2048x2048",
+      "kind": "add_softmax",
+      "dtype": "float16",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "input_builder": "large_nonmatmul",
+      "ordinal": 158
+    },
+    {
+      "case_id": "large:add_layernorm_affine:float16:2048x2048",
+      "kind": "add_layernorm_affine",
+      "dtype": "float16",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "input_builder": "large_nonmatmul",
+      "ordinal": 194
+    },
+    {
+      "case_id": "large:mul_sum:float16:2048x2048",
+      "kind": "mul_sum",
+      "dtype": "float16",
+      "M": 2048,
+      "N": 2048,
+      "K": null,
+      "tolerance": {
+        "atol": 0.003,
+        "rtol": 0.003
+      },
+      "input_builder": "large_nonmatmul",
+      "ordinal": 203
+    }
+  ],
+  "started": 1793615185.453565,
+  "timing": "graph replay GPU and synchronized ordinary-call E2E are separate",
+  "records": [
+    {
+      "label": "r0-122-eager",
+      "ordinal": 122,
+      "route": "eager",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 35 0 0 0 95 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:26:25 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 35,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 8.8280782699876,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-122-cluster",
+      "ordinal": 122,
+      "route": "cluster",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 37 0 0 0 121 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:26:34 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 37,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 1,
+      "timed_out": false,
+      "elapsed_seconds": 9.579464303009445,
+      "status": "unsupported_resource",
+      "stage": "compile"
+    },
+    {
+      "label": "r0-122-sdnn",
+      "ordinal": 122,
+      "route": "sdnn",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 35 0 0 0 95 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:26:44 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 35,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 18.244140192022314,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-158-eager",
+      "ordinal": 158,
+      "route": "eager",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 37 0 0 0 123 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:27:02 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 37,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 7.17591875398648,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-158-cluster",
+      "ordinal": 158,
+      "route": "cluster",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 39 0 0 0 142 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:27:09 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 39,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 22.554207304987358,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-158-sdnn",
+      "ordinal": 158,
+      "route": "sdnn",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 36 0 0 0 99 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:27:32 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 36,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 1,
+      "timed_out": false,
+      "elapsed_seconds": 9.028844865999417,
+      "status": "error",
+      "stage": "compile"
+    },
+    {
+      "label": "r0-194-eager",
+      "ordinal": 194,
+      "route": "eager",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 35 0 0 0 95 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:27:41 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 35,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 6.825491138995858,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-194-cluster",
+      "ordinal": 194,
+      "route": "cluster",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 38 0 0 0 148 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:27:48 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 38,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 22.24840216198936,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-194-sdnn",
+      "ordinal": 194,
+      "route": "sdnn",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 37 0 0 0 99 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:28:10 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 37,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 1,
+      "timed_out": false,
+      "elapsed_seconds": 9.02930697001284,
+      "status": "error",
+      "stage": "compile"
+    },
+    {
+      "label": "r0-203-eager",
+      "ordinal": 203,
+      "route": "eager",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 36 0 0 0 95 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:28:19 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 36,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 6.476040146982996,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-203-cluster",
+      "ordinal": 203,
+      "route": "cluster",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 37 0 0 0 123 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:28:25 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 37,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 13.639482889004285,
+      "status": "passed",
+      "stage": "completed"
+    },
+    {
+      "label": "r0-203-sdnn",
+      "ordinal": 203,
+      "route": "sdnn",
+      "repeat": 0,
+      "before": {
+        "machine": "00000000:03:00.0 0 0 02K15K0261D00Q2F 37 0 0 0 103 1450 1450 1450 1450 1450 1450 0 96 0 98304 0 1.0:2.43:1.86.5.3 \"P800 OAM\" 0 0 0 0 0 0 0 0 0 0\n",
+        "health": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 18:28:39 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:03:00.0\n    Ecc Mode\n        Current                           : Enabled\n        Pending                           : Enabled\n    ECC Errors\n        Volatile\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n        Aggregate\n            DRAM Correctable              : 0\n            DRAM Uncorrectable            : 0\n    Processes                             : None\n\n",
+        "memory_mb": 0,
+        "utilization": 0,
+        "temperature": 37,
+        "clocks": [
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450",
+          "1450"
+        ],
+        "pci": "00000000:03:00.0",
+        "idle": true
+      },
+      "returncode": 1,
+      "timed_out": false,
+      "elapsed_seconds": 8.878525807987899,
+      "status": "error",
+      "stage": "compile"
+    }
+  ],
+  "completed": 1793615328.5562487
+}

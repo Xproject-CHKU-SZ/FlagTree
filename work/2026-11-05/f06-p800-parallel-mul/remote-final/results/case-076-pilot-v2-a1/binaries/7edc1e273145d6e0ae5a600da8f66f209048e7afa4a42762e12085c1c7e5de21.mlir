@@ -1,0 +1,136 @@
+#cluster = #triton_xpu.cluster<{sizePerCore = [1, 128], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+#cluster1 = #triton_xpu.cluster<{sizePerCore = [1, 1], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+#cluster2 = #triton_xpu.cluster<{sizePerCore = [128], coresPerGroup = [2], groupsPerCluster = [1], order = [0]}>
+#cluster3 = #triton_xpu.cluster<{sizePerCore = [1, 8], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+#cluster4 = #triton_xpu.cluster<{sizePerCore = [1], coresPerGroup = [1], groupsPerCluster = [32], order = [0]}>
+#cluster5 = #triton_xpu.cluster<{sizePerCore = [1, 2], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+#cluster6 = #triton_xpu.cluster<{sizePerCore = [1, 4], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+#cluster7 = #triton_xpu.cluster<{sizePerCore = [1, 64], coresPerGroup = [1, 2], groupsPerCluster = [32, 1], order = [0, 1]}>
+module attributes {triton_xpu.target = "xpu:3", "ttg.num-ctas" = 1 : i32, "ttg.num-warps" = 32 : i32, "ttg.threads-per-warp" = 2 : i32} {
+  tt.func public @triton_per_fused_mul_sum_0(%arg0: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg3: i32 {tt.divisibility = 16 : i32}, %arg4: i32 {tt.divisibility = 16 : i32}, %arg5: i32, %arg6: i32, %arg7: i32) attributes {noinline = false} {
+    %0 = triton_xpu.get_cluster_id : i32
+    %1 = triton_xpu.get_num_cluster : i32
+    %2 = arith.muli %arg5, %arg6 : i32
+    %3 = arith.muli %2, %arg7 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %4 = arith.subi %1, %c1_i32 : i32
+    %5 = arith.addi %3, %4 : i32
+    %6 = arith.index_cast %0 : i32 to index
+    %7 = arith.index_cast %3 : i32 to index
+    %8 = arith.index_cast %1 : i32 to index
+    %cst = arith.constant dense<0.000000e+00> : tensor<32x256xf16, #cluster>
+    %c0_i32 = arith.constant 0 : i32
+    %c32_i32 = arith.constant 32 : i32
+    %cst_0 = arith.constant dense<32> : tensor<32x1xi32, #cluster1>
+    %cst_1 = arith.constant dense<256> : tensor<32x1xi32, #cluster1>
+    %9 = triton_xpu.make_range   {end = 256 : i32, realSize = 256 : i32, start = 0 : i32} :   -> tensor<256xi32, #cluster2>
+    %10 = tt.splat %arg1 : !tt.ptr<f16> -> tensor<1x256x!tt.ptr<f16>, #cluster>
+    scf.for %arg8 = %6 to %7 step %8 {
+      %11 = arith.index_cast %arg8 : index to i32
+      %12 = arith.divsi %11, %arg7 : i32
+      %13 = arith.divsi %12, %arg6 : i32
+      %14 = "triton_xpu.alloca"() <{size = 32 : si64}> : () -> tensor<32x1x!tt.ptr<f16, 0>, #cluster1>
+      %15 = "triton_xpu.alloca"() <{size = 256 : si64}> : () -> tensor<1x256x!tt.ptr<f16, 0>, #cluster>
+      %16 = "triton_xpu.alloca"() <{size = 8192 : si64}> : () -> tensor<32x256x!tt.ptr<f16, 0>, #cluster>
+      %17 = "triton_xpu.vconst"() <{value = dense<0.000000e+00> : tensor<32x256xf32, #cluster>}> : () -> tensor<32x16xvector<16xf32>, #cluster3>
+      %18 = arith.muli %13, %c32_i32 : i32
+      %19 = "triton_xpu.out_range"(%c0_i32) <{groupsize = 2 : i32, rowspercore = 1 : i32}> : (i32) -> tensor<32xi32, #cluster4>
+      %20 = triton_xpu.convert_layout %19 : tensor<32xi32, #cluster4> -> tensor<32xi32, #ttg.slice<{dim = 1, parent = #cluster1}>>
+      %21 = tt.expand_dims %20 {axis = 1 : i32} : tensor<32xi32, #ttg.slice<{dim = 1, parent = #cluster1}>> -> tensor<32x1xi32, #cluster1>
+      %22 = tt.splat %18 : i32 -> tensor<32x1xi32, #cluster1>
+      %23 = arith.addi %22, %21 : tensor<32x1xi32, #cluster1>
+      %24 = arith.subi %cst_0, %23 : tensor<32x1xi32, #cluster1>
+      %25 = arith.cmpi slt, %23, %cst_0 : tensor<32x1xi32, #cluster1>
+      %26 = "triton_xpu.extract"(%25) <{index = 0 : i32}> : (tensor<32x1xi1, #cluster1>) -> i1
+      scf.if %26 {
+        %27 = "triton_xpu.out_range"(%c0_i32) <{groupsize = 2 : i32, rowspercore = 1 : i32}> : (i32) -> tensor<256xi32, #cluster2>
+        %28 = triton_xpu.convert_layout %9 : tensor<256xi32, #cluster2> -> tensor<256xi32, #ttg.slice<{dim = 0, parent = #cluster}>>
+        %29 = tt.expand_dims %28 {axis = 0 : i32} : tensor<256xi32, #ttg.slice<{dim = 0, parent = #cluster}>> -> tensor<1x256xi32, #cluster>
+        %30 = arith.muli %23, %cst_1 : tensor<32x1xi32, #cluster1>
+        %31 = triton_xpu.broadcast %29 : tensor<1x256xi32, #cluster> -> tensor<32x256xi32, #cluster>
+        %32 = triton_xpu.broadcast %30 : tensor<32x1xi32, #cluster1> -> tensor<32x256xi32, #cluster>
+        %33 = arith.addi %31, %32 : tensor<32x256xi32, #cluster>
+        %34 = tt.splat %arg0 : !tt.ptr<f16> -> tensor<32x256x!tt.ptr<f16>, #cluster>
+        %35 = tt.addptr %34, %33 : tensor<32x256x!tt.ptr<f16>, #cluster>, tensor<32x256xi32, #cluster>
+        %36 = triton_xpu.broadcast %25 : tensor<32x1xi1, #cluster1> -> tensor<32x256xi1, #cluster>
+        %37 = "triton_xpu.extract_slice"(%cst) : (tensor<32x256xf16, #cluster>) -> tensor<32x4xf16, #cluster5>
+        %c0 = arith.constant 0 : index
+        %c64 = arith.constant 64 : index
+        %c1 = arith.constant 1 : index
+        scf.for %arg9 = %c0 to %c64 step %c1 {
+          %64 = arith.index_cast %arg9 : index to i32
+          "triton_xpu.store"(%16, %37, %64) <{bf16Tofp32Unordered = false, dtype = 0 : i32, operandSegmentSizes = array<i32: 1, 1, 0, 1>, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<32x256x!tt.ptr<f16, 0>, #cluster>, tensor<32x4xf16, #cluster5>, i32) -> ()
+        }
+        %38 = "triton_xpu.gm2lm"(%35, %36, %cst, %16) <{SVOpt = false, atomicSim = false, cache = false, fixedStride = 1 : si32, handwrittenOffsetState = false, lrie = -1 : si32, offsetState = -1 : si32, operandSegmentSizes = array<i32: 1, 1, 1, 1>, rowLen = -1 : si64, rowStride = -1 : si64, syncMode = 2 : i32, tensorColSize = -1 : si32}> : (tensor<32x256x!tt.ptr<f16>, #cluster>, tensor<32x256xi1, #cluster>, tensor<32x256xf16, #cluster>, tensor<32x256x!tt.ptr<f16, 0>, #cluster>) -> tensor<32x256x!tt.ptr<f16, 0>, #cluster>
+        %39 = tt.addptr %10, %29 : tensor<1x256x!tt.ptr<f16>, #cluster>, tensor<1x256xi32, #cluster>
+        %40 = "triton_xpu.gm2lm"(%39, %15) <{SVOpt = false, atomicSim = false, cache = true, fixedStride = 1 : si32, handwrittenOffsetState = false, lrie = -1 : si32, offsetState = 1 : si32, operandSegmentSizes = array<i32: 1, 0, 0, 1>, rowLen = -1 : si64, rowStride = -1 : si64, syncMode = 2 : i32, tensorColSize = -1 : si32}> : (tensor<1x256x!tt.ptr<f16>, #cluster>, tensor<1x256x!tt.ptr<f16, 0>, #cluster>) -> tensor<1x256x!tt.ptr<f16, 0>, #cluster>
+        llvm_xpu.mfence %c1_i32
+        %41 = "triton_xpu.load"(%38, %36, %cst) <{SVOpt = false, bf16Tofp32Unordered = false, isDiscrete = false, operandSegmentSizes = array<i32: 1, 1, 1, 0>, stride = 1 : si32, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<32x256x!tt.ptr<f16, 0>, #cluster>, tensor<32x256xi1, #cluster>, tensor<32x256xf16, #cluster>) -> tensor<32x8xvector<32xf16>, #cluster6>
+        %42 = "triton_xpu.load"(%40) <{SVOpt = false, bf16Tofp32Unordered = false, isDiscrete = false, operandSegmentSizes = array<i32: 1, 0, 0, 0>, stride = 1 : si32, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<1x256x!tt.ptr<f16, 0>, #cluster>) -> tensor<1x256xf16, #cluster>
+        %43 = "triton_xpu.vextf"(%41) : (tensor<32x8xvector<32xf16>, #cluster6>) -> tensor<32x16xvector<16xf32>, #cluster3>
+        %44 = arith.extf %42 : tensor<1x256xf16, #cluster> to tensor<1x256xf32, #cluster>
+        %45 = triton_xpu.broadcast %44 : tensor<1x256xf32, #cluster> -> tensor<32x16xvector<16xf32>, #cluster3>
+        %46 = triton_xpu.vvmulf %43, %45 : tensor<32x16xvector<16xf32>, #cluster3>
+        %47 = "triton_xpu.vtruncf"(%46) : (tensor<32x16xvector<16xf32>, #cluster3>) -> tensor<32x8xvector<32xf16>, #cluster6>
+        %48 = "triton_xpu.vextf"(%47) : (tensor<32x8xvector<32xf16>, #cluster6>) -> tensor<32x16xvector<16xf32>, #cluster3>
+        %49 = "triton_xpu.vselect"(%36, %48, %17) : (tensor<32x256xi1, #cluster>, tensor<32x16xvector<16xf32>, #cluster3>, tensor<32x16xvector<16xf32>, #cluster3>) -> tensor<32x16xvector<16xf32>, #cluster3>
+        %50 = "triton_xpu.extract_slice"(%49) : (tensor<32x16xvector<16xf32>, #cluster3>) -> tensor<32x8xvector<16xf32>, #cluster6>
+        %c2 = arith.constant 2 : index
+        %51 = scf.for %arg9 = %c1 to %c2 step %c1 iter_args(%arg10 = %50) -> (tensor<32x8xvector<16xf32>, #cluster6>) {
+          %64 = arith.index_cast %arg9 : index to i32
+          %65 = "triton_xpu.vconst"() <{value = dense<0.000000e+00> : tensor<32x256xf32, #cluster>}> : () -> tensor<32x8xvector<16xf32>, #cluster6>
+          %66 = "triton_xpu.out_range"(%c0_i32) <{groupsize = 2 : i32, rowspercore = 1 : i32}> : (i32) -> tensor<32xi32, #cluster4>
+          %67 = triton_xpu.convert_layout %66 : tensor<32xi32, #cluster4> -> tensor<32xi32, #ttg.slice<{dim = 1, parent = #cluster1}>>
+          %68 = tt.expand_dims %67 {axis = 1 : i32} : tensor<32xi32, #ttg.slice<{dim = 1, parent = #cluster1}>> -> tensor<32x1xi32, #cluster1>
+          %69 = arith.addi %22, %68 : tensor<32x1xi32, #cluster1>
+          %70 = arith.cmpi slt, %69, %cst_0 : tensor<32x1xi32, #cluster1>
+          %71 = triton_xpu.broadcast %70 : tensor<32x1xi1, #cluster1> -> tensor<32x128xi1, #cluster7>
+          %72 = "triton_xpu.load"(%38, %71, %cst, %64) <{SVOpt = false, bf16Tofp32Unordered = false, isDiscrete = false, operandSegmentSizes = array<i32: 1, 1, 1, 1>, stride = 1 : si32, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<32x256x!tt.ptr<f16, 0>, #cluster>, tensor<32x128xi1, #cluster7>, tensor<32x256xf16, #cluster>, i32) -> tensor<32x4xvector<32xf16>, #cluster5>
+          %73 = "triton_xpu.load"(%40, %64) <{SVOpt = false, bf16Tofp32Unordered = false, isDiscrete = false, operandSegmentSizes = array<i32: 1, 0, 0, 1>, stride = 1 : si32, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<1x256x!tt.ptr<f16, 0>, #cluster>, i32) -> tensor<1x128xf16, #cluster7>
+          %74 = "triton_xpu.vextf"(%72) : (tensor<32x4xvector<32xf16>, #cluster5>) -> tensor<32x8xvector<16xf32>, #cluster6>
+          %75 = arith.extf %73 : tensor<1x128xf16, #cluster7> to tensor<1x128xf32, #cluster7>
+          %76 = triton_xpu.broadcast %75 : tensor<1x128xf32, #cluster7> -> tensor<32x8xvector<16xf32>, #cluster6>
+          %77 = triton_xpu.vvmulf %74, %76 : tensor<32x8xvector<16xf32>, #cluster6>
+          %78 = "triton_xpu.vtruncf"(%77) : (tensor<32x8xvector<16xf32>, #cluster6>) -> tensor<32x4xvector<32xf16>, #cluster5>
+          %79 = "triton_xpu.vextf"(%78) : (tensor<32x4xvector<32xf16>, #cluster5>) -> tensor<32x8xvector<16xf32>, #cluster6>
+          %80 = "triton_xpu.vselect"(%71, %79, %65) : (tensor<32x128xi1, #cluster7>, tensor<32x8xvector<16xf32>, #cluster6>, tensor<32x8xvector<16xf32>, #cluster6>) -> tensor<32x8xvector<16xf32>, #cluster6>
+          %81 = triton_xpu.vvaddf %arg10, %80 : tensor<32x8xvector<16xf32>, #cluster6>
+          scf.yield %81 : tensor<32x8xvector<16xf32>, #cluster6>
+        }
+        %52 = "triton_xpu.reduce"(%51, %c0_i32) <{axis = 1 : i32, loopNum = 1 : i32}> ({
+        ^bb0(%arg9: vector<16xf32>, %arg10: vector<16xf32>):
+          %64 = arith.addf %arg9, %arg10 : vector<16xf32>
+          triton_xpu.reduce.return %64 : vector<16xf32>
+        }) : (tensor<32x8xvector<16xf32>, #cluster6>, i32) -> tensor<32xf32, #ttg.slice<{dim = 1, parent = #cluster6}>>
+        %53 = triton_xpu.convert_layout %52 : tensor<32xf32, #ttg.slice<{dim = 1, parent = #cluster6}>> -> tensor<32xf32, #cluster4>
+        %54 = triton_xpu.convert_layout %53 : tensor<32xf32, #cluster4> -> tensor<32xf32, #ttg.slice<{dim = 1, parent = #cluster1}>>
+        %55 = tt.expand_dims %54 {axis = 1 : i32} : tensor<32xf32, #ttg.slice<{dim = 1, parent = #cluster1}>> -> tensor<32x1xf32, #cluster1>
+        %56 = tt.splat %arg2 : !tt.ptr<f16> -> tensor<32x1x!tt.ptr<f16>, #cluster1>
+        %57 = tt.addptr %56, %23 : tensor<32x1x!tt.ptr<f16>, #cluster1>, tensor<32x1xi32, #cluster1>
+        %58 = arith.truncf %55 : tensor<32x1xf32, #cluster1> to tensor<32x1xf16, #cluster1>
+        %59 = "triton_xpu.get_core_id"() : () -> i32
+        %c2_i32 = arith.constant 2 : i32
+        %60 = arith.remsi %59, %c2_i32 : i32
+        %61 = arith.cmpi eq, %60, %c0_i32 : i32
+        %c64_i32 = arith.constant 64 : i32
+        %62 = arith.cmpi slt, %59, %c64_i32 : i32
+        %63 = arith.andi %61, %62 : i1
+        scf.if %63 {
+          "triton_xpu.store"(%14, %58, %25) <{bf16Tofp32Unordered = false, dtype = 0 : i32, operandSegmentSizes = array<i32: 1, 1, 1, 0>, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<32x1x!tt.ptr<f16, 0>, #cluster1>, tensor<32x1xf16, #cluster1>, tensor<32x1xi1, #cluster1>) -> ()
+          "triton_xpu.lm2gm"(%57, %24, %14) <{atomicSim = false, handwrittenOffsetState = false, offsetState = -1 : si32, operandSegmentSizes = array<i32: 1, 0, 1, 1>, rowLen = -1 : si64, rowStride = -1 : si64, syncMode = 1 : i32, tensorColSize = -1 : si32}> : (tensor<32x1x!tt.ptr<f16>, #cluster1>, tensor<32x1xi32, #cluster1>, tensor<32x1x!tt.ptr<f16, 0>, #cluster1>) -> ()
+        }
+      }
+    }
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "any()",
+      disable_threading: false,
+      verify_each: false
+    }
+  }
+#-}

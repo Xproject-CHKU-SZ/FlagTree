@@ -1,0 +1,823 @@
+--- a/python/triton/experimental/graph_fusion/_p800_bf16_gelu.py
++++ b/python/triton/experimental/graph_fusion/_p800_bf16_gelu.py
+@@ -96,6 +96,21 @@
+     ...
+ 
+ 
++@tle.raw.dialect('xpu3', file='_p800_bf16_gelu.xpu')
++def kl3_pipe_cast_bf(src, out, pid, total):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_bf16_gelu.xpu')
++def kl3_pipe_relu_bf(src, out, pid, total):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_bf16_gelu.xpu')
++def kl3_pipe_relu_half(src, out, pid, total):
++    ...
++
++
+ @triton.jit(do_not_specialize=['src', 'out'], do_not_specialize_on_alignment=['src', 'out'])
+ def vector_finish(src, out, TOTAL: tl.constexpr, WIDTH: tl.constexpr, ACT: tl.constexpr):
+     args = (src, out, tl.program_id(0), tl.full((), TOTAL, tl.int32),
+@@ -109,6 +124,14 @@
+             tle.raw.call(kl3_pipeline_relu_bf16, (src, out, tl.program_id(0)))
+         else:
+             tle.raw.call(kl3_pipeline_relu_fp16, (src, out, tl.program_id(0)))
++    elif TOTAL >= 2 * 12 * 64 * 512 and TOTAL % 512 == 0 and (ACT == 2 or (ACT == 0 and out.dtype.element_ty == tl.bfloat16)):
++        args_pipe = (src, out, tl.program_id(0), tl.full((), TOTAL, tl.int32))
++        if ACT == 0:
++            tle.raw.call(kl3_pipe_cast_bf, args_pipe)
++        elif out.dtype.element_ty == tl.bfloat16:
++            tle.raw.call(kl3_pipe_relu_bf, args_pipe)
++        else:
++            tle.raw.call(kl3_pipe_relu_half, args_pipe)
+     elif out.dtype.element_ty == tl.bfloat16:
+         tle.raw.call(kl3_finish_bf16, args)
+     else:
+--- a/python/triton/experimental/graph_fusion/_p800_bf16_gelu.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_bf16_gelu.xpu
+@@ -173,12 +173,13 @@
+ // The 2048x2048 grouped product writes contiguous FP32 tiles. Overlap the
+ // next tile read with the current epilogue, then narrow once at the store.
+ template<class T, int Act>
+-static __device__ inline void finish_pipeline(const _global_ptr_ float *src, _global_ptr_ T *out, int pid) {
+-    constexpr int width = 512, total = 2048 * 2048;
++static __device__ inline void finish_pipeline(const _global_ptr_ float *src, _global_ptr_ T *out, int pid, int total = 2048 * 2048) {
++    constexpr int width = 512;
+     __simd__ float tiles[2][width];
+     __simd__ T result[width];
+     const int step = 12 * core_num() * width;
+     int start = (pid * core_num() + core_id()) * width;
++    if (start >= total) return;
+     GM2LM(src + start, tiles[0], width * sizeof(float));
+     for (int slot = 0; start < total; start += step, slot ^= 1) {
+         float *tile = tiles[slot];
+@@ -221,3 +222,15 @@
+ extern "C" __device__ void kl3_pipeline_relu_bf16(const _global_ptr_ float *src, _global_ptr_ int16_t *out, int pid) {
+     finish_pipeline<int16_t, 2>(src, out, pid);
+ }
++
++// Keep the transfer width constant so that the load of the next tile
++// overlaps the current tile's rounding. The caller supplies whole tiles.
++extern "C" __device__ void kl3_pipe_cast_bf(const _global_ptr_ float *src, _global_ptr_ int16_t *out, int pid, int total) {
++    finish_pipeline<int16_t, 0>(src, out, pid, total);
++}
++extern "C" __device__ void kl3_pipe_relu_bf(const _global_ptr_ float *src, _global_ptr_ int16_t *out, int pid, int total) {
++    finish_pipeline<int16_t, 2>(src, out, pid, total);
++}
++extern "C" __device__ void kl3_pipe_relu_half(const _global_ptr_ float *src, _global_ptr_ uint16_t *out, int pid, int total) {
++    finish_pipeline<uint16_t, 2>(src, out, pid, total);
++}
+--- a/python/triton/experimental/graph_fusion/_p800_generated.py
++++ b/python/triton/experimental/graph_fusion/_p800_generated.py
+@@ -2,6 +2,7 @@
+ import ast
+ import inspect
+ import sys
++import types
+ from operator import itemgetter
+ 
+ 
+@@ -52,6 +53,71 @@
+     if [ast.dump(n) for n in body] != [ast.dump(n) for n in expected]:
+         return None
+     return dev, layouts, shape, stride, itemgetter(*(names.index(n) for n in tensor_names[:-1])), constants
++
++
++def _packet_for_launcher(launcher, binary, layouts, shape, stride, constants, empty, stream, dev):
++    """Resolve the static Inductor launch using opaque argument markers, once."""
++    from ._p800_bound_launch import _pack_launch
++    import torch
++    runner = binary.run
++    scope = getattr(launcher, '__globals__', {})
++    code = getattr(launcher, '__code__', None)
++    from triton import knobs
++    from triton.compiler.compiler import CompiledKernel
++    if type(binary) is not CompiledKernel or 'launch_metadata' in vars(binary):
++        return None
++    names = {'runner', 'function', 'metadata', 'bin', 'launch_metadata', 'launch_enter_hook', 'launch_exit_hook'}
++    for name in ('launch_enter_hook', 'launch_exit_hook'):
++        hook = scope.get(name)
++        if hook is not None and (type(hook) is not knobs.HookChain or hook.calls
++                                 or hook is not getattr(knobs.runtime, name)):
++            return None
++    if (not isinstance(launcher, types.FunctionType) or code.co_filename != '<string>'
++            or code.co_freevars or not set(code.co_names) <= names or 'runner' not in code.co_names
++            or scope.get('bin') is not binary or scope.get('runner') is not runner
++            or scope.get('function') != binary.function or scope.get('metadata') is not binary.packed_metadata
++            or type(runner).__module__ != 'triton.backends.xpu.driver'
++            or getattr(binary.metadata, 'global_scratch_size', 0) or getattr(binary.metadata, 'profile_scratch_size', 0)):
++        return None
++    markers = tuple(object() for _ in range(len(layouts)+1))
++    saved = []
++    def record(*args):
++        saved.append(args)
++    # The generated launcher constructs a LazyDict for an empty HookChain.
++    # There is no consumer in this path; an installed hook uses the original launcher.
++    no_metadata = types.SimpleNamespace(launch_metadata=lambda *args: None)
++    probe = types.FunctionType(code, dict(scope, runner=record, bin=no_metadata))
++    try:
++        probe(*markers, *constants, stream=None)
++    except (TypeError, ValueError, IndexError, KeyError, AttributeError):
++        return None
++    if len(saved) != 1:
++        return None
++    args, = saved
++    signature = tuple(runner._signature.values())
++    if (len(args) != 9 + len(signature) or any(type(v) is not int or v <= 0 for v in args[:3])
++            or args[3] is not None or args[4] != binary.function or args[5] is not binary.packed_metadata
++            or args[6] is not None or args[7] is not scope.get('launch_enter_hook')
++            or args[8] is not scope.get('launch_exit_hook')):
++        return None
++    runtime_args = [arg for typ, arg in zip(signature, args[9:]) if typ != 'constexpr']
++    if any(not typ.startswith('*') and typ not in ('constexpr', 'i1', 'i32', 'i64') for typ in signature):
++        return None
++    seen = [arg for arg in runtime_args if type(arg) is not int]
++    if len(seen) != len(markers) or any(arg is not marker for arg, marker in zip(seen, markers)):
++        return None
++    slots = tuple(9+i for i,v in enumerate(runtime_args) if type(v) is not int)
++    words = tuple(None if type(v) is not int else v for v in runtime_args)
++    # The normal SDNN tensor ABI passes numel beside each live pointer.
++    import math
++    counts = tuple(math.prod(layout[0]) for layout in layouts) + (math.prod(shape),)
++    header = args[:6] + (None, None, None)
++    fn = _pack_launch(runner.launch, header, words, slots, counts, empty,
++                      (shape, stride, torch.float32), stream, dev)
++    state = getattr(fn, '__self__', None)
++    if type(state) is not tuple or len(state) != 13:
++        return None
++    return fn, code, runner, args[4], args[5]
+ 
+ 
+ def prepare(compiled, proof):
+@@ -117,11 +183,31 @@
+                     or x.device.type != 'cuda' or x.device.index != dev or (tuple(x.shape), tuple(x.stride())) != layout
+                     for x, layout in zip(inputs, layouts))):
+                 return native(inputs)
+-            state = launcher, guards.TensorGuards(*inputs, dynamic_dims_sizes=None, dynamic_dims_strides=None).check
++            packet = _packet_for_launcher(launcher, chosen, reorder(layouts), shape, stride, constants, empty, stream, dev)
++            state = launcher, guards.TensorGuards(*inputs, dynamic_dims_sizes=None, dynamic_dims_strides=None).check, packet, chosen, launcher.__globals__.get('launch_enter_hook'), launcher.__globals__.get('launch_exit_hook')
+             proof['schedule'] = 'generated_static_sdnn'
+-        if not state[1](*inputs) or any(x.data_ptr() & 15 for x in inputs):
++        if not state[1](*inputs):
+             return native(inputs)
+         args = reorder(inputs)
++        if state[2] is not None:
++            packed, code, runner, function, metadata = state[2]
++            scope = launcher.__globals__
++            if (launcher.__code__ is code and scope.get('runner') is runner and scope.get('function') == function
++                    and scope.get('metadata') is metadata and scope.get('bin') is state[3]
++                    and scope.get('launch_enter_hook') is state[4] and scope.get('launch_exit_hook') is state[5]
++                    and (state[4] is None or state[4] is enter) and (state[5] is None or state[5] is leave)
++                    and not getattr(sys.modules[type(runner).__module__], '_PRINT_TRITON_FUNC', False)):
++                if hasattr(triton, 'set_allocator'):
++                    triton.set_allocator(allocator)
++                output = packed(*args)
++                if output is None:
++                    return native(inputs)
++                inputs.clear()
++                proof['schedule'] = 'generated_static_sdnn_packet'
++                proof['prepared_launch'] = True
++                return (output,)
++        if any(x.data_ptr() & 15 for x in inputs):
++            return native(inputs)
+         inputs.clear()
+         output = empty(shape, stride, torch.float32)
+         if hasattr(triton, 'set_allocator'):
+--- a/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
++++ b/python/triton/experimental/graph_fusion/_p800_inline_fp32.py
+@@ -5,7 +5,9 @@
+ 
+ def sdk_store_candidate(core, inputs):
+     return (len(inputs) == 3 and inputs[0].dtype == torch.bfloat16
+-            and tuple(inputs[0].shape) == (2048, 64) and tuple(inputs[1].shape) == (64, 2048)
++            and inputs[0].ndim == inputs[1].ndim == 2
++            and inputs[0].shape[1] == inputs[1].shape[0] == 64
++            and inputs[0].shape[0] >= 1024 and inputs[1].shape[1] >= 512 and inputs[1].shape[1] % 256 == 0
+             and sum(n.op in ('call_function', 'call_method') for n in core.graph.nodes) == 2)
+ 
+ 
+@@ -31,7 +33,7 @@
+             if min(m, n, k) < 1 or max(m*n, m*k, k*n) > 0x7fffffff:
+                 return None
+             if sdk_store:
+-                if mm['act'] != 0 or dtype != 'bfloat16' or (mm['M'], mm['N']) != (2048, 2048):
++                if mm['act'] != 0 or dtype != 'bfloat16' or not sdk_store_candidate(core, inputs):
+                     return None
+                 kernel, proof = _p800_fp32_mm.prepare_sdk_store(mm)
+             elif split:
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.py
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.py
+@@ -60,6 +60,11 @@
+     ...
+ 
+ 
++@tle.raw.dialect('xpu3', file='_p800_layernorm.xpu')
++def kl3_bf_quarter_packed(a, bias, out, first, rows, eps):
++    ...
++
++
+ @triton.jit
+ def _row_layernorm(A, B, W, SHIFT, OUT, N: tl.constexpr, SEGMENT: tl.constexpr,
+                    EPS: tl.constexpr, AFFINE: tl.constexpr, ROWS: tl.constexpr, M: tl.constexpr = None, FINAL_ONLY: tl.constexpr = False):
+@@ -70,7 +75,9 @@
+     dtype_code = 2 if A.dtype.element_ty == tl.bfloat16 else A.dtype.element_ty == tl.float16
+     if FINAL_ONLY:
+         dtype_code = dtype_code + 2
+-    if N == 2048 and SEGMENT == 512:
++    if N == 2048 and SEGMENT == 512 and A.dtype.element_ty == tl.bfloat16 and FINAL_ONLY and not AFFINE:
++        tle.raw.call(kl3_bf_quarter_packed, (A, B, OUT, first, count, tl.full((), EPS, tl.float32)))
++    elif N == 2048 and SEGMENT == 512:
+         args = (A, B, W, SHIFT, OUT, first, count, tl.full((), EPS, tl.float32),
+                 tl.full((), AFFINE, tl.int32))
+         if A.dtype.element_ty == tl.float32:
+--- a/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_layernorm.xpu
+@@ -447,6 +447,34 @@
+ 
+ // Keep one native-width input row in each core's LM. Use logical column
+ // order for FP32 moments and packed lane order for pointwise writeback.
++// Keep the 2048 BF16 operands packed in LM/SM. The four FP32
++// moment partials must be folded in the original ascending column order.
++extern "C" __device__ void kl3_bf_quarter_packed(const _global_ptr_ int16_t *a,
++        const _global_ptr_ int16_t *bias, _global_ptr_ int16_t *out,
++        int first, int rows, float eps) {
++#pragma clang fp contract(off)
++    __shared__ __simd__ int16_t b[2048];
++    __simd__ int16_t tile[2048];
++    if (core_id() == 0) GM2SM_ASYNC(bias, b, 2048 * sizeof(int16_t));
++    mfence_sm_gm();
++    sync_cluster();
++    for (int row = core_id(); row < rows; row += core_num()) {
++        int base = (first + row) * 2048;
++        GM2LM(a + base, tile, 2048 * sizeof(int16_t));
++        float sum = 0.f, squares = 0.f;
++        for (int part = 0; part < 4; ++part) {
++            Moments m = moments<PackedInput>(tile + part * 512, b + part * 512, 512);
++            sum += m.sum;
++            squares += m.squares;
++        }
++        float mean = sum / 2048;
++        float inv = 1.f / __builtin_sqrtf((squares / 2048 - mean * mean) + eps);
++        apply_packed<int16_t, false>(tile, b, b, b, 2048, mean, inv);
++        mfence_lm();
++        LM2GM(tile, out + base, 2048 * sizeof(int16_t));
++    }
++}
++
+ template<class IO, bool Affine>
+ static __device__ inline void packed_row_norm(const _global_ptr_ IO *a, const _global_ptr_ IO *bias,
+         const _global_ptr_ IO *weight, const _global_ptr_ IO *shift, _global_ptr_ IO *out,
+--- a/python/triton/experimental/graph_fusion/_p800_reduce.py
++++ b/python/triton/experimental/graph_fusion/_p800_reduce.py
+@@ -737,7 +737,8 @@
+     # A full descriptor tile requires at least 32 rows, in multiples of eight.
+     # Use the guarded vector-row kernel for partial batches of any supported
+     # precision. The narrow-input variant adds in FP32 only for a final-only graph.
+-    vector_rows = (spec['m'] < 32 or spec['m'] % 8 or spec['n'] not in (512, 1024, 2048))
++    vector_rows = (spec['m'] < 32 or spec['m'] % 8 or spec['n'] not in (512, 1024, 2048)
++                   or spec['n'] == 2048 and 2 * spec['m'] <= 12 * 64)
+     if kind == 2 and (final_only and spec['dtype'] == 'bfloat16' or
+                       vector_rows and (final_only or spec['dtype'] == 'float32')):
+         from ._p800_vector_rows import wide_softmax_configuration, prepare as prepare_vector
+@@ -755,6 +756,10 @@
+         width = segment_width(spec['m'], spec['n'], compute_dtype)
+         if width is not None and toolchain_available():
+             rows = rows_per_program(spec['m'], allow_tail=True, dtype=compute_dtype)
++            if final_only and not affine and spec['dtype'] == 'bfloat16' and width == 512 and spec['n'] == 2048:
++                rows = (spec['m'] + 11) // 12
++            if affine and spec['dtype'] == 'float32' and spec['n'] == 2048 and spec['m'] >= 1024:
++                rows = ((spec['m'] + 12*16 - 1) // (12*16)) * 16
+             grid = ((spec['m'] + rows - 1) // rows,)
+             kernel = _row_layernorm
+             constants = (spec['n'], width, spec['eps'], affine, rows, spec['m'], final_only)
+@@ -924,8 +929,9 @@
+         proof['tiles'] = {'xb': xb, 'yb': yb, 'route': 'tle'}
+         return out
+ 
++    from ._p800_bound_launch import bind as bind_pointer
++
+     def run_pointer_softmax(a, b):
+-        from ._p800_bound_launch import bind
+         bound = state.get('pointer_runner')
+         if bound is not None:
+             out = bound(a, b)
+@@ -952,7 +958,7 @@
+             tile = {'block': block, 'route': 'masked'}
+         if not proof['resource_verified']:
+             bind_evidence(proof, binary)
+-            state['pointer_runner'] = bind(kernel, binary, grid, (a, b), (m, n), (), 'cluster')
++            state['pointer_runner'] = bind_pointer(kernel, binary, grid, (a, b), (m, n), (), 'cluster')
+             proof.update(tiles=tile, prepared_launch=state['pointer_runner'] is not None)
+         return out
+ 
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.py
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.py
+@@ -33,6 +33,11 @@
+ 
+ @tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
+ def kl3_silu_half_2048(a, bias, out, pid):
++    ...
++
++
++@tle.raw.dialect('xpu3', file='_p800_vector_rows.xpu')
++def kl3_silu_half_rows(a, bias, out, pid, total):
+     ...
+ 
+ 
+@@ -184,6 +189,8 @@
+         tle.raw.call(kl3_bf_activation_rows, (A, B, OUT, first, count, n, tl.full((), KIND - 8, tl.int32)))
+     elif FINAL_ACT and KIND == 2 and M == 2048 and N == 2048 and TILE == 512 and A.dtype.element_ty == tl.float16:
+         tle.raw.call(kl3_silu_half_2048, (A, B, OUT, pid))
++    elif FINAL_ACT and KIND == 2 and N == 2048 and TILE == 512 and M*N >= 2*12*64*512 and A.dtype.element_ty == tl.float16:
++        tle.raw.call(kl3_silu_half_rows, (A, B, OUT, pid, tl.full((), M*N, tl.int32)))
+     elif FINAL_ACT:
+         args = (A, B, OUT, pid, tl.full((), M*N, tl.int32), n, tl.full((), TILE, tl.int32),
+                 tl.full((), KIND, tl.int32))
+--- a/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
++++ b/python/triton/experimental/graph_fusion/_p800_vector_rows.xpu
+@@ -165,16 +165,16 @@
+ 
+ // For a full 2048-column row each of the 12 programs reuses one shared
+ // bias vector across its cores. Unroll scalar exp/div from an FP32 LM tile.
+-extern "C" __device__ void kl3_silu_half_2048(const _global_ptr_ uint16_t *a,
+-        const _global_ptr_ uint16_t *bias, _global_ptr_ uint16_t *out, int pid) {
+-    constexpr int width = 512, cols = 2048, total = cols * cols;
++static __device__ inline void silu_half_rows(const _global_ptr_ uint16_t *a,
++        const _global_ptr_ uint16_t *bias, _global_ptr_ uint16_t *out, int pid, int total) {
++    constexpr int width = 512, cols = 2048;
+     __shared__ __simd__ uint16_t shared_bias[cols];
+     __simd__ uint16_t tiles[2][width];
+     __simd__ float compute[width];
+     if (core_id() == 0) GM2SM_ASYNC(bias, shared_bias, cols * sizeof(uint16_t));
+     int start = (pid * core_num() + core_id()) * width;
+     const int step = 12 * core_num() * width;
+-    GM2LM(a + start, tiles[0], width * sizeof(uint16_t));
++    if (start < total) GM2LM(a + start, tiles[0], width * sizeof(uint16_t));
+     mfence_sm_gm();
+     sync_cluster();
+     for (int slot = 0; start < total; start += step, slot ^= 1) {
+@@ -192,6 +192,15 @@
+         LM2GM_ASYNC(tile, out + start, width * sizeof(uint16_t));
+         mfence_lm_gm();
+     }
++}
++
++extern "C" __device__ void kl3_silu_half_2048(const _global_ptr_ uint16_t *a,
++        const _global_ptr_ uint16_t *bias, _global_ptr_ uint16_t *out, int pid) {
++    silu_half_rows(a, bias, out, pid, 2048 * 2048);
++}
++extern "C" __device__ void kl3_silu_half_rows(const _global_ptr_ uint16_t *a,
++        const _global_ptr_ uint16_t *bias, _global_ptr_ uint16_t *out, int pid, int total) {
++    silu_half_rows(a, bias, out, pid, total);
+ }
+ 
+ // The packed inputs and the packed output use the same lane arrangement.
+--- a/python/triton/experimental/graph_fusion/_resource_entry.c
++++ b/python/triton/experimental/graph_fusion/_resource_entry.c
+@@ -81,14 +81,10 @@
+ 
+ /* self holds the module, inputs to the preflight checks, class, and both version
+  * tags. PyCFunction traverses its tuple receiver, so cycles remain collectable. */
+-static PyObject *try_frame(PyObject *self, PyObject *args) {
++static PyObject *try_frame_values(PyObject *self, PyObject *const *args, Py_ssize_t count) {
+   PyObject *config = PyTuple_GET_ITEM(self, 1);
+ #define FIELD(i) PyTuple_GET_ITEM(config, (i))
+ #define MISS_FRAME() return Py_NewRef(FIELD(MISS))
+-  if (!PyTuple_CheckExact(args)) {
+-    MISS_FRAME();
+-  }
+-  Py_ssize_t count = PyTuple_GET_SIZE(args);
+   PyObject *names = FIELD(NAMES);
+   if ((count != 2 && count != 3) || count + 1 != PyTuple_GET_SIZE(names)) {
+     MISS_FRAME();
+@@ -99,7 +95,7 @@
+     MISS_FRAME();
+   }
+   for (Py_ssize_t i = 0; i < count; ++i) {
+-    if ((PyObject *)Py_TYPE(PyTuple_GET_ITEM(args, i)) != FIELD(TENSOR_TYPE)) {
++    if ((PyObject *)Py_TYPE(args[i]) != FIELD(TENSOR_TYPE)) {
+       MISS_FRAME();
+     }
+   }
+@@ -175,7 +171,7 @@
+   PyObject *values[4] = {model};
+   for (Py_ssize_t i = 0; i <= count; ++i) {
+     if (i != 0)
+-      values[i] = PyTuple_GET_ITEM(args, i - 1);
++      values[i] = args[i - 1];
+     if (PyDict_SetItem(locals, PyTuple_GET_ITEM(names, i), values[i]) < 0) {
+       Py_DECREF(locals);
+       return NULL;
+@@ -192,6 +188,11 @@
+   return PyObject_Vectorcall(FIELD(REPLAY), values, count + 1, NULL);
+ #undef MISS_FRAME
+ #undef FIELD
++}
++
++static PyObject *try_frame(PyObject *self, PyObject *args) {
++  if (!PyTuple_CheckExact(args)) return Py_NewRef(PyTuple_GET_ITEM(PyTuple_GET_ITEM(self, 1), MISS));
++  return try_frame_values(self, ((PyTupleObject *)args)->ob_item, PyTuple_GET_SIZE(args));
+ }
+ 
+ static PyMethodDef frame_method = {"try_frame", try_frame, METH_O, NULL};
+@@ -233,15 +234,15 @@
+ /* Module.__call__ still dispatches hooks, tracing, and replacement methods
+  * through Torch on every miss. A hit shares exactly the guard used by forward.
+  * The native cell is live across recompilation and concurrent callers. */
+-static PyObject *call_module(PyObject *config, PyObject *args, PyObject *kwargs) {
++static PyObject *call_module(PyObject *config, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames) {
+   PyObject *wrapper = PyTuple_GET_ITEM(config, 0);
+   PyObject *slow = PyTuple_GET_ITEM(config, 1);
+   PyTypeObject *cls = Py_TYPE(wrapper);
+   if ((PyObject *)cls != PyTuple_GET_ITEM(config, 2))
+-    return PyObject_Call(PyTuple_GET_ITEM(config, 4), args, kwargs);
++    return PyObject_Vectorcall(PyTuple_GET_ITEM(config, 4), args, nargs, kwnames);
+   PyObject *version = PyTuple_GET_ITEM(config, 3);
+   if (PyList_GET_SIZE(version) != 1 || !PyLong_CheckExact(PyList_GET_ITEM(version, 0)))
+-    return PyObject_Call(slow, args, kwargs);
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
+   if (!PyType_HasFeature(cls, Py_TPFLAGS_VALID_VERSION_TAG) ||
+       cls->tp_version_tag != PyLong_AsUnsignedLong(PyList_GET_ITEM(version, 0))) {
+     /* Compiling another graph can invalidate the type tag without changing
+@@ -250,47 +251,51 @@
+     if (valid < 0)
+       return NULL;
+     if (!valid || !PyType_HasFeature(cls, Py_TPFLAGS_VALID_VERSION_TAG) || !cls->tp_version_tag)
+-      return PyObject_Call(PyTuple_GET_ITEM(config, 4), args, kwargs);
++      return PyObject_Vectorcall(PyTuple_GET_ITEM(config, 4), args, nargs, kwnames);
+     PyObject *tag = PyLong_FromUnsignedLong(cls->tp_version_tag);
+     if (!tag || PyList_SetItem(version, 0, tag) < 0)
+       return NULL;
+   }
+   if (PyFunction_GET_CODE(PyMethod_GET_FUNCTION(slow)) != PyTuple_GET_ITEM(config, 13))
+-    return PyObject_Call(slow, args, kwargs);
+-  if (kwargs && PyDict_GET_SIZE(kwargs))
+-    return PyObject_Call(slow, args, kwargs);
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
++  if (kwnames && PyTuple_GET_SIZE(kwnames))
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
+ 
+   PyObject *frame = PyCell_GET(PyTuple_GET_ITEM(config, 5));
+   PyObject **dict = _PyObject_GetDictPtr(wrapper);
+   if (!frame || !PyTuple_CheckExact(frame) || PyTuple_GET_SIZE(frame) != 2 ||
+       !dict || !*dict || !PyDict_CheckExact(*dict))
+-    return PyObject_Call(slow, args, kwargs);
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
+   PyObject *keys = PyTuple_GET_ITEM(config, 6);
+   PyObject *values = PyTuple_GET_ITEM(config, 7);
+   if (PyFunction_GET_CODE(PyTuple_GET_ITEM(values, 0)) != PyTuple_GET_ITEM(config, 11))
+-    return PyObject_Call(slow, args, kwargs);
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
+   for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(keys); ++i) {
+     PyObject *v = PyDict_GetItemWithError(*dict, PyTuple_GET_ITEM(keys, i));
+     if (!v && PyErr_Occurred())
+       return NULL;
+     if (v != PyTuple_GET_ITEM(values, i) || (i && PyDict_GET_SIZE(v)))
+-      return PyObject_Call(slow, args, kwargs);
++      return PyObject_Vectorcall(slow, args, nargs, kwnames);
+   }
+   PyObject *attempt = Py_NewRef(PyTuple_GET_ITEM(frame, 1));
+-  PyObject *result = PyObject_CallOneArg(attempt, args);
++  if (!PyCFunction_Check(attempt) || PyCFunction_GET_FUNCTION(attempt) != (PyCFunction)try_frame) {
++    Py_DECREF(attempt);
++    return PyObject_Vectorcall(slow, args, nargs, kwnames);
++  }
++  PyObject *result = try_frame_values(PyCFunction_GET_SELF(attempt), args, nargs);
+   Py_DECREF(attempt);
+   if (!result)
+     return NULL;
+   for (Py_ssize_t i = 8; i < 11; ++i) {
+     if (result == PyTuple_GET_ITEM(config, i)) {
+       Py_DECREF(result);
+-      return PyObject_Call(slow, args, kwargs);
++      return PyObject_Vectorcall(slow, args, nargs, kwnames);
+     }
+   }
+   return result;
+ }
+ 
+-static PyMethodDef module_call = {"guarded_module_call", (PyCFunction)call_module, METH_VARARGS | METH_KEYWORDS, NULL};
++static PyMethodDef module_call = {"guarded_module_call", (PyCFunction)call_module, METH_FASTCALL | METH_KEYWORDS, NULL};
+ 
+ static PyObject *bind_dispatch(PyObject *module, PyObject *args) {
+   PyObject *wrapper, *slow, *dynamic, *cell, *keys, *values, *miss, *guard_miss, *refresh, *recheck;
+@@ -318,6 +323,82 @@
+   return result;
+ }
+ 
++#ifdef __cplusplus
++/* Shared with the optional KL3 launcher capsule. No tensor address or stream
++ * is stored in the prepared packet. Each call patches its own stack copy. */
++struct DenseLaunchABI {
++  const char *types;
++  void (*issue)(const int *, uintptr_t, uintptr_t, const int64_t *, const int64_t *);
++};
++struct DensePacket {
++  const DenseLaunchABI *abi;
++  uintptr_t function;
++  int grid[6], slots[5], words;
++  int64_t values[23], counts[23];
++};
++
++static void free_packet(PyObject *capsule) {
++  PyMem_Free(PyCapsule_GetPointer(capsule, "f06.dense_packet.v1"));
++}
++
++static PyObject *make_packet(PyObject *config) {
++  PyObject *entry = PyTuple_GET_ITEM(config, 0), *base = PyTuple_GET_ITEM(config, 1);
++  if (!PyCFunction_Check(entry)) Py_RETURN_NONE;
++  PyObject *owner = PyCFunction_GET_SELF(entry);
++  if (!owner || !PyModule_Check(owner) || PyDict_GetItemString(PyModule_GetDict(owner), "launch") != entry) Py_RETURN_NONE;
++  PyObject *capsule = PyDict_GetItemString(PyModule_GetDict(owner), "_dense_launch_abi");
++  if (!capsule || !PyCapsule_IsValid(capsule, "triton.xpu.dense_launch.v1")) Py_RETURN_NONE;
++  DensePacket p = {};
++  p.abi = (const DenseLaunchABI *)PyCapsule_GetPointer(capsule, "triton.xpu.dense_launch.v1");
++  p.words = (int)PyTuple_GET_SIZE(base) - 9;
++  if (p.words < 1 || p.words > 23 || strlen(p.abi->types) != (size_t)p.words) Py_RETURN_NONE;
++  for (int j = 6; j < 9; ++j)
++    if (PyTuple_GET_ITEM(base, j) != Py_None) Py_RETURN_NONE;
++  PyObject *meta = PyTuple_GET_ITEM(base, 5);
++  int warps, ctas, shared;
++  if (!PyArg_ParseTuple(meta, "iiiiii", &warps, &ctas, &shared, p.grid+3, p.grid+4, p.grid+5))
++    return NULL;
++  for (int i=0; i<3; ++i) {
++    long n = PyLong_AsLong(PyTuple_GET_ITEM(base, i));
++    if (PyErr_Occurred()) return NULL;
++    if (n < 0 || n > INT_MAX) Py_RETURN_NONE;
++    p.grid[i] = (int)n;
++  }
++  p.function = PyLong_AsUnsignedLongLong(PyTuple_GET_ITEM(base, 4));
++  if (PyErr_Occurred()) return NULL;
++  PyObject *slots = PyTuple_GET_ITEM(config, 2), *counts = PyTuple_GET_ITEM(config, 3);
++  int ptrs = 0;
++  for (int j=0; j<p.words; ++j) {
++    char ty = p.abi->types[j];
++    PyObject *v = PyTuple_GET_ITEM(base, j+9);
++    if (ty == 'p') {
++      if (ptrs >= PyTuple_GET_SIZE(slots) || PyLong_AsLong(PyTuple_GET_ITEM(slots, ptrs)) != j+9
++          || v != Py_None) Py_RETURN_NONE;
++      p.slots[ptrs] = j;
++      PyObject *count = PyTuple_GET_ITEM(counts, ptrs++);
++      if (count != Py_None) {
++        p.counts[j] = PyLong_AsLongLong(count);
++        if (PyErr_Occurred()) return NULL;
++        if (p.counts[j] < 0) Py_RETURN_NONE;
++      }
++    } else {
++      if (!PyLong_Check(v)) Py_RETURN_NONE;
++      p.values[j] = PyLong_AsLongLong(v);
++      if (PyErr_Occurred()) return NULL;
++      if ((ty == 'i' && (p.values[j] < INT_MIN || p.values[j] > INT_MAX))
++          || (ty == 'b' && p.values[j] != 0 && p.values[j] != 1)) Py_RETURN_NONE;
++    }
++  }
++  if (ptrs != PyTuple_GET_SIZE(slots)) Py_RETURN_NONE;
++  DensePacket *owned = (DensePacket *)PyMem_Malloc(sizeof(p));
++  if (!owned) return PyErr_NoMemory();
++  *owned = p;
++  PyObject *result = PyCapsule_New(owned, "f06.dense_packet.v1", free_packet);
++  if (!result) PyMem_Free(owned);
++  return result;
++}
++#endif
++
+ /* The KL3 launcher owns the SDK call. Keep its constant arguments here, and
+  * build each call on the stack so concurrent streams never share addresses. */
+ static PyObject *launch_dense(PyObject *config, PyObject *const *inputs, Py_ssize_t nargs) {
+@@ -329,7 +410,11 @@
+   PyObject *stream = NULL, *out = NULL, *result = NULL, *status = NULL;
+ #ifdef __cplusplus
+   using DataPtr = void *(*)(PyObject *);
+-  DataPtr tensor_ptr = PyTuple_GET_SIZE(config) == 12
++  const DensePacket *packet = PyTuple_GET_SIZE(config) == 13
++      ? (const DensePacket *)PyCapsule_GetPointer(PyTuple_GET_ITEM(config, 12), "f06.dense_packet.v1") : NULL;
++  int64_t values[23];
++  if (packet) memcpy(values, packet->values, packet->words * sizeof(int64_t));
++  DataPtr tensor_ptr = PyTuple_GET_SIZE(config) >= 12
+       ? reinterpret_cast<DataPtr>(PyLong_AsVoidPtr(PyTuple_GET_ITEM(config, 11))) : nullptr;
+ #endif
+   Py_ssize_t argc = PyTuple_GET_SIZE(base);
+@@ -350,13 +435,24 @@
+                        (PyObject *)Py_TYPE(tensor) == PyTuple_GET_ITEM(config, 10))) {
+       // Non-affine LayerNorm repeats one live bias in three consecutive ABI slots.
+       if (i > 0 && i < nargs && tensor == inputs[i - 1] && count == PyTuple_GET_ITEM(counts, i - 1)) {
+-        argv[slot] = owned[i] = Py_NewRef(owned[i - 1]);
++        if (packet)
++          values[packet->slots[i]] = values[packet->slots[i - 1]];
++        else
++          argv[slot] = owned[i] = Py_NewRef(owned[i - 1]);
+         continue;
+       }
+       try {
+         // Inductor's accessor reads the live TensorImpl, including its current storage offset.
+         void *raw = tensor_ptr(tensor);
+         address = reinterpret_cast<uintptr_t>(raw);
++        if (packet) {
++          if ((address & 15) || (!address && packet->counts[packet->slots[i]])) {
++            result = Py_NewRef(Py_None);
++            goto done;
++          }
++          values[packet->slots[i]] = (int64_t)address;
++          continue;
++        }
+         ptr = PyLong_FromVoidPtr(raw);
+         if (!ptr || PyErr_Occurred()) { Py_XDECREF(ptr); goto done; }
+       } catch (...) {
+@@ -371,6 +467,17 @@
+       address = (uintptr_t)PyLong_AsUnsignedLongLong(ptr);
+       if (PyErr_Occurred()) { Py_DECREF(ptr); goto done; }
+     }
++#ifdef __cplusplus
++    if (packet) {
++      Py_DECREF(ptr);
++      if ((address & 15) || (!address && packet->counts[packet->slots[i]])) {
++        result = Py_NewRef(Py_None);
++        goto done;
++      }
++      values[packet->slots[i]] = (int64_t)address;
++      continue;
++    }
++#endif
+     owned[i] = ptr;
+     if (address & 15) {
+       result = Py_NewRef(Py_None);
+@@ -386,6 +493,17 @@
+   stream = PyObject_CallOneArg(PyTuple_GET_ITEM(config, 7), PyTuple_GET_ITEM(config, 8));
+   if (!stream) goto done;
+   argv[3] = stream;
++#ifdef __cplusplus
++  if (packet) {
++    uintptr_t handle = (uintptr_t)PyLong_AsUnsignedLongLong(stream);
++    if (PyErr_Occurred()) goto done;
++    Py_BEGIN_ALLOW_THREADS
++    packet->abi->issue(packet->grid, handle, packet->function, values, packet->counts);
++    Py_END_ALLOW_THREADS
++    if (!PyErr_Occurred()) {result = out; out = NULL;}
++    goto done;
++  }
++#endif
+   status = PyObject_Vectorcall(PyTuple_GET_ITEM(config, 0), argv, argc, NULL);
+   if (status) {
+     Py_DECREF(status);
+@@ -443,7 +561,11 @@
+     return fallback;
+   }
+   Py_DECREF(fallback);
+-  PyObject *extra = PyTuple_Pack(3, tensor_type, parameter_type, addr);
++  PyObject *packet = make_packet(config);
++  if (!packet) { Py_DECREF(addr); return NULL; }
++  PyObject *extra = packet == Py_None ? PyTuple_Pack(3, tensor_type, parameter_type, addr)
++                                      : PyTuple_Pack(4, tensor_type, parameter_type, addr, packet);
++  Py_DECREF(packet);
+   Py_DECREF(addr);
+   if (!extra) return NULL;
+   PyObject *bound = PySequence_Concat(config, extra);
+@@ -455,7 +577,36 @@
+ }
+ #endif
+ 
+-static PyMethodDef methods[] = {{"bind", bind_frame, METH_O, NULL},
++/* Positional call and result[0], for a fully matched Dynamo replay program. */
++static PyObject *single_output(PyObject *config, PyObject *const *values, Py_ssize_t nargs) {
++  Py_ssize_t count = PyLong_AsSsize_t(PyTuple_GET_ITEM(config, 1));
++  if (nargs != count + 1) {
++    PyErr_SetString(PyExc_TypeError, "Unexpected number of guarded frame arguments");
++    return NULL;
++  }
++  PyObject *result = PyObject_Vectorcall(PyTuple_GET_ITEM(config, 0), values + 1, count, NULL);
++  if (!result) return NULL;
++  PyObject *out = PyObject_GetItem(result, PyTuple_GET_ITEM(config, 2));
++  Py_DECREF(result);
++  return out;
++}
++
++static PyMethodDef single_call = {"single_output", (PyCFunction)single_output, METH_FASTCALL, NULL};
++
++static PyObject *bind_single_output(PyObject *module, PyObject *args) {
++  PyObject *graph;
++  int nargs;
++  if (!PyArg_ParseTuple(args, "Oi", &graph, &nargs)) return NULL;
++  if (!PyCallable_Check(graph) || (nargs != 2 && nargs != 3)) Py_RETURN_NONE;
++  PyObject *config = Py_BuildValue("(Oii)", graph, nargs, 0);
++  if (!config) return NULL;
++  PyObject *bound = PyCFunction_New(&single_call, config);
++  Py_DECREF(config);
++  return bound;
++}
++
++static PyMethodDef methods[] = {{"bind_single_output", bind_single_output, METH_VARARGS, NULL},
++                                {"bind", bind_frame, METH_O, NULL},
+                                 {"bind_dense", bind_dense, METH_O, NULL},
+ #ifdef __cplusplus
+                                 {"bind_native_dense", bind_native_dense, METH_VARARGS, NULL},
+--- a/python/triton/experimental/graph_fusion/_resource_entry.py
++++ b/python/triton/experimental/graph_fusion/_resource_entry.py
+@@ -46,6 +46,43 @@
+     DUP_TOP ROT_TWO ROT_THREE BUILD_LIST BUILD_TUPLE LIST_EXTEND
+     BINARY_SUBSCR UNPACK_SEQUENCE POP_TOP RETURN_VALUE
+ """.split())
++
++
++def _single_tensor_replay(code, bindings, graph):
++    """Recognize Torch 2.9's positional graph call and result[0] reconstruction."""
++    ops = list(dis.get_instructions(code))
++    # Record hooks in this private replay already resolve to our two no-ops.
++    prefix = ('LOAD_GLOBAL', 'LOAD_GLOBAL', 'LOAD_ATTR', 'DUP_TOP', 'STORE_FAST',
++              'CALL_FUNCTION', 'STORE_FAST')
++    suffix = ('LOAD_GLOBAL', 'LOAD_ATTR', 'DUP_TOP', 'STORE_FAST', 'LOAD_FAST',
++              'CALL_FUNCTION', 'POP_TOP', 'CALL_FUNCTION', 'STORE_FAST', 'LOAD_FAST',
++              'LOAD_CONST', 'BINARY_SUBSCR', 'BUILD_LIST', 'BUILD_LIST', 'ROT_TWO',
++              'BUILD_LIST', 'LIST_EXTEND', 'POP_TOP', 'BUILD_LIST', 'ROT_TWO',
++              'DELETE_FAST', 'RETURN_VALUE')
++    n = code.co_argcount - 1
++    if n not in (2, 3) or len(ops) != len(prefix) + n + len(suffix):
++        return None
++    start, args, end = ops[:len(prefix)], ops[len(prefix):len(prefix)+n], ops[-len(suffix):]
++    if (tuple(i.opname for i in start) != prefix or tuple(i.opname for i in end) != suffix
++            or bindings.get(start[0].argval) is not graph
++            or getattr(bindings.get(start[1].argval), 'record_pregraph_bytecode_enter', None) is not _before_graph
++            or getattr(bindings.get(start[1].argval), 'record_pregraph_bytecode_exit', None) is not _after_graph
++            or start[2].argval != 'record_pregraph_bytecode_enter' or start[5].arg != 0
++            or end[0].argval != start[1].argval or end[1].argval != 'record_pregraph_bytecode_exit'
++            or end[4].argval != start[6].argval or end[5].arg != 1 or end[7].arg != n
++            or end[8].argval != end[9].argval or end[20].argval != end[8].argval
++            or type(end[10].argval) is not int or end[10].argval != 0
++            or [end[j].arg for j in (12, 13, 15, 16, 18)] != [0, 0, 0, 2, 1]
++            or any(i.opname != 'LOAD_FAST' for i in args)
++            or tuple(i.argval for i in args) != code.co_varnames[1:n+1]):
++        return None
++    # The compiler's original formal arguments and temporaries must be disjoint.
++    temps = {start[4].argval, start[6].argval, end[3].argval, end[8].argval}
++    if len(temps) != 4 or not temps.isdisjoint(code.co_varnames[:n+1]):
++        return None
++    module = _frame_extension()
++    bind = getattr(module, 'bind_single_output', None)
++    return bind(graph, n) if bind is not None else None
+ 
+ 
+ def _guarded_frame(forward, backend, frame_locals):
+@@ -89,7 +126,8 @@
+             if graph is not None and entry.guard_manager.check(frame_locals):
+                 # Execute Dynamo's bytecode, including its argument order and
+                 # return reconstruction. Never guess the FX calling convention.
+-                return entry.guard_manager, types.FunctionType(code, bindings, forward.__name__)
++                replay = _single_tensor_replay(code, bindings, graph)
++                return entry.guard_manager, replay or types.FunctionType(code, bindings, forward.__name__)
+     return None
+ 
+ 
+--- a/third_party/xpu/backend/driver.py
++++ b/third_party/xpu/backend/driver.py
+@@ -684,6 +684,32 @@
+                 hex_string = ",".join(f"0x{byte:02x}" for byte in chunk)
+                 hex_lines.append(hex_string)
+         return ",\n    ".join(hex_lines)
++
++    # Expose the existing typed _launch to a bound dense launcher. Only
++    # integer scalars and live tensor addresses have a fixed packet ABI.
++    packet_code, packet_export = "", ""
++    word_types = {"i1": "b", "i32": "i", "i64": "l"}
++    if (xpu_arch == 3 and 1 <= len(signature) <= 23
++            and all(ty.startswith("*") or ty in word_types for ty in signature.values())):
++        types = "".join("p" if ty.startswith("*") else word_types[ty] for ty in signature.values())
++        args = ", ".join(f"(void *)(uintptr_t)v[{i}], sizes[{i}]" if ty.startswith("*")
++                         else f"({ty_to_cpp(ty)})v[{i}]" for i, ty in signature.items())
++        packet_code = f"""
++struct DenseLaunchABI {{
++  const char *types;
++  void (*issue)(const int *, uintptr_t, uintptr_t, const int64_t *, const int64_t *);
++}};
++static void issue_dense(const int *g, uintptr_t stream, uintptr_t fn, const int64_t *v, const int64_t *sizes) {{
++  _launch(g[0], g[1], g[2], g[3], g[4], g[5], (XPUStream)stream, (XPUFunc)fn, {args});
++}}
++static DenseLaunchABI dense_abi = {{"{types}", issue_dense}};
++"""
++        packet_export = """
++  PyObject *capsule = PyCapsule_New(&dense_abi, "triton.xpu.dense_launch.v1", NULL);
++  if (!capsule || PyModule_AddObject(m, "_dense_launch_abi", capsule) < 0) {
++    Py_XDECREF(capsule); Py_DECREF(m); return NULL;
++  }
++"""
+ 
+     # generate glue code
+     src = f"""
+@@ -852,6 +878,7 @@
+   return ptr_info;
+ }}
+ 
++{packet_code}
+ static PyObject* launch(PyObject* self, PyObject* args) {{
+   int gridX, gridY, gridZ;
+   uint64_t _stream;
+@@ -925,6 +952,7 @@
+   if(m == NULL) {{
+     return NULL;
+   }}
++  {packet_export}
+   PyModule_AddFunctions(m, ModuleMethods);
+   return m;
+ }}

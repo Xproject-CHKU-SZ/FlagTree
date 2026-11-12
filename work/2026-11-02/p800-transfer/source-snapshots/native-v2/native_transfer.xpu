@@ -1,0 +1,104 @@
+// Primitive paths copied from this SDK's GM2LM/LM2GM headers and audited
+// SDNN copy lowering. No host installation, driver calls or global state.
+#include "xpu/kernel/xtdk.h"
+#ifndef TILE
+#define TILE 1024
+#endif
+#ifndef SDNN
+#define SDNN 0
+#endif
+
+#if SDNN
+extern "C" __device__ void dma_cfg(int,int,int,int) asm("llvm.xpu.dma_cfg");
+extern "C" __device__ void dma_run(int) asm("llvm.xpu.dma_run.v3");
+extern "C" __device__ void lock_dma(int,int) asm("llvm.xpu.lock.v2");
+extern "C" __device__ void unlock_dma(int) asm("llvm.xpu.unlock");
+extern "C" __device__ void signal_dma(int,int) asm("llvm.xpu.xsignal");
+extern "C" __device__ void wait_dma(int,int) asm("llvm.xpu.xwait");
+extern "C" __device__ void sync_group(int) asm("llvm.xpu.csr_set_sync_group");
+extern "C" __device__ void signal_mode(int) asm("llvm.xpu.xsignal_mode_cfg");
+extern "C" __device__ void sram_cfg(int,int) asm("llvm.xpu.uni_sram_cfg");
+extern "C" __device__ void ew_cfg(int,int,int,int) asm("llvm.xpu.ew_cfg");
+
+static __device__ __attribute__((always_inline)) void sdnn_read(_global_ptr_ const void *x) {
+  unsigned long long address=(unsigned long long)x;
+  lock_dma(0,4);
+  dma_cfg(0,0,0,0);
+  dma_cfg(0,address>>32,0,2);
+  dma_cfg(0,address,TILE,3);
+  dma_cfg(TILE,TILE,1,4);
+  dma_run(0);unlock_dma(4);
+  signal_dma(2,0);wait_dma(2,0);
+}
+static __device__ __attribute__((always_inline)) void sdnn_write(_global_ptr_ void *y) {
+  unsigned long long address=(unsigned long long)y;
+  lock_dma(0,5);
+  dma_cfg(0,0,0,0);dma_cfg(0,1,0,1);
+  dma_cfg(address>>32,0,0,2);
+  dma_cfg(address,0,TILE,3);
+  dma_cfg(TILE,TILE,1,4);
+  dma_run(0);unlock_dma(5);
+  signal_dma(3,0);wait_dma(3,0);
+}
+#endif
+
+extern "C" __global__ void native_transfer(_global_ptr_ const char *x,
+    _global_ptr_ char *y, _global_ptr_ unsigned long long *metrics,
+    int nbytes,int repeats,int mode) {
+  int unit,units;
+#if SDNN
+  if(core_id()!=0)return;
+  unit=cluster_id();units=cluster_num();
+  signal_mode(1);sram_cfg(1,1);
+  lock_dma(0,2);ew_cfg(1,0,0,16);unlock_dma(2);sync_group(-1);
+#else
+  unit=cluster_id()*core_num()+core_id();units=cluster_num()*core_num();
+  __local__ char buffer[TILE];
+#endif
+  __local__ unsigned long long data[8];
+  int last=-1;
+  unsigned long long bytes=0;
+  if(unit*TILE<nbytes && mode==2) {
+#if SDNN
+    sdnn_read(x);
+#else
+    GM2LM(x,buffer,TILE);
+#endif
+  }
+  unsigned long long start=get_clock64();
+  for(int rep=0;rep<repeats;++rep) {
+    for(int offset=unit*TILE;offset<nbytes;offset+=units*TILE) {
+      if(mode!=2) {
+#if SDNN
+        sdnn_read(x+offset);
+#else
+        GM2LM(x+offset,buffer,TILE);
+#endif
+      }
+      if(mode!=1) {
+#if SDNN
+        sdnn_write(y+offset);
+#else
+        LM2GM(buffer,y+offset,TILE);
+#endif
+      }
+      last=offset;bytes+=TILE;
+    }
+  }
+  unsigned long long end=get_clock64();
+  // Read-only benchmark writes the last loaded tile after the timed region.
+  if(mode==1 && last>=0) {
+#if SDNN
+    sdnn_write(y+last);
+#else
+    LM2GM(buffer,y+last,TILE);
+#endif
+  }
+  data[0]=start;data[1]=end;data[2]=bytes;data[3]=unit;data[4]=units;
+  data[5]=mode;data[6]=(unsigned long long)(long long)last;data[7]=repeats;
+  LM2GM(data,metrics+unit*8,sizeof(data));
+#if SDNN
+  lock_dma(0,2);ew_cfg(0,0,0,16);unlock_dma(2);signal_mode(0);
+#endif
+  mfence();
+}

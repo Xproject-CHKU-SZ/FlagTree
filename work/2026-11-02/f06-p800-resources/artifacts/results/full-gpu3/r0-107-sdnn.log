@@ -1,0 +1,134 @@
+imports
+XCCL /home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+build_inputs
+compile
+b'ld.lld: error: undefined symbol: xpu::math_rsqrt(float AS2*, float AS2*, int, int, int)\n>>> referenced by ieee-multiply.mlir:56\n>>>               /home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.o:(triton_unk_fused_0)\n'
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Triton compilation failed: triton_unk_fused_0
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] def triton_unk_fused_0(in_ptr0, in_ptr1, in_ptr2, out_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr):
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xnumel = 64
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_numel = 1024
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     R0_BLOCK: tl.constexpr = 1024
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rnumel = r0_numel
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     RBLOCK: tl.constexpr = R0_BLOCK
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xoffset = tl.program_id(0) * XBLOCK
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     xmask = xindex < xnumel
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_index = tl.arange(0, R0_BLOCK)[None, :]
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_offset = 0
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_mask = tl.full([XBLOCK, R0_BLOCK], True, tl.int1)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     roffset = r0_offset
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     rindex = r0_index
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     r0_1 = r0_index
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     x0 = xindex
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp0 = tl.load(in_ptr0 + (r0_1 + 1024*x0), xmask, other=0.0).to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp3 = tl.load(in_ptr1 + (r0_1), None, eviction_policy='evict_last').to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp33 = tl.load(in_ptr2 + (r0_1), None, eviction_policy='evict_last').to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp1 = tmp0.to(tl.bfloat16)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp2 = tmp1.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp4 = tmp3.to(tl.bfloat16)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp5 = tmp4.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp6 = tmp2 + tmp5
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp7 = tmp6.to(tl.bfloat16)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp8 = tmp7.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp9 = tmp8.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp10 = tl.broadcast_to(tmp9, [XBLOCK, R0_BLOCK])
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp12 = tl.where(xmask, tmp10, 0)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp13 = tl.broadcast_to(tmp10, [XBLOCK, R0_BLOCK])
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp15 = tl.where(xmask, tmp13, 0)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp16 = tl.sum(tmp15, 1)[:, None].to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp17 = tl.full([XBLOCK, 1], 1024, tl.int32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp18 = tmp17.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp19 = (tmp16 / tmp18)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp20 = tmp10 - tmp19
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp21 = tmp20 * tmp20
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp22 = tl.broadcast_to(tmp21, [XBLOCK, R0_BLOCK])
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp24 = tl.where(xmask, tmp22, 0)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp25 = tl.sum(tmp24, 1)[:, None].to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp26 = tmp9 - tmp19
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp27 = 1024.0
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp28 = (tmp25 / tmp27)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp29 = 0.001
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp30 = tmp28 + tmp29
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp31 = libdevice.rsqrt(tmp30)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp32 = tmp26 * tmp31
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp34 = tmp33.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp35 = tmp32 + tmp34
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tmp36 = tmp35.to(tl.float32)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     tl.store(out_ptr2 + (r0_1 + 1024*x0), tmp36, xmask)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] 
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] metadata: {'signature': {'in_ptr0': '*bf16', 'in_ptr1': '*bf16', 'in_ptr2': '*bf16', 'out_ptr2': '*bf16', 'xnumel': 'i32', 'r0_numel': 'i32', 'XBLOCK': 'constexpr'}, 'device': 0, 'constants': {'XBLOCK': 1}, 'configs': [{(0,): [['tt.divisibility', 16]], (1,): [['tt.divisibility', 16]], (2,): [['tt.divisibility', 16]], (3,): [['tt.divisibility', 16]], (4,): [['tt.divisibility', 16]], (5,): [['tt.divisibility', 16]]}], 'device_type': 'cuda', 'num_warps': 8, 'num_stages': 1, 'debug': True, 'cc': 86}
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] Traceback (most recent call last):
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     binary = triton.compile(*compile_args, **compile_kwargs)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_p800_compiler.py", line 65, in compile_for_actual_target
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     return original_compile(source, **kwargs)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 467, in compile
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     module = run_stage(ext, compile_ir, module)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 349, in run_stage
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     next_module = compile_ir(module, metadata)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 884, in <lambda>
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     stages["xpubin"] = lambda src, metadata: self.make_xpubin(src, metadata, options)
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 844, in make_xpubin
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     out_bytes = run_cmd(cmd, env=llvm19_toolchain.llvm19_env("xpu"))
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]   File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 37, in run_cmd
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780]     raise RuntimeError(
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] RuntimeError: Command failed (1): ['/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin/xpu3-elfconv-triton', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.o', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.bin', '/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin']
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] stdout: b''
+E1102 18:51:54.909000 3150229 env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py:780] stderr: b'ld.lld: error: undefined symbol: xpu::math_rsqrt(float AS2*, float AS2*, int, int, int)\n>>> referenced by ieee-multiply.mlir:56\n>>>               /home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.o:(triton_unk_fused_0)\n'
+Traceback (most recent call last):
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 248, in <module>
+    main()
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 128, in main
+    compiled, proof = codegen.compile_region(
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py", line 404, in compile_region
+    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 782, in compile_fx_inner
+    return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py", line 144, in debug_wrapper
+    inner_compiled_fn = compiler_fn(gm, example_inputs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 963, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1695, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1505, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2319, in compile_to_module
+    return self._compile_to_module()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2329, in _compile_to_module
+    mod = self._compile_to_module_lines(wrapper_code)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 2397, in _compile_to_module_lines
+    mod = PyCodeCache.load_by_key_path(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/codecache.py", line 3548, in load_by_key_path
+    mod = _reload_python_module(key, path, set_sys_modules=in_toplevel)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/compile_tasks.py", line 33, in _reload_python_module
+    exec(code, mod.__dict__, mod.__dict__)
+  File "/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/cache/inductor/nm/cnmrbwwikb62qqdlhyniymwwfkaar4vtck42uyvh2p74s26i2cr5.py", line 55, in <module>
+    triton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/async_compile.py", line 500, in triton
+    kernel.precompile(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 448, in precompile
+    self._precompile_worker()
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 470, in _precompile_worker
+    compile_results.append(self._precompile_config(c))
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py", line 189, in compile_for_resource
+    result = compile_config(*a, **kw)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py", line 778, in _precompile_config
+    binary = triton.compile(*compile_args, **compile_kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_p800_compiler.py", line 65, in compile_for_actual_target
+    return original_compile(source, **kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 467, in compile
+    module = run_stage(ext, compile_ir, module)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py", line 349, in run_stage
+    next_module = compile_ir(module, metadata)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 884, in <lambda>
+    stages["xpubin"] = lambda src, metadata: self.make_xpubin(src, metadata, options)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 844, in make_xpubin
+    out_bytes = run_cmd(cmd, env=llvm19_toolchain.llvm19_env("xpu"))
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py", line 37, in run_cmd
+    raise RuntimeError(
+RuntimeError: Command failed (1): ['/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin/xpu3-elfconv-triton', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.o', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.bin', '/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin']
+stdout: b''
+stderr: b'ld.lld: error: undefined symbol: xpu::math_rsqrt(float AS2*, float AS2*, int, int, int)\n>>> referenced by ieee-multiply.mlir:56\n>>>               /home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp5lodfk4v/kernel.o:(triton_unk_fused_0)\n'

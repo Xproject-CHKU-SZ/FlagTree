@@ -1,0 +1,81 @@
+{
+  "status": "error",
+  "route": "split",
+  "ordinal": 140,
+  "repeat": 1,
+  "timing": "graph",
+  "started_at": 1793618023.2893217,
+  "stage": "compile",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "ordinal": 140,
+    "case_id": "large:matmul_bias_gelu_tanh:float16:2048x2048x2048",
+    "kind": "matmul_bias_gelu_tanh",
+    "dtype": "float16",
+    "M": 2048,
+    "N": 2048,
+    "K": 2048,
+    "tolerance": {
+      "atol": 0.003,
+      "rtol": 0.003
+    },
+    "input_builder": "historical_large_matmul"
+  },
+  "physical_device": 4,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 19:13:48 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:84:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3315841\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 226 MiB\n\n",
+  "input_binding": {
+    "inputs": [
+      {
+        "shape": [
+          2048,
+          2048
+        ],
+        "sha256": "d2e969dd34b114e44879e475a0652808f66d6b66130161035bfe61319d044417"
+      },
+      {
+        "shape": [
+          2048,
+          2048
+        ],
+        "sha256": "d2e969dd34b114e44879e475a0652808f66d6b66130161035bfe61319d044417"
+      },
+      {
+        "shape": [
+          2048
+        ],
+        "sha256": "2c1b3a53dc9395174766140ec31c8ebf34a874bd961fc3f4225901f62cbedd5e"
+      }
+    ],
+    "seed": 61
+  },
+  "resource_rejections": [],
+  "error": "AssertionError: ",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/zhaoweiming/f06-resources-20261102/split_worker.py\", line 130, in main\n    compiled, proof = compile_split(lifted, flat, codegen)\n  File \"/home/zhaoweiming/f06-resources-20261102/split_compile.py\", line 8, in compile_split\n    assert len(inputs) == len(placeholders) == 3 and len(dots) == 1\nAssertionError\n"
+}

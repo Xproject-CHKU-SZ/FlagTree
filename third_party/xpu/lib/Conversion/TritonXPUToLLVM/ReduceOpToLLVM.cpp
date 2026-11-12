@@ -920,6 +920,59 @@ private:
     accVecs = acc;
   }
 
+  // KL3 shifts a 512-bit packet by a bit count. After the four combines
+  // lane zero covers all 16 original lanes, including on all-negative rows.
+  static bool collapseSoftmaxPacket(ConversionPatternRewriter &rewriter,
+                                    triton::xpu::ReduceOp op,
+                                    SmallVector<Value> &accs) {
+    if (accs.size() != 1 ||
+        !op->getParentOfType<ModuleOp>()->hasAttr("flagtree.kl3_row_softmax"))
+      return false;
+    auto vec = dyn_cast<VectorType>(accs.front().getType());
+    if (!vec || vec.isScalable() || vec.getRank() != 1 ||
+        vec.getNumElements() != 16 || !vec.getElementType().isF32())
+      return false;
+    Block &block = op.getCombineOp().front();
+    if (block.getNumArguments() != 2 ||
+        block.getTerminator()->getNumOperands() != 1)
+      return false;
+    Value lhs = block.getArgument(0), rhs = block.getArgument(1);
+    Value returned = block.getTerminator()->getOperand(0);
+    StringRef combine;
+    if (auto add = returned.getDefiningOp<arith::AddFOp>()) {
+      if (add.getLhs() != lhs || add.getRhs() != rhs)
+        return false;
+      combine = "vadd.f.mz.rn $0{mr1}, $1, $2";
+    } else if (auto sel = returned.getDefiningOp<arith::SelectOp>()) {
+      auto cmp = sel.getCondition().getDefiningOp<arith::CmpFOp>();
+      if (!cmp || cmp.getPredicate() != arith::CmpFPredicate::OGT ||
+          cmp.getLhs() != lhs || cmp.getRhs() != rhs ||
+          sel.getTrueValue() != lhs || sel.getFalseValue() != rhs)
+        return false;
+      combine = "vmax.f.mz $0{mr1}, $1, $2";
+    } else {
+      return false;
+    }
+
+    auto loc = op.getLoc();
+    auto emit = [&](StringRef asmText, StringRef constraints, Value a, Value b) {
+      return LLVM::InlineAsmOp::create(
+                 rewriter, loc, vec, ValueRange{a, b}, asmText, constraints,
+                 false, false, LLVM::tailcallkind::TailCallKind::None,
+                 LLVM::AsmDialectAttr::get(rewriter.getContext(),
+                                           LLVM::AsmDialect::AD_ATT),
+                 ArrayAttr())
+          .getRes();
+    };
+    Value packet = accs.front();
+    for (int bits : {256, 128, 64, 32}) {
+      Value shifted = emit("vsrl.p $0, $1, $2", "=v,r,v", i32_val(bits), packet);
+      packet = emit(combine, "=v,v,v", packet, shifted);
+    }
+    accs.front() = extract_element(vec.getElementType(), packet, i32_val(0));
+    return true;
+  }
+
   void accmulateWithinVector(ConversionPatternRewriter &rewriter,
                              const Location &loc, Operation *op,
                              Value &accVec) const {
@@ -1055,20 +1108,19 @@ private:
         indices[key] = srcIndices[i];
     }
 
-    // Accumulate within Vector
-    if (useRegion) {
-      for (auto &it : accs)
-        collapseVectorsJointly(rewriter, op.getLoc(), *combineOp, it.second);
-    } else if (helper.isVectorized()) {
-      SmallVector<Operation *> returnDefOps = helper.getReturnDefOps();
-      for (auto &it : accs) {
-        SmallVector<Value> &accVecs = it.second;
-        assert(accVecs.size() == returnDefOps.size() &&
-               "accVecs.size() !=returnDefOps.size()");
-        for (unsigned i = 0; i < returnDefOps.size(); ++i) {
-          accmulateWithinVector(rewriter, op.getLoc(), returnDefOps[i],
+    if (!vectorized)
+      return;
+    for (auto &it : accs) {
+      auto &accVecs = it.second;
+      if (collapseSoftmaxPacket(rewriter, op, accVecs))
+        continue;
+      if (useRegion) {
+        collapseVectorsJointly(rewriter, op.getLoc(), *combineOp, accVecs);
+      } else {
+        assert(accVecs.size() == returnDefOpsForAccum.size());
+        for (unsigned i = 0; i < accVecs.size(); ++i)
+          accmulateWithinVector(rewriter, op.getLoc(), returnDefOpsForAccum[i],
                                 accVecs[i]);
-        }
       }
     }
   }

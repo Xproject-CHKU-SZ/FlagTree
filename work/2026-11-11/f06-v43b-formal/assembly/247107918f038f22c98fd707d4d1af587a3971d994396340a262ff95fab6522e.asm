@@ -1,0 +1,444 @@
+000000  17200000  xor zero, zero, zero
+000004  1f420000  addli r4, zero, 4
+000008  1f041000  addli r8, zero, 8
+00000c  9f77f0ff  addli r15, zero, -1
+000010  80310002  core_id r3
+000014  00510102  load_param_i r2, 2
+000018  ab800000  lui r1, 8
+00001c  ab020000  lui r5, 0
+000020  9f820200  addli r5, r5, 0
+000024  8b805018  sub.u r1, r1, r5
+000028  1b85f100  andi r10, r3, 15
+00002c  9b144000  ori r9, zero, 4
+000030  3fb04100  blt.s r3, r4, 12
+000034  1f45f5ff  addli r10, r10, -4
+000038  9b146000  ori r9, zero, 6
+00003c  0b059538  mod.u r10, r10, r9
+000040  1f7a1100  addli r20, r2, 15
+000044  9b454a00  srli r11, r20, 4
+000048  1bc64100  srli r12, r3, 4
+00004c  8b86b030  div.u r13, r1, r11
+000050  1f160600  addli r12, r12, 1
+000054  8b00d620  mul.u r1, r12, r13
+000058  8b805010  add.u r1, r1, r5
+00005c  9f8e0000  addli sp, r1, 0
+000060  1bba6700  slli r20, r15, 6
+000064  978e4e01  and sp, sp, r20
+000068  bb003000  bneq zero, r3, 32
+00006c  80520202  load_param_i r5, 4
+000070  00d20102  load_param_i r4, 3
+000074  ab0900f0  lui r19, 983040
+000078  9f093000  addli r19, zero, 24
+00007c  00200300  mfence { sm, gm }
+000080  ff090200  l_gm2sm r19, zero, 0(r[5:6])
+000084  00200300  mfence { sm, gm }
+000088  abfa0000  lui r21, 15
+00008c  9b9afaff  ori r21, r21, 4095
+000090  80a10a04  csr_set csr3, r21
+000094  00d00100  sync_group
+000098  57160000  jal 176
+00009c  00a00100  mfence { lm, sm }
+0000a0  00d00100  sync_group
+0000a4  fe8007e0  vmmov mr1, r15
+0000a8  fe900720  vmmovh mr1, r15
+0000ac  d71b0000  jal 220
+0000b0  fe8007e0  vmmov mr1, r15
+0000b4  fe900720  vmmovh mr1, r15
+0000b8  1f8a8eff  addli r20, sp, -64
+0000bc  4a100002  vloads_mask16.mz vr0{mr1}, 0(zero)
+0000c0  46000a02  vstore.mz vr0{mr1}, 0(r20)
+0000c4  00a00100  mfence { lm, sm }
+0000c8  00d00100  sync_group
+0000cc  97a01000  xor r1, r1, r1
+0000d0  1f8f0e00  addli r30, sp, 0
+0000d4  d71b0000  jal 220
+0000d8  00400000  trap
+0000dc  9f8e0edb  addli sp, sp, -4736
+0000e0  00510102  load_param_i r2, 2
+0000e4  80d00002  load_param_i r1, 1
+0000e8  1f8f8e24  addli r30, sp, 4672
+0000ec  9f028000  addli r5, zero, 64
+0000f0  2b0300fc  lui r6, 1032192
+0000f4  1f060003  addli r12, zero, 384
+0000f8  8b902020  mul.s r1, r1, r2
+0000fc  6b5b0f01  load.d r[23:24], 16(r30)
+000100  3385a22a  zext_int2long r[10:11], r5
+000104  9f223000  addli r5, zero, 26
+000108  3303632c  zext_int2long r[6:7], r6
+00010c  eb580f00  load.d r[18:19], 0(r30)
+000110  b381302a  zext_int2long r[3:4], r1
+000114  8f113b66  div.sl r[3:4], r[22:23], r[3:4]
+000118  8bb1a148  max.sl r[4:5], r[4:5], r[11:12]
+00011c  3305a628  zext_int2long r[10:11], r12
+000120  2bf6ffff  lui r12, 1048575
+000124  97b15102  sll.d r[4:5], r[4:5], r5
+000128  1b1606fc  ori r12, r12, 4032
+00012c  8ba16110  add.ul r[4:5], r[4:5], r[7:8]
+000130  33136628  sext_int2long r[6:7], r12
+000134  00560002  load_param_i r12, 0
+000138  97d15102  sra.d r[4:5], r[4:5], r5
+00013c  80320002  core_id r5
+000140  97816102  and.d r[4:5], r[4:5], r[7:8]
+000144  8b122650  fmac.s r5, r12, r2
+000148  8bb5a140  min.sl r[12:13], r[4:5], r[11:12]
+00014c  3381222a  zext_int2long r[2:3], r5
+000150  8bb72520  mul.sl r[16:17], r[12:13], r[3:4]
+000154  1331fb06  setle.sl r2, r[23:24], r[16:17]
+000158  bb600100  bneq r2, zero, 56
+00015c  9f210000  addli r3, zero, 2
+000160  0b32fb18  sub.sl r[5:6], r[23:24], r[16:17]
+000164  2b0500f0  lui r10, 983040
+000168  9f060fdc  addli r13, r30, -4608
+00016c  17b33702  sll.d r[7:8], r[16:17], r3
+000170  8bb14540  min.sl r[4:5], r[12:13], r[5:6]
+000174  8ba26810  add.ul r[6:7], r[18:19], r[7:8]
+000178  9bb32100  slli r7, r3, 2
+00017c  9793a300  or r7, r7, r10
+000180  ffa3d200  l_gm2lm r7, r13, 0(r[6:7])
+000184  00a00200  mfence { lm, gm }
+000188  37400100  beq r2, zero, 16
+00018c  5b620000  j 784
+000190  9f010000  addli r3, zero, 0
+000194  3b2c0100  bneq r2, zero, 776
+000198  8b90b020  mul.s r1, r1, r11
+00019c  9f02efdb  addli r5, r30, -4624
+0001a0  eb568f00  load.d r[14:15], 8(r30)
+0001a4  b390102a  sext_int2long r[1:2], r1
+0001a8  0ba31710  add.ul r[7:8], r[16:17], r[2:3]
+0001ac  73b01200  store.d r[2:3], 0(r5)
+0001b0  1f01ffdb  addli r2, r30, -4616
+0001b4  93306b06  setle.sl r1, r[23:24], r[7:8]
+0001b8  7330d100  store.d r[14:15], 0(r2)
+0001bc  9f060fdc  addli r13, r30, -4608
+0001c0  3ba70000  bneq r1, zero, 456
+0001c4  9f00dfdb  addli r1, r30, -4632
+0001c8  1f01cfdb  addli r2, r30, -4640
+0001cc  9f0a0000  addli r21, zero, 0
+0001d0  9f090000  addli r19, zero, 0
+0001d4  1f0e0fdc  addli r28, r30, -4608
+0001d8  1f3a0000  addli r20, zero, 3
+0001dc  1f07000c  addli r14, zero, 1536
+0001e0  1f1c0000  addli r24, zero, 1
+0001e4  9f2c1000  addli r25, zero, 10
+0001e8  1f7d0000  addli r26, zero, 7
+0001ec  9f060fdc  addli r13, r30, -4608
+0001f0  9f0d0000  addli r27, zero, 0
+0001f4  73b01001  store.d r[18:19], 0(r1)
+0001f8  7330b100  store.d r[12:13], 0(r2)
+0001fc  5b080000  j 64
+000200  9f05efdb  addli r11, r30, -4624
+000204  9f910a00  addli r3, r21, 1
+000208  270b0400  addli.d r[23:24], r[9:10], 0
+00020c  1f04cfdb  addli r8, r30, -4640
+000210  9f060fdc  addli r13, r30, -4608
+000214  a7870800  addli.d r[16:17], r[18:19], 0
+000218  1f0e0500  addli r28, r10, 0
+00021c  6bd20500  load.d r[5:6], 0(r11)
+000220  8b9a4139  mod.s r21, r3, r20
+000224  eb550400  load.d r[12:13], 0(r8)
+000228  0ba34810  add.ul r[7:8], r[18:19], r[5:6]
+00022c  9f810000  addli r3, r1, 0
+000230  93326305  setlt.sl r5, r[7:8], r[23:24]
+000234  8b96ea50  fmac.s r13, r21, r14
+000238  b7950200  beq r5, zero, 356
+00023c  a7080300  addli.d r[18:19], r[7:8], 0
+000240  9f900900  addli r1, r19, 1
+000244  9f03dfdb  addli r7, r30, -4632
+000248  27040b00  addli.d r[9:10], r[23:24], 0
+00024c  1f050fdc  addli r10, r30, -4608
+000250  8b994039  mod.s r19, r1, r20
+000254  8b321b19  sub.sl r[6:7], r[23:24], r[18:19]
+000258  9f200000  addli r1, zero, 2
+00025c  17bb1802  sll.d r[23:24], r[18:19], r1
+000260  8bb05540  min.sl r[2:3], r[12:13], r[6:7]
+000264  ab0200f0  lui r5, 983040
+000268  ebd50300  load.d r[12:13], 0(r7)
+00026c  1bb32000  slli r6, r1, 2
+000270  0bab6511  add.ul r[23:24], r[12:13], r[23:24]
+000274  0b95e950  fmac.s r10, r19, r14
+000278  97125300  or r5, r6, r5
+00027c  ff22ab00  l_gm2lm r5, r10, 0(r[23:24])
+000280  3f938101  blt.s r3, r24, 196
+000284  9f0b0000  addli r23, zero, 0
+000288  9f820600  addli r5, r13, 0
+00028c  1f038e00  addli r6, r28, 64
+000290  42100e02  vload_mask16.mz vr0{mr1}, 0(r28)
+000294  9f8b4b00  addli r23, r23, 32
+000298  1f0e0e01  addli r28, r28, 128
+00029c  c2100302  vload_mask16.mz vr1{mr1}, 0(r6)
+0002a0  2b030100  lui r6, 16
+0002a4  6a210302  vand.u.mz vr2{mr1}, r6, vr0
+0002a8  ea211302  vand.u.mz vr3{mr1}, r6, vr1
+0002ac  2b830000  lui r6, 8
+0002b0  72212002  veq.u.mz mr2{mr1}, zero, vr2
+0002b4  fe010140  vmnot mr3, mr2
+0002b8  72203002  veq.u.mz mr0{mr1}, zero, vr3
+0002bc  12200316  vadd.u.mh vr0{mr3}, r6, vr0
+0002c0  fe010040  vmnot mr3, mr0
+0002c4  92201316  vadd.u.mh vr1{mr3}, r6, vr1
+0002c8  2b730000  lui r6, 7
+0002cc  1b13f3ff  ori r6, r6, 4095
+0002d0  12200314  vadd.u.mh vr0{mr2}, r6, vr0
+0002d4  92201310  vadd.u.mh vr1{mr0}, r6, vr1
+0002d8  6ab10cc2  vsrl.s.mz vr2{mr1}, r25, vr0
+0002dc  eab11cc2  vsrl.s.mz vr3{mr1}, r25, vr1
+0002e0  2b03803f  lui r6, 260096
+0002e4  abf380ff  lui r7, 1046543
+0002e8  2bfb7f00  lui r22, 2047
+0002ec  1b1bfbff  ori r22, r22, 4095
+0002f0  6a212322  vor.u.mz vr2{mr1}, r6, vr2
+0002f4  ea213322  vor.u.mz vr3{mr1}, r6, vr3
+0002f8  9b9303f8  ori r7, r7, 3968
+0002fc  6a200b02  vand.u.mz vr0{mr1}, r22, vr0
+000300  ea201b02  vand.u.mz vr1{mr1}, r22, vr1
+000304  06110120  vfloat2fp16_l.rz vr2, vr2
+000308  6a200322  vor.u.mz vr0{mr1}, r6, vr0
+00030c  ea201322  vor.u.mz vr1{mr1}, r6, vr1
+000310  2b037f00  lui r6, 2032
+000314  06d10120  vfloat2fp16_h.rz vr2, vr3
+000318  1b13f307  ori r6, r6, 127
+00031c  06100020  vfloat2fp16_l.rz vr0, vr0
+000320  6a212da2  vsll.u.mz vr2{mr1}, r26, vr2
+000324  06d00020  vfloat2fp16_h.rz vr0, vr1
+000328  eaa02302  vand.u.mz vr1{mr1}, r7, vr2
+00032c  6a200ac2  vsrl.u.mz vr0{mr1}, r20, vr0
+000330  6a200302  vand.u.mz vr0{mr1}, r6, vr0
+000334  6e201022  vor.u.mz vr0{mr1}, vr0, vr1
+000338  46800202  vstore.mz vr0{mr1}, 0(r5)
+00033c  9f828200  addli r5, r5, 64
+000340  3fbd3bfe  blt.s r23, r3, -180
+000344  9f03ffdb  addli r7, r30, -4616
+000348  00a00000  mfence { lm }
+00034c  9bb11100  slli r3, r3, 1
+000350  2b0200f0  lui r4, 983040
+000354  97b28703  sll.d r[6:7], r[16:17], r24
+000358  9f9d0d00  addli r27, r27, 1
+00035c  ebd70300  load.d r[16:17], 0(r7)
+000360  97914100  or r3, r3, r4
+000364  8ba25710  add.ul r[6:7], r[16:17], r[6:7]
+000368  ffb1d200  s_lm2gm r3, r13, 0(r[6:7])
+00036c  9b81fd00  andi r3, r27, 15
+000370  3bca01fe  bneq r3, zero, -368
+000374  abf10000  lui r3, 15
+000378  9b91f1ff  ori r3, r3, 4095
+00037c  80a10104  csr_set csr3, r3
+000380  00d00100  sync_group
+000384  dbcfffff  j -388
+000388  1f050fdc  addli r10, r30, -4608
+00038c  a7880700  addli.d r[18:19], r[16:17], 0
+000390  9f100000  addli r1, zero, 1
+000394  bf831100  blt.s r3, r1, 224
+000398  5b020000  j 16
+00039c  9f810000  addli r3, r1, 0
+0003a0  9f100000  addli r1, zero, 1
+0003a4  3fc31100  blt.s r3, r1, 208
+0003a8  1f010000  addli r2, zero, 0
+0003ac  1f241000  addli r8, zero, 10
+0003b0  9f740000  addli r9, zero, 7
+0003b4  9f350000  addli r11, zero, 3
+0003b8  9f820600  addli r5, r13, 0
+0003bc  1f038500  addli r6, r10, 64
+0003c0  42100502  vload_mask16.mz vr0{mr1}, 0(r10)
+0003c4  1f014100  addli r2, r2, 32
+0003c8  1f050501  addli r10, r10, 128
+0003cc  c2100302  vload_mask16.mz vr1{mr1}, 0(r6)
+0003d0  2b030100  lui r6, 16
+0003d4  6a210302  vand.u.mz vr2{mr1}, r6, vr0
+0003d8  ea211302  vand.u.mz vr3{mr1}, r6, vr1
+0003dc  2b830000  lui r6, 8
+0003e0  72212002  veq.u.mz mr2{mr1}, zero, vr2
+0003e4  fe010140  vmnot mr3, mr2
+0003e8  72203002  veq.u.mz mr0{mr1}, zero, vr3
+0003ec  12200316  vadd.u.mh vr0{mr3}, r6, vr0
+0003f0  fe010040  vmnot mr3, mr0
+0003f4  92201316  vadd.u.mh vr1{mr3}, r6, vr1
+0003f8  2b730000  lui r6, 7
+0003fc  1b13f3ff  ori r6, r6, 4095
+000400  12200314  vadd.u.mh vr0{mr2}, r6, vr0
+000404  92201310  vadd.u.mh vr1{mr0}, r6, vr1
+000408  6a3104c2  vsrl.s.mz vr2{mr1}, r8, vr0
+00040c  ea3114c2  vsrl.s.mz vr3{mr1}, r8, vr1
+000410  2b03803f  lui r6, 260096
+000414  abf380ff  lui r7, 1046543
+000418  2bf67f00  lui r12, 2047
+00041c  1b16f6ff  ori r12, r12, 4095
+000420  6a212322  vor.u.mz vr2{mr1}, r6, vr2
+000424  ea213322  vor.u.mz vr3{mr1}, r6, vr3
+000428  9b9303f8  ori r7, r7, 3968
+00042c  6a200602  vand.u.mz vr0{mr1}, r12, vr0
+000430  ea201602  vand.u.mz vr1{mr1}, r12, vr1
+000434  06110120  vfloat2fp16_l.rz vr2, vr2
+000438  6a200322  vor.u.mz vr0{mr1}, r6, vr0
+00043c  ea201322  vor.u.mz vr1{mr1}, r6, vr1
+000440  2b037f00  lui r6, 2032
+000444  06d10120  vfloat2fp16_h.rz vr2, vr3
+000448  1b13f307  ori r6, r6, 127
+00044c  06100020  vfloat2fp16_l.rz vr0, vr0
+000450  6aa124a2  vsll.u.mz vr2{mr1}, r9, vr2
+000454  06d00020  vfloat2fp16_h.rz vr0, vr1
+000458  eaa02302  vand.u.mz vr1{mr1}, r7, vr2
+00045c  6aa005c2  vsrl.u.mz vr0{mr1}, r11, vr0
+000460  6a200302  vand.u.mz vr0{mr1}, r6, vr0
+000464  6e201022  vor.u.mz vr0{mr1}, vr0, vr1
+000468  46800202  vstore.mz vr0{mr1}, 0(r5)
+00046c  9f828200  addli r5, r5, 64
+000470  3f3d31fe  blt.s r2, r3, -180
+000474  9f03ffdb  addli r7, r30, -4616
+000478  00a00000  mfence { lm }
+00047c  9bb11100  slli r3, r3, 1
+000480  2b0200f0  lui r4, 983040
+000484  97b01802  sll.d r[2:3], r[18:19], r1
+000488  ebd20300  load.d r[6:7], 0(r7)
+00048c  97914100  or r3, r3, r4
+000490  8ba01210  add.ul r[2:3], r[6:7], r[2:3]
+000494  ffb1d000  s_lm2gm r3, r13, 0(r[2:3])
+000498  00a00200  mfence { lm, gm }
+00049c  9f0e8fdb  addli sp, r30, -4672
+0004a0  9f8e8e24  addli sp, sp, 4672
+0004a4  00a00300  mfence { lm, sm, gm }
+0004a8  00100000  exit
+0004ac  00100000  exit
+0004b0  00100000  exit
+0004b4  00100000  exit
+0004b8  00100000  exit
+0004bc  00100000  exit
+0004c0  00100000  exit
+0004c4  00100000  exit
+0004c8  00100000  exit
+0004cc  00100000  exit
+0004d0  00100000  exit
+0004d4  00100000  exit
+0004d8  00100000  exit
+0004dc  00100000  exit
+0004e0  00100000  exit
+0004e4  00100000  exit
+0004e8  00100000  exit
+0004ec  00100000  exit
+0004f0  00100000  exit
+0004f4  00100000  exit
+0004f8  00100000  exit
+0004fc  00100000  exit
+000500  00100000  exit
+000504  00100000  exit
+000508  00100000  exit
+00050c  00100000  exit
+000510  00100000  exit
+000514  00100000  exit
+000518  00100000  exit
+00051c  00100000  exit
+000520  00100000  exit
+000524  00100000  exit
+000528  00100000  exit
+00052c  00100000  exit
+000530  00100000  exit
+000534  00100000  exit
+000538  00100000  exit
+00053c  00100000  exit
+000540  00100000  exit
+000544  00100000  exit
+000548  00100000  exit
+00054c  00100000  exit
+000550  00100000  exit
+000554  00100000  exit
+000558  00100000  exit
+00055c  00100000  exit
+000560  00100000  exit
+000564  00100000  exit
+000568  00100000  exit
+00056c  00100000  exit
+000570  00100000  exit
+000574  00100000  exit
+000578  00100000  exit
+00057c  00100000  exit
+000580  00100000  exit
+000584  00100000  exit
+000588  00100000  exit
+00058c  00100000  exit
+000590  00100000  exit
+000594  00100000  exit
+000598  00100000  exit
+00059c  00100000  exit
+0005a0  00100000  exit
+0005a4  00100000  exit
+0005a8  00100000  exit
+0005ac  00100000  exit
+0005b0  00100000  exit
+0005b4  00100000  exit
+0005b8  00100000  exit
+0005bc  00100000  exit
+0005c0  00100000  exit
+0005c4  00100000  exit
+0005c8  00100000  exit
+0005cc  00100000  exit
+0005d0  00100000  exit
+0005d4  00100000  exit
+0005d8  00100000  exit
+0005dc  00100000  exit
+0005e0  00100000  exit
+0005e4  00100000  exit
+0005e8  00100000  exit
+0005ec  00100000  exit
+0005f0  00100000  exit
+0005f4  00100000  exit
+0005f8  00100000  exit
+0005fc  00100000  exit
+000600  00100000  exit
+000604  00100000  exit
+000608  00100000  exit
+00060c  00100000  exit
+000610  00100000  exit
+000614  00100000  exit
+000618  00100000  exit
+00061c  00100000  exit
+000620  00100000  exit
+000624  00100000  exit
+000628  00100000  exit
+00062c  00100000  exit
+000630  00100000  exit
+000634  00100000  exit
+000638  00100000  exit
+00063c  00100000  exit
+000640  00100000  exit
+000644  00100000  exit
+000648  00100000  exit
+00064c  00100000  exit
+000650  00100000  exit
+000654  00100000  exit
+000658  00100000  exit
+00065c  00100000  exit
+000660  00100000  exit
+000664  00100000  exit
+000668  00100000  exit
+00066c  00100000  exit
+000670  00100000  exit
+000674  00100000  exit
+000678  00100000  exit
+00067c  00100000  exit
+000680  00100000  exit
+000684  00100000  exit
+000688  00100000  exit
+00068c  00100000  exit
+000690  00100000  exit
+000694  00100000  exit
+000698  00100000  exit
+00069c  00100000  exit
+0006a0  00100000  exit
+0006a4  00100000  exit
+0006a8  00100000  exit
+0006ac  00100000  exit
+0006b0  00100000  exit
+0006b4  00100000  exit
+0006b8  00100000  exit
+0006bc  00100000  exit
+0006c0  00100000  exit
+0006c4  00100000  exit
+0006c8  00100000  exit
+0006cc  00100000  exit
+0006d0  00100000  exit
+0006d4  00100000  exit
+0006d8  00100000  exit
+0006dc  00100000  exit
+0006e0  00100000  exit
+0006e4  00100000  exit
+0006e8  00100000  exit
+0006ec  00000000  nop

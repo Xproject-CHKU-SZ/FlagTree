@@ -1,0 +1,134 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"name": "base", "tiles": {"xb": 8, "yb": 2048, "route": "tle"}, "checks": {"seed61": {"max_abs": 1.4901161193847656e-08, "passed": true}, "seed93": {"max_abs": 1.4901161193847656e-08, "passed": true}, "wide": {"max_abs": 2.384185791015625e-07, "passed": true}, "shift": {"max_abs": 1.4901161193847656e-08, "passed": true}, "special": {"max_abs": 7.450580596923828e-09, "passed": true}}, "code": {"exp.f.rn": 256, "div.f.rn": 256, "jal": 22, "max.f": 0, "vmax.f.mz": 15, "vadd.f.mz.rn": 47, "vmul.f.mz.rn": 0, "vextracti.f": 544, "vsrl.p": 0, "vload_mask16.mz": 90, "vstore_mask16.mz": 54, "mfence": 13}, "tree": null}
+CHECK {"name": "xb4", "tiles": {"xb": 4, "yb": 2048, "route": "tle"}, "checks": {"seed61": {"max_abs": 2.2351741790771484e-08, "passed": true}, "seed93": {"max_abs": 1.4901161193847656e-08, "passed": true}, "wide": {"max_abs": 2.384185791015625e-07, "passed": true}, "shift": {"max_abs": 1.4901161193847656e-08, "passed": true}, "special": {"max_abs": 1.1175870895385742e-08, "passed": true}}, "code": {"exp.f.rn": 128, "div.f.rn": 128, "jal": 30, "max.f": 0, "vmax.f.mz": 7, "vadd.f.mz.rn": 23, "vmul.f.mz.rn": 0, "vextracti.f": 288, "vsrl.p": 0, "vload_mask16.mz": 39, "vstore_mask16.mz": 18, "mfence": 13}, "tree": null}
+CHECK {"name": "xb16", "tiles": {"xb": 16, "yb": 2048, "route": "tle"}, "checks": {"seed61": {"max_abs": 1.4901161193847656e-08, "passed": true}, "seed93": {"max_abs": 1.4901161193847656e-08, "passed": true}, "wide": {"max_abs": 2.384185791015625e-07, "passed": true}, "shift": {"max_abs": 1.4901161193847656e-08, "passed": true}, "special": {"max_abs": 5.587935447692871e-09, "passed": true}}, "code": {"exp.f.rn": 512, "div.f.rn": 512, "jal": 18, "max.f": 0, "vmax.f.mz": 31, "vadd.f.mz.rn": 95, "vmul.f.mz.rn": 0, "vextracti.f": 1056, "vsrl.p": 0, "vload_mask16.mz": 185, "vstore_mask16.mz": 119, "mfence": 13}, "tree": null}
+/tmp/diag_xb32.py:329:0: error: per-core local memory 8192 bytes exceeds the 8000 byte budget (min(XTDK stack limit, 8KB physical))
+#shared = #ttg.swizzled_shared<{vec = 1, perPhase = 1, maxPhase = 1, order = [1, 0], CGALayout = [[1, 1], [1, 1], [1, 0]]}>
+#shared1 = #ttg.swizzled_shared<{vec = 1, perPhase = 1, maxPhase = 1, order = [0], CGALayout = [[1], [1], [0]]}>
+#smem = #ttg.shared_memory
+module {
+  tt.func public @_tle_row_softmax_diag_xb32(%arg0: !tt.tensordesc<tensor<32x2048xf32>>, %arg1: i32, %arg2: i32, %arg3: i64, %arg4: i64, %arg5: !tt.tensordesc<tensor<2048xf32>>, %arg6: i32, %arg7: i64, %arg8: !tt.tensordesc<tensor<32x2048xf32>>, %arg9: i32, %arg10: i32, %arg11: i64, %arg12: i64, %arg13: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c32_i32 = arith.constant 32 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c32_i32 : i32
+    %2 = ttg.local_alloc : () -> !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>
+    %3 = ttg.local_alloc : () -> !ttg.memdesc<2048xf32, #shared1, #smem, mutable>
+    %4 = tt.make_range {end = 32 : i32, start = 0 : i32} : tensor<32xi32>
+    %5 = tt.expand_dims %4 {axis = 1 : i32} : tensor<32xi32> -> tensor<32x1xi32>
+    %6 = tt.broadcast %5 : tensor<32x1xi32> -> tensor<32x2048xi32>
+    %7 = tt.make_range {end = 2048 : i32, start = 0 : i32} : tensor<2048xi32>
+    %8 = tt.expand_dims %7 {axis = 0 : i32} : tensor<2048xi32> -> tensor<1x2048xi32>
+    %9 = tt.broadcast %8 : tensor<1x2048xi32> -> tensor<32x2048xi32>
+    %10 = "triton_xpu.tle_local_ptr"(%2, %6, %9) <{operandSegmentSizes = array<i32: 1, 2, 0>}> : (!ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, tensor<32x2048xi32>, tensor<32x2048xi32>) -> tensor<32x2048x!tt.ptr<f32, 0>>
+    %11 = "triton_xpu.tle_local_ptr"(%3, %7) <{operandSegmentSizes = array<i32: 1, 1, 0>}> : (!ttg.memdesc<2048xf32, #shared1, #smem, mutable>, tensor<2048xi32>) -> tensor<2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_g2l"(%arg5, %c0_i32, %3, %arg7, %arg6) <{is_sync = true, operandSegmentSizes = array<i32: 1, 1, 1, 1, 1>}> : (!tt.tensordesc<tensor<2048xf32>>, i32, !ttg.memdesc<2048xf32, #shared1, #smem, mutable>, i64, i32) -> ()
+    %12 = tt.load %11 : tensor<2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_g2l"(%arg0, %1, %c0_i32, %2, %arg3, %arg4, %arg1, %arg2) <{is_sync = true, operandSegmentSizes = array<i32: 1, 2, 1, 2, 2>}> : (!tt.tensordesc<tensor<32x2048xf32>>, i32, i32, !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, i64, i64, i32, i32) -> ()
+    %13 = tt.load %10 : tensor<32x2048x!tt.ptr<f32, 0>>
+    %14 = tt.expand_dims %12 {axis = 0 : i32} : tensor<2048xf32> -> tensor<1x2048xf32>
+    %15 = tt.broadcast %14 : tensor<1x2048xf32> -> tensor<32x2048xf32>
+    %16 = arith.addf %13, %15 : tensor<32x2048xf32>
+    %17 = "tt.reduce"(%16) <{axis = 1 : i32}> ({
+    ^bb0(%arg14: f32, %arg15: f32):
+      %26 = arith.maxnumf %arg14, %arg15 : f32
+      tt.reduce.return %26 : f32
+    }) : (tensor<32x2048xf32>) -> tensor<32xf32>
+    %18 = tt.expand_dims %17 {axis = 1 : i32} : tensor<32xf32> -> tensor<32x1xf32>
+    %19 = tt.broadcast %18 : tensor<32x1xf32> -> tensor<32x2048xf32>
+    %20 = arith.subf %16, %19 : tensor<32x2048xf32>
+    %21 = math.exp %20 : tensor<32x2048xf32>
+    %22 = "tt.reduce"(%21) <{axis = 1 : i32}> ({
+    ^bb0(%arg14: f32, %arg15: f32):
+      %26 = arith.addf %arg14, %arg15 : f32
+      tt.reduce.return %26 : f32
+    }) : (tensor<32x2048xf32>) -> tensor<32xf32>
+    %23 = tt.expand_dims %22 {axis = 1 : i32} : tensor<32xf32> -> tensor<32x1xf32>
+    %24 = tt.broadcast %23 : tensor<32x1xf32> -> tensor<32x2048xf32>
+    %25 = arith.divf %21, %24 : tensor<32x2048xf32>
+    tt.store %10, %25 : tensor<32x2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_l2g"(%arg8, %1, %c0_i32, %2, %arg11, %arg12, %arg9, %arg10) <{is_sync = true, operandSegmentSizes = array<i32: 1, 2, 1, 2, 2>}> : (!tt.tensordesc<tensor<32x2048xf32>>, i32, i32, !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, i64, i64, i32, i32) -> ()
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, convert-triton-to-triton-xpu{buffer_size=128 core_num=64 is-tle=true xpu_arch=3}, tritonxpu-tle-core-tiling{core-num=64 dump-flag=false lm-buflen=128}, tritonxpu-tle-pipeline{enable=false lm-bytes-limit=8000 num-stages=1 wait-mask=1}, tritonxpu-tle-legalize, tritonxpu-tle-sm-alloc, tritonxpu-tle-dtype-convert, tritonxpu-normalize{compare-fusion=false dump-flag=false}, tritonxpu-vectorize{compare-fusion=false dump-flag=false per-op-decision=true tle-smem-vec=true tle-vec=true}, tritonxpu-tile-analysis{vrf-budget=24}, tritonxpu-cf-to-scf, tritonxpu-loop-grid, tritonxpu-reconcile-layouts, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, symbol-dce)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/tmp/diag_xb32.py:329:0: error: Failures have been detected while processing an MLIR pass pipeline
+/tmp/diag_xb32.py:329:0: note: Pipeline failed while executing [`TritonXPUTLEPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+REJECT {"name": "xb32", "error": "{'r': 16, 'c': 2048, 'warps': 4, 'us': 292.32}"}
+CHECK {"name": "rcp_xb16", "tiles": {"xb": 16, "yb": 2048, "route": "tle"}, "checks": {"seed61": {"max_abs": 1.4901161193847656e-08, "passed": true}, "seed93": {"max_abs": 1.4901161193847656e-08, "passed": true}, "wide": {"max_abs": 2.384185791015625e-07, "passed": true}, "shift": {"max_abs": 1.4901161193847656e-08, "passed": true}, "special": {"max_abs": 5.587935447692871e-09, "passed": true}}, "code": {"exp.f.rn": 512, "div.f.rn": 1, "jal": 18, "max.f": 0, "vmax.f.mz": 31, "vadd.f.mz.rn": 95, "vmul.f.mz.rn": 32, "vextracti.f": 544, "vsrl.p": 0, "vload_mask16.mz": 156, "vstore_mask16.mz": 89, "mfence": 13}, "tree": null}
+/tmp/diag_rcp_xb32.py:329:0: error: per-core local memory 8192 bytes exceeds the 8000 byte budget (min(XTDK stack limit, 8KB physical))
+#shared = #ttg.swizzled_shared<{vec = 1, perPhase = 1, maxPhase = 1, order = [1, 0], CGALayout = [[1, 1], [1, 1], [1, 0]]}>
+#shared1 = #ttg.swizzled_shared<{vec = 1, perPhase = 1, maxPhase = 1, order = [0], CGALayout = [[1], [1], [0]]}>
+#smem = #ttg.shared_memory
+module {
+  tt.func public @_tle_row_softmax_diag_rcp_xb32(%arg0: !tt.tensordesc<tensor<32x2048xf32>>, %arg1: i32, %arg2: i32, %arg3: i64, %arg4: i64, %arg5: !tt.tensordesc<tensor<2048xf32>>, %arg6: i32, %arg7: i64, %arg8: !tt.tensordesc<tensor<32x2048xf32>>, %arg9: i32, %arg10: i32, %arg11: i64, %arg12: i64, %arg13: i32) attributes {noinline = false} {
+    %cst = arith.constant dense<1.000000e+00> : tensor<32xf32>
+    %c0_i32 = arith.constant 0 : i32
+    %c32_i32 = arith.constant 32 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c32_i32 : i32
+    %2 = ttg.local_alloc : () -> !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>
+    %3 = ttg.local_alloc : () -> !ttg.memdesc<2048xf32, #shared1, #smem, mutable>
+    %4 = tt.make_range {end = 32 : i32, start = 0 : i32} : tensor<32xi32>
+    %5 = tt.expand_dims %4 {axis = 1 : i32} : tensor<32xi32> -> tensor<32x1xi32>
+    %6 = tt.broadcast %5 : tensor<32x1xi32> -> tensor<32x2048xi32>
+    %7 = tt.make_range {end = 2048 : i32, start = 0 : i32} : tensor<2048xi32>
+    %8 = tt.expand_dims %7 {axis = 0 : i32} : tensor<2048xi32> -> tensor<1x2048xi32>
+    %9 = tt.broadcast %8 : tensor<1x2048xi32> -> tensor<32x2048xi32>
+    %10 = "triton_xpu.tle_local_ptr"(%2, %6, %9) <{operandSegmentSizes = array<i32: 1, 2, 0>}> : (!ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, tensor<32x2048xi32>, tensor<32x2048xi32>) -> tensor<32x2048x!tt.ptr<f32, 0>>
+    %11 = "triton_xpu.tle_local_ptr"(%3, %7) <{operandSegmentSizes = array<i32: 1, 1, 0>}> : (!ttg.memdesc<2048xf32, #shared1, #smem, mutable>, tensor<2048xi32>) -> tensor<2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_g2l"(%arg5, %c0_i32, %3, %arg7, %arg6) <{is_sync = true, operandSegmentSizes = array<i32: 1, 1, 1, 1, 1>}> : (!tt.tensordesc<tensor<2048xf32>>, i32, !ttg.memdesc<2048xf32, #shared1, #smem, mutable>, i64, i32) -> ()
+    %12 = tt.load %11 : tensor<2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_g2l"(%arg0, %1, %c0_i32, %2, %arg3, %arg4, %arg1, %arg2) <{is_sync = true, operandSegmentSizes = array<i32: 1, 2, 1, 2, 2>}> : (!tt.tensordesc<tensor<32x2048xf32>>, i32, i32, !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, i64, i64, i32, i32) -> ()
+    %13 = tt.load %10 : tensor<32x2048x!tt.ptr<f32, 0>>
+    %14 = tt.expand_dims %12 {axis = 0 : i32} : tensor<2048xf32> -> tensor<1x2048xf32>
+    %15 = tt.broadcast %14 : tensor<1x2048xf32> -> tensor<32x2048xf32>
+    %16 = arith.addf %13, %15 : tensor<32x2048xf32>
+    %17 = "tt.reduce"(%16) <{axis = 1 : i32}> ({
+    ^bb0(%arg14: f32, %arg15: f32):
+      %27 = arith.maxnumf %arg14, %arg15 : f32
+      tt.reduce.return %27 : f32
+    }) : (tensor<32x2048xf32>) -> tensor<32xf32>
+    %18 = tt.expand_dims %17 {axis = 1 : i32} : tensor<32xf32> -> tensor<32x1xf32>
+    %19 = tt.broadcast %18 : tensor<32x1xf32> -> tensor<32x2048xf32>
+    %20 = arith.subf %16, %19 : tensor<32x2048xf32>
+    %21 = math.exp %20 : tensor<32x2048xf32>
+    %22 = "tt.reduce"(%21) <{axis = 1 : i32}> ({
+    ^bb0(%arg14: f32, %arg15: f32):
+      %27 = arith.addf %arg14, %arg15 : f32
+      tt.reduce.return %27 : f32
+    }) : (tensor<32x2048xf32>) -> tensor<32xf32>
+    %23 = tt.precise_divf %cst, %22 : tensor<32xf32>
+    %24 = tt.expand_dims %23 {axis = 1 : i32} : tensor<32xf32> -> tensor<32x1xf32>
+    %25 = tt.broadcast %24 : tensor<32x1xf32> -> tensor<32x2048xf32>
+    %26 = arith.mulf %21, %25 : tensor<32x2048xf32>
+    tt.store %10, %26 : tensor<32x2048x!tt.ptr<f32, 0>>
+    "triton_xpu.tle_copy_l2g"(%arg8, %1, %c0_i32, %2, %arg11, %arg12, %arg9, %arg10) <{is_sync = true, operandSegmentSizes = array<i32: 1, 2, 1, 2, 2>}> : (!tt.tensordesc<tensor<32x2048xf32>>, i32, i32, !ttg.memdesc<32x2048xf32, #shared, #smem, mutable>, i64, i64, i32, i32) -> ()
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, convert-triton-to-triton-xpu{buffer_size=128 core_num=64 is-tle=true xpu_arch=3}, tritonxpu-tle-core-tiling{core-num=64 dump-flag=false lm-buflen=128}, tritonxpu-tle-pipeline{enable=false lm-bytes-limit=8000 num-stages=1 wait-mask=1}, tritonxpu-tle-legalize, tritonxpu-tle-sm-alloc, tritonxpu-tle-dtype-convert, tritonxpu-normalize{compare-fusion=false dump-flag=false}, tritonxpu-vectorize{compare-fusion=false dump-flag=false per-op-decision=true tle-smem-vec=true tle-vec=true}, tritonxpu-tile-analysis{vrf-budget=24}, tritonxpu-cf-to-scf, tritonxpu-loop-grid, tritonxpu-reconcile-layouts, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, symbol-dce)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/tmp/diag_rcp_xb32.py:329:0: error: Failures have been detected while processing an MLIR pass pipeline
+/tmp/diag_rcp_xb32.py:329:0: note: Pipeline failed while executing [`TritonXPUTLEPipeline` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`
+REJECT {"name": "rcp_xb32", "error": "{'r': 16, 'c': 2048, 'warps': 4, 'us': 292.32, 'version': 'flat-red-v2'}"}
+EVENT {"median": {"eager_add_softmax": 75.90017318725586, "eager_softmax_preadded": 53.58525684901646, "eager_add": 22.763885770525253, "base": 181.04594094412667, "xb4": 255.0170625959124, "xb16": 156.22539520263672, "rcp_xb16": 113.99997302464077}, "samples": {"eager_add_softmax": [75.82685606820243, 75.90453965323312, 76.07805388314384, 76.30108424595424, 75.90017318725586, 76.45237105233329, 75.89868818010602, 75.80608640398297, 75.43760027204242, 75.83297320774624, 75.91308866228376], "eager_softmax_preadded": [53.59768526894705, 53.727143151419504, 53.19245883396694, 53.314341817583355, 53.61757278442383, 53.58525684901646, 53.14397130693708, 53.675600460597444, 53.581513677324565, 53.12411444527762, 53.89034407479422], "eager_add": [22.732514994485037, 23.322742325919016, 22.706913948059082, 22.744572162628174, 22.793686389923096, 22.698027747017996, 23.082571370261057, 23.418399265834264, 23.408656460898264, 22.628229004996165, 22.763885770525253], "base": [181.88934326171875, 180.74229104178292, 181.19471413748605, 181.04594094412667, 180.64734595162528, 181.80394853864397, 180.99922452654158, 181.38369151524134, 181.1859403337751, 180.93956538609095, 180.55383137294226], "xb4": [255.7541983468192, 254.9694878714425, 255.0170625959124, 255.0830023629325, 255.59128352573939, 254.7806876046317, 254.9896240234375, 255.15575408935547, 255.08101327078683, 254.85485621861048, 254.93818010602678], "xb16": [154.68951633998327, 155.23557662963867, 156.2359128679548, 156.31400517054968, 156.01763044084822, 156.85863494873047, 156.11283438546317, 156.22539520263672, 156.86749049595423, 155.7340349469866, 156.5549714224679], "rcp_xb16": [113.84297098432269, 115.0547981262207, 113.61165727887835, 113.50259780883789, 114.83526229858398, 113.81791659763881, 114.47779791695731, 113.9303411756243, 113.99997302464077, 115.1538576398577, 114.16374615260533]}}
+DISPATCH {"median": {"eager_add_softmax": 18.9996, "eager_softmax_preadded": 8.901542857142857, "eager_add": 10.4358, "base": 32.2302, "xb4": 31.82565714285714, "xb16": 32.05537142857143, "rcp_xb16": 31.906228571428574}, "samples": {"eager_add_softmax": [19.230742857142857, 18.90162857142857, 19.3142, 19.88417142857143, 19.383914285714287, 19.818485714285714, 18.9996, 18.707057142857142, 18.415342857142857, 18.6602, 18.842485714285715], "eager_softmax_preadded": [9.182400000000001, 9.0518, 8.323257142857143, 8.737257142857143, 8.939228571428572, 8.901542857142857, 8.272971428571427, 9.038942857142857, 8.866942857142858, 8.356971428571429, 9.264942857142858], "eager_add": [10.6438, 10.798057142857143, 10.4358, 10.098371428571427, 10.238657142857143, 10.044085714285714, 10.669485714285715, 10.912914285714285, 10.908085714285715, 10.256057142857143, 10.070371428571429], "base": [33.845885714285714, 32.2302, 33.88274285714286, 32.68162857142857, 32.199628571428576, 33.07562857142857, 32.55362857142857, 31.524485714285714, 32.01248571428571, 31.435657142857146, 31.35308571428571], "xb4": [34.68414285714285, 31.959085714285713, 31.82565714285714, 31.84337142857143, 33.887885714285716, 31.770200000000003, 31.457085714285714, 31.420514285714287, 31.844514285714286, 30.91165714285714, 31.197371428571426], "xb16": [32.58305714285714, 33.87988571428571, 31.76422857142857, 32.266485714285714, 31.97077142857143, 32.05537142857143, 32.12362857142857, 30.901085714285713, 32.206514285714285, 31.456228571428575, 31.976228571428567], "rcp_xb16": [32.195057142857145, 32.866485714285716, 32.81362857142857, 31.906228571428574, 32.0522, 31.70422857142857, 31.892485714285716, 30.663685714285716, 31.42794285714286, 32.39762857142857, 31.412514285714288]}}

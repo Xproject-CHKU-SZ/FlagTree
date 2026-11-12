@@ -1,0 +1,76 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>F06 v15 热调用检查与选路门槛复核</title><style>body{font:16px/1.65 system-ui,sans-serif;color:#18242a;max-width:1240px;margin:auto;padding:30px 22px 64px}h1{font-size:30px}h2{margin-top:32px;font-size:22px}p{max-width:100ch}div{overflow:auto}a{color:#09657a}table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:6px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid #dbe3e7}thead{background:#ecf4f5}</style><h1>F06 v15 热调用检查与选路门槛复核</h1>
+<p>P800 OAM 个人 Docker，沿用已发布的 v15 镜像。结论来自两项对照：对 117 项已有准入记录重新计算门槛，并在真机上对同一已编译模块分段计时。</p>
+<h2>选路只在冷启动执行</h2>
+<p>6 个算子/精度/尺寸组合取得 12 份独立冷编译后的有效测量。每份额外连续调用 512 次，候选枚举、编译、数值校验、双轮计时、最终排名的新增次数均为 0。热入口直接回放上次提交的计划。</p>
+<div><table><thead><tr><th>模板、精度、形状</th><th>卡</th><th>路由</th><th>首次入口 s</th><th>编译候选数</th><th>正确性验证次数</th><th>准入计时轮数</th><th>排名 ms</th></tr></thead><tbody>
+<tr><td>add_silu float32 512×1024</td><td>0</td><td>eager</td><td>13.18</td><td>4</td><td>4</td><td>2</td><td>0.30</td></tr>
+<tr><td>add_softmax float32 512×1024</td><td>0</td><td>cluster</td><td>10.61</td><td>3</td><td>3</td><td>2</td><td>0.37</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>1</td><td>native_mm</td><td>13.68</td><td>3</td><td>3</td><td>2</td><td>0.27</td></tr>
+<tr><td>mul_sum float32 64×1024</td><td>1</td><td>cluster</td><td>9.44</td><td>4</td><td>4</td><td>2</td><td>0.37</td></tr>
+<tr><td>add_gelu_exact float16 64×1024</td><td>2</td><td>sdnn</td><td>11.65</td><td>4</td><td>4</td><td>2</td><td>0.37</td></tr>
+<tr><td>add_layernorm_affine bfloat16 64×1024</td><td>3</td><td>eager</td><td>11.85</td><td>3</td><td>3</td><td>2</td><td>0.27</td></tr>
+<tr><td>add_silu float32 512×1024</td><td>4</td><td>eager</td><td>13.70</td><td>4</td><td>4</td><td>2</td><td>0.31</td></tr>
+<tr><td>add_softmax float32 512×1024</td><td>4</td><td>cluster</td><td>11.61</td><td>3</td><td>3</td><td>2</td><td>0.37</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>5</td><td>eager</td><td>14.31</td><td>3</td><td>3</td><td>2</td><td>0.28</td></tr>
+<tr><td>mul_sum float32 64×1024</td><td>5</td><td>cluster</td><td>9.17</td><td>4</td><td>4</td><td>2</td><td>0.39</td></tr>
+<tr><td>add_gelu_exact float16 64×1024</td><td>7</td><td>sdnn</td><td>11.63</td><td>4</td><td>4</td><td>2</td><td>0.36</td></tr>
+<tr><td>add_layernorm_affine bfloat16 64×1024</td><td>7</td><td>eager</td><td>12.70</td><td>3</td><td>3</td><td>2</td><td>0.29</td></tr>
+</tbody></table></div>
+<h2>用原始 117 项重新计算准入门槛</h2>
+<p>复现原版 117 项全部选路，再固定已满足正确性、资源与图验证的候选，只改计时门槛。70 项回退 eager 中，34 项没有进入双轮计时的融合候选，其余 36 项至少有一个融合候选参与了计时。</p>
+<div><table><thead><tr><th>准入规则</th><th>相对 v15 改路数</th></tr></thead><tbody>
+<tr><td>3%，两轮分别满足（现行）</td><td>0</td></tr>
+<tr><td>1%，两轮分别满足</td><td>2</td></tr>
+<tr><td>0%，两轮分别满足</td><td>2</td></tr>
+<tr><td>3%，仅两轮均值满足</td><td>0</td></tr>
+<tr><td>0%，仅两轮均值满足</td><td>2</td></tr>
+</tbody></table></div>
+<p>1% 和 0% 的改路用例完全相同。下表是独立冷编译后，在同一个已热身的正式入口替换已校验计划得到的同步中位数。原模块直接 eager 在同一组中交错测量。</p>
+<div><table><thead><tr><th>模板、精度、形状</th><th>卡</th><th>本次自然选路</th><th>门槛边界候选</th><th>候选入口 µs</th><th>包裹 eager µs</th><th>直接 eager µs</th></tr></thead><tbody>
+<tr><td>add_silu float32 512×1024</td><td>0</td><td>eager</td><td>cluster</td><td>56.77</td><td>50.81</td><td>40.61</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>1</td><td>native_mm</td><td>native_mm</td><td>128.56</td><td>135.50</td><td>115.04</td></tr>
+<tr><td>add_silu float32 512×1024</td><td>4</td><td>eager</td><td>cluster</td><td>56.22</td><td>51.26</td><td>41.29</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>5</td><td>eager</td><td>native_mm</td><td>128.68</td><td>129.62</td><td>109.36</td></tr>
+</tbody></table></div>
+<h2>每次命中执行的 31 个前置判断和完整守卫</h2>
+<p>31 是 Python 或表达式中的顶层条件数。命中后还会检查 Dynamo 缓存项有效性、构建当前的 frame locals 字典、执行完整 GuardManager.check。下表是纯 CPU 批量实测，按各独立进程的中位数再次取中位数，已扣除空函数及循环对照。分组计时不能直接相加。</p>
+<div><table><thead><tr><th>检查</th><th>项数</th><th>单次 CPU µs</th></tr></thead><tbody>
+<tr><td>调用参数与 Tensor 类型</td><td>3</td><td>0.35</td></tr>
+<tr><td>梯度、Dynamo 回调与 stance</td><td>5</td><td>0.28</td></tr>
+<tr><td>trace 与 profiler</td><td>4</td><td>0.26</td></tr>
+<tr><td>分派模式、变换与 tracing</td><td>5</td><td>0.59</td></tr>
+<tr><td>模块、方法与字节码身份</td><td>8</td><td>0.21</td></tr>
+<tr><td>子模块、局部和全局 hook</td><td>6</td><td>0.29</td></tr>
+<tr><td>整段前置判断</td><td>31</td><td>2.05</td></tr>
+<tr><td>缓存有效性、构造字典并检查完整守卫</td><td></td><td>2.15</td></tr>
+<tr><td>只查完整守卫（复用诊断输入字典）</td><td></td><td>1.79</td></tr>
+</tbody></table></div>
+<p>正式入口的移除对照保持相同模块、计划、张量、输出分配和设备同步。用同结构的完整命中分支作对照，正数为诊断组节省的端到端时间。最后一列保留全部判定与完整守卫，仅在固定输入上展开类型判断、绑定 C 查询函数并直接构建局部变量字典。各列为独立配对差，不能相加。</p>
+<div><table><thead><tr><th>模板、精度、形状</th><th>卡</th><th>省去前置检查 µs</th><th>省去 Dynamo 检查 µs</th><th>两者均省去 µs</th><th>保留判断的紧凑写法 µs</th></tr></thead><tbody>
+<tr><td>add_silu float32 512×1024</td><td>0</td><td>3.40</td><td>5.09</td><td>8.29</td><td>1.17</td></tr>
+<tr><td>add_softmax float32 512×1024</td><td>0</td><td>2.44</td><td>3.35</td><td>6.06</td><td>0.90</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>1</td><td>3.78</td><td>6.49</td><td>10.29</td><td>1.15</td></tr>
+<tr><td>mul_sum float32 64×1024</td><td>1</td><td>3.05</td><td>4.19</td><td>7.42</td><td>1.34</td></tr>
+<tr><td>add_gelu_exact float16 64×1024</td><td>2</td><td>2.83</td><td>4.48</td><td>7.21</td><td>0.71</td></tr>
+<tr><td>add_layernorm_affine bfloat16 64×1024</td><td>3</td><td>4.69</td><td>8.37</td><td>11.68</td><td>2.18</td></tr>
+<tr><td>add_silu float32 512×1024</td><td>4</td><td>3.41</td><td>5.37</td><td>8.64</td><td>1.11</td></tr>
+<tr><td>add_softmax float32 512×1024</td><td>4</td><td>2.72</td><td>3.17</td><td>5.83</td><td>0.99</td></tr>
+<tr><td>matmul_bias_silu float16 2048×2048</td><td>5</td><td>4.91</td><td>10.49</td><td>15.92</td><td>1.88</td></tr>
+<tr><td>mul_sum float32 64×1024</td><td>5</td><td>2.69</td><td>3.94</td><td>6.61</td><td>0.80</td></tr>
+<tr><td>add_gelu_exact float16 64×1024</td><td>7</td><td>2.82</td><td>3.88</td><td>7.02</td><td>0.82</td></tr>
+<tr><td>add_layernorm_affine bfloat16 64×1024</td><td>7</td><td>3.68</td><td>6.56</td><td>10.52</td><td>1.14</td></tr>
+</tbody></table></div>
+<p>改变形状或 self.kind 后，Dynamo 守卫拒绝原图，前置判断仍放行。给原模块注册 forward pre-hook 或注册全局 forward hook 后，前置判断要求回到正常调用，Dynamo 守卫对同一输入仍放行。由此可见两层都承担可观察的语义。</p>
+<h2>512×1024 Add + Softmax 的启动器重复检查</h2>
+<p>cluster 行 Softmax 已经过外层完整张量守卫，绑定启动器再次检查两份张量的布局，并再次查询 TorchDispatch 和 TorchFunction 模式。下面固定同一套已编译二进制，在每个区块内保持入口和启动器不变。除紧凑入口使用实际原版为基线外，各省略对照均相对逐条件相同的启动器复本。单位为同步端到端 µs。</p>
+<div><table><thead><tr><th>精度</th><th>卡</th><th>原版入口 µs</th><th>省去两项模式查询 µs</th><th>省去布局检查 µs</th><th>三项一起省去 µs</th><th>外层保留判断的紧凑写法 µs</th></tr></thead><tbody>
+<tr><td>float32</td><td>0</td><td>32.26</td><td>0.25</td><td>0.46</td><td>0.57</td><td>1.05</td></tr>
+<tr><td>float16</td><td>2</td><td>38.91</td><td>0.17</td><td>0.25</td><td>0.55</td><td>1.09</td></tr>
+<tr><td>float32</td><td>4</td><td>32.00</td><td>0.23</td><td>0.28</td><td>0.54</td><td>0.79</td></tr>
+<tr><td>float16</td><td>6</td><td>38.96</td><td>0.14</td><td>0.21</td><td>0.45</td><td>1.11</td></tr>
+</tbody></table></div>
+<p>相同步长和形状下，FP32 输入地址偏移 4 字节、FP16 偏移 2 字节时，Dynamo 守卫和内层 TensorGuards 均放行。启动器的 16 字节地址对齐检查仍有独立作用。改步长或形状时两层布局检查均拒绝。上述变体只在隔离进程内测固定输入；发布镜像、源码和正式准入规则均沿用 v15。</p>
+<h2>数据与源码</h2>
+<p>原矩阵来自 v15 的 117 个最终路由，当前只重测选路边界和调用路径。入口分解每个变体交错取 192 个样本，候选替换对照每个计划 160 个，启动器对照每个变体 40 块、每块 12 个有效样本。每张卡同一时刻只测一组，物理卡与冷启动失败都保存在数据中。共有 2 次冷启动未进入有效测量。</p>
+<p><a href="results.json">结构化结果与 117 项门槛复算</a> · <a href="evidence.tar.gz">脚本、逐次计时和守卫清单</a> · <a href="../f06-v15-sdnn-activation/F06-v15实际路由与加速比.html">v15 基线</a> · <a href="../../../python/triton/experimental/graph_fusion/_resource_entry.py">正式入口</a> · <a href="../../../python/triton/experimental/graph_fusion/_resource_autotune.py">选路器</a> · <a href="../../../python/triton/experimental/graph_fusion/_p800_reduce.py">行启动器</a></p>
+</html>

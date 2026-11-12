@@ -1,0 +1,355 @@
+000000  17200000  xor zero, zero, zero
+000004  1f420000  addli r4, zero, 4
+000008  1f041000  addli r8, zero, 8
+00000c  9f77f0ff  addli r15, zero, -1
+000010  80310002  core_id r3
+000014  00510102  load_param_i r2, 2
+000018  ab800000  lui r1, 8
+00001c  ab020000  lui r5, 0
+000020  9f820200  addli r5, r5, 0
+000024  8b805018  sub.u r1, r1, r5
+000028  1b85f100  andi r10, r3, 15
+00002c  9b144000  ori r9, zero, 4
+000030  3fb04100  blt.s r3, r4, 12
+000034  1f45f5ff  addli r10, r10, -4
+000038  9b146000  ori r9, zero, 6
+00003c  0b059538  mod.u r10, r10, r9
+000040  1f7a1100  addli r20, r2, 15
+000044  9b454a00  srli r11, r20, 4
+000048  1bc64100  srli r12, r3, 4
+00004c  8b86b030  div.u r13, r1, r11
+000050  1f160600  addli r12, r12, 1
+000054  8b00d620  mul.u r1, r12, r13
+000058  8b805010  add.u r1, r1, r5
+00005c  9f8e0000  addli sp, r1, 0
+000060  1bba6700  slli r20, r15, 6
+000064  978e4e01  and sp, sp, r20
+000068  bb003000  bneq zero, r3, 32
+00006c  80520202  load_param_i r5, 4
+000070  00d20102  load_param_i r4, 3
+000074  ab0900f0  lui r19, 983040
+000078  9f494000  addli r19, zero, 36
+00007c  00200300  mfence { sm, gm }
+000080  ff090200  l_gm2sm r19, zero, 0(r[5:6])
+000084  00200300  mfence { sm, gm }
+000088  abfa0000  lui r21, 15
+00008c  9b9afaff  ori r21, r21, 4095
+000090  80a10a04  csr_set csr3, r21
+000094  00d00100  sync_group
+000098  57160000  jal 176
+00009c  00a00100  mfence { lm, sm }
+0000a0  00d00100  sync_group
+0000a4  fe8007e0  vmmov mr1, r15
+0000a8  fe900720  vmmovh mr1, r15
+0000ac  d71b0000  jal 220
+0000b0  fe8007e0  vmmov mr1, r15
+0000b4  fe900720  vmmovh mr1, r15
+0000b8  1f8a8eff  addli r20, sp, -64
+0000bc  4a100002  vloads_mask16.mz vr0{mr1}, 0(zero)
+0000c0  46000a02  vstore.mz vr0{mr1}, 0(r20)
+0000c4  00a00100  mfence { lm, sm }
+0000c8  00d00100  sync_group
+0000cc  97a01000  xor r1, r1, r1
+0000d0  1f8f0e00  addli r30, sp, 0
+0000d4  d71b0000  jal 220
+0000d8  00400000  trap
+0000dc  9f8e0efd  addli sp, sp, -384
+0000e0  1f8f8e02  addli r30, sp, 320
+0000e4  e3463f00  loadli.w r13,  28(r30)
+0000e8  e3013f00  loadli.w r3,  24(r30)
+0000ec  e3054f00  loadli.w r11,  32(r30)
+0000f0  0b923620  mul.s r4, r13, r3
+0000f4  80510002  load_param_i r3, 0
+0000f8  0b12b220  mul.s r4, r4, r11
+0000fc  4b093200  ble.s r4, r3, 576
+000100  00360002  core_id r12
+000104  2b29373d  lui r18, 250738
+000108  ab494c3f  lui r19, 259268
+00010c  80d20002  load_param_i r5, 1
+000110  9f078000  addli r15, zero, 64
+000114  9f088ffe  addli r17, r30, -192
+000118  2b0b803f  lui r22, 260096
+00011c  1b364600  slli r12, r12, 4
+000120  1b193971  ori r18, r18, 1811
+000124  9b99a922  ori r19, r19, 554
+000128  e74f5ffc  storeli.w r5, -260(r30)
+00012c  0b9cb130  div.s r24, r3, r11
+000130  9f020008  addli r5, zero, 1024
+000134  9f240000  addli r9, zero, 2
+000138  2b0d00f0  lui r26, 983040
+00013c  ab0d00f0  lui r27, 983040
+000140  179da701  or r26, r15, r26
+000144  979db701  or r27, r15, r27
+000148  0b1cdc30  div.s r24, r24, r13
+00014c  1b3cac00  slli r24, r24, 10
+000150  0b1ccc10  add.s r24, r24, r12
+000154  8b1c5c38  mod.s r25, r24, r5
+000158  b3120c28  sext_int2long r[6:7], r24
+00015c  b3930c28  sext_int2long r[8:9], r25
+000160  17bc9202  sll.d r[25:26], r[6:7], r9
+000164  97b29302  sll.d r[6:7], r[8:9], r9
+000168  eb530f00  load.d r[8:9], 0(r30)
+00016c  eb548f00  load.d r[10:11], 8(r30)
+000170  8ba25410  add.ul r[6:7], r[10:11], r[6:7]
+000174  8ba38311  add.ul r[8:9], r[8:9], r[25:26]
+000178  9f040ffe  addli r9, r30, -256
+00017c  7fad9300  l_gm2lm r26, r9, 0(r[8:9])
+000180  ffad1201  l_gm2lm r27, r17, 0(r[6:7])
+000184  ab020040  lui r5, 262144
+000188  00a00000  mfence { lm }
+00018c  42100fe2  vload_mask16.mz vr0{mr1}, 1792(r30)
+000190  c2108fe2  vload_mask16.mz vr1{mr1}, 1856(r30)
+000194  16101002  vadd.f.mz.rn vr0{mr1}, vr0, vr1
+000198  8a100902  vmul.f.mz.rn vr1{mr1}, r18, vr0
+00019c  8e900002  vmul.f.mz.rn vr1{mr1}, vr1, vr0
+0001a0  12310002  vadd.s.mz vr2{mr1}, zero, vr0
+0001a4  26912002  vmac.f.mz.rn vr2{mr1}, vr1, vr2
+0001a8  8a902902  vmul.f.mz.rn vr1{mr1}, r19, vr2
+0001ac  8a901202  vmul.f.mz.rn vr1{mr1}, r5, vr1
+0001b0  9f028fff  addli r5, r30, -64
+0001b4  9a101002  vsub.f.mz.rn vr1{mr1}, zero, vr1
+0001b8  46901202  vstore_mask16.mz vr1{mr1}, 0(r5)
+0001bc  00a00000  mfence { lm }
+0001c0  e3028fff  loadli.w r5,  -64(r30)
+0001c4  63438fff  loadli.w r6,  -60(r30)
+0001c8  e30d9fff  loadli.w r27,  -56(r30)
+0001cc  6344afff  loadli.w r8,  -44(r30)
+0001d0  e344bfff  loadli.w r9,  -36(r30)
+0001d4  634d9fff  loadli.w r26,  -52(r30)
+0001d8  e303afff  loadli.w r7,  -48(r30)
+0001dc  630ebfff  loadli.w r28,  -40(r30)
+0001e0  6305cfff  loadli.w r10,  -32(r30)
+0001e4  e340dfff  loadli.w r1,  -20(r30)
+0001e8  6301efff  loadli.w r2,  -16(r30)
+0001ec  6347cfff  loadli.w r14,  -28(r30)
+0001f0  6308dfff  loadli.w r16,  -24(r30)
+0001f4  634aefff  loadli.w r20,  -12(r30)
+0001f8  e30affff  loadli.w r21,  -8(r30)
+0001fc  e34bffff  loadli.w r23,  -4(r30)
+000200  8f820200  exp.f.rn r5, r5
+000204  0f030300  exp.f.rn r6, r6
+000208  8f8d0d00  exp.f.rn r27, r27
+00020c  0f040400  exp.f.rn r8, r8
+000210  8f840400  exp.f.rn r9, r9
+000214  0f050500  exp.f.rn r10, r10
+000218  8f800000  exp.f.rn r1, r1
+00021c  0f010100  exp.f.rn r2, r2
+000220  8be26211  add.f.rn r5, r5, r22
+000224  0b636311  add.f.rn r6, r6, r22
+000228  8be46411  add.f.rn r9, r9, r22
+00022c  0b646411  add.f.rn r8, r8, r22
+000230  0b656511  add.f.rn r10, r10, r22
+000234  8be06011  add.f.rn r1, r1, r22
+000238  0b616111  add.f.rn r2, r2, r22
+00023c  8f025b18  div.f.rn r5, r22, r5
+000240  0f036b18  div.f.rn r6, r22, r6
+000244  8f049b18  div.f.rn r9, r22, r9
+000248  0f05ab18  div.f.rn r10, r22, r10
+00024c  8f001b18  div.f.rn r1, r22, r1
+000250  0f012b18  div.f.rn r2, r22, r2
+000254  67085ffe  storeli.w r5, -128(r30)
+000258  8f020d00  exp.f.rn r5, r26
+00025c  0f0d0e00  exp.f.rn r26, r28
+000260  67486ffe  storeli.w r6, -124(r30)
+000264  0f830300  exp.f.rn r6, r7
+000268  8be36d11  add.f.rn r7, r27, r22
+00026c  e7499ffe  storeli.w r9, -100(r30)
+000270  8f840b00  exp.f.rn r9, r23
+000274  e74a1ffe  storeli.w r1, -84(r30)
+000278  670aaffe  storeli.w r10, -96(r30)
+00027c  670b2ffe  storeli.w r2, -80(r30)
+000280  9f000fff  addli r1, r30, -128
+000284  8f037b18  div.f.rn r7, r22, r7
+000288  8be26211  add.f.rn r5, r5, r22
+00028c  0b636311  add.f.rn r6, r6, r22
+000290  0b6d6d11  add.f.rn r26, r26, r22
+000294  8be46411  add.f.rn r9, r9, r22
+000298  8f025b18  div.f.rn r5, r22, r5
+00029c  e7087ffe  storeli.w r7, -120(r30)
+0002a0  8f038b18  div.f.rn r7, r22, r8
+0002a4  0f036b18  div.f.rn r6, r22, r6
+0002a8  0f04ab19  div.f.rn r8, r22, r26
+0002ac  8f049b18  div.f.rn r9, r22, r9
+0002b0  e7485ffe  storeli.w r5, -116(r30)
+0002b4  8f020700  exp.f.rn r5, r14
+0002b8  67096ffe  storeli.w r6, -112(r30)
+0002bc  0f030800  exp.f.rn r6, r16
+0002c0  67497ffe  storeli.w r7, -108(r30)
+0002c4  8f030a00  exp.f.rn r7, r20
+0002c8  e7098ffe  storeli.w r8, -104(r30)
+0002cc  0f840a00  exp.f.rn r8, r21
+0002d0  e74b9ffe  storeli.w r9, -68(r30)
+0002d4  8be26211  add.f.rn r5, r5, r22
+0002d8  0b636311  add.f.rn r6, r6, r22
+0002dc  8be36311  add.f.rn r7, r7, r22
+0002e0  0b646411  add.f.rn r8, r8, r22
+0002e4  8f025b18  div.f.rn r5, r22, r5
+0002e8  0f036b18  div.f.rn r6, r22, r6
+0002ec  8f037b18  div.f.rn r7, r22, r7
+0002f0  0f048b18  div.f.rn r8, r22, r8
+0002f4  674a5ffe  storeli.w r5, -92(r30)
+0002f8  e70a6ffe  storeli.w r6, -88(r30)
+0002fc  674b7ffe  storeli.w r7, -76(r30)
+000300  e70b8ffe  storeli.w r8, -72(r30)
+000304  ab0200f0  lui r5, 983040
+000308  00a00000  mfence { lm }
+00030c  c2900002  vload_mask16.mz vr1{mr1}, 0(r1)
+000310  eb500f01  load.d r[2:3], 16(r30)
+000314  97925700  or r5, r15, r5
+000318  8ba08011  add.ul r[2:3], r[2:3], r[25:26]
+00031c  0e101002  vmul.f.mz.rn vr0{mr1}, vr0, vr1
+000320  46140fe2  vstore_mask16.mz vr0{mr1}, 1856(r30)
+000324  00a00000  mfence { lm }
+000328  ffb21001  s_lm2gm r5, r17, 0(r[2:3])
+00032c  e342fffd  loadli.w r5,  -260(r30)
+000330  00a00000  mfence { lm }
+000334  8b915110  add.s r3, r3, r5
+000338  bfd741fe  blt.s r3, r4, -524
+00033c  9f0e8ffd  addli sp, r30, -320
+000340  9f8e8e02  addli sp, sp, 320
+000344  00a00300  mfence { lm, sm, gm }
+000348  00100000  exit
+00034c  00100000  exit
+000350  00100000  exit
+000354  00100000  exit
+000358  00100000  exit
+00035c  00100000  exit
+000360  00100000  exit
+000364  00100000  exit
+000368  00100000  exit
+00036c  00100000  exit
+000370  00100000  exit
+000374  00100000  exit
+000378  00100000  exit
+00037c  00100000  exit
+000380  00100000  exit
+000384  00100000  exit
+000388  00100000  exit
+00038c  00100000  exit
+000390  00100000  exit
+000394  00100000  exit
+000398  00100000  exit
+00039c  00100000  exit
+0003a0  00100000  exit
+0003a4  00100000  exit
+0003a8  00100000  exit
+0003ac  00100000  exit
+0003b0  00100000  exit
+0003b4  00100000  exit
+0003b8  00100000  exit
+0003bc  00100000  exit
+0003c0  00100000  exit
+0003c4  00100000  exit
+0003c8  00100000  exit
+0003cc  00100000  exit
+0003d0  00100000  exit
+0003d4  00100000  exit
+0003d8  00100000  exit
+0003dc  00100000  exit
+0003e0  00100000  exit
+0003e4  00100000  exit
+0003e8  00100000  exit
+0003ec  00100000  exit
+0003f0  00100000  exit
+0003f4  00100000  exit
+0003f8  00100000  exit
+0003fc  00100000  exit
+000400  00100000  exit
+000404  00100000  exit
+000408  00100000  exit
+00040c  00100000  exit
+000410  00100000  exit
+000414  00100000  exit
+000418  00100000  exit
+00041c  00100000  exit
+000420  00100000  exit
+000424  00100000  exit
+000428  00100000  exit
+00042c  00100000  exit
+000430  00100000  exit
+000434  00100000  exit
+000438  00100000  exit
+00043c  00100000  exit
+000440  00100000  exit
+000444  00100000  exit
+000448  00100000  exit
+00044c  00100000  exit
+000450  00100000  exit
+000454  00100000  exit
+000458  00100000  exit
+00045c  00100000  exit
+000460  00100000  exit
+000464  00100000  exit
+000468  00100000  exit
+00046c  00100000  exit
+000470  00100000  exit
+000474  00100000  exit
+000478  00100000  exit
+00047c  00100000  exit
+000480  00100000  exit
+000484  00100000  exit
+000488  00100000  exit
+00048c  00100000  exit
+000490  00100000  exit
+000494  00100000  exit
+000498  00100000  exit
+00049c  00100000  exit
+0004a0  00100000  exit
+0004a4  00100000  exit
+0004a8  00100000  exit
+0004ac  00100000  exit
+0004b0  00100000  exit
+0004b4  00100000  exit
+0004b8  00100000  exit
+0004bc  00100000  exit
+0004c0  00100000  exit
+0004c4  00100000  exit
+0004c8  00100000  exit
+0004cc  00100000  exit
+0004d0  00100000  exit
+0004d4  00100000  exit
+0004d8  00100000  exit
+0004dc  00100000  exit
+0004e0  00100000  exit
+0004e4  00100000  exit
+0004e8  00100000  exit
+0004ec  00100000  exit
+0004f0  00100000  exit
+0004f4  00100000  exit
+0004f8  00100000  exit
+0004fc  00100000  exit
+000500  00100000  exit
+000504  00100000  exit
+000508  00100000  exit
+00050c  00100000  exit
+000510  00100000  exit
+000514  00100000  exit
+000518  00100000  exit
+00051c  00100000  exit
+000520  00100000  exit
+000524  00100000  exit
+000528  00100000  exit
+00052c  00100000  exit
+000530  00100000  exit
+000534  00100000  exit
+000538  00100000  exit
+00053c  00100000  exit
+000540  00100000  exit
+000544  00100000  exit
+000548  00100000  exit
+00054c  00100000  exit
+000550  00100000  exit
+000554  00100000  exit
+000558  00100000  exit
+00055c  00100000  exit
+000560  00100000  exit
+000564  00100000  exit
+000568  00100000  exit
+00056c  00100000  exit
+000570  00100000  exit
+000574  00100000  exit
+000578  00100000  exit
+00057c  00100000  exit
+000580  00100000  exit
+000584  00100000  exit
+000588  00100000  exit

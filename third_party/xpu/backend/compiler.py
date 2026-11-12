@@ -139,6 +139,10 @@ def _xtdk_lld_version(tool_dir: str) -> str:
 # [raise FrozenInstanceError]
 @dataclass(frozen=True)
 class XPUOptions:
+    kl3_softmax_shift: bool = False
+    # Dense, out-of-place add-softmax. The second GM pointer is read-only
+    # throughout the launch and does not alias an output.
+    kl3_row_softmax: bool = False
     resource_kind: str = "auto"
     arch: int = 3
     assert arch in [2, 3, 4, 5], "Invalid XPU ARCH"
@@ -315,6 +319,15 @@ def _record_effective_launch(metadata, opt):
 class XPUBackend(BaseBackend):
 
     def __init__(self, target: GPUTarget) -> None:
+        # The P800 Torch CUDA compatibility layer advertises SM86 to Inductor.
+        # Resolve that facade only when compiling with the active P800 driver.
+        if target == GPUTarget("cuda", 86, 32):
+            from triton.runtime import driver
+            from .driver import XPUDriver
+            if isinstance(driver.active, XPUDriver):
+                actual = driver.active.get_current_target()
+                if actual.arch == 3 and actual.warp_size == 1:
+                    target = actual
         super().__init__(target)
         assert isinstance(target.arch, int)
         self.binary_ext = "xpubin"
@@ -477,6 +490,7 @@ class XPUBackend(BaseBackend):
                 # arguments that xpuLaunchKernel passes at the end of kernel_params.
                 xpu.passes.ttxpuir.add_tritonxpu_cf_to_scf_pass(pm)
                 xpu.passes.ttxpuir.add_tritonxpu_loop_grid_pass(pm)
+            xpu.passes.ttxpuir.add_tritonxpu_reconcile_layouts_pass(pm)
             passes.common.add_canonicalizer(pm)
             passes.common.add_cse(pm)
             passes.common.add_symbol_dce(pm)
@@ -487,6 +501,10 @@ class XPUBackend(BaseBackend):
                     xpu.passes.ttsdnnir.add_triton_convert_type_pass(pm, opt.arch, 2)
                 else:
                     xpu.passes.ttsdnnir.add_triton_convert_type_pass(pm, opt.arch, TTSDNN_F_MATMUL_FAST_MODE)
+            if opt.arch == 3:
+                # The prebuilt rank-1 split-pointer lowering drops modulo.
+                # Capture its address contract before that information is lost.
+                xpu.passes.ttsdnnir.add_capture_rank1_wrap_pass(pm)
             xpu.passes.ttsdnnir.add_convert_triton_to_tritonsdnn_pass(pm, opt.arch, opt.load_tile_size)
             passes.ttir.add_loop_aware_cse(pm)
             xpu.passes.ttsdnnir.add_linalg_to_tritonsdnn_pass(pm, opt.arch)
@@ -525,6 +543,10 @@ class XPUBackend(BaseBackend):
                 xpu.passes.ttsdnnir.add_tritonsdnn_ew_act_table_pass(pm, res)
             else:
                 xpu.passes.ttsdnnir.add_tritonsdnn_ew_act_table_pass(pm, None)
+            if opt.arch == 3:
+                # Repair after fusion: earlier SDNN passes cannot consume the
+                # loop of DMA segments used to preserve all wrap boundaries.
+                xpu.passes.ttsdnnir.add_repair_rank1_wrap_pass(pm)
             xpu.passes.ttsdnnir.add_tritonsdnn_loop_grid_pass(pm)
             xpu.passes.ttsdnnir.add_tritonsdnn_hoist_loop_invariant_dma_pass(pm, opt.arch)
             # FlagTree: defer_event_coloring (arch5-only wiring) needs the
@@ -623,7 +645,18 @@ class XPUBackend(BaseBackend):
             pm.run(mod, 'make_ttxir')
         except Exception as e:
             from triton import OutOfResources
-            raise OutOfResources(0, 0, f"uni_sram {e}")
+            # Only a genuine source-buffer overflow is an OutOfResources. Wrapping
+            # every pipeline failure as "uni_sram" hid verifier/type errors behind
+            # a memory-limit message for months (e.g. the loop-carried encoding
+            # mismatch surfacing as 'arith.subf requires the same encoding').
+            # Keep OutOfResources for real allocation failures, and let anything
+            # else keep its own type/message so the pass name and location survive.
+            msg = str(e)
+            resource_markers = ('Buffer alloc failed', 'out of resource',
+                                'uni_sram', 'SRAM', 'local-memory budget')
+            if isinstance(e, OutOfResources) or any(m in msg for m in resource_markers):
+                raise OutOfResources(0, 0, f"uni_sram {e}") from e
+            raise
 
         return mod
 
@@ -642,6 +675,12 @@ class XPUBackend(BaseBackend):
                 "math.exp2": np.exp2,
                 "math.log2": np.log2,
                 "tt.gelu": np_gelu,
+                # Native SDNN LUT functions recognised by the prebuilt
+                # ttronsdnn-ew-act-table pass. Native sigmoid is
+                # 0.5*tanh(x/2)+0.5, so its table is the tanh one.
+                "tt.tanh": np.tanh,
+                "tt.sigmoid": np.tanh,
+                "tt.silu": lambda x: x / (1.0 + np.exp(-x)),
             }[fn]
             dtype = {0: np.float32, 1: np.float16}[dtype]
             table = [0.0] * size * 2
@@ -700,6 +739,10 @@ class XPUBackend(BaseBackend):
 
     @staticmethod
     def make_llir(mod, metadata, opt):
+        if opt.kl3_softmax_shift and opt.arch == 3:
+            mod.set_attr("flagtree.kl3_softmax_shift", ir.builder(mod.context).get_unit_attr())
+        if opt.kl3_row_softmax and opt.arch == 3:
+            mod.set_attr("flagtree.kl3_row_softmax", ir.builder(mod.context).get_unit_attr())
         XPUBackend.make_ewtable(mod, metadata, opt)
         # Also covers IR-entry pipelines that skip make_ttxir; idempotent when
         # make_ttxir already recorded the pair.

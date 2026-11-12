@@ -96,7 +96,7 @@ def _compilation_scope():
         mod = original(mod, metadata, options)
         if not _ACTIVE.get() or options.arch != 3:
             return mod
-        if not (options.is_sdnn or xpu.is_sdnn_kernel(mod)):
+        if not (getattr(options, 'resource_kind', None) == 'sdnn' or options.is_sdnn or xpu.is_sdnn_kernel(mod)):
             from ._p800_native_activation import bound_tanh_inputs
             with tempfile.TemporaryDirectory(prefix='cluster-tanh-', dir=os.environ['TRITON_CACHE_DIR']) as directory:
                 mod, records = bound_tanh_inputs(mod, directory, triton_bitcast=True)

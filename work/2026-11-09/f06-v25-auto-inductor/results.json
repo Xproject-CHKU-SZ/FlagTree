@@ -1,0 +1,784 @@
+{
+  "image": "zhaoweiming/f06-p800:auto-inductor-final-20261109-v25",
+  "image_id": "sha256:77958e4701222a9b07886844fd05a6a6ecba5f93516c1cd96c2d335d9e3506fa",
+  "base": "sha256:795671a32805a3a408e4b83bd39403934d76d8a9e4854c96fa2afa44034e5570",
+  "test_card": 6,
+  "torch": "2.9.0+cu129",
+  "device_probe": "TARGET GPU (8, 6) DeviceProperties(type='cuda', index=0, multi_processor_count=8, cc=86, major=8, regs_per_multiprocessor=65536, max_threads_per_multi_processor=2048, warp_size=32) GPUTarget(backend='cuda', arch=3, warp_size=1) {'max_shared_mem': 262144, 'max_num_regs': 0, 'multiprocessor_count': 12, 'warpSize': 1, 'sm_clock_rate': 0, 'mem_clock_rate': 0, 'mem_bus_width': 0, 'device_model': 3}",
+  "sdk_pre_grad_before_sha256": "91a859657a7a776e5a2f4321f98027d2fb005358c6dd1ffb979f4877d42d6325",
+  "software": {
+    "torch_inductor_patch": "7d27733189be46f6220212e04ec11f11d065cf4ad36a3a8941e941daa69b1313",
+    "template": "200e102b66c1a6d052cab6ec089734940d411a7d3abb610f770ceab5362dc782"
+  },
+  "tests": "55 passed",
+  "protocol": "Hot calls, synchronize before and after each invocation, 8 warmup + 64 alternating timed samples for each arm. Primary timing repeats run without LD_PRELOAD; machine bytes sampled in separate processes. Ratio=eager / native wall time.",
+  "before": {
+    "case": "plain",
+    "mode": "tanh",
+    "rows": 64,
+    "timings": {
+      "native": [
+        82.7385,
+        107.833
+      ],
+      "eager": [
+        30.4395,
+        36.949
+      ]
+    },
+    "cache": {
+      "fxgraph_cache_miss": 1,
+      "async_compile_cache_miss": 1,
+      "triton_bundler_save_kernel": 18,
+      "benchmarking.InductorBenchmarker.benchmark_gpu": 2
+    },
+    "machines": {
+      "native": [
+        {
+          "name": "triton_poi_fused_add_gelu_0",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 1448,
+          "sha256": "a6ad0323d8c58092bff5edc4548cecec5a5daae9f2245307ee8648363d601631"
+        }
+      ],
+      "eager": [
+        {
+          "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 3960,
+          "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+        },
+        {
+          "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 2112,
+          "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "shape": "64x1024",
+      "mode": "tanh",
+      "machine": {
+        "name": "triton_tem_fused_bias_gelu_0",
+        "resource": 0,
+        "clusters": 12,
+        "cores": 64,
+        "size": 4452,
+        "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1"
+      },
+      "baseline_machine_sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1",
+      "trace": {
+        "case": "plain",
+        "mode": "tanh",
+        "rows": 64,
+        "timings": {
+          "native": [
+            83.3535,
+            92.2735
+          ],
+          "eager": [
+            33.469,
+            40.339
+          ]
+        },
+        "cache": {
+          "async_compile_cache_miss": 2,
+          "fxgraph_cache_hit": 1
+        },
+        "machines": {
+          "native": [
+            {
+              "name": "triton_tem_fused_bias_gelu_0",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 4452,
+              "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1"
+            }
+          ],
+          "eager": [
+            {
+              "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3960,
+              "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+            },
+            {
+              "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 2112,
+              "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+            }
+          ]
+        }
+      },
+      "hot_us": {
+        "native": [
+          77.9235,
+          86.113
+        ],
+        "eager": [
+          32.564,
+          39.324
+        ]
+      },
+      "ratio": 0.456655789485908
+    },
+    {
+      "shape": "64x1024",
+      "mode": "exact",
+      "machine": {
+        "name": "triton_tem_fused_bias_gelu_0",
+        "resource": 0,
+        "clusters": 8,
+        "cores": 64,
+        "size": 13792,
+        "sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2"
+      },
+      "baseline_machine_sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2",
+      "trace": {
+        "case": "plain",
+        "mode": "none",
+        "rows": 64,
+        "timings": {
+          "native": [
+            80.7535,
+            89.313
+          ],
+          "eager": [
+            34.035,
+            41.388999999999996
+          ]
+        },
+        "cache": {
+          "async_compile_cache_miss": 2,
+          "fxgraph_cache_hit": 1
+        },
+        "machines": {
+          "native": [
+            {
+              "name": "triton_tem_fused_bias_gelu_0",
+              "resource": 0,
+              "clusters": 8,
+              "cores": 64,
+              "size": 13792,
+              "sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2"
+            }
+          ],
+          "eager": [
+            {
+              "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3960,
+              "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+            },
+            {
+              "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3264,
+              "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+            }
+          ]
+        }
+      },
+      "hot_us": {
+        "native": [
+          79.56299999999999,
+          87.74799999999999
+        ],
+        "eager": [
+          30.6845,
+          37.539
+        ]
+      },
+      "ratio": 0.4278046223275745
+    },
+    {
+      "shape": "512x1024",
+      "mode": "tanh",
+      "machine": {
+        "name": "triton_tem_fused_bias_gelu_0",
+        "resource": 0,
+        "clusters": 12,
+        "cores": 64,
+        "size": 14728,
+        "sha256": "538c5cbb959c908c288fedfd08721cf33ede3f2d2962a2d01000602d6d3edc0a"
+      },
+      "baseline_machine_sha256": "538c5cbb959c908c288fedfd08721cf33ede3f2d2962a2d01000602d6d3edc0a",
+      "trace": {
+        "case": "plain",
+        "mode": "tanh",
+        "rows": 512,
+        "timings": {
+          "native": [
+            84.73349999999999,
+            100.25800000000001
+          ],
+          "eager": [
+            31.755000000000003,
+            57.9035
+          ]
+        },
+        "cache": {
+          "async_compile_cache_miss": 2,
+          "fxgraph_cache_hit": 1
+        },
+        "machines": {
+          "native": [
+            {
+              "name": "triton_tem_fused_bias_gelu_0",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 14728,
+              "sha256": "538c5cbb959c908c288fedfd08721cf33ede3f2d2962a2d01000602d6d3edc0a"
+            }
+          ],
+          "eager": [
+            {
+              "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3960,
+              "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+            },
+            {
+              "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 2112,
+              "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+            }
+          ]
+        }
+      },
+      "hot_us": {
+        "native": [
+          78.244,
+          95.6935
+        ],
+        "eager": [
+          31.174,
+          61.929
+        ]
+      },
+      "ratio": 0.6471599429428331
+    },
+    {
+      "shape": "512x1024",
+      "mode": "exact",
+      "machine": {
+        "name": "triton_tem_fused_bias_gelu_0",
+        "resource": 0,
+        "clusters": 12,
+        "cores": 64,
+        "size": 13792,
+        "sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770"
+      },
+      "baseline_machine_sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770",
+      "trace": {
+        "case": "plain",
+        "mode": "none",
+        "rows": 512,
+        "timings": {
+          "native": [
+            83.90299999999999,
+            114.833
+          ],
+          "eager": [
+            33.655,
+            67.689
+          ]
+        },
+        "cache": {
+          "async_compile_cache_miss": 2,
+          "fxgraph_cache_hit": 1
+        },
+        "machines": {
+          "native": [
+            {
+              "name": "triton_tem_fused_bias_gelu_0",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 13792,
+              "sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770"
+            }
+          ],
+          "eager": [
+            {
+              "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3960,
+              "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+            },
+            {
+              "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+              "resource": 0,
+              "clusters": 12,
+              "cores": 64,
+              "size": 3264,
+              "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+            }
+          ]
+        }
+      },
+      "hot_us": {
+        "native": [
+          84.7285,
+          114.6625
+        ],
+        "eager": [
+          37.6195,
+          71.9085
+        ]
+      },
+      "ratio": 0.6271317998473782
+    }
+  ],
+  "blocks": [
+    {
+      "case": "block",
+      "mode": "tanh",
+      "rows": 64,
+      "timings": {
+        "native": [
+          126.4825,
+          149.687
+        ],
+        "eager": [
+          58.604,
+          66.194
+        ]
+      },
+      "cache": {
+        "fxgraph_cache_miss": 1,
+        "async_compile_cache_miss": 4,
+        "triton_bundler_save_kernel": 36
+      },
+      "machines": {
+        "native": [
+          {
+            "name": "triton_poi_fused_bias_gelu_neg_relu_0",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1196,
+            "sha256": "7ce550aab21d58f3bffa5def7c19193f1f9e750e40cddae0d2eb3c330e88e8c4"
+          },
+          {
+            "name": "triton_poi_fused_bias_gelu_neg_relu_1",
+            "resource": 0,
+            "clusters": 4,
+            "cores": 64,
+            "size": 1160,
+            "sha256": "4c38ac20211dd0f67d6ee165e1adca8f7b02d6017e41c2778e43a65e5d7c1a03"
+          },
+          {
+            "name": "triton_tem_fused_bias_gelu_neg_relu_2",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 4452,
+            "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1"
+          },
+          {
+            "name": "triton_poi_fused_neg_3",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1116,
+            "sha256": "70d2c97d5c5a39d4a08559c5458ec984c4752f223531b9215f70398aabc8c996"
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu38relu_fwdI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1648,
+            "sha256": "ad7e6f54c9eecd42225d8c62d198fc21ff81f26d364f9deae006cdac8b65364d"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu33negI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1240,
+            "sha256": "fb8da0ea500de2e826c406e04493142d7515e3dd56271c5234e584e36bb78c41"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 2112,
+            "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu33negI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1240,
+            "sha256": "fb8da0ea500de2e826c406e04493142d7515e3dd56271c5234e584e36bb78c41"
+          }
+        ]
+      }
+    },
+    {
+      "case": "block",
+      "mode": "none",
+      "rows": 512,
+      "timings": {
+        "native": [
+          129.787,
+          218.4
+        ],
+        "eager": [
+          61.759,
+          88.458
+        ]
+      },
+      "cache": {
+        "fxgraph_cache_miss": 1,
+        "async_compile_cache_miss": 4,
+        "triton_bundler_save_kernel": 54,
+        "benchmarking.InductorBenchmarker.benchmark_gpu": 4
+      },
+      "machines": {
+        "native": [
+          {
+            "name": "triton_poi_fused_bias_gelu_neg_relu_0",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 2864,
+            "sha256": "917b810bd7ba6c60056dec2691e251aa3e7aed36af9b4abf549007918c7abaa2"
+          },
+          {
+            "name": "triton_poi_fused_bias_gelu_neg_relu_1",
+            "resource": 0,
+            "clusters": 4,
+            "cores": 64,
+            "size": 1160,
+            "sha256": "4c38ac20211dd0f67d6ee165e1adca8f7b02d6017e41c2778e43a65e5d7c1a03"
+          },
+          {
+            "name": "triton_tem_fused_bias_gelu_neg_relu_2",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 13792,
+            "sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770"
+          },
+          {
+            "name": "triton_poi_fused_neg_3",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 2088,
+            "sha256": "9d552effb7b905ff4a316e2b1e401f88ccb5d426a63d67038cfaa9e85c45089b"
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu38relu_fwdI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1648,
+            "sha256": "ad7e6f54c9eecd42225d8c62d198fc21ff81f26d364f9deae006cdac8b65364d"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu33negI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1240,
+            "sha256": "fb8da0ea500de2e826c406e04493142d7515e3dd56271c5234e584e36bb78c41"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3264,
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu33negI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 1240,
+            "sha256": "fb8da0ea500de2e826c406e04493142d7515e3dd56271c5234e584e36bb78c41"
+          }
+        ]
+      }
+    },
+    {
+      "case": "chain",
+      "mode": "none",
+      "rows": 64,
+      "timings": {
+        "native": [
+          91.97800000000001,
+          101.913
+        ],
+        "eager": [
+          51.584,
+          58.464
+        ]
+      },
+      "cache": {
+        "fxgraph_cache_miss": 1,
+        "async_compile_cache_miss": 1,
+        "triton_bundler_save_kernel": 9
+      },
+      "machines": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "resource": 0,
+            "clusters": 8,
+            "cores": 64,
+            "size": 13792,
+            "sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2"
+          },
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "resource": 0,
+            "clusters": 8,
+            "cores": 64,
+            "size": 13792,
+            "sha256": "6a13255d1e8e27c9ff2a4c31e6f4abe572cf4c7c6d5f5116a4d1f29fd004b5e2"
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3264,
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3264,
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+          }
+        ]
+      }
+    }
+  ],
+  "defaults": [
+    {
+      "case": "plain",
+      "mode": "tanh",
+      "rows": 64,
+      "timings": {
+        "native": [
+          75.5235,
+          83.60300000000001
+        ],
+        "eager": [
+          30.954,
+          37.349000000000004
+        ]
+      },
+      "cache": {
+        "fxgraph_cache_miss": 1,
+        "async_compile_cache_miss": 1,
+        "triton_bundler_save_kernel": 9
+      },
+      "machines": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 4452,
+            "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1"
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 2112,
+            "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+          }
+        ]
+      }
+    },
+    {
+      "case": "plain",
+      "mode": "none",
+      "rows": 512,
+      "timings": {
+        "native": [
+          79.8285,
+          111.6275
+        ],
+        "eager": [
+          31.815,
+          66.958
+        ]
+      },
+      "cache": {
+        "fxgraph_cache_miss": 1,
+        "async_compile_cache_miss": 1,
+        "triton_bundler_save_kernel": 9
+      },
+      "machines": {
+        "native": [
+          {
+            "name": "triton_tem_fused_bias_gelu_0",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 13792,
+            "sha256": "9b835ce206a8c23fe8e751588646776e163555de957dfc73675b7834db37a770"
+          }
+        ],
+        "eager": [
+          {
+            "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3960,
+            "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+          },
+          {
+            "name": "_ZN14xpukernel_xpu321gelu_highprecision_nvI8bfloat16EEvPKT_PS2_l",
+            "resource": 0,
+            "clusters": 12,
+            "cores": 64,
+            "size": 3264,
+            "sha256": "2fa2f450a582fa9bbb4256d5ae9e843ea6d371e56ff45205bf1dc37a412d7d00"
+          }
+        ]
+      }
+    }
+  ],
+  "fresh_process_same_cache": {
+    "case": "plain",
+    "mode": "tanh",
+    "rows": 64,
+    "timings": {
+      "native": [
+        77.4485,
+        86.113
+      ],
+      "eager": [
+        30.644,
+        39.929
+      ]
+    },
+    "cache": {
+      "async_compile_cache_miss": 2,
+      "fxgraph_cache_hit": 1
+    },
+    "machines": {
+      "native": [
+        {
+          "name": "triton_tem_fused_bias_gelu_0",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 4452,
+          "sha256": "983c4f2e77485dc8ff5c975f53d36ea4ba94540a2f418a6cad1df91b748b4de1"
+        }
+      ],
+      "eager": [
+        {
+          "name": "_ZN14xpukernel_xpu316tensor_calc_k_nkILi0ELb1E8bfloat16fS1_S1_EEvPKT1_PKT4_PT3_T2_ll",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 3960,
+          "sha256": "9f53364797c98018530683066d08b26b5578451ee8c1a9a00cb508b6b3e7d435"
+        },
+        {
+          "name": "_ZN14xpukernel_xpu326gelu_highprecision_nv_tanhI8bfloat16EEvPKT_PS2_l",
+          "resource": 0,
+          "clusters": 12,
+          "cores": 64,
+          "size": 2112,
+          "sha256": "bffb7eeec2e9ab71091395a9f27632f38f203a511b02f8ddba9745d2c429af88"
+        }
+      ]
+    }
+  }
+}

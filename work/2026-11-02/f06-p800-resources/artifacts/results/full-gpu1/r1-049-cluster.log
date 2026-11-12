@@ -1,0 +1,56 @@
+imports
+XCCL /home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+build_inputs
+compile
+Traceback (most recent call last):
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 248, in <module>
+    main()
+  File "/home/zhaoweiming/f06-resources-20261102/resource_worker.py", line 128, in main
+    compiled, proof = codegen.compile_region(
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py", line 404, in compile_region
+    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 782, in compile_fx_inner
+    return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py", line 144, in debug_wrapper
+    inner_compiled_fn = compiler_fn(gm, example_inputs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 963, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1695, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 1420, in codegen_and_compile
+    graph.run(*example_inputs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 937, in run
+    return super().run(*args)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/fx/interpreter.py", line 174, in run
+    self.env[node] = self.run_node(node)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 1624, in run_node
+    result = super().run_node(n)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/fx/interpreter.py", line 256, in run_node
+    return getattr(self, n.op)(n.target, args, kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 1289, in call_function
+    raise LoweringException(e, target, args, kwargs).with_traceback(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py", line 1279, in call_function
+    out = lowerings[target](*args, **kwargs)  # type: ignore[index]
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/lowering.py", line 488, in wrapped
+    out = decomp_fn(*args, **kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/kernel/mm.py", line 866, in tuned_mm
+    return autotune_select_algorithm(
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 3443, in autotune_select_algorithm
+    return cache(*args, **kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py", line 287, in select_algorithm
+    return original_select(*bound.args, **bound.kwargs)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2640, in __call__
+    timings = do_autotuning(choices, precompile_fn)
+  File "/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/select_algorithm.py", line 2547, in do_autotuning
+    raise NoValidChoicesError
+torch._inductor.exc.LoweringException: NoValidChoicesError: 
+  target: aten.mm.default
+  args[0]: TensorBox(StorageBox(
+    InputBuffer(name='arg0_1', layout=FixedLayout('cuda:0', torch.float16, size=[32, 64], stride=[64, 1]))
+  ))
+  args[1]: TensorBox(StorageBox(
+    InputBuffer(name='arg1_1', layout=FixedLayout('cuda:0', torch.float16, size=[64, 256], stride=[256, 1]))
+  ))

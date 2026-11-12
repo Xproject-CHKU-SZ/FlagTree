@@ -45,11 +45,21 @@ def native_template_eligibility(device):
             raise RuntimeError("nested P800 template compilation is unsupported")
         token = _DEVICE.set(index)
 
-        def eligible(queried_index):
+        def eligible(index_or_device=0):
             requested = _DEVICE.get()
+            # Torch 2.5 passes an index; 2.9 passes layout.device. Preserve
+            # device locality for both forms, including another device type.
+            if isinstance(index_or_device, torch.device):
+                if index_or_device.type != device.type:
+                    return original(index_or_device)
+                queried_index = index_or_device.index
+                if queried_index is None:
+                    queried_index = torch.cuda.current_device()
+            else:
+                queried_index = index_or_device
             if requested is not None and queried_index == requested:
                 return True
-            return original(queried_index)
+            return original(index_or_device)
 
         utils.is_big_gpu = eligible
         try:

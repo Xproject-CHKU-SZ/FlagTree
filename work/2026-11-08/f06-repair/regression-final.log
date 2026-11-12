@@ -1,0 +1,42 @@
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "flat tail canary", "passed": true}
+CHECK {"test": "DSA rejects matrix", "passed": true}
+CHECK {"test": "DSA rejects mixed", "passed": true}
+CHECK {"test": "DSA rejects strided", "passed": true}
+CHECK {"test": "fp16 mulsum False", "passed": true, "dtype": "torch.float16", "route": "plain_reduce"}
+CHECK {"test": "fp16 mulsum True", "passed": true, "dtype": "torch.float16", "route": "plain_reduce"}
+EXIT bounds 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "SDNN modulo", "passed": true, "bad": 0}
+EXIT wrap 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "BF16 roundtrip", "passed": true, "values": [1.0, 1.5, 1.0, 3.140625]}
+EXIT backend 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "silu 65torch.float32", "passed": true, "count": 1}
+CHECK {"test": "silu specials 65torch.float32", "passed": true, "got": [Infinity, NaN, NaN, -0.008364611305296421], "ref": [Infinity, NaN, NaN, -0.008364018984138966]}
+CHECK {"test": "alpha reject", "passed": true}
+CHECK {"test": "silu 513torch.float32", "passed": true, "count": 1}
+CHECK {"test": "silu specials 513torch.float32", "passed": true, "got": [Infinity, NaN, NaN, 5.29529333114624], "ref": [Infinity, NaN, NaN, 5.2952961921691895]}
+CHECK {"test": "alpha reject", "passed": true}
+CHECK {"test": "silu 64torch.float16", "passed": true, "count": 1}
+CHECK {"test": "silu specials 64torch.float16", "passed": true, "got": [Infinity, NaN, NaN, 5.19921875], "ref": [Infinity, NaN, NaN, 5.19921875]}
+CHECK {"test": "alpha reject", "passed": true}
+EXIT matrix 0
+XCCL /root/miniconda/envs/python310_torch29_cuda/lib/python3.10/site-packages/torch_xmlir/xccl//so/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+CHECK {"test": "add_softmax fresh True", "passed": true, "tiles": {"xb": 8, "yb": 1024, "route": "tle"}}
+CHECK {"test": "add_softmax stable True", "passed": true, "error": 2.3283064365386963e-10}
+CHECK {"test": "add_layernorm fresh False", "passed": true, "tiles": {"r": 8, "c": 512, "warps": 4, "us": 21.12}}
+CHECK {"test": "add_layernorm stable False", "passed": true, "error": 7.152557373046875e-07}
+CHECK {"test": "add_layernorm fresh True", "passed": true, "tiles": {"xb": 16, "yb": 1024, "route": "tle_ln"}}
+CHECK {"test": "add_layernorm stable True", "passed": true, "error": 4.76837158203125e-07}
+CHECK {"test": "add_layernorm_affine fresh False", "passed": true, "tiles": {"r": 8, "c": 256, "warps": 4, "us": 21.56}}
+CHECK {"test": "add_layernorm_affine stable False", "passed": true, "error": 9.5367431640625e-07}
+CHECK {"test": "add_layernorm_affine fresh True", "passed": true, "tiles": {"xb": 16, "yb": 1024, "route": "tle_ln"}}
+CHECK {"test": "add_layernorm_affine stable True", "passed": true, "error": 9.5367431640625e-07}
+EXIT norm 0

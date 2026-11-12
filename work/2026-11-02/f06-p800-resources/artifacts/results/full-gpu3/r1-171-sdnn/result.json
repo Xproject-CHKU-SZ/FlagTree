@@ -1,0 +1,79 @@
+{
+  "status": "error",
+  "route": "sdnn",
+  "ordinal": 171,
+  "repeat": 1,
+  "timing": "graph",
+  "started_at": 1793617330.3680367,
+  "stage": "compile",
+  "torch": "2.9.0+cu128",
+  "triton": "3.6.0",
+  "target": {
+    "driver": "triton.backends.xpu.driver.XPUDriver",
+    "arch": 3,
+    "warp_size": 1,
+    "backend_alias": "cuda"
+  },
+  "device": "GPU",
+  "affinity": [
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "native_sha256": "e05ead1b599f3657b0fae3c3dc73209b2d8a54349cf107b8859df6724990e54a",
+  "cuda_compatibility_properties": {
+    "capability": [
+      8,
+      6
+    ],
+    "shared_memory_per_block_optin": 0,
+    "multiprocessor_count": 8
+  },
+  "case": {
+    "case_id": "large:add_layernorm_weight:float32:128x1024",
+    "kind": "add_layernorm_weight",
+    "dtype": "float32",
+    "M": 128,
+    "N": 1024,
+    "K": null,
+    "tolerance": {
+      "atol": 0.0003,
+      "rtol": 0.0003
+    },
+    "input_builder": "large_nonmatmul",
+    "ordinal": 171
+  },
+  "physical_device": 3,
+  "physical_process_proof": "\n==============XPUSMI LOG==============\n\nTimestamp                                 : Mon Nov  2 19:02:15 2026\nDriver Version                            : 5.0.21.47\nXPU-RT Version                            : 10.2\n\nAttached XPUs                             : 8\nXPU 00000000:2E:00.0\n    Processes\n        XPU instance ID                   : N/A\n        Compute instance ID               : N/A\n        Process ID                        : 3237721\n            Type                          : C\n            Name                          : /home/zhaoweiming/f06-resources-20261102/env/bin/python\n            Used XPU Memory               : 168 MiB\n\n",
+  "input_binding": {
+    "seed": 61,
+    "inputs": [
+      {
+        "shape": [
+          128,
+          1024
+        ],
+        "sha256": "1f4542dabdff87364e89a1b3ef368fc5200dbb29a6ddac8e1e200e89423aff87"
+      },
+      {
+        "shape": [
+          1024
+        ],
+        "sha256": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+      }
+    ],
+    "parameters": {
+      "weight": "993b3cda21f199d51ebbd24cd8b58bc0c602c03468423d68809af52ee5cb3124"
+    },
+    "graph": "graph():\n    %a : [num_users=1] = placeholder[target=a]\n    %b : [num_users=1] = placeholder[target=b]\n    %add : [num_users=1] = call_function[target=operator.add](args = (%a, %b), kwargs = {})\n    %weight : [num_users=1] = get_attr[target=weight]\n    %layer_norm : [num_users=1] = call_function[target=torch.nn.functional.layer_norm](args = (%add, (1024,)), kwargs = {weight: %weight, bias: None, eps: 0.001})\n    return layer_norm",
+    "note": "same historical operator definitions and dtype tolerances; larger inputs"
+  },
+  "resource_rejections": [],
+  "error": "RuntimeError: Command failed (1): ['/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin/xpu3-elfconv-triton', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.o', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.bin', '/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin']\nstdout: b''\nstderr: b'ld.lld: error: undefined symbol: xpu::math_rsqrt(float AS2*, float AS2*, int, int, int)\\n>>> referenced by ieee-multiply.mlir:50\\n>>>               /home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.o:(triton_unk_fused_0)\\n'",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/zhaoweiming/f06-resources-20261102/resource_worker.py\", line 128, in main\n    compiled, proof = codegen.compile_region(\n  File \"/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py\", line 404, in compile_region\n    compiled = compile_fx_inner(lowered, list(inputs), is_inference=True, cudagraphs=BoxedBool(False))\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 782, in compile_fx_inner\n    return wrap_compiler_debug(_compile_fx_inner, compiler_name=\"inductor\")(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_dynamo/repro/after_aot.py\", line 144, in debug_wrapper\n    inner_compiled_fn = compiler_fn(gm, example_inputs)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 963, in _compile_fx_inner\n    mb_compiled_graph = fx_codegen_and_compile(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 1695, in fx_codegen_and_compile\n    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/compile_fx.py\", line 1505, in codegen_and_compile\n    compiled_module = graph.compile_to_module()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2319, in compile_to_module\n    return self._compile_to_module()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2329, in _compile_to_module\n    mod = self._compile_to_module_lines(wrapper_code)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/graph.py\", line 2397, in _compile_to_module_lines\n    mod = PyCodeCache.load_by_key_path(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/codecache.py\", line 3548, in load_by_key_path\n    mod = _reload_python_module(key, path, set_sys_modules=in_toplevel)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/compile_tasks.py\", line 33, in _reload_python_module\n    exec(code, mod.__dict__, mod.__dict__)\n  File \"/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/cache/inductor/vo/cvo2bnbghbqhju7pdachi7xnpr4mmhf2qye4l5xoamr4qq7edmte.py\", line 53, in <module>\n    triton_unk_fused_0 = async_compile.triton('triton_unk_fused_0', '''\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/async_compile.py\", line 500, in triton\n    kernel.precompile(\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py\", line 448, in precompile\n    self._precompile_worker()\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py\", line 470, in _precompile_worker\n    compile_results.append(self._precompile_config(c))\n  File \"/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_resource_codegen.py\", line 189, in compile_for_resource\n    result = compile_config(*a, **kw)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/torch/_inductor/runtime/triton_heuristics.py\", line 778, in _precompile_config\n    binary = triton.compile(*compile_args, **compile_kwargs)\n  File \"/home/zhaoweiming/f06-resources-20261102/source/python/triton/experimental/graph_fusion/_p800_compiler.py\", line 65, in compile_for_actual_target\n    return original_compile(source, **kwargs)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 467, in compile\n    module = run_stage(ext, compile_ir, module)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 349, in run_stage\n    next_module = compile_ir(module, metadata)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 884, in <lambda>\n    stages[\"xpubin\"] = lambda src, metadata: self.make_xpubin(src, metadata, options)\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 844, in make_xpubin\n    out_bytes = run_cmd(cmd, env=llvm19_toolchain.llvm19_env(\"xpu\"))\n  File \"/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/compiler.py\", line 37, in run_cmd\n    raise RuntimeError(\nRuntimeError: Command failed (1): ['/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin/xpu3-elfconv-triton', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.o', '/home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.bin', '/home/zhaoweiming/f06-resources-20261102/env/lib/python3.10/site-packages/triton/backends/xpu/xpu3/bin']\nstdout: b''\nstderr: b'ld.lld: error: undefined symbol: xpu::math_rsqrt(float AS2*, float AS2*, int, int, int)\\n>>> referenced by ieee-multiply.mlir:50\\n>>>               /home/zhaoweiming/f06-resources-20261102/results/full-gpu3/tmp/tmp_i7lnn76/kernel.o:(triton_unk_fused_0)\\n'\n"
+}

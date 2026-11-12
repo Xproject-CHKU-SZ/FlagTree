@@ -1,0 +1,86 @@
+{
+  "image": "zhaoweiming/f06-p800:kl3-llvm-pass-20261109-v9",
+  "image_id": "sha256:4e3ba6da7a8269ff18d8559d40a202fabc2eeeff89b082ab54a7209f52e708c1",
+  "base": "sha256:c391fe3b7a4767a011389fb746d201a5a35d75c57e74e8ca5d3e53aa1b9a0c5f",
+  "hardware": "p800-152 card 4, 2048x2048 contiguous FP32 add+bias last-axis softmax",
+  "pass": "kl3-grouped-exp",
+  "llvm": "FlagTree LLVM 22 in-process, independently loaded by XTDK opt 19.1.7. Standalone LLVM 19 object emitted with XPU llc.",
+  "lib_sha256": "98cda81772869a066237f11f38a9bc3d50759a402799ea45bcd4a841f60b9831",
+  "plugin19_sha256": "e71fc5cdaa438679a01493664976530dcbf2317e3e10b23b4f00a985f61cedef",
+  "tests": {
+    "p800_exp_shapes": [
+      [
+        8,
+        128
+      ],
+      [
+        16,
+        2048
+      ]
+    ],
+    "modes": [
+      "default LLVM optimization",
+      "DISABLE_LLVM_OPT=1"
+    ],
+    "numerical_cases_per_route": 7,
+    "max_abs_finite_vs_eager": 2.384185791015625e-07,
+    "standalone_new_pm": [
+      "explicit pipeline twice plus verify",
+      "default<O3>",
+      "KL2 negative control",
+      "dependent calls, 5 independent packets, exp2, narrower packet and SDNN in FileCheck"
+    ]
+  },
+  "binaries": [
+    {
+      "route": "tle",
+      "sha": "347ee89b6861665a5d75f315a17328865f50a522a7f7f7136884db8b2e44d5f1",
+      "instructions": {
+        "vsrl.p": 8,
+        "vmax.f.mz": 35,
+        "vadd.f.mz.rn": 99,
+        "vextracti.f": 2,
+        "exp.f.rn": 512,
+        "l_gm2lm": 2,
+        "vor.u.mh": 0
+      },
+      "dma_before_grid": 1,
+      "dma_in_grid": 1
+    },
+    {
+      "route": "native",
+      "sha": "0376165026a8b3277f783733342e80223c824f7295a0ac91d7f24faad2c87b59",
+      "instructions": {
+        "vsrl.p": 8,
+        "vmax.f.mz": 11,
+        "vadd.f.mz.rn": 27,
+        "vextracti.f": 2,
+        "exp.f.rn": 128,
+        "l_gm2lm": 2,
+        "vor.u.mh": 0
+      },
+      "dma_before_grid": 1,
+      "dma_in_grid": 1
+    }
+  ],
+  "binaries_byte_identical_to_v8": true,
+  "groups_of_16_registers": {
+    "tle": 32,
+    "native": 8
+  },
+  "v9_device_us": {
+    "native": 93.68225187063217,
+    "tle": 64.74550068378448,
+    "eager": 76.55200362205505,
+    "eager_softmax": 54.91974949836731,
+    "eager_add": 24.737125262618065
+  },
+  "v8_device_us_reference": {
+    "native": 93.66674721240997,
+    "tle": 64.78224694728851,
+    "eager": 76.27175003290176,
+    "eager_softmax": 54.83825132250786,
+    "eager_add": 24.841999635100365
+  },
+  "timing": "B2 graph replay, 8 launches per sample, 2 warmup and 13 retained samples, device events; excludes host entry latency. See prior and current records for per-sample times."
+}

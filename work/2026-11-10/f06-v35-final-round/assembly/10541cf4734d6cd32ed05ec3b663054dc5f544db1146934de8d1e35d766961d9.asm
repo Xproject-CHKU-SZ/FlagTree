@@ -1,0 +1,421 @@
+000000  17200000  xor zero, zero, zero
+000004  1f420000  addli r4, zero, 4
+000008  1f041000  addli r8, zero, 8
+00000c  9f77f0ff  addli r15, zero, -1
+000010  80310002  core_id r3
+000014  00510102  load_param_i r2, 2
+000018  ab800000  lui r1, 8
+00001c  ab020000  lui r5, 0
+000020  9f820200  addli r5, r5, 0
+000024  8b805018  sub.u r1, r1, r5
+000028  0b864138  mod.u r12, r3, r4
+00002c  9f450000  addli r11, zero, 4
+000030  8b86b030  div.u r13, r1, r11
+000034  1f160600  addli r12, r12, 1
+000038  8b00d620  mul.u r1, r12, r13
+00003c  8b805010  add.u r1, r1, r5
+000040  9f8e0000  addli sp, r1, 0
+000044  1bba6700  slli r20, r15, 6
+000048  978e4e01  and sp, sp, r20
+00004c  cb003200  ble.s r4, r3, 32
+000050  80520202  load_param_i r5, 4
+000054  00d20102  load_param_i r4, 3
+000058  ab0900f0  lui r19, 983040
+00005c  9f495000  addli r19, zero, 44
+000060  1f8a8eff  addli r20, sp, -64
+000064  ff494201  bl_gm2lm r19, r20, 0(r[5:6])
+000068  00a00200  mfence { lm, gm }
+00006c  abfa0000  lui r21, 15
+000070  9b9afaff  ori r21, r21, 4095
+000074  80a10a04  csr_set csr3, r21
+000078  00d00100  sync_group
+00007c  fe8007e0  vmmov mr1, r15
+000080  fe900720  vmmovh mr1, r15
+000084  d7160000  jal 180
+000088  fe8007e0  vmmov mr1, r15
+00008c  fe900720  vmmovh mr1, r15
+000090  1f8a8eff  addli r20, sp, -64
+000094  4a100002  vloads_mask16.mz vr0{mr1}, 0(zero)
+000098  46000a02  vstore.mz vr0{mr1}, 0(r20)
+00009c  00a00100  mfence { lm, sm }
+0000a0  00d00100  sync_group
+0000a4  97a01000  xor r1, r1, r1
+0000a8  1f8f0e00  addli r30, sp, 0
+0000ac  d7160000  jal 180
+0000b0  00400000  trap
+0000b4  9f8e8eff  addli sp, sp, -64
+0000b8  1f8f0e00  addli r30, sp, 0
+0000bc  1f120000  addli r4, zero, 1
+0000c0  00310002  core_id r2
+0000c4  e3005f00  loadli.w r1,  40(r30)
+0000c8  e3414f00  loadli.w r3,  36(r30)
+0000cc  7d400200  xsignal_mode_cfg r4
+0000d0  37600100  beq r2, zero, 24
+0000d4  2bf2ffff  lui r4, 1048575
+0000d8  1b12f2ff  ori r4, r4, 4095
+0000dc  80210204  csr_set csr3, r4
+0000e0  00d00100  sync_group
+0000e4  5b0b0000  j 88
+0000e8  9f220000  addli r5, zero, 2
+0000ec  7d520200  uni_sram_cfg r4, r4
+0000f0  2bf3ffff  lui r6, 1048575
+0000f4  1d800200  lock zero, r5
+0000f8  0d020020  ew_cfg r4, zero, zero, 16
+0000fc  1b12f3ff  ori r4, r6, 4095
+000100  1d900200  unlock r5
+000104  9f320000  addli r5, zero, 3
+000108  80210204  csr_set csr3, r4
+00010c  1f520000  addli r4, zero, 5
+000110  00d00100  sync_group
+000114  7d000200  xsignal r4, 0
+000118  7d800200  xsignal r5, 0
+00011c  1f121000  addli r4, zero, 9
+000120  9f720000  addli r5, zero, 7
+000124  7d000200  xsignal r4, 0
+000128  7d800200  xsignal r5, 0
+00012c  1f321000  addli r4, zero, 11
+000130  9f621000  addli r5, zero, 14
+000134  7d000200  xsignal r4, 0
+000138  7d800200  xsignal r5, 0
+00013c  63024f00  loadli.w r4,  32(r30)
+000140  e3424f00  loadli.w r5,  36(r30)
+000144  80d30002  load_param_i r7, 1
+000148  63035f00  loadli.w r6,  40(r30)
+00014c  0b924220  mul.s r4, r5, r4
+000150  9f820300  addli r5, r7, 0
+000154  8b126250  fmac.s r5, r4, r6
+000158  0b136220  mul.s r6, r4, r6
+00015c  9ff2f2ff  addli r5, r5, -1
+000160  8b927230  div.s r5, r5, r7
+000164  80530002  load_param_i r7, 0
+000168  0b927220  mul.s r4, r5, r7
+00016c  8b927250  fmac.s r5, r5, r7
+000170  8b926240  min.s r5, r5, r6
+000174  4bda4200  ble.s r5, r4, 660
+000178  2b6a0000  lui r20, 6
+00017c  33930228  sext_int2long r[7:8], r5
+000180  33140228  sext_int2long r[9:10], r4
+000184  1f750000  addli r10, zero, 7
+000188  9f450000  addli r11, zero, 4
+00018c  1f160000  addli r12, zero, 1
+000190  1f320000  addli r4, zero, 3
+000194  9f070001  addli r15, zero, 128
+000198  1f088000  addli r16, zero, 64
+00019c  9f280000  addli r17, zero, 2
+0001a0  9f090002  addli r19, zero, 256
+0001a4  1f0c0004  addli r24, zero, 512
+0001a8  9f5b0000  addli r23, zero, 5
+0001ac  1f090040  addli r18, zero, 8192
+0001b0  ab820000  lui r5, 8
+0001b4  9f6c0000  addli r25, zero, 6
+0001b8  1b1d0a20  ori r26, r20, 512
+0001bc  db0f0000  j 124
+0001c0  9f561000  addli r13, zero, 13
+0001c4  7d100200  xwait r4, 0
+0001c8  1d800500  lock zero, r11
+0001cc  15060600  dma_cfg r12, r12, zero, 0
+0001d0  97b6dd02  sll.d r[14:15], r[28:29], r13
+0001d4  eb5d0f00  load.d r[28:29], 0(r30)
+0001d8  8ba6dd10  add.ul r[14:15], r[28:29], r[14:15]
+0001dc  15000704  dma_cfg zero, r14, zero, 2
+0001e0  1580f606  dma_cfg zero, r13, r15, 3
+0001e4  97b6ca02  sll.d r[14:15], r[22:23], r12
+0001e8  eb5a0f01  load.d r[22:23], 16(r30)
+0001ec  95870709  dma_cfg r15, r15, r16, 4
+0001f0  35000000  dma_run zero
+0001f4  1d900500  unlock r11
+0001f8  7d800800  xsignal r17, 0
+0001fc  8ba6da10  add.ul r[14:15], r[22:23], r[14:15]
+000200  9f3a1000  addli r21, zero, 11
+000204  7d900a00  xwait r21, 0
+000208  1d800500  lock zero, r11
+00020c  15000600  dma_cfg zero, r12, zero, 0
+000210  15000704  dma_cfg zero, r14, zero, 2
+000214  158a3607  dma_cfg r20, r13, r19, 3
+000218  9f261000  addli r13, zero, 10
+00021c  158cc908  dma_cfg r24, r19, r12, 4
+000220  35000000  dma_run zero
+000224  1d900500  unlock r11
+000228  7d800600  xsignal r13, 0
+00022c  27140400  addli.d r[9:10], r[9:10], 1
+000230  93366404  setlt.sl r13, r[9:10], r[7:8]
+000234  37d70600  beq r13, zero, 468
+000238  8b1a1430  div.s r21, r8, r1
+00023c  0b9b3a38  mod.s r22, r21, r3
+000240  8b9a3a30  div.s r21, r21, r3
+000244  b3160b28  sext_int2long r[14:15], r22
+000248  b39d0a28  sext_int2long r[28:29], r21
+00024c  97baa602  sll.d r[22:23], r[14:15], r10
+000250  bf912500  blt.s r11, r2, 100
+000254  b73dc1fe  beq r2, r12, -148
+000258  37251101  beq r2, r17, 328
+00025c  bb33b100  bneq r2, r11, 236
+000260  9f061000  addli r13, zero, 8
+000264  7d900500  xwait r11, 0
+000268  7d900600  xwait r13, 0
+00026c  9f661000  addli r13, zero, 14
+000270  7d900600  xwait r13, 0
+000274  1d000600  lock zero, r12
+000278  9b160a30  ori r13, r20, 768
+00027c  09080801  mm_cfg r16, r16, r16, 0
+000280  8988c504  mm_cfg r17, r11, r12, 2
+000284  290d000a  mm r26, zero, zero, 5
+000288  1d100600  unlock r12
+00028c  1d000600  lock zero, r12
+000290  09080801  mm_cfg r16, r16, r16, 0
+000294  8988c504  mm_cfg r17, r11, r12, 2
+000298  a906200b  mm r13, zero, r18, 5
+00029c  9f161000  addli r13, zero, 9
+0002a0  1d100600  unlock r12
+0002a4  7d800b00  xsignal r23, 0
+0002a8  7d800600  xsignal r13, 0
+0002ac  9f461000  addli r13, zero, 12
+0002b0  5befffff  j -136
+0002b4  37017101  beq r2, r23, 64
+0002b8  37649101  beq r2, r25, 280
+0002bc  3b32a100  bneq r2, r10, 140
+0002c0  9f161000  addli r13, zero, 9
+0002c4  7d900c00  xwait r25, 0
+0002c8  7d900600  xwait r13, 0
+0002cc  1d000000  lock zero, zero
+0002d0  9f061000  addli r13, zero, 8
+0002d4  01020000  ds_cfg r4, zero, 0
+0002d8  81070002  ds_cfg r15, zero, 1
+0002dc  0108001c  ds_cfg r16, zero, 14
+0002e0  8107001a  ds_cfg r15, zero, 13
+0002e4  41000905  shuffle_coa zero, r18, r16, 2
+0002e8  1d100000  unlock zero
+0002ec  7d000500  xsignal r10, 0
+0002f0  5be7ffff  j -200
+0002f4  9f261000  addli r13, zero, 10
+0002f8  9f0a0000  addli r21, zero, 0
+0002fc  7d900600  xwait r13, 0
+000300  9f461000  addli r13, zero, 12
+000304  7d900600  xwait r13, 0
+000308  1d800800  lock zero, r17
+00030c  ab06803f  lui r13, 260096
+000310  0d000002  ew_cfg zero, zero, zero, 1
+000314  8d960600  ewcoeff_cfg r13, r13, zero, 0
+000318  9f76f000  addli r13, zero, 127
+00031c  0d800604  ew_cfg zero, r13, zero, 2
+000320  0d060006  ew_cfg r12, zero, zero, 3
+000324  8b96aa11  add.s r13, r21, r26
+000328  9f8a0a04  addli r21, r21, 512
+00032c  ad864601  dsmadd r13, r13, r20, 0
+000330  bbdf5afe  bneq r21, r5, -12
+000334  9f361000  addli r13, zero, 11
+000338  1d900800  unlock r17
+00033c  7d800600  xsignal r13, 0
+000340  9f561000  addli r13, zero, 13
+000344  dbdcffff  j -284
+000348  bb1b01fe  bneq r2, zero, -284
+00034c  9f262000  addli r13, zero, 18
+000350  1f5c1000  addli r24, zero, 13
+000354  97ba1a03  sll.d r[22:23], r[22:23], r17
+000358  97b6dd02  sll.d r[14:15], r[28:29], r13
+00035c  eb5d8f01  load.d r[28:29], 24(r30)
+000360  7d100c00  xwait r24, 0
+000364  1d800b00  lock zero, r23
+000368  1f0c0004  addli r24, zero, 512
+00036c  15000000  dma_cfg zero, zero, zero, 0
+000370  15000602  dma_cfg zero, r12, zero, 1
+000374  8ba6dd10  add.ul r[14:15], r[28:29], r[14:15]
+000378  8ba65611  add.ul r[14:15], r[14:15], r[22:23]
+00037c  9f0a0004  addli r21, zero, 512
+000380  15070004  dma_cfg r14, zero, zero, 2
+000384  95065d07  dma_cfg r13, r26, r21, 3
+000388  9f060020  addli r13, zero, 4096
+00038c  95860a09  dma_cfg r13, r21, r16, 4
+000390  9f661000  addli r13, zero, 14
+000394  35000000  dma_run zero
+000398  1d900b00  unlock r23
+00039c  dbd1ffff  j -372
+0003a0  7d900800  xwait r17, 0
+0003a4  7d900b00  xwait r23, 0
+0003a8  1d000000  lock zero, zero
+0003ac  01020000  ds_cfg r4, zero, 0
+0003b0  01080002  ds_cfg r16, zero, 1
+0003b4  0108001c  ds_cfg r16, zero, 14
+0003b8  0108001a  ds_cfg r16, zero, 13
+0003bc  21100003  shuffle_batch zero, zero, r16, 1
+0003c0  1d100000  unlock zero
+0003c4  7d000200  xsignal r4, 0
+0003c8  7d800500  xsignal r11, 0
+0003cc  5bccffff  j -416
+0003d0  97b6ca02  sll.d r[14:15], r[22:23], r12
+0003d4  eb5a8f00  load.d r[22:23], 8(r30)
+0003d8  7d100500  xwait r10, 0
+0003dc  1d800500  lock zero, r11
+0003e0  15060600  dma_cfg r12, r12, zero, 0
+0003e4  8ba6da10  add.ul r[14:15], r[22:23], r[14:15]
+0003e8  15000704  dma_cfg zero, r14, zero, 2
+0003ec  15893607  dma_cfg r18, r13, r19, 3
+0003f0  9f060010  addli r13, zero, 2048
+0003f4  95890609  dma_cfg r19, r13, r16, 4
+0003f8  35000000  dma_run zero
+0003fc  1d900500  unlock r11
+000400  7d800c00  xsignal r25, 0
+000404  5bc5ffff  j -472
+000408  7d000000  xsignal zero, 0
+00040c  37300100  beq r2, zero, 12
+000410  00a00300  mfence { lm, sm, gm }
+000414  00100000  exit
+000418  9f200000  addli r1, zero, 2
+00041c  7d100000  xwait zero, 0
+000420  7d100000  xwait zero, 0
+000424  7d100000  xwait zero, 0
+000428  7d100000  xwait zero, 0
+00042c  7d100000  xwait zero, 0
+000430  7d100000  xwait zero, 0
+000434  7d100000  xwait zero, 0
+000438  7d100000  xwait zero, 0
+00043c  1d800000  lock zero, r1
+000440  0d000020  ew_cfg zero, zero, zero, 16
+000444  1d900000  unlock r1
+000448  7d400000  xsignal_mode_cfg zero
+00044c  00a00300  mfence { lm, sm, gm }
+000450  00100000  exit
+000454  00100000  exit
+000458  00100000  exit
+00045c  00100000  exit
+000460  00100000  exit
+000464  00100000  exit
+000468  00100000  exit
+00046c  00100000  exit
+000470  00100000  exit
+000474  00100000  exit
+000478  00100000  exit
+00047c  00100000  exit
+000480  00100000  exit
+000484  00100000  exit
+000488  00100000  exit
+00048c  00100000  exit
+000490  00100000  exit
+000494  00100000  exit
+000498  00100000  exit
+00049c  00100000  exit
+0004a0  00100000  exit
+0004a4  00100000  exit
+0004a8  00100000  exit
+0004ac  00100000  exit
+0004b0  00100000  exit
+0004b4  00100000  exit
+0004b8  00100000  exit
+0004bc  00100000  exit
+0004c0  00100000  exit
+0004c4  00100000  exit
+0004c8  00100000  exit
+0004cc  00100000  exit
+0004d0  00100000  exit
+0004d4  00100000  exit
+0004d8  00100000  exit
+0004dc  00100000  exit
+0004e0  00100000  exit
+0004e4  00100000  exit
+0004e8  00100000  exit
+0004ec  00100000  exit
+0004f0  00100000  exit
+0004f4  00100000  exit
+0004f8  00100000  exit
+0004fc  00100000  exit
+000500  00100000  exit
+000504  00100000  exit
+000508  00100000  exit
+00050c  00100000  exit
+000510  00100000  exit
+000514  00100000  exit
+000518  00100000  exit
+00051c  00100000  exit
+000520  00100000  exit
+000524  00100000  exit
+000528  00100000  exit
+00052c  00100000  exit
+000530  00100000  exit
+000534  00100000  exit
+000538  00100000  exit
+00053c  00100000  exit
+000540  00100000  exit
+000544  00100000  exit
+000548  00100000  exit
+00054c  00100000  exit
+000550  00100000  exit
+000554  00100000  exit
+000558  00100000  exit
+00055c  00100000  exit
+000560  00100000  exit
+000564  00100000  exit
+000568  00100000  exit
+00056c  00100000  exit
+000570  00100000  exit
+000574  00100000  exit
+000578  00100000  exit
+00057c  00100000  exit
+000580  00100000  exit
+000584  00100000  exit
+000588  00100000  exit
+00058c  00100000  exit
+000590  00100000  exit
+000594  00100000  exit
+000598  00100000  exit
+00059c  00100000  exit
+0005a0  00100000  exit
+0005a4  00100000  exit
+0005a8  00100000  exit
+0005ac  00100000  exit
+0005b0  00100000  exit
+0005b4  00100000  exit
+0005b8  00100000  exit
+0005bc  00100000  exit
+0005c0  00100000  exit
+0005c4  00100000  exit
+0005c8  00100000  exit
+0005cc  00100000  exit
+0005d0  00100000  exit
+0005d4  00100000  exit
+0005d8  00100000  exit
+0005dc  00100000  exit
+0005e0  00100000  exit
+0005e4  00100000  exit
+0005e8  00100000  exit
+0005ec  00100000  exit
+0005f0  00100000  exit
+0005f4  00100000  exit
+0005f8  00100000  exit
+0005fc  00100000  exit
+000600  00100000  exit
+000604  00100000  exit
+000608  00100000  exit
+00060c  00100000  exit
+000610  00100000  exit
+000614  00100000  exit
+000618  00100000  exit
+00061c  00100000  exit
+000620  00100000  exit
+000624  00100000  exit
+000628  00100000  exit
+00062c  00100000  exit
+000630  00100000  exit
+000634  00100000  exit
+000638  00100000  exit
+00063c  00100000  exit
+000640  00100000  exit
+000644  00100000  exit
+000648  00100000  exit
+00064c  00100000  exit
+000650  00100000  exit
+000654  00100000  exit
+000658  00100000  exit
+00065c  00100000  exit
+000660  00100000  exit
+000664  00100000  exit
+000668  00100000  exit
+00066c  00100000  exit
+000670  00100000  exit
+000674  00100000  exit
+000678  00100000  exit
+00067c  00100000  exit
+000680  00100000  exit
+000684  00100000  exit
+000688  00100000  exit
+00068c  00100000  exit
+000690  00100000  exit

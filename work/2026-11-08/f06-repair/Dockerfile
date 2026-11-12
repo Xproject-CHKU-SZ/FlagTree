@@ -1,0 +1,3 @@
+FROM zhaoweiming/f06-p800:20261114
+ENV XMLIR_ENABLE_MOCK_TORCH_COMPILE=false
+COPY rootfs/ /

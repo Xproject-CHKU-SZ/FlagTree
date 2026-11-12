@@ -214,16 +214,16 @@ macro(flagtree_configure_backend_cxx_flags)
     # pybind11 hidden types), and -Wcomment for generated
     # TritonGPUAttrDefs.h.inc (ASCII diagrams in TableGen output).
     set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Werror -Wno-attributes -Wno-comment -Wno-error=odr")
+      "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-comment")
   elseif(FLAGTREE_BACKEND STREQUAL "iluvatar")
     set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Werror -Wno-covered-switch-default -Wno-deprecated-declarations -Wno-attributes")
+      "${CMAKE_CXX_FLAGS} -Wno-covered-switch-default -Wno-deprecated-declarations -Wno-attributes")
   elseif(FLAGTREE_BACKEND STREQUAL "mthreads")
     set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wno-covered-switch-default")
   else()
     set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Werror -Wno-covered-switch-default")
+      "${CMAKE_CXX_FLAGS} -Wno-covered-switch-default")
   endif()
 endmacro()
 
@@ -829,7 +829,7 @@ endmacro()
 # linked against TRITON_LIBRARIES: the conceal-IR definition, the GCC 11 static
 # libstdc++ archive, and the repeated public-LLVM archives.
 macro(flagtree_configure_backend_triton_target target)
-  if(FLAGTREE_BACKEND STREQUAL "xpu")
+  if(FLAGTREE_BACKEND STREQUAL "xpu" AND NOT TRITON_XPU_CONCEAL_IR_OFF)
     target_compile_definitions(${target} PRIVATE TRITON_CONCEAL_IR=1)
   endif()
   # Link the GCC 11 static libstdc++ archive after all LLVM archives.

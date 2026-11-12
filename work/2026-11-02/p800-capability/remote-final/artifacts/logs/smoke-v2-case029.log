@@ -1,0 +1,48 @@
+XCCL /data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:22:33: error: 'math.fma' op requires the same type for all operands and results
+            out = tl.fma(out, a, b)
+                                ^
+module {
+  tt.func public @vector_kernel(%arg0: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg4: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %c1_i32 = arith.constant 1 : i32
+    %c0_i32 = arith.constant 0 : i32
+    %c256_i32 = arith.constant 256 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c256_i32 : i32
+    %2 = tt.make_range {end = 256 : i32, start = 0 : i32} : tensor<256xi32>
+    %3 = tt.splat %1 : i32 -> tensor<256xi32>
+    %4 = arith.addi %3, %2 : tensor<256xi32>
+    %5 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %6 = tt.addptr %5, %4 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    %7 = tt.load %6 : tensor<256x!tt.ptr<f32>>
+    %8 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %9 = tt.addptr %8, %4 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    %10 = tt.load %9 : tensor<256x!tt.ptr<f32>>
+    %11 = tt.splat %arg2 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %12 = tt.addptr %11, %4 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    %13 = tt.load %12 : tensor<256x!tt.ptr<f32>>
+    %14 = scf.for %arg5 = %c0_i32 to %arg4 step %c1_i32 iter_args(%arg6 = %7) -> (tensor<256xf32>)  : i32 {
+      %17 = math.fma %arg6, %10, %13 : tensor<256xf32>
+      scf.yield %17 : tensor<256xf32>
+    }
+    %15 = tt.splat %arg3 : !tt.ptr<f32> -> tensor<256x!tt.ptr<f32>>
+    %16 = tt.addptr %15, %4 : tensor<256x!tt.ptr<f32>>, tensor<256xi32>
+    tt.store %16, %14 : tensor<256x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, tritonxpu-legalize-extern-ew, convert-triton-to-triton-xpu{buffer_size=128 core_num=64 is-tle=false xpu_arch=3}, tritonxpu-print, tritonxpu-create-gm2lm{atomic-sim=true core0-act-only=false is-use-mask-zero=false xpu-arch=3}, tritonxpu-memory-cache{core-num=64 lm-buflen=128}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, tritonxpu-dtype-convert{xpu-arch=3}, tritonxpu-vectorizability-analysis{pre-tiling=true reduce-vec=true tle-smem-vec=true tle-vec=true}, tritonxpu-tile-decide{reduce-vec=true}, tritonxpu-core-tiling{core-num=64 dump-flag=false groups-per-cluster=1 lm-buflen=128 triton-auto-core-tiling=false}, cse, tritonxpu-scalar-analysis{aggressive=false}, tritonxpu-offset-analysis{dump-flag=false is-use-mask-zero=false lm-buflen=128}, tritonxpu-scalar-analysis{aggressive=true}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, tritonxpu-legalize{core-num=64 groups-per-cluster=1 is-use-mask-zero=false lm-buflen=128}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, tritonxpu-mask{core0-act-only=false is-use-mask-zero=false}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse, loop-invariant-code-motion, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, tritonxpu-normalize{compare-fusion=false dump-flag=false}, tritonxpu-vectorizability-analysis{pre-tiling=false reduce-vec=true tle-smem-vec=true tle-vec=true}, tritonxpu-vectorize{compare-fusion=false dump-flag=false per-op-decision=true tle-smem-vec=true tle-vec=true}, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, tritonxpu-alloca{core-num=64 lm-buflen=128}, tritonxpu-async-load-schedule{dump-flag=false}, tritonxpu-tile-analysis{vrf-budget=24}, tritonxpu-unroll-control{budget-tiling=true core-num=64 is-use-mask-zero=false lm-buflen=128 open-decision-entry=false pin-unroll-num=0 unroll-num=2 vrf-budget=24}, tritonxpu-store-control, tritonxpu-other-sim{core-num=64 lm-buflen=128}, tritonxpu-memory-inplace{core-num=64 lm-buflen=128}, tritonxpu-cf-to-scf, tritonxpu-loop-grid, cse, loop-invariant-code-motion, symbol-dce)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:7:0: error: Failures have been detected while processing an MLIR pass pipeline
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:7:0: note: Pipeline failed while executing [`TritonXPUUnrollControl` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`

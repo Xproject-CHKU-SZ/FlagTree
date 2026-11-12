@@ -1,0 +1,49 @@
+XCCL /data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch_xmlir/libbkcl.so loaded
+[35mSYMBOL_REWRITE [0m[32mtorch success[0m
+/data2/zhaoweiming/p800-capability-20261102/env/lib/python3.10/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:34:16: error: Buffer alloc failed in uni_sram: min required = 3145984 bytes (every buffer single-buffered); hardware limit = 1605632 bytes; tried num_stages down to 1 (rerun with -debug-only=tritonsdnn-multi-buffer for the per-alloc layout)
+    x = tl.load(X + r[:, None] * N + c[None, :])
+               ^
+module {
+  tt.func public @reduce_kernel(%arg0: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f32> {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %cst = arith.constant dense<4096> : tensor<64x1xi32>
+    %c64_i32 = arith.constant 64 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.muli %0, %c64_i32 : i32
+    %2 = tt.make_range {end = 64 : i32, start = 0 : i32} : tensor<64xi32>
+    %3 = tt.splat %1 : i32 -> tensor<64xi32>
+    %4 = arith.addi %3, %2 : tensor<64xi32>
+    %5 = tt.make_range {end = 4096 : i32, start = 0 : i32} : tensor<4096xi32>
+    %6 = tt.expand_dims %4 {axis = 1 : i32} : tensor<64xi32> -> tensor<64x1xi32>
+    %7 = arith.muli %6, %cst : tensor<64x1xi32>
+    %8 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<64x1x!tt.ptr<f32>>
+    %9 = tt.addptr %8, %7 : tensor<64x1x!tt.ptr<f32>>, tensor<64x1xi32>
+    %10 = tt.expand_dims %5 {axis = 0 : i32} : tensor<4096xi32> -> tensor<1x4096xi32>
+    %11 = tt.broadcast %9 : tensor<64x1x!tt.ptr<f32>> -> tensor<64x4096x!tt.ptr<f32>>
+    %12 = tt.broadcast %10 : tensor<1x4096xi32> -> tensor<64x4096xi32>
+    %13 = tt.addptr %11, %12 : tensor<64x4096x!tt.ptr<f32>>, tensor<64x4096xi32>
+    %14 = tt.load %13 : tensor<64x4096x!tt.ptr<f32>>
+    %15 = "tt.reduce"(%14) <{axis = 1 : i32}> ({
+    ^bb0(%arg2: f32, %arg3: f32):
+      %18 = arith.maxnumf %arg2, %arg3 : f32
+      tt.reduce.return %18 : f32
+    }) : (tensor<64x4096xf32>) -> tensor<64xf32>
+    %16 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<64x!tt.ptr<f32>>
+    %17 = tt.addptr %16, %4 : tensor<64x!tt.ptr<f32>>, tensor<64xi32>
+    tt.store %17, %15 : tensor<64x!tt.ptr<f32>>
+    tt.return
+  }
+}
+
+{-#
+  external_resources: {
+    mlir_reproducer: {
+      pipeline: "builtin.module(triton-loop-aware-cse, strip-all-ir{xpu_arch=3}, triton-convert-type{mode=0 xpu_arch=3}, triton-to-linalg-experimental{load-tile-size=131072 xpu_arch=3}, triton-loop-aware-cse, linalg-to-tritonsdnn{xpu_arch=3}, triton-loop-aware-cse, tritonsdnn-legalize{xpu_arch=3}, tritonsdnn-merge-extern-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-resolve-layout-conflict, tritonsdnn-hoist-ds, tritonsdnn-transpose-mma, tritonsdnn-transpose-ew, tritonsdnn-combine-before{xpu_arch=3}, tritonsdnn-wrap-fallback, tritonsdnn-eliminate-mma-acc-zero{xpu_arch=3}, tritonsdnn-optimize-rc-layout{xpu_arch=3}, tritonsdnn-dsa-copy, func.func(tritonsdnn-bufferize{xpu_arch=3}), tritonsdnn-mx-scale-layout, tritonsdnn-fuse-relu-activation{xpu_arch=3}, tritonsdnn-ew-act-table{exp-range-max=0.000000e+00 exp-range-min=-1.598438e+01}, tritonsdnn-loop-grid, tritonsdnn-hoist-loop-invariant-dma{xpu_arch=3}, tritonsdnn-pipeline{defer-event-coloring=false test-event-limit=0 xpu_arch=3}, tritonsdnn-multi-buffer{num_stages=1 xpu_arch=3}, tritonsdnn-lower-rc-subview{xpu_arch=3}, symbol-dce, canonicalize{  max-iterations=10 max-num-rewrites=-1 region-simplify=normal test-convergence=false top-down=true}, cse)",
+      disable_threading: true,
+      verify_each: true
+    }
+  }
+#-}
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:30:0: error: Failures have been detected while processing an MLIR pass pipeline
+/data2/zhaoweiming/p800-capability-20261102/kernels.py:30:0: note: Pipeline failed while executing [`TritonSDNNMultiBuffer` on 'builtin.module' operation]: reproducer generated at `std::errs, please share the reproducer above with Triton project.`

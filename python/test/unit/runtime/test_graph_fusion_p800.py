@@ -49,8 +49,14 @@ class P800RoutingTests(InferenceCPUTestBase):
             with self.assertRaisesRegex(RuntimeError, "compile failed"):
                 with self.p800.native_template_eligibility(torch.device("cuda:0")):
                     self.assertTrue(utils.is_big_gpu(0))
+                    self.assertTrue(utils.is_big_gpu(torch.device("cuda:0")))
+                    self.assertFalse(utils.is_big_gpu(torch.device("cuda:1")))
+                    self.assertFalse(utils.is_big_gpu(torch.device("cpu")))
+                    with mock.patch.object(torch.cuda, "current_device", return_value=0):
+                        self.assertTrue(utils.is_big_gpu(torch.device("cuda")))
                     self.assertFalse(utils.is_big_gpu(1))
                     self.assertFalse(Context().run(utils.is_big_gpu, 0))
+                    self.assertFalse(Context().run(utils.is_big_gpu, torch.device("cuda:0")))
                     with self.assertRaisesRegex(RuntimeError, "nested"):
                         with self.p800.native_template_eligibility(torch.device("cuda:0")):
                             pass
