@@ -19,7 +19,7 @@ from urllib.parse import unquote, urlsplit
 
 import assistant_engine as ai
 import library as lib
-from coursebook import CourseBook
+from reading_collection import ReadingRoom
 
 STATIC = Path(__file__).parent / "static"
 WAKE = threading.Event()
@@ -55,6 +55,8 @@ def view_paper(pid):
         chapter = COURSE.by_id.get(pid) if COURSE else None
         doc["course"] = dict(chapter.info(), outline=chapter.outline) if chapter else None
         doc["guide"] = json.loads(r["guide"]) if r["guide"] else None
+        if COURSE:
+            doc["guide"] = COURSE.guide_for(pid, doc["guide"])
         doc["analysis"] = public_job(
             c.execute("select * from jobs where paper=? and kind='guide' order by id desc limit 1", (pid,)).fetchone()
         )
@@ -139,8 +141,11 @@ def worker(kind):
                         raise ValueError("当前书库找不到原先选中的章节。")
                     result = COURSE.answer(COURSE.by_id[r["id"]], req, history)
                 else:
+                    guide = json.loads(r["guide"] or "null")
+                    if COURSE:
+                        guide = COURSE.guide_for(r["id"], guide)
                     result = ai.answer(
-                        {"title": r["title"], "guide": json.loads(r["guide"] or "null")},
+                        {"title": r["title"], "guide": guide},
                         pages,
                         req,
                         history,
@@ -281,6 +286,8 @@ class Handler(BaseHTTPRequestHandler):
         if not post:
             if not r["count"]:
                 raise KeyError("本章使用拆解正文，没有独立 PDF。")
+            if action == "pages":
+                return self.send(200, dict(count=r["count"], pages=lib.page_sizes(r)))
             if action == "pdf":
                 return self.send(200, Path(r["path"]).read_bytes(), "application/pdf")
             page = re.fullmatch(r"pages/(\d+)(/image)?", action or "")
@@ -418,7 +425,7 @@ def main():
         parser.exit(1, "这个书库已在另一个阅读器中打开。\n")
     lib.init()
     lib.seed()
-    COURSE = CourseBook(lib.BOOK)
+    COURSE = ReadingRoom(lib.BOOK)
     COURSE.attach()
     if ai.cli():
         status = subprocess.run([ai.cli(), "login", "status"], capture_output=True, timeout=15)

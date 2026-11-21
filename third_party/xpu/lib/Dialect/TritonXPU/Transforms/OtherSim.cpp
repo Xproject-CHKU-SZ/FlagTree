@@ -72,6 +72,18 @@ public:
       auto loc = gm2lmOp.getLoc();
       OpBuilder builder(gm2lmOp);
       if (auto other = gm2lmOp.getOther()) {
+        // A boolean DMA predicate selects individual elements. Initialize the
+        // corresponding full other tensor: repeating its first slice loses
+        // position-dependent defaults. Index zero lets StoreOp use the value's
+        // logical extent even when the DMA reuses a larger LM allocation.
+        if (auto len = gm2lmOp.getLen();
+            len && getElementTypeOrSelf(len.getType()).isInteger(1)) {
+          auto zero = builder.create<arith::ConstantIntOp>(loc, 0, 32);
+          builder.create<triton::xpu::StoreOp>(
+              loc, gm2lmOp.getBufPtr(), other, Value(), zero, -1, false,
+              Dtype::UNKNOWN, MemorySyncMode::SYNC);
+          return;
+        }
         Value extractOther = other;
         unsigned iterNum = 1;
         if (auto otherTy = dyn_cast<RankedTensorType>(other.getType())) {

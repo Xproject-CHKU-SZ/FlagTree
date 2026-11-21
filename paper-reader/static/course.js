@@ -11,11 +11,9 @@ function courseControls() {
     $('mode-original').hidden = $('mode-text').hidden = !doc?.count;
     pressed($('mode-original'), !book && state.mode === 'original');
     pressed($('mode-text'), !book && state.mode === 'text');
-    $('reader-label').textContent = book ? doc.course.stage || doc.course.kind : '论文原文';
     $('chapter-menu').hidden = $('chapter-nav').hidden = $('book-frame').hidden = !book;
-    $('pdf-nav').hidden = $('canvas').hidden = $('pdf-tools').hidden = book;
+    $('pdf-nav').hidden = $('canvas').hidden = $('pdf-tools').hidden = book || !doc?.count;
     if (book) {
-        $('page-state').replaceChildren(icon('pointer'), document.createTextNode('选中正文即可提问'));
         const chapters = state.books.filter((x) => x.course);
         const idx = chapters.findIndex((x) => x.id === state.id);
         for (const [id, next] of [
@@ -35,10 +33,11 @@ function openChapter(anchor) {
     const c = state.doc?.course;
     if (!c) return;
     state.mode = 'book';
-    state.loadPage++;
+    state.observer?.disconnect();
     state.selection = null;
     $('ask-selection').hidden = true;
     courseControls();
+    updatePager();
     const frame = $('book-frame'),
         key = c.key;
     const requested = anchor || localStorage.getItem('paperdesk-locus-' + key) || key;
@@ -139,6 +138,7 @@ function setupChapterFrame() {
         key = state.doc?.course?.key;
     if (!key || !doc?.body || frame.contentWindow.location.pathname !== '/course/' + key) return;
     doc.body.dataset.course = key;
+    doc.addEventListener('keydown', readingKeys);
     frameMarkers = [...doc.querySelectorAll('a[id]:empty,h2#book-contents')];
     doc.addEventListener('pointerup', () => setTimeout(bookSelection, 0));
     doc.addEventListener('keyup', bookSelection);
@@ -157,6 +157,13 @@ function setupChapterFrame() {
             window.open(href, '_blank', 'noopener');
         }
     });
+    doc.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        e.stopPropagation();
+        wheelZoom('article', e.deltaY);
+    }, { passive: false });
+    applyBookZoom();
     frame.contentWindow.addEventListener(
         'scroll',
         () => {
@@ -193,6 +200,7 @@ async function handleCourseRoute() {
             page = Number(a);
         if (!p || !Number.isInteger(page) || page < 1 || page > p.count) return false;
         if (state.doc?.id === id) {
+            if (state.mode === 'book') await mode('original');
             await go(page);
         } else await choose(id, { page });
         return true;
@@ -205,7 +213,7 @@ function courseOutline(area, d) {
     for (const h of d.course.outline.filter((h) => h.level <= 4)) {
         list.append(
             btn(h.title, '', () => {
-                drawer('');
+                closeLibrary();
                 openChapter(h.anchor);
             })
         );
@@ -222,8 +230,8 @@ function evidenceLink(ref, label) {
             a.onclick = (e) => {
                 if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                     e.preventDefault();
-                    drawer('');
-                    go(ref.page);
+                    closeLibrary();
+                    jumpToPage(ref.page);
                 }
             };
     } else {

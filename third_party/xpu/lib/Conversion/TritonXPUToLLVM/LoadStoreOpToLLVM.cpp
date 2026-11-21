@@ -199,6 +199,103 @@ struct LoadStoreConversionBase {
     rewriter.create<mlir::LLVM::XPU::SetHaddrOp>(loc, ptrIntS32);
   }
 
+  // Preserve the prefilled destination without relying on zero-length DMA.
+  // An invalid lane must not issue a transfer from its safe substitute address.
+  void createGuardedGM2LMOp(ConversionPatternRewriter &rewriter,
+                           MLIRContext *ctx, Location loc, Value src,
+                           Value dst, Value offset, Value size,
+                           Value valid) const {
+    if (!valid) {
+      createGM2LMOp(rewriter, ctx, loc, src, dst, offset, size);
+      return;
+    }
+    Block *current = rewriter.getInsertionBlock();
+    Block *continuation =
+        rewriter.splitBlock(current, rewriter.getInsertionPoint());
+    Block *copy = rewriter.createBlock(continuation);
+    rewriter.setInsertionPointToEnd(current);
+    rewriter.create<LLVM::CondBrOp>(loc, valid, copy, continuation);
+    rewriter.setInsertionPointToEnd(copy);
+    createGM2LMOp(rewriter, ctx, loc, src, dst, offset, size);
+    rewriter.create<LLVM::BrOp>(loc, ValueRange{}, continuation);
+    rewriter.setInsertionPointToStart(continuation);
+  }
+
+  void createGuardedLM2GMOp(ConversionPatternRewriter &rewriter,
+                           MLIRContext *ctx, Location loc, Value src,
+                           Value dst, Value offset, Value size,
+                           Value valid) const {
+    Block *current = rewriter.getInsertionBlock();
+    Block *continuation =
+        rewriter.splitBlock(current, rewriter.getInsertionPoint());
+    Block *copy = rewriter.createBlock(continuation);
+    rewriter.setInsertionPointToEnd(current);
+    rewriter.create<LLVM::CondBrOp>(loc, valid, copy, continuation);
+    rewriter.setInsertionPointToEnd(copy);
+    createLM2GMOp(rewriter, ctx, loc, src, dst, offset, size);
+    rewriter.create<LLVM::BrOp>(loc, ValueRange{}, continuation);
+    rewriter.setInsertionPointToStart(continuation);
+  }
+
+  // Coalesce only after checking the actual predicate and both pointer views.
+  // This does not infer a prefix from an arbitrary comparison or assume that
+  // a fixed stride survives a modulo wrap. Partial/non-contiguous tiles retain
+  // the exact guarded element transfers.
+  void emitExactMaskedTransfer(ConversionPatternRewriter &rewriter,
+                               MLIRContext *ctx, Location loc,
+                               ArrayRef<Value> gmPtrs, ArrayRef<Value> lmPtrs,
+                               ArrayRef<Value> predicates, unsigned byteWidth,
+                               bool toLocal) const {
+    Value zero = i32_val(0);
+    Value bytes = i32_val(byteWidth);
+    Block *merge = nullptr;
+    if (gmPtrs.size() > 1) {
+      Value complete = int_val(1, 1);
+      Value gmBase = ptrtoint(i64_ty, gmPtrs[0]);
+      Value lmBase = ptrtoint(i32_ty, lmPtrs[0]);
+      for (size_t i = 0; i < gmPtrs.size(); ++i) {
+        complete = and_(complete, predicates[predicates.size() == 1 ? 0 : i]);
+        if (i) {
+          complete = and_(complete,
+              icmp_eq(ptrtoint(i64_ty, gmPtrs[i]),
+                      add(gmBase, i64_val(i * byteWidth))));
+          complete = and_(complete,
+              icmp_eq(ptrtoint(i32_ty, lmPtrs[i]),
+                      add(lmBase, i32_val(i * byteWidth))));
+        }
+      }
+      Block *current = rewriter.getInsertionBlock();
+      merge = rewriter.splitBlock(current, rewriter.getInsertionPoint());
+      Block *bulk = rewriter.createBlock(merge);
+      Block *individual = rewriter.createBlock(merge);
+      rewriter.setInsertionPointToEnd(current);
+      rewriter.create<LLVM::CondBrOp>(loc, complete, bulk, individual);
+      rewriter.setInsertionPointToEnd(bulk);
+      Value gm = bitcast(gmPtrs[0], ptr_ty(ctx, 1));
+      Value lm = bitcast(lmPtrs[0], ptr_ty(ctx, 0));
+      Value totalBytes = i32_val(gmPtrs.size() * byteWidth);
+      if (toLocal)
+        createGM2LMOp(rewriter, ctx, loc, gm, lm, zero, totalBytes);
+      else
+        createLM2GMOp(rewriter, ctx, loc, lm, gm, zero, totalBytes);
+      rewriter.create<LLVM::BrOp>(loc, ValueRange{}, merge);
+      rewriter.setInsertionPointToEnd(individual);
+    }
+    for (size_t i = 0; i < gmPtrs.size(); ++i) {
+      Value gm = bitcast(gmPtrs[i], ptr_ty(ctx, 1));
+      Value lm = bitcast(lmPtrs[i], ptr_ty(ctx, 0));
+      Value valid = predicates[predicates.size() == 1 ? 0 : i];
+      if (toLocal)
+        createGuardedGM2LMOp(rewriter, ctx, loc, gm, lm, zero, bytes, valid);
+      else
+        createGuardedLM2GMOp(rewriter, ctx, loc, lm, gm, zero, bytes, valid);
+    }
+    if (merge) {
+      rewriter.create<LLVM::BrOp>(loc, ValueRange{}, merge);
+      rewriter.setInsertionPointToStart(merge);
+    }
+  }
+
   void createGM2LMOp(ConversionPatternRewriter &rewriter,
                      mlir::MLIRContext *ctx, mlir::Location &loc, Value src,
                      Value dst, Value offset, Value size) const {
@@ -2504,6 +2601,35 @@ struct XPUGM2LMOpConversion
     auto llGMPtrs = unpackLLElements(loc, llGMPtr, rewriter);
     auto llLMPtrs = unpackLLElements(loc, llLMPtr, rewriter);
 
+    // A tiled DMA can reuse a larger LM allocation. The transfer below starts
+    // at that allocation's base, while its result describes only the copied
+    // prefix. Return that pointer view, not the full allocation's LLVM type.
+    if (llLMPtr.getType() != llvmResultStructTy) {
+      auto resultTy = dyn_cast<LLVM::LLVMStructType>(llvmResultStructTy);
+      if (!resultTy || resultTy.getBody().size() > llLMPtrs.size())
+        return rewriter.notifyMatchFailure(op, "DMA result exceeds LM pointer view");
+      llLMPtrs.resize(resultTy.getBody().size());
+      llLMPtr = packLLElements(loc, typeConverter, llLMPtrs, rewriter,
+                              llvmResultStructTy);
+      resultStruct = llLMPtr;
+    }
+
+    // Boolean len is an exact element predicate, not a transfer count. Do not
+    // replace invalid addresses with lane zero: false lanes issue no DMA and
+    // keep the value initialized by OtherSim.
+    if (len && getElementTypeOrSelf(len.getType()).isInteger(1)) {
+      auto predicates = unpackLLElements(loc, llLen, rewriter);
+      if ((predicates.size() != 1 && predicates.size() != llGMPtrs.size()) ||
+          llLMPtrs.size() < llGMPtrs.size())
+        return rewriter.notifyMatchFailure(op, "DMA predicate/pointer arity mismatch");
+      emitExactMaskedTransfer(rewriter, ctx, loc, llGMPtrs, llLMPtrs,
+                              predicates, (elemNbits + 7u) / 8u, true);
+      if (!async)
+        createMfenceLMOp(rewriter, loc);
+      rewriter.replaceOp(op, {resultStruct});
+      return success();
+    }
+
     Value elemBytes = i32_val(elemNbits / 8u);
     Value offsetBytes = i32_val(0);
 
@@ -2580,30 +2706,20 @@ struct XPUGM2LMOpConversion
         readBytes = elemBytes;
         for (size_t i = 0; i < llGMPtrs.size(); ++i) {
           //  Protect Ptr Boundary Condition
-          Value base;
-          if (coreDealMultiRows) {
-            base = mask ? select(int_val(1, maskLists[i]), llGMPtrs[i],
-                                 llGMPtrs[0])
-                        : llGMPtrs[i];
-          } else {
-            if (mask) { // Has Mask
-              if (llLens[0].getType().isInteger(32)) {
-                base = select(icmp_slt(i32_val(i), llLens[0]), llGMPtrs[i],
-                              llGMPtrs[0]);
-              } else if (llLens[0].getType().isInteger(64)) {
-                base = select(icmp_slt(i64_val(i), llLens[0]), llGMPtrs[i],
-                              llGMPtrs[0]);
-              } else {
-                llvm_unreachable("Unsupported Mask Int Type");
-              }
-            } else {
-              base = llGMPtrs[i];
-            }
+          Value valid;
+          if (mask) {
+            valid = coreDealMultiRows
+                        ? int_val(1, maskLists[i])
+                        : icmp_slt(int_val(lenElemBit, i), llLens[0]);
           }
+          Value base = valid ? select(valid, llGMPtrs[i], llGMPtrs[0])
+                             : llGMPtrs[i];
           Value dstPtr = bitcast(llLMPtrs[i], ptr_ty(ctx, 0));
           Value srcPtr = bitcast(base, ptr_ty(ctx, 1));
-          createGM2LMOp(rewriter, ctx, loc, srcPtr, dstPtr, offsetBytes,
-                        readBytes);
+          // A safe address alone does not implement a masked load: copying
+          // from it would overwrite OtherSim's fill in an invalid lane.
+          createGuardedGM2LMOp(rewriter, ctx, loc, srcPtr, dstPtr,
+                               offsetBytes, elemBytes, valid);
         }
         // Fence once after issuing all per-element DMAs. A per-iteration fence
         // would serialize every element's DMA; a single trailing fence still
@@ -2869,6 +2985,21 @@ struct XPULM2GMOpConversion
     Value readBytes = mul(readLen, elemBytes);
     auto lmBufPtrs = unpackLLElements(loc, llBufPtr, rewriter);
     Value lmBuf = lmBufPtrs[0];
+
+    // Preserve the full write predicate, including holes and false first
+    // lanes. Repeating a write to a safe substitute pointer is not equivalent.
+    if (len && getElementTypeOrSelf(len.getType()).isInteger(1)) {
+      auto predicates = unpackLLElements(loc, llLen, rewriter);
+      if ((predicates.size() != 1 && predicates.size() != llPtrs.size()) ||
+          lmBufPtrs.size() < llPtrs.size())
+        return rewriter.notifyMatchFailure(op, "DMA predicate/pointer arity mismatch");
+      emitExactMaskedTransfer(rewriter, ctx, loc, llPtrs, lmBufPtrs,
+                              predicates, (elemNbits + 7u) / 8u, false);
+      if (!async)
+        createMfenceLMOp(rewriter, loc);
+      rewriter.eraseOp(op);
+      return success();
+    }
 
     // Create LM2GM and mfence
     switch (offsetState) {
@@ -3145,18 +3276,19 @@ struct XPUGM2LMMaskOpConversion
         // Unknown
         for (size_t i = 0; i < llGMPtrs.size(); ++i) {
           //  Protect Ptr Boundary Condition
-          Value base = llGMPtrs[i];
-          if (coreDealMultiRows) {
-            base =
-                len ? select(int_val(1, maskLists[i]), llGMPtrs[i], llGMPtrs[0])
-                    : llGMPtrs[i];
+          Value valid = mask ? llMasks[i] : Value();
+          if (len) {
+            Value inRange = coreDealMultiRows
+                                ? int_val(1, maskLists[i])
+                                : icmp_slt(int_val(lenElemBit, i), llLens[0]);
+            valid = valid ? and_(valid, inRange) : inRange;
           }
+          Value base = valid ? select(valid, llGMPtrs[i], llGMPtrs[0])
+                             : llGMPtrs[i];
           Value dstPtr = bitcast(llLMPtrs[i], ptr_ty(ctx, 0));
-          Value srcPtr = bitcast(llGMPtrs[i], ptr_ty(ctx, 1));
-          Value _readBytes =
-              mask ? select(llMasks[i], elemBytes, i32_val(0)) : elemBytes;
-          createGM2LMOp(rewriter, ctx, loc, srcPtr, dstPtr, offsetBytes,
-                        _readBytes);
+          Value srcPtr = bitcast(base, ptr_ty(ctx, 1));
+          createGuardedGM2LMOp(rewriter, ctx, loc, srcPtr, dstPtr,
+                               offsetBytes, elemBytes, valid);
         }
       }
       resultStruct = packLLElements(loc, typeConverter, llLMPtrs, rewriter,
@@ -3676,7 +3808,10 @@ struct XPUTLELocalAllocOpConversion
     }
 
     auto lmPtrTy = LLVM::LLVMPointerType::get(ctx, 0);
-    auto lmBuf = allocate(lmPtrTy, llvmElemTy, i32_val(allocNumElems));
+    // Rounding the extent does not align the base. TLE vector loads/stores
+    // require a 64-byte aligned LM address even when the element type is scalar.
+    auto lmBuf = allocate(lmPtrTy, llvmElemTy, i32_val(allocNumElems),
+                          /*alignment=*/64);
 
     // For TLE, we store the base pointer as the lowered result.
     // The memdesc type will be converted to a struct containing the base ptr.
@@ -4150,14 +4285,22 @@ struct XPUTLECopyG2LOpConversion
     // across all cores, see emitPartitionedGM2SM) and shared by every core.
     // This skips the per-core tile-segment planning used for LM entirely.
     //
-    // LIMITATION -- no tail clamp: exactly product(buffer_shape) elements are
-    // read from GM, so `adaptor.getShapes()` (the descriptor's REAL extent,
-    // used by the LM path below to clamp row/col tails) is deliberately unused
-    // here. The caller must therefore pad the GM weight array up to the smem
-    // buffer width (see test_layernorm_sm_stageonce.py's R_PAD), otherwise the
-    // staging DMA reads past the tensor. Acceptable because scope=smem targets
-    // loop-invariant weight vectors whose padding is free; a real clamp would
-    // need per-dimension segment planning like planTileSegmentsFromLayout.
+    // TAIL CLAMP (2026-10-14): for a RANK-1 smem buffer (the loop-invariant
+    // weight vectors this scope targets) the staging read is clamped to the
+    // descriptor's real extent `adaptor.getShapes()[0]`, so `N < W` no longer
+    // requires the caller to pad the GM array. The SM slots in `[N, W)` are
+    // left untouched (whatever was there before), which is safe for the
+    // layernorm data flow: `bias` feeds the reduce but only through a
+    // `tl.where(r0_mask,
+    // ...)` that zeroes padding columns, and `gamma`/`beta` are applied after
+    // the reduce, on columns the output descriptor clamps away at the tensor
+    // edge. Callers that need the padding region ZEROED must still pre-pad.
+    //
+    // Rank >= 2 keeps the old behaviour (exactly product(buffer_shape)
+    // elements, caller pads): the staging DMA is one contiguous block cut
+    // across cores, so clamping an inner dimension would leave holes rather
+    // than a tail -- that needs per-dimension segment planning like
+    // planTileSegmentsFromLayout.
     if (Operation *allocOp = getTLESmemAlloc(op.getDstBuffer())) {
       auto memDescTy =
           cast<triton::gpu::MemDescType>(op.getDstBuffer().getType());
@@ -4181,10 +4324,16 @@ struct XPUTLECopyG2LOpConversion
       Value gmByteOff = mul(tileOriginElem64, i64_val(elemBytes));
       Value srcPtr = gep(ptr_ty(ctx, 1), i8_ty, gmBasePtr, gmByteOff);
 
+      // Rank-1: clamp the staged element count to the descriptor's real extent
+      // (see the TAIL CLAMP note above). Rank >= 2 stages the whole buffer.
+      Value readElems = i32_val((int32_t)tileElems);
+      auto shapesSM = adaptor.getShapes();
+      if (bufShape.size() == 1 && shapesSM.size() == 1)
+        readElems = smax(smin(readElems, shapesSM[0]), i32_val(0));
+
       emitPartitionedGM2SM(loc, rewriter, ctx, op, srcPtr,
                            getTLESmemBase(loc, rewriter, op, allocOp),
-                           i32_val((int32_t)tileElems),
-                           i32_val((int32_t)elemBytes));
+                           readElems, i32_val((int32_t)elemBytes));
 
       rewriter.eraseOp(op);
       return success();
@@ -4641,9 +4790,31 @@ struct XPUTLEWaitOpConversion
 /// sliceCols) * rowStride + loopIndex * sliceCols + i % sliceCols`. Both
 /// constants come from `stampSliceGeometry`; their absence selects the
 /// contiguous form.
+///
+/// `bcastCols` != 0 marks a BROADCAST-COLLAPSED read: a 1-D buffer (a weight
+/// row such as layernorm's bias / gamma / beta) read through a 2-D result
+/// layout, where every tile row holds a replica of the SAME columns. The slot
+/// enumeration then counts rows * cols while the buffer only holds `bcastCols`
+/// column slots, so the ROW component has to be dropped -- keeping it walks
+/// row k > 0 past the end of the buffer and reads whatever follows it in LM.
+///
+/// This is the LM twin of the fix `tleSmemSlotIndex` already carries for
+/// cluster-shared buffers ("the ROW component of the LM form must be
+/// dropped"). Without it every rows-per-core > 1 config (XBLOCK > core_num,
+/// i.e. the tle-core-tiling RowTiled rpc=2/4 path) silently reads garbage for
+/// all but the first row of each core: measured on `[XBLOCK, R0_BLOCK]` + 1-D
+/// bias add, rpc=2 corrupts exactly the odd rows (64/128) and rpc=4 corrupts
+/// 3 of every 4 (384/512), while rpc=1 is exact.
 static Value tleSlotIndex(Location loc, Operation *op, Value loopIndex,
                           unsigned perSlice, unsigned i,
-                          ConversionPatternRewriter &rewriter) {
+                          ConversionPatternRewriter &rewriter,
+                          unsigned bcastCols = 0) {
+  if (bcastCols) {
+    // Replica rows read the same column slots, and the tile loop advances by
+    // one row's worth of columns -- not by the row-multiplied slot count.
+    i %= bcastCols;
+    perSlice = bcastCols;
+  }
   auto sliceColsAttr = op->getAttrOfType<IntegerAttr>("xpu.slice_cols");
   auto rowStrideAttr = op->getAttrOfType<IntegerAttr>("xpu.row_stride");
   if (sliceColsAttr && rowStrideAttr) {
@@ -4658,6 +4829,34 @@ static Value tleSlotIndex(Location loc, Operation *op, Value loopIndex,
   if (!loopIndex)
     return i32_val(i);
   return add(mul(loopIndex, i32_val(perSlice)), i32_val(i));
+}
+
+/// Column-slot count of a BROADCAST-COLLAPSED TLE read: non-zero only when a
+/// 1-D LM buffer is accessed through a 2-D result layout whose per-core tile
+/// spans MORE THAN ONE ROW (rows-per-core > 1). See `tleSlotIndex`'s
+/// `bcastCols` parameter.
+///
+/// Deliberately returns 0 for rows-per-core == 1 so that path keeps the exact
+/// pre-existing slot arithmetic (zero regression risk for every shipping
+/// kernel); and the count comes from the layout's `sizePerCore`, NOT from the
+/// result SHAPE -- the shape is the whole tile's extent, which only coincides
+/// with the per-core column count while the column axis is un-split
+/// (coresPerGroup[1] == groupsPerCluster[1] == 1).
+static unsigned tleBroadcastCols(Value buffer, Type resultTy) {
+  auto memTy = dyn_cast<triton::gpu::MemDescType>(buffer.getType());
+  auto resTy = dyn_cast<RankedTensorType>(resultTy);
+  if (!memTy || !resTy)
+    return 0;
+  if (memTy.getShape().size() != 1 || resTy.getRank() != 2)
+    return 0;
+  auto clusterLayout =
+      dyn_cast_if_present<triton::xpu::ClusterLayoutAttr>(resTy.getEncoding());
+  if (!clusterLayout)
+    return 0;
+  auto sizePerCore = clusterLayout.getSizePerCore();
+  if (sizePerCore.size() != 2 || sizePerCore[0] <= 1)
+    return 0; // one row per core: keep the original arithmetic verbatim
+  return static_cast<unsigned>(sizePerCore[1]);
 }
 
 /// Buffer slot that element `i` of a sliced TLE access touches in a
@@ -4819,7 +5018,8 @@ struct XPUTLELocalPtrOpConversion
     // cannot stand in for -- it arrives through $loopIndex.
     (void)indices;
     (void)rank;
-    auto basePtrTy = LLVM::LLVMPointerType::get(ctx, 0);
+    // Pipeline slots can reside in SM; keep the buffer address space.
+    auto basePtrTy = lmPtrTy;
     // One pointer per VECTOR slot once tritonxpu-vectorize retyped this op (see
     // makeVectorTLELocalPtr): a slot is W buffer elements wide, which is not
     // the register width when the registers are f32 over a bf16 buffer.
@@ -4829,12 +5029,16 @@ struct XPUTLELocalPtrOpConversion
       if (auto vecETy = dyn_cast<VectorType>(ptrETy.getPointeeType()))
         slotTy = VectorType::get(vecETy.getNumElements(), llvmElemTy);
     SmallVector<Value> resultPtrs;
+    // 1-D buffer under a 2-D result layout == broadcast-collapsed weight row:
+    // drop the row component so replica rows point at the same columns (see
+    // tleSlotIndex / tleBroadcastCols).
+    unsigned ptrBcastCols = tleBroadcastCols(op.getBuffer(), resTy);
     for (unsigned i = 0; i < numElems; ++i) {
       // `slotTy` fixes the width of one step, `tleSlotIndex` which step this
       // core and tile iteration takes; both are in slot units.
-      Value ptr = gep(
-          basePtrTy, slotTy, lmBase,
-          tleSlotIndex(loc, op, adaptor.getLoopIndex(), numElems, i, rewriter));
+      Value ptr = gep(basePtrTy, slotTy, lmBase,
+                      tleSlotIndex(loc, op, adaptor.getLoopIndex(), numElems, i,
+                                   rewriter, ptrBcastCols));
       resultPtrs.push_back(ptr);
     }
 
@@ -5369,12 +5573,19 @@ struct XPUTLEVLoadOpConversion
     // loop's index arrives through $loopIndex and the base advances by a whole
     // slice (numVecs vectors, already the sliced count because the result type
     // was sliced with it). Absent index == whole-buffer load.
-    auto basePtrTy = LLVM::LLVMPointerType::get(ctx, 0);
+    //
+    // A 1-D buffer read through a 2-D layout (a broadcast-collapsed weight row)
+    // has `numVecs` == rows * cols while the buffer holds only `cols`; drop the
+    // row component so replica rows re-read the same columns instead of walking
+    // off the buffer (see tleSlotIndex / tleBroadcastCols).
+    unsigned bcastCols = tleBroadcastCols(op.getBuffer(), resTy);
+    auto basePtrTy = LLVM::LLVMPointerType::get(
+        ctx, triton::xpu::getMemDescAddrSpace(op.getBuffer().getType()));
     SmallVector<Value> loadedVals;
     for (unsigned i = 0; i < numVecs; ++i) {
-      Value ptr = gep(
-          basePtrTy, llvmVecTy, lmBase,
-          tleSlotIndex(loc, op, adaptor.getLoopIndex(), numVecs, i, rewriter));
+      Value ptr = gep(basePtrTy, llvmVecTy, lmBase,
+                      tleSlotIndex(loc, op, adaptor.getLoopIndex(), numVecs, i,
+                                   rewriter, bcastCols));
       Value v = load(llvmVecTy, ptr);
       loadedVals.push_back(v);
     }

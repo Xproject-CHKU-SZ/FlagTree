@@ -404,6 +404,24 @@ using ret = py::return_value_policy;
 
 void init_triton_xpu_llvm(py::module &&m) {
 
+  m.def("rename_defined_function", [](llvm::Module &mod,
+                                       const std::string &oldName,
+                                       const std::string &newName) {
+    auto *function = mod.getFunction(oldName);
+    if (!function || function->isDeclaration())
+      throw py::value_error("XPU entry rename requires a defined function");
+    if (newName.empty())
+      throw py::value_error("XPU entry name must not be empty");
+    if (auto *existing = mod.getNamedValue(newName)) {
+      if (existing != function)
+        throw py::value_error("XPU entry name collides with an existing symbol");
+    }
+    // Rename the Value itself so calls and ValueAsMetadata annotations retain
+    // their references. Replacing printed IR text would also touch unrelated
+    // strings and would not reliably handle quoted names.
+    function->setName(newName);
+  });
+
   m.def("get_kernel_name", [](llvm::Module &mod) {
     // Only a defined function can be the kernel entry. SDNN also annotates
     // external intrinsic declarations; public LLVM 22 preserves calling
@@ -522,6 +540,12 @@ void init_triton_xpu(py::module &&m) {
   auto sdnn = passes.def_submodule("ttsdnnir");
   sdnn.def("add_capture_rank1_wrap_pass", [](mlir::PassManager &pm) {
     pm.addPass(mlir::triton::xpu::createCaptureRank1WrapPass());
+  });
+  sdnn.def("add_capture_sdnn_k_extent_pass", [](mlir::PassManager &pm) {
+    pm.addPass(mlir::triton::xpu::createCaptureSDNNKExtentPass());
+  });
+  sdnn.def("add_preserve_sdnn_k_extent_pass", [](mlir::PassManager &pm) {
+    pm.addPass(mlir::triton::xpu::createPreserveSDNNKExtentPass());
   });
   sdnn.def("add_repair_rank1_wrap_pass", [](mlir::PassManager &pm) {
     pm.addPass(mlir::triton::xpu::createRepairRank1WrapPass());

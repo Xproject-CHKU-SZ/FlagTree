@@ -204,7 +204,7 @@ class CourseBook:
             + html.escape(ch.title)
             + "</title><style>"
             + self.css
-            + "html{scroll-padding-top:.5em}body{margin:0 auto;padding:22px clamp(14px,3vw,36px) 45px;font-size:16px;background:#fff} h4,h5,h6{font-size:1em} img{display:block;margin:1em auto} summary{padding:.5em 0} :target{scroll-margin-top:12px} pre{tab-size:4} </style></head><body>"
+            + "html{scroll-padding-top:.5em}body{margin:0 auto;padding:22px clamp(14px,3vw,36px) 45px;font-size:16px;background:#fff;color:#1f2329} h4,h5,h6{font-size:1em} img{display:block;margin:1em auto} summary{padding:.5em 0} :target{scroll-margin-top:12px} pre{tab-size:4} h1,h2,h3,h4,h5,h6{color:#1f2329} a{color:#048a45} pre,.equation{background:#f5f6f7} th,td{border-color:#ebedf0} th{background:#f7f8fa} .book-nav{border-bottom-color:#ebedf0} ::selection{background:#07c16040} </style></head><body>"
             + LINKS.sub(link, ch.body)
             + "</body></html>"
         )

@@ -114,6 +114,30 @@ def page_data(row, n):
     return {"width": float(node.attrib["width"]), "height": float(node.attrib["height"]), "lines": lines}
 
 
+def page_sizes(row):
+    """Return the rendered aspect ratio of every page without extracting text."""
+    info = utility(
+        "pdfinfo", "-box", "-f", 1, "-l", row["count"], row["path"]
+    ).decode("utf-8", "replace")
+    sizes = {}
+    for match in re.finditer(r"^Page\s+(\d+)\s+size:\s+([\d.]+)\s+x\s+([\d.]+)\s+pts", info, re.M):
+        sizes[int(match[1])] = (float(match[2]), float(match[3]))
+    rotated = {
+        int(match[1])
+        for match in re.finditer(r"^Page\s+(\d+)\s+rot:\s+(\d+)", info, re.M)
+        if int(match[2]) % 180
+    }
+    if not sizes:
+        raise ValueError("这份 PDF 无法读取页面尺寸。")
+    pages = []
+    for n in range(1, row["count"] + 1):
+        width, height = sizes.get(n, sizes[min(sizes)])
+        if n in rotated:
+            width, height = height, width
+        pages.append(dict(width=width, height=height))
+    return pages
+
+
 def page_image(row, n):
     directory = DATA / "cache" / row["id"]
     directory.mkdir(exist_ok=True)

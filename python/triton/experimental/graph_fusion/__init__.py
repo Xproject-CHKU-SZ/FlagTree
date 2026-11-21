@@ -12,6 +12,22 @@ from ._resource_runtime import resource_backend
 from ._resource_autotune import autotune_resource_backend, calibrate_resources
 
 
+def compile_model(model, **kwargs):
+    from ._model import compile_model as prepare
+    return prepare(model, **kwargs)
+
+
+def compile_pipeline(tensor_model, **kwargs):
+    from ._model_pipeline import compile_pipeline as prepare
+    return prepare(tensor_model, **kwargs)
+
+
+def select_model_routes(routes, **kwargs):
+    """Select complete prepared call paths, including the caller's adapter."""
+    from ._whole_model_selection import select_whole_model
+    return select_whole_model(routes, **kwargs)
+
+
 def p800_inductor_options():
     """Enable P800 FP32 region arithmetic and the native inference templates."""
     from torch._inductor import config
@@ -32,6 +48,9 @@ __all__ = [
     "FusionTemplate",
     "Registry",
     "compile",
+    "compile_model",
+    "compile_pipeline",
+    "select_model_routes",
     "p800_inductor_options",
     "composition_candidates",
     "cross_call_candidate",

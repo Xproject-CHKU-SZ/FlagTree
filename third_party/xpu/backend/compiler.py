@@ -16,6 +16,20 @@ from typing import Tuple, Optional
 import hashlib
 from pathlib import Path
 
+# The ELF converter derives temporary basenames from the entry symbol and
+# llvm-objcopy appends its own suffix. Bound the symbol before either that step
+# or the backend's assembly cache write, retaining the full name in metadata.
+_KERNEL_NAME_MAX_BYTES = 128
+
+
+def _compact_kernel_name(name):
+    encoded = name.encode("utf-8")
+    if len(encoded) <= _KERNEL_NAME_MAX_BYTES:
+        return name
+    digest = hashlib.sha256(encoded).hexdigest()
+    prefix = re.sub(r"[^a-zA-Z0-9_]", "_", name)[:_KERNEL_NAME_MAX_BYTES - len(digest) - 1]
+    return f"{prefix}_{digest}"
+
 from .launch_config import DEFAULT_LAUNCH, resolve_launch_config
 
 # The desensitized LLVM 19 package ships no `opt`; the read-in step is
@@ -505,9 +519,14 @@ class XPUBackend(BaseBackend):
                 # The prebuilt rank-1 split-pointer lowering drops modulo.
                 # Capture its address contract before that information is lost.
                 xpu.passes.ttsdnnir.add_capture_rank1_wrap_pass(pm)
+            # Keep original dot K before masked loads become prefix views.
+            xpu.passes.ttsdnnir.add_capture_sdnn_k_extent_pass(pm)
             xpu.passes.ttsdnnir.add_convert_triton_to_tritonsdnn_pass(pm, opt.arch, opt.load_tile_size)
             passes.ttir.add_loop_aware_cse(pm)
             xpu.passes.ttsdnnir.add_linalg_to_tritonsdnn_pass(pm, opt.arch)
+            # Load masks do not shrink dot's logical K dimension. Keep both
+            # DS packings and MMA consistent, including padded other values.
+            xpu.passes.ttsdnnir.add_preserve_sdnn_k_extent_pass(pm)
             passes.ttir.add_loop_aware_cse(pm)
             xpu.passes.ttsdnnir.add_tritonsdnn_legalize_pass(pm, opt.arch)
             xpu.passes.ttsdnnir.add_tritonsdnn_merge_extern_ew_pass(pm)
@@ -879,6 +898,11 @@ class XPUBackend(BaseBackend):
         # We get the name at the last possible step to accomodate `triton.compile`
         # on user-provided LLVM
         metadata["name"] = xpu.llvm.get_kernel_name(mod)
+        compact_name = _compact_kernel_name(metadata["name"])
+        if compact_name != metadata["name"]:
+            metadata["original_name"] = metadata["name"]
+            xpu.llvm.rename_defined_function(mod, metadata["name"], compact_name)
+            metadata["name"] = compact_name
         # print(f'metadata[name] = {metadata["name"]}')
 
         # Must go through the LLVM 22 -> 19 text-downgrade path; do NOT use the
@@ -918,6 +942,16 @@ class XPUBackend(BaseBackend):
         if not _compilation_knobs.store_binary_only:
             fn_cache_manager.put(ret_asm, f"{metadata['name']}.asm")
         ret_elf = llvm19_toolchain.llir_to_object(ir_text, "xpu", triple, proc, extra_args=llc_extra)
+
+        # `tle.raw` payloads declared with `object=` ship as device objects
+        # rather than IR, so their calls remain external symbols in `ret_elf`.
+        # Link them in with a relocatable link so the backend still receives a
+        # single object; this trades the raw call's inlining for shipping
+        # machine code instead of readable IR.
+        from triton.experimental.tle.raw.merge import TLE_RAW_EXTERN_OBJECTS_KEY
+        objects = metadata.get(TLE_RAW_EXTERN_OBJECTS_KEY) or ()
+        if objects:
+            ret_elf = llvm19_toolchain.link_objects(ret_elf, list(objects), "xpu")
 
         del mod
         return ret_elf
@@ -966,7 +1000,7 @@ class XPUBackend(BaseBackend):
         # and the LLVM 19 bin dir the tools come from.
         tool_dir = XPUBackend.path_to_xpu_compile_tool(self.target)
         flags = " ".join(_LLC_EXTRA) + " " + llvm19_toolchain.codegen_key("xpu")
-        return f"{_xtdk_lld_version(tool_dir)}-{self.target}-{flags}"
+        return f"{_xtdk_lld_version(tool_dir)}-{self.target}-{flags}-kernel-name-v1-{_KERNEL_NAME_MAX_BYTES}"
 
     def parse_options(self, options: dict) -> object:
         from .resource_context import current_resource

@@ -91,6 +91,10 @@ static __device__ inline Pair rounded_add(int16_t *tile, const _shared_ptr_ int1
 }
 
 struct Moments { float sum, squares; };
+struct ResidualInput {
+    static __device__ inline float32x16_t add(float32x16_t x, float32x16_t y) { return vvadd_float32x16(x, y); }
+    static __device__ inline Pair load(float *tile, const _shared_ptr_ float *) { return read_pair(tile); }
+};
 struct RoundedInput {
     static __device__ inline float32x16_t add(float32x16_t x, float32x16_t y) { return vvadd_float32x16(x, y); }
     template<class T> static __device__ inline Pair load(T *tile, const _shared_ptr_ T *bias) {
@@ -410,6 +414,75 @@ extern "C" __device__ void kl3_add_layernorm(const _global_ptr_ void *a, const _
         select_affine<float>(a, bias, weight, shift, out, first, rows, n, segment, eps, affine);
 }
 
+// Dense same-shape residual operands, with any number of leading dimensions.
+// Each core owns a row: both inputs remain in LM, accumulate in FP32, and
+// narrow once on output. The existing eager-compatible lane/segment order is
+// reused; broadcast-bias entry points above remain unchanged.
+template<class IO, bool Affine>
+static __device__ inline void residual_norm(const _global_ptr_ IO *a,
+        const _global_ptr_ IO *residual, const _global_ptr_ IO *weight,
+        const _global_ptr_ IO *shift, _global_ptr_ IO *out,
+        int first, int rows, int n, int segment, float eps) {
+    #pragma clang fp contract(off)
+    __shared__ __simd__ float w[1024], s[1024];
+    // Keep both FP32 rows below KL3's 8000-byte per-core stack limit.
+    // The model-region matcher admits N <= 768 for this entry point.
+    __simd__ float tile[768], rhs[768];
+    if (Affine) {
+        promote_vector(weight, w, n);
+        promote_vector(shift, s, n);
+    }
+    const int padded = (n + 63) & ~63;
+    if (core_id() == 0) {
+        for (int i=n; i<padded; ++i) { w[i]=0.f; s[i]=0.f; }
+    }
+    mfence();
+    sync_cluster();
+    const int pieces = (n + segment - 1) / segment;
+    for (int row=core_id(); row<rows; row+=core_num()) {
+        const int base=(first+row)*n;
+        stage_row(a+base,tile,n);
+        stage_row(residual+base,rhs,n);
+        for (int i=n; i<padded; ++i) { tile[i]=0.f; rhs[i]=0.f; }
+        mfence_lm();
+        for (int i=0; i<padded; i+=32) {
+            Pair x=read_pair(tile+i), y=read_pair(rhs+i);
+            write_pair(tile+i,{vvadd_float32x16(x.lo,y.lo),vvadd_float32x16(x.hi,y.hi)});
+        }
+        float sum=0.f,squares=0.f;
+        for (int k=0;k<pieces;++k) {
+            int start=(segment==256 ? k : pieces-1-k)*segment;
+            int count=n-start<segment ? n-start : segment;
+            Moments p=moments<ResidualInput>(tile+start,w+start,count);
+            sum+=p.sum;squares+=p.squares;
+        }
+        // The wrapper admits the vendor's dense row path: N <= 768 aligned
+        // to 64. Match its two div.f.rn instructions; a rounded reciprocal
+        // changes variance when a large mean cancels the second moment.
+        float mean=sum/n,second=squares/n;
+        float inv=1.f/__builtin_sqrtf((second-mean*mean)+eps);
+        mfence_lm();
+        normalize_output<float,Affine>(tile,out+base,w,s,n,mean,inv);
+    }
+}
+
+template<class IO> static __device__ inline void residual_dispatch(
+        const _global_ptr_ void *a,const _global_ptr_ void *b,
+        const _global_ptr_ void *w,const _global_ptr_ void *s,_global_ptr_ void *out,
+        int first,int rows,int n,int segment,float eps,int affine) {
+    if (affine) residual_norm<IO,true>((const _global_ptr_ IO*)a,(const _global_ptr_ IO*)b,
+        (const _global_ptr_ IO*)w,(const _global_ptr_ IO*)s,(_global_ptr_ IO*)out,first,rows,n,segment,eps);
+    else residual_norm<IO,false>((const _global_ptr_ IO*)a,(const _global_ptr_ IO*)b,
+        (const _global_ptr_ IO*)w,(const _global_ptr_ IO*)s,(_global_ptr_ IO*)out,first,rows,n,segment,eps);
+}
+extern "C" __device__ void kl3_residual_layernorm(const _global_ptr_ void *a,
+        const _global_ptr_ void *b,const _global_ptr_ void *w,const _global_ptr_ void *s,
+        _global_ptr_ void *out,int first,int rows,int n,int segment,float eps,int affine,int dtype) {
+    if (dtype==2) residual_dispatch<int16_t>(a,b,w,s,out,first,rows,n,segment,eps,affine);
+    else if (dtype==1) residual_dispatch<uint16_t>(a,b,w,s,out,first,rows,n,segment,eps,affine);
+    else residual_dispatch<float>(a,b,w,s,out,first,rows,n,segment,eps,affine);
+}
+
 static __device__ inline Pair ordered_bias(const _shared_ptr_ uint16_t *p) { return read_shared(p); }
 static __device__ inline Pair ordered_bias(const _shared_ptr_ int16_t *p) {
     float16x32_t z = {}, v = vload_sm_float16x32(p);
@@ -558,4 +631,84 @@ extern "C" __device__ void kl3_packed_bf16_norm_2048(const _global_ptr_ int16_t 
         mfence_lm();
         LM2GM(tile, out + offset, cols * sizeof(int16_t));
     }
+}
+
+// Whole-graph multi-output template. Existing template entry points are unchanged.
+template<class IO, bool Affine, bool Dual>
+static __device__ inline void model_residual_norm(const _global_ptr_ IO *a,
+        const _global_ptr_ IO *residual, const _global_ptr_ IO *weight,
+        const _global_ptr_ IO *shift, _global_ptr_ IO *out,
+        _global_ptr_ IO *resout, int first, int rows, int n, int brows, float eps) {
+    #pragma clang fp contract(off)
+    __shared__ __simd__ float w[1024], s[1024];
+    // Keep both FP32 rows below KL3's 8000-byte per-core stack limit.
+    // The model-region matcher admits N <= 768 for this entry point.
+    __simd__ float tile[768], rhs[768];
+    if (Affine) {
+        promote_vector(weight, w, n);
+        promote_vector(shift, s, n);
+    }
+    const int padded = (n + 63) & ~63;
+    if (core_id() == 0) {
+        for (int i=n; i<padded; ++i) { w[i]=0.f; s[i]=0.f; }
+    }
+    mfence();
+    sync_cluster();
+    const int segment = 768;
+    const int pieces = (n + segment - 1) / segment;
+    for (int row=core_id(); row<rows; row+=core_num()) {
+        const int base=(first+row)*n;
+        stage_row(a+base,tile,n);
+        stage_row(residual+((first+row)%brows)*n,rhs,n);
+        for (int i=n; i<padded; ++i) { tile[i]=0.f; rhs[i]=0.f; }
+        mfence_lm();
+        for (int i=0; i<padded; i+=32) {
+            Pair x=read_pair(tile+i), y=read_pair(rhs+i);
+            write_pair(tile+i,{vvadd_float32x16(x.lo,y.lo),vvadd_float32x16(x.hi,y.hi)});
+        }
+        if (Dual) {
+            for (int i=0;i<n;i+=32) store_ordered((IO*)rhs+i,read_pair(tile+i));
+            mfence_lm();
+            LM2GM(rhs,resout+base,n*sizeof(IO));
+        }
+        float sum=0.f,squares=0.f;
+        for (int k=0;k<pieces;++k) {
+            int start=(segment==256 ? k : pieces-1-k)*segment;
+            int count=n-start<segment ? n-start : segment;
+            Moments p=moments<ResidualInput>(tile+start,w+start,count);
+            sum+=p.sum;squares+=p.squares;
+        }
+        // The wrapper admits the vendor's dense row path: N <= 768 aligned
+        // to 64. Match its two div.f.rn instructions; a rounded reciprocal
+        // changes variance when a large mean cancels the second moment.
+        float mean=sum/n,second=squares/n;
+        float inv=1.f/__builtin_sqrtf((second-mean*mean)+eps);
+        mfence_lm();
+        normalize_output<float,Affine>(tile,out+base,w,s,n,mean,inv);
+    }
+}
+
+template<class IO, bool Dual> static __device__ inline void model_norm_affine(
+        const _global_ptr_ void *a,const _global_ptr_ void *b,const _global_ptr_ void *w,
+        const _global_ptr_ void *s,_global_ptr_ void *out,_global_ptr_ void *res,
+        int first,int rows,int n,int brows,float eps,int affine) {
+    if(affine) model_residual_norm<IO,true,Dual>((const _global_ptr_ IO*)a,(const _global_ptr_ IO*)b,
+        (const _global_ptr_ IO*)w,(const _global_ptr_ IO*)s,(_global_ptr_ IO*)out,(_global_ptr_ IO*)res,first,rows,n,brows,eps);
+    else model_residual_norm<IO,false,Dual>((const _global_ptr_ IO*)a,(const _global_ptr_ IO*)b,
+        (const _global_ptr_ IO*)w,(const _global_ptr_ IO*)s,(_global_ptr_ IO*)out,(_global_ptr_ IO*)res,first,rows,n,brows,eps);
+}
+template<class IO> static __device__ inline void model_norm_dispatch(
+        const _global_ptr_ void *a,const _global_ptr_ void *b,const _global_ptr_ void *w,
+        const _global_ptr_ void *s,_global_ptr_ void *out,_global_ptr_ void *res,
+        int first,int rows,int n,int brows,float eps,int affine,int dual) {
+    if(dual) model_norm_affine<IO,true>(a,b,w,s,out,res,first,rows,n,brows,eps,affine);
+    else model_norm_affine<IO,false>(a,b,w,s,out,res,first,rows,n,brows,eps,affine);
+}
+extern "C" __device__ void kl3_model_layernorm(const _global_ptr_ void *a,
+        const _global_ptr_ void *b,const _global_ptr_ void *w,const _global_ptr_ void *s,
+        _global_ptr_ void *out,_global_ptr_ void *res,int first,int rows,int n,int brows,
+        float eps,int affine,int dual,int dtype) {
+    if(dtype==2) model_norm_dispatch<int16_t>(a,b,w,s,out,res,first,rows,n,brows,eps,affine,dual);
+    else if(dtype==1) model_norm_dispatch<uint16_t>(a,b,w,s,out,res,first,rows,n,brows,eps,affine,dual);
+    else model_norm_dispatch<float>(a,b,w,s,out,res,first,rows,n,brows,eps,affine,dual);
 }

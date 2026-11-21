@@ -105,7 +105,9 @@ def Tle_LocalPointerResultType : AnyTypeOf<[TT_Tensor, TT_Ptr, TT_Int]>;
 def Tle_LocalPointerIndexType : AnyTypeOf<[TT_Tensor, TT_Int]>;
 def Tle_WGMMAAType : AnyTypeOf<[TT_FpIntTensor, TTG_MemDescType]>;
 
-def Tle_LocalPointersOp : Tle_Op<"local_pointers", [Pure]> {
+// Tensor indices and the pointer result share a register encoding. The source
+// MemDesc has an independent storage encoding (ignored by this tensor trait).
+def Tle_LocalPointersOp : Tle_Op<"local_pointers", [Pure, SameOperandsAndResultEncoding]> {
   let arguments = (ins TTG_MemDescType:$src,
       Variadic<Tle_LocalPointerIndexType>:$indices);
   let results = (outs Tle_LocalPointerResultType:$result);
@@ -357,6 +359,13 @@ def Tle_WGMMAWaitOp : Tle_Op<"wgmma_wait", [
 
 def Tle_BarrierAllocOp : Tle_Op<"barrier.alloc"> {
   let summary = "create a typed TLE GPU barrier array";
+  let description = [{
+    The allocation owns its mbarrier objects for the defining structured region.
+    The lowering publishes initialization and invalidates owned objects before
+    leaving that region. The descriptor must not escape the region; allocate in
+    an enclosing region or caller when later users need a longer lifetime.
+    A barrier passed to another function is borrowed by that function.
+  }];
   let arguments = (ins
     I32Attr:$num_barriers,
     I32Attr:$arrive_count,
