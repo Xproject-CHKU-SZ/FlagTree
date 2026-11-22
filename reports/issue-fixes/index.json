@@ -1,7 +1,7 @@
 {
   "updated": "2026-11-19",
-  "scope": "保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 57 项全清单测试记录，共 176 条查询记录；这不是 176 个独立且全部已修复的缺陷。",
-  "count": 176,
+  "scope": "保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 58 项全清单测试记录，共 177 条查询记录；这不是 177 个独立且全部已修复的缺陷。",
+  "count": 177,
   "group_counts": {
     "本地 F06 与集成": 56,
     "FlagTree 源码": 17,
@@ -9,7 +9,7 @@
     "XPU 工具包与预编译链路": 4,
     "本次 FlagGems 诊断": 10,
     "后续整模型集成": 8,
-    "全清单测试与环境兼容": 54,
+    "全清单测试与环境兼容": 55,
     "整模型测试环境与协调": 3
   },
   "historical_baseline_counts": {
@@ -3411,7 +3411,8 @@
       "baseline": "官方固定提交 e6a8799cc；本地条目为历史 v51e 对照。",
       "related": [],
       "notes": [
-        "保留用于排重和查找；不计作已根修。状态与证据来自 11 月 13 日复筛。"
+        "保留用于排重和查找；不计作已根修。状态与证据来自 11 月 13 日复筛。",
+        "2026-11-22 新触发来自本地整图成本标定器错误提取的非凸残差区域，49个外部输入及48个add输出被错误视为可同时融合；修正成本区域依赖边界后P800标定通过。此处修复本地探针，不是放宽或修复后端64事件上限，原后端状态保留。"
       ],
       "refs": [
         {
@@ -3421,6 +3422,14 @@
         {
           "label": "历史问题说明",
           "path": "/home/f/Documents/FlagTree/work/2026-11-12/f06-issue-pr-review/U29b/ISSUE.md"
+        },
+        {
+          "label": "非凸残差标定导致SDNN事件超限的原始结果",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/pruning-v42a-ead8c3d95e1c2da7bf3a-float16-1795337557088567504-calibrated-cost-smoke/status.json"
+        },
+        {
+          "label": "依赖边界修正后CLIP标定通过",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/pruning-v42b-ead8c3d95e1c2da7bf3a-float16-1795337871678764673-calibrated-cost-smoke/status.json"
         }
       ],
       "fix_paths": []
@@ -4089,7 +4098,8 @@
         "本轮为局部激活诊断，正式v35包和选路缓存未修改。四模型都降低了原融合入口开销，但CLIP336/PLIP仍未通过原始FP32完整精度，MiniLM/e5通过精度却仍慢于厂商eager；不能据此统一强制替换。准备期绑定已证明入口可复用，实验的计时外全局核绑定切换不作为并发生产实现。",
         "2026-11-21 MiniLM范围更正：上轮局部GELU入口0.978倍不能替代完整融合结果。当前完整融合保持厂商GELU，独立复测1.705倍、全部输出通过。新增正式基线波动后不重测而回退的问题见M65；N09调用优化与M65选路问题分开。",
         "2026-11-21 MiniLM一元3D FP16 cluster补充验证：同一生成二进制、完整186次相同发射序列下，AOT包装9.696578ms→直接wrapper9.293377ms→预绑定发射9.043327ms，同轮eager9.041996ms。真实模型六次GELU调用提交合计581.44→236.30→106.77µs，原生114.48µs。发射准备是局部回退的确定来源；但预绑定仅4/12轮快于eager，不能称稳定加速，未进正式包。真正稳定整图收益由M65新包三次冷启动复核，保持厂商GELU。",
-        "2026-11-21范围复核：此前CLIP336短调用100.767ms相对同轮102.374ms的1.015944倍仍成立，属于保留FP16厂商路径的局部QuickGELU替换，完整FP32门槛仅2/8通过；当前正式精度合格的混合图是另一计算路径。两轮eager最终机器码序列相同，不能把当前正式FP32矩阵路径较慢说成N09的已验证收益消失。"
+        "2026-11-21范围复核：此前CLIP336短调用100.767ms相对同轮102.374ms的1.015944倍仍成立，属于保留FP16厂商路径的局部QuickGELU替换，完整FP32门槛仅2/8通过；当前正式精度合格的混合图是另一计算路径。两轮eager最终机器码序列相同，不能把当前正式FP32矩阵路径较慢说成N09的已验证收益消失。",
+        "2026-11-22成本模型补充：给候选打分时混用原生直接调用与带Dynamo/AOT包装的生成单算子，会把包装成本只归到生成核，导致错误剪枝。实验统一两类标定入口并计输出转换后，五组子图短名单保留该轮最快组合。本条是成本标定口径修补，未将子图搜索收益称为完整模型运行加速。"
       ],
       "refs": [
         {
@@ -4179,6 +4189,22 @@
         {
           "label": "N09局部快路与正式慢路的机器码对齐",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-v36-profile-20261121/report.txt"
+        },
+        {
+          "label": "P800有限候选空间剪枝实验与边界成本反例",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/report.txt"
+        },
+        {
+          "label": "五组尺寸完整枚举、短名单与机器码汇总",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/search-pruning-1795334747268822198/summary.json"
+        },
+        {
+          "label": "FP32厂商Linear编译接口修补",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/fp32-vendor-abi.patch"
+        },
+        {
+          "label": "50项精度保护和FakeTensor回归",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/cpu-regression.json"
         },
         {
           "label": "本地源码 python/triton/experimental/graph_fusion/_resource_entry.py",
@@ -5331,6 +5357,10 @@
         {
           "label": "本地源码 work/2026-11-19/flaggems-diagnosis/op_probe.py",
           "path": "/home/f/Documents/FlagTree/work/2026-11-19/flaggems-diagnosis/op_probe.py"
+        },
+        {
+          "label": "v46原生健康异常与排除记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/excluded-card1-native-timeouts.json"
         }
       ],
       "related": [
@@ -5375,7 +5405,8 @@
         "新增43.179.154.78和43.138.5.189均复制相同63580d62镜像及5308文件健康环境，分别仅测物理0号卡；原生128元素add、8x8GEMM、Softmax及FP16/BF16转换和GELU边界均通过，逻辑设备计数1和PCI身份一致。仅证明这两张卡当次健康，不代表新增机器全部卡通过，也不证明前两机故障根修。",
         "2026-11-20恢复新增两台认证后，在43.179.154.78和43.138.5.189的各0、1号卡上串行运行原有原生健康探针，四次均rc0/stage passed；每卡占用监控无外来进程或采样错误。保留旧健康证据，恢复原模型队列；原两台16张卡的历史异常没有因此解除，不宣称驱动根修。",
         "新增卡恢复复查的四份latest健康指针被正常模型发射前检查更新；恢复记录中的完整stdout及占用采样仍保留。按原progress内容逐位匹配取回四份原Docker探针记录，不重构旧summary哈希。check_card新增先保存不可变原字节receipt再更新latest；随后真实P800健康检查验证两份字节完全一致。",
-        "2026-11-20 补全CPU机器码诊断配置：llvm-mc --triple=xpu3-baidu-none-gnu --mcpu=xpu3 --mattr=+cdnn3 --disassemble可额外识别SDNN指令，252份实码的未解码位置从13777降至7473（新增6304条），与原已识别指令无解释冲突；新增6304条拼接回编后25216字节与捕获原文完全相同。获得mm_cfg/mm/mm_acc和DMA/ew配置，但其助记符不能单独证明矩阵输入/乘法/累加精度。仍有235份二进制部分未解码，不以工具返回码0冒充完整解码；没有修改LLVM生产工具、主机环境或设备状态。"
+        "2026-11-20 补全CPU机器码诊断配置：llvm-mc --triple=xpu3-baidu-none-gnu --mcpu=xpu3 --mattr=+cdnn3 --disassemble可额外识别SDNN指令，252份实码的未解码位置从13777降至7473（新增6304条），与原已识别指令无解释冲突；新增6304条拼接回编后25216字节与捕获原文完全相同。获得mm_cfg/mm/mm_acc和DMA/ew配置，但其助记符不能单独证明矩阵输入/乘法/累加精度。仍有235份二进制部分未解码，不以工具返回码0冒充完整解码；没有修改LLVM生产工具、主机环境或设备状态。",
+        "2026-11-22 本轮两台新增P800的物理1号卡在无新编译器的原生eager健康检查超时：一台停在FP16边界转换，另一台停在GEMM之后。排除这两张卡，未重置、未更改主机；两台2号卡原生GEMM及FP16/BF16转换全部通过后继续个人Docker测试。不得把这两次超时记为新LLVM Pass回退。"
       ],
       "group": "本次 FlagGems 诊断",
       "date": "2026-11-19",
@@ -6224,6 +6255,22 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-gemm-modes-20261121/sdpa-probe-path-review.json"
         },
         {
+          "label": "P800有限候选空间剪枝实验与边界成本反例",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/report.txt"
+        },
+        {
+          "label": "五组尺寸完整枚举、短名单与机器码汇总",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/search-pruning-1795334747268822198/summary.json"
+        },
+        {
+          "label": "FP32厂商Linear编译接口修补",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/fp32-vendor-abi.patch"
+        },
+        {
+          "label": "50项精度保护和FakeTensor回归",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/cpu-regression.json"
+        },
+        {
           "label": "本地源码 python/triton/experimental/graph_fusion/_model_inductor.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_inductor.py"
         },
@@ -6257,7 +6304,8 @@
         "正式launch_case而非候选脚本复验Instructor FP32通过：新包及4个实际入口源码指纹核对一致，4组语义对照逐位一致；一张581节点图，7680输出0超差。图内选original，整模型选inductor_current（捕获FX原始算子路径）；最终eager16.058612ms/选中16.183424ms=0.992288倍，未获得FP32加速，不能写成原生直通或负优化已全部消除。此前校准/候选对照约3%的收益在后续官方独立测量中未重现，保留原始数据，捕获边界修复与小幅计时/选路不稳定分别记录。该正式入口运行使用分块传输，新包SHA3a301e7c...，4次占用观察无外来进程；全量749队列未恢复。",
         "2026-11-21 Instructor/CLIP完整图瓶颈复查：三者均为一张完整张量图。Instructor慢的融合候选主要为短行跨核Softmax和逐元素转置，CLIP主要为小块搬运的Bias+QuickGELU/残差核，详见机器码与分项报告。不是仍有四段图捕获；不能将original图或原生FP32路线的收益归给融合核。",
         "2026-11-21补齐Linear暴露后的性能问题：aten.linear进一步降为SDK addmm会物化bias。按M60在完整Inductor图中提供mm+原生广播add候选，已完整实测：float32 eager124.372792→F06120.287919ms=1.033959倍，图内inductor_p800_lm_sdk_norm_native_bias_mm_packed_gemm2048；float16 eager101.492810→F06121.654487ms=0.834271倍，图内inductor_p800_lm_native_bias_mm_packed_gemm2048；8个公开输出均通过。FP16 eager未通过完整FP32标准，仅作速度基线，未宣称FP16相对eager已加速。",
-        "2026-11-21诊断脚本再次覆盖PYTHONPATH而加载另一份TLE，dialect位置参数接口不符。复用已有保留/opt/hsp搜索路径的方案，50项布局复测通过；未修改镜像已安装包。"
+        "2026-11-21诊断脚本再次覆盖PYTHONPATH而加载另一份TLE，dialect位置参数接口不符。复用已有保留/opt/hsp搜索路径的方案，50项布局复测通过；未修改镜像已安装包。",
+        "2026-11-22搜索实验补齐既有FakeTensor方案：preserve_native_compute原先仅保护低精度，已捕获FP32 _dynamo_workaround.linear跳过reviewed fake ABI，AOT进入Hydra data_ptr检查报错。复用_source_precision已有precision_linear描述接口，对已捕获厂商/自定义Linear覆盖FP32，实际仍直接发射原厂商函数；普通FP32 F.linear保持原节点。50项CPU回归及五组P800子图所有组合通过，最终矩阵二进制与对应dtype eager一致；未改安装Torch、正式wheel或主机。"
       ],
       "group": "后续整模型集成",
       "date": "2026-11-19",
@@ -8972,6 +9020,14 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-gemm-20261121/runtime-from-inductor12.patch"
         },
         {
+          "label": "CLIP逐核、资源与调度因果验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/report.txt"
+        },
+        {
+          "label": "本轮手册复核与实验边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/handbook-review.json"
+        },
+        {
           "label": "本地源码 review-local/shape-regression-20261115/login.sh",
           "path": "/home/f/Documents/FlagTree/review-local/shape-regression-20261115/login.sh"
         }
@@ -8987,10 +9043,11 @@
         "2026-11-20新增两台的SSH复用仍可读个人文件，但sudo认证失败，不能套用既往SSH连接恢复结论。非敏感输入传输检查通过；用户在本机终端重新认证仍未成功，未改变已保存凭据。用户随后要求暂时仅用原两台，新增两台认证、准备及发射均停用，保留已有容器和证据。密码是否重置完成尚未证实，不宣称本次认证问题已修复，也不继续尝试密码。",
         "新密码认证窗口启动失败时，查明临时导入系统pexpect依赖的搜索路径影响keyring后端发现；在导入后立即恢复搜索路径，继续保留SecretService强校验。实测加密后端正常，窗口进程可持续等待用户输入；不记录明文密码，不在认证成功前替换保存凭据。",
         "2026-11-20用户重新授权新增两台并输入新密码后，发现新建SSH控制连接文件名113/114字节超过UNIX socket上限。缩短为81字节（包含OpenSSH临时后缀98字节），先在本机实际bind预检，再提示密码。两台全新SSH和sudo均退出0，随后才更新各自加密凭据；既有个人Docker读取及四张卡串行健康检查通过。此轮路径错误不能判为密码错误，未修改主机环境或远端密码。",
-        "2026-11-21本地连接进程中断后遗留UNIX socket，原login.sh会认证但提示已存在并禁用复用。补齐仅当socket属于当前用户且connect返回ECONNREFUSED/ENOENT、inode未变时删除；存在监听、非socket或非本人文件一律拒绝。两台原有主机指纹严格校验及ssh -O check恢复通过，无远端环境改动。"
+        "2026-11-21本地连接进程中断后遗留UNIX socket，原login.sh会认证但提示已存在并禁用复用。补齐仅当socket属于当前用户且connect返回ECONNREFUSED/ENOENT、inode未变时删除；存在监听、非socket或非本人文件一律拒绝。两台原有主机指纹严格校验及ssh -O check恢复通过，无远端环境改动。",
+        "2026-11-22四机资源复核：三台复用连接失效，沿用严格校验既有主机指纹的login.sh和加密凭据恢复成功；未改密码或远端环境。用户允许四台各至多两张空闲卡。152机器有占用，81机器空闲卡0原生健康失败，实际使用两台新增主机各一张健康卡做独立对照。"
       ],
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-20",
+      "date": "2026-11-22",
       "historical_status": "",
       "baseline": "81.70.153.29:26008，zhaoweiming；使用已有严格主机身份检查和本机加密凭据入口。"
     },
@@ -10590,6 +10647,10 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/colpali-safe-stack-model-outcome.json"
         },
         {
+          "label": "完整模型剪枝计时口径和覆盖对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/compare.py"
+        },
+        {
           "label": "本地源码 review-local/f06-all-models-20261119/stack_diagnostics_compat.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/stack_diagnostics_compat.py"
         },
@@ -10614,7 +10675,8 @@
         "官方源码对照：https://github.com/python/cpython/blob/v3.10.18/Modules/faulthandler.c；该版本exit默认0，不能仅据源码解释容器实测的异常退出。",
         "正式P800 Nomic-v1.5的FP16及FP32均通过完整数值校验、3/10端到端测量和机器码采集；FP16编译中实际输出1次安全周期堆栈，正式计时前两个观察阶段均已停止。该证据证明新观察器可用于真实模型，不代替历史Instructor/ColPali退出样例的复测。",
         "正式InstructorFP16重测1795117513940014419已通过：6次128分块、1次安全周期堆栈，7680元素全通过FP32标准(maxabs0.001933187)，无外来占用。实际路由为FP32packed融合+原始路径+SDKnorm；eager21.431136ms/F0691.356492ms=0.234588×，正确但仍更慢，不能称为性能优化成功。",
-        "原版ColPaliFP16重测1795117643080418450已写出完整终态，编译期间11次安全堆栈无诊断错误；后续为第4子图FP32精度不通过。该运行40次已有占用观察无外来进程，但协调恢复造成监控缺口而排除，不能给出有效性能结论，也不能把精度问题标为已修复。"
+        "原版ColPaliFP16重测1795117643080418450已写出完整终态，编译期间11次安全堆栈无诊断错误；后续为第4子图FP32精度不通过。该运行40次已有占用观察无外来进程，但协调恢复造成监控缺口而排除，不能给出有效性能结论，也不能把精度问题标为已修复。",
+        "2026-11-22 完整模型剪枝复核：正式a100_public_protocol与四轮完整候选选路计时明确停止Python堆栈观察器，受影响的是扩展resource_diagnostics阶段，其phase重新启动60秒观察器，CLIP最终轮有15次快照。未将堆栈输出误判为执行异常；主性能和快路径覆盖采用关闭观察器的正式数据，12轮扩展诊断单独标注可能含观察开销。后续扩展计时也应将resource_diagnostics纳入停用阶段；本轮保留实测脚本和原始证据，不伪称已在该轮关闭。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-20",
@@ -11474,6 +11536,10 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/stage_secondary_ready.py"
         },
         {
+          "label": "MiniLM单检查点跨机核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/minilm-checkpoint-copy.json"
+        },
+        {
           "label": "本地源码 review-local/f06-all-models-20261119/checkpoint_dependencies.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/checkpoint_dependencies.py"
         },
@@ -11509,7 +11575,8 @@
         "Qwen/Qwen3-8B固定b968826d依赖本次已完成下载和个人Docker校验，原62815任务自然结束rc0（没有重启或终止）。naver/splade-code-8B基座准备条件已解除；这仅是依赖就绪，完整原适配器、LoRA/双向注意力/稀疏输出及设备数值和性能仍需分别验证。",
         "8B基座准备完成后实际复核：原SentenceTransformer错误转换SparseEncoder为普通AutoModel，根目录无权重而报None.endswith；单独改用发布者SparseEncoder仍未解决，真实查找记录证明LoRA加载器把父fe9fb2fc的revision及_commit_hash传给Qwen基座，4个权重/索引查找返回None，已暂存正确基座是b968826d。还观察到4.51实现的因果掩码风险，与发布者is_causal=False要求需继续完整验证。未将这款加入已修复白名单，未修改生产入口，旧M40只换类方案不完整，待补齐后更新本条。",
         "8B加载候选继续补齐：旧目录路径匹配遗漏HF逐文件符号链接，改为核对相同固定adapter文件后，父revision误传不再阻断基座加载；随后分词器因extra_special_tokens列表与Transformers4.51映射接口不兼容而失败。按调用参数兼容并核验151669个词表ID后，完整发布者SparseEncoder成功加载，399个基座张量及504个LoRA张量全部与固定原文件提升至FP32后逐位一致（8365323264个元素）。仍未执行完整前向：声明is_causal=False，但实际36层attention对象均为True，掩码兼容仍待补齐；不能标为整模型已修复，也没有部署到正式白名单或新增测速结果。",
-        "两机测试的初版复制器只支持无外部依赖模型，不能据第一台ready宣称第二台ready。现将嵌套基模型、auto_map代码、清单内配套权重和已审阅UForm/DINO发布者源码纳入精确复制集合；两端按manifest逐文件验证后才发布就绪记录。13项检查含六类真实依赖/源码、三款PRref固定解析及缺件/错hash/未就绪拒绝，435个当前已准备模型全部可解析完整复制集合。实际Jina、UForm、Trendyol三款共2.845GB在第二台还原验证；仅证明环境/权重/源码复制，模型数值及性能仍分别实测。"
+        "两机测试的初版复制器只支持无外部依赖模型，不能据第一台ready宣称第二台ready。现将嵌套基模型、auto_map代码、清单内配套权重和已审阅UForm/DINO发布者源码纳入精确复制集合；两端按manifest逐文件验证后才发布就绪记录。13项检查含六类真实依赖/源码、三款PRref固定解析及缺件/错hash/未就绪拒绝，435个当前已准备模型全部可解析完整复制集合。实际Jina、UForm、Trendyol三款共2.845GB在第二台还原验证；仅证明环境/权重/源码复制，模型数值及性能仍分别实测。",
+        "2026-11-22单模型跨机回归复用：第一台缺MiniLM检查点就绪记录，入口拒绝启动。按既有manifest复制已验证公开检查点，核对全部文件和固定revision，并复用目标已有且版本一致的环境，完成个人Docker回归。Docker创建的父目录不可由登录用户直接写入时，仅预建本次唯一传输文件并赋予登录用户所有权，未改目录权限或主机环境。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-20",
@@ -11810,7 +11877,7 @@
     },
     {
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-20",
+      "date": "2026-11-22",
       "historical_status": "",
       "id": "M41",
       "title": "源码附件随修复增大，启动脚本超过单个参数上限而在 SSH 前失败",
@@ -11822,7 +11889,8 @@
       "fix_paths": [
         "review-local/f06-all-models-20261119/launch_case.py",
         "review-local/f06-all-models-20261119/verify_naver_formal_integration.py",
-        "review-local/f06-all-models-20261119/issue_handbook.py"
+        "review-local/f06-all-models-20261119/issue_handbook.py",
+        "review-local/f06-all-models-20261119/monitor_case.py"
       ],
       "related": [
         "M29",
@@ -11840,7 +11908,11 @@
         "原诊断入口遗漏同步正式发射器的zlib压缩协议及新增源码集合，真实旧包在当前解码器复现incorrect header check，未进入设备执行。现从正式入口解析所需源码清单、使用同一压缩协议，发射前保存不可变label与host/container/完整SHA。16个诊断变体的probe字节及配置与原版一致，全部本地解包通过；21源文件在第一台个人Docker以实际解码和收集代码往返逐字节一致，未初始化GPU。这是诊断基础设施修补，不表示相关模型计算问题已解决。",
         "新增Jina-v3兼容文件后正式源码集合为22份；16种诊断变体仍与原探针逐字节一致，完整22文件通过当前正式解码器和收集器在个人Docker往返验证。旧21文件证明另存于before-jina-v3-integration目录。",
         "新增8B正式CPU验证入口一度重新使用未压缩165028字节源码包，在本地SSH进程创建前触发参数过长；复用本条zlib压缩后真实正式CPU验证通过，远端8文件哈希匹配。随后实际正式启动器26文件压缩包115640字节运输与回收通过；验证脚本起初100000字节保守界限误拒，已改用此前125000界限并以实际进程运输验证，未将误拒当成远端故障。",
-        "完整张量入口附加源码后，压缩包再次超过原125000字符启动准入上限，检查在GPU任务创建前拒绝。进一步改为每段48000字符传输至个人目录、核对完整SHA256后传短路径给launcher；仍逐文件保存源码指纹。Instructor/CLIP新入口已用此方式成功运行；正式launch_case同步采用该方法，未改变设备或计时口径。"
+        "完整张量入口附加源码后，压缩包再次超过原125000字符启动准入上限，检查在GPU任务创建前拒绝。进一步改为每段48000字符传输至个人目录、核对完整SHA256后传短路径给launcher；仍逐文件保存源码指纹。Instructor/CLIP新入口已用此方式成功运行；正式launch_case同步采用该方法，未改变设备或计时口径。",
+        "2026-11-22 CPU验证传输补齐：新增测试扩大后stage.py再次触发单参数上限，失败发生在SSH启动前。沿用无损压缩，约束压缩参数小于48000字节，远端恢复后逐源码SHA验证；两台个人Docker全部CPU检查通过。未修改设备计算。",
+        "2026-11-22候选测试扩展：CPU测试源码压缩包超过48000字符后，stage传输也改为48000字符分段写入个人目录，再传不可变内容摘要命名的短路径。新增测试不再受单个参数上限影响；v39/v39a各91单元测试及11合同检查通过。",
+        "2026-11-22补齐结果回收边界：MiniLM v39b已正常rc=0、diagnosis completed，但最终状态JSON单独14,770,144字节，旧未压缩证据封包超过30秒SSH回收期限，导致本地仍显示running。monitor_case改为压缩完整JSON封包，保持逐文件SHA验证；实际已结束任务重采集成功，状态/exit JSON与独立原始取证相同，日志文本一致（原始CR进度换行字节另行保留）。未重跑模型、未改计时或精度结果。",
+        "2026-11-22 编译工具双机部署补修：并行读取同名本地归档时曾读取尚未写完的tar.gz而EOF；改为临时文件完成后原子替换，并校验现有归档内容及SHA后上传。两台最终工具SHA一致；该传输错误不归因模型、XPU或远端Docker。"
       ],
       "refs": [
         {
@@ -11936,6 +12008,18 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/splade-code8b-transport-budget-review.json"
         },
         {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
+        },
+        {
+          "label": "完整结果压缩回收一致性验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/evidence-recovery-mini.json"
+        },
+        {
           "label": "本地源码 review-local/f06-all-models-20261119/launch_case.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/launch_case.py"
         },
@@ -11946,6 +12030,22 @@
         {
           "label": "本地源码 review-local/f06-all-models-20261119/issue_handbook.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/issue_handbook.py"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/monitor_case.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/monitor_case.py"
+        },
+        {
+          "label": "v46最终单核及24项边界校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/micro-summary.json"
+        },
+        {
+          "label": "v46正式源码指纹",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/formal-source-manifest.json"
+        },
+        {
+          "label": "v46编译框架与整模型复测报告",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/report.txt"
         }
       ]
     },
@@ -13354,7 +13454,7 @@
     {
       "id": "M52",
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-20",
+      "date": "2026-11-22",
       "title": "Jina-CLIP视觉RoPE每次前向重建partial，导致Dynamo缓存失效并重复整图校准",
       "component": "固定模型发布者EVA源码的推理期函数对象变更；不是FlagTree LLVM计算缺陷",
       "status": "CPU缓存修复与P800 FP16/FP32正式复测均通过；性能不足如实保留",
@@ -13377,7 +13477,8 @@
         "CPU首次探针遗漏已有enable_vendor_capture，因Hydrax的FakeTensor _tensor_state删除而失败；复用M01既有处理后才进行对照，未把该探针错误归为模型缓存根因。",
         "完整监控的正式复测两种精度均通过3次预热10次平均、完整15360值及两侧机器码核查。FP16 actual=inductor_f06_fp32_packed，66.094518→85.069489ms，0.776947×，最大误差0.0002657622，1099→780次发射但仍更慢；FP32 actual=original，66.265154→64.626312ms，1.025359×，误差0，1096→1096次发射。两个正式进程从验证到机器码均只有一个audit，缓存修复闭环；未将original-only或发射减少等同融合加速。",
         "2026-11-20 完整入口引入连续原生候选后发现旧restore不幂等：第二次删除forward_features实例覆盖时报AttributeError，属于旧修复未覆盖的调用序列。已改为仅删除仍存在的实例覆盖；原有覆盖则恢复原对象。CPU真实helper/PyTorch数值夹具复现旧失败，修复后有/无预先覆盖的连续恢复与连续启用均保持逐位结果。固定模型及EVA/RoPE源码指纹不变，P800完整模型正在复测。",
-        "重复切换修复的P800完整模型已通过：helperSHA 592c69bee1a410b0，eager 66.950917ms，当前Inductor 84.420776ms，整模型选路后 65.842390ms，实际原生FP32最终转换，完整输出0超差。多次连续恢复不再报属性删除错误；不宣称融合核本身加速。"
+        "重复切换修复的P800完整模型已通过：helperSHA 592c69bee1a410b0，eager 66.950917ms，当前Inductor 84.420776ms，整模型选路后 65.842390ms，实际原生FP32最终转换，完整输出0超差。多次连续恢复不再报属性删除错误；不宣称融合核本身加速。",
+        "2026-11-22 独立候选缓存边界：此次多资源候选因共享forward代码对象耗尽重编译预算，区别于本项每次创建partial导致缓存失效。修复为冷阶段隔离候选捕获代码对象，所有守卫保留；热调用不重建包装。详见M58 v38记录。"
       ],
       "refs": [
         {
@@ -13435,6 +13536,14 @@
         {
           "label": "完整模型重复切换P800复测",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/whole-model-rope-restore-device-validation.json"
+        },
+        {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
         },
         {
           "label": "本地源码 review-local/f06-all-models-20261119/jina_clip_rope_compat.py",
@@ -13773,15 +13882,22 @@
     {
       "id": "M58",
       "title": "P800整图默认短行归约和逐点分块产生过细搬运与跨核同步",
-      "component": "本地F06的Inductor候选调度与P800厂商节点",
-      "status": "已在两模型FP16/FP32完整输出与正式入口验证",
-      "solution": "新增整图候选：FP32最后维2至128的短Softmax与非连续contiguous保留厂商节点，外围仍融合；大逐点核用XBLOCK32768和实测512/2048字节缓冲候选，以完整图和完整模型同步主机耗时选路。快速分块同时覆盖融合LayerNorm与保留厂商LayerNorm两种数学路径，相同源码去重。逐点冷校准绕行不扩散到归约配置。",
-      "evidence": "实际Softmax c5f093d29222与转置347a05600892和eager逐字节相同；旧Softmax LLVM有9个静态同步点、ASM58处Spill/121处Reload。初次调度验证12次Softmax串行约59.7→0.218ms，12次转置11.1→0.159ms。CLIP主要QuickGELU24次串行35.76→10.29→7.75ms；正式结果为：openai/clip-vit-large-patch14-336 float32 124.420023→124.578691ms=0.998726倍，实际native_original_dtype/图内正式调用未使用融合图；hkunlp/instructor-base float16 20.893931→8.464146ms=2.468522倍，实际inductor_current/图内inductor_p800_lm2048；openai/clip-vit-large-patch14-336 float16 101.602602→125.715446ms=0.808195倍，实际inductor_current/图内inductor_p800_lm2048；hkunlp/instructor-base float32 16.143227→8.472061ms=1.905466倍，实际inductor_current/图内inductor_p800_lm2048。全部公开输出对原始FP32参考通过。",
-      "baseline": "2026-11-21 个人Docker P800物理卡0；Python3.10/Torch2.9/FlagTree0.6.1+xpu3.6，最终包0.3.11+v51e.inductor12，SHA256 905d0c65039f6687bc6338f37187db8b7b4e2b5f3c0a4cacfdf2802c9f7679dc；预热3、正式10次算术平均，单模型单卡，观察共享卡占用。",
+      "component": "XPU LLVM DMA调度（官方源码存在同类结构）及本地F06/Inductor候选接入",
+      "status": "v46正式编译流程及两模型完整输出已验证；MiniLM加速，CLIP仍有整模型差距",
+      "solution": "整图保留已验证厂商短行归约与布局节点，候选补齐FP16分块。新增XPU LLVM结构化DMA Pass，按依赖证明合并输入等待、外提互不重叠的向量写回等待，并自动生成双/三缓冲跨块预取；不能证明独立时保留等待，退出排空。工具SHA及选项纳入编译缓存，CMake与打包接入；完整输出对原始FP32通过后按整模型端到端耗时选路。",
+      "evidence": "最终单核scale98.405572→48.190558us、multiply160.430590→71.374478us，两项12/12配对轮改善；全23633920元素逐位通过，24项设备边界检查及8项LLVM结构测试通过。最终机器码的算术与转换条数不变，预取与条件等待已核对。CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。逐核串行时间不是纯设备耗时；共享卡仅记录观察到的占用情况。",
+      "baseline": "P800个人Docker，两台物理卡2；Python3.10/Torch2.9.0+cu129/FlagTree0.6.1+xpu3.6；F06 0.3.50+v51e.inductor46，wheel ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f，正式LLVM工具 cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd。预热3次、正式10次算术平均，并追加6轮独立对照。",
       "fix_paths": [
         "python/triton/experimental/graph_fusion/_p800_model_schedule.py",
         "python/triton/experimental/graph_fusion/_model_inductor.py:inductor_backend",
-        "python/test/unit/runtime/test_graph_fusion_model_inductor.py"
+        "python/test/unit/runtime/test_graph_fusion_model_inductor.py",
+        "python/triton/experimental/graph_fusion/_model_inductor.py",
+        "python/triton/experimental/graph_fusion/_model.py",
+        "python/triton/experimental/graph_fusion/_model_pipeline.py",
+        "python/triton/experimental/graph_fusion/_whole_model_selection.py",
+        "third_party/xpu/tools/xpu-dma-opt/xpu-dma-opt.cpp",
+        "third_party/xpu/backend/dma_pipeline.py",
+        "third_party/xpu/backend/compiler.py"
       ],
       "refs": [
         {
@@ -13853,6 +13969,46 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/region-reuse-20261121/probe.py"
         },
         {
+          "label": "CLIP逐核、资源与调度因果验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/report.txt"
+        },
+        {
+          "label": "本轮手册复核与实验边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/handbook-review.json"
+        },
+        {
+          "label": "v37正式调度修复与整模型复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/report.txt"
+        },
+        {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
+        },
+        {
+          "label": "v38逐核机器码、协处理及剩余误差边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/machine-findings.txt"
+        },
+        {
+          "label": "CLIP最终模式的精度白名单与接口改写来源",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/report.txt"
+        },
+        {
+          "label": "生成wrapper、最终矩阵及逐点核复核证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/origin-evidence.json"
+        },
+        {
+          "label": "v39b完整候选、精度及端到端实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/report.txt"
+        },
+        {
+          "label": "最终机器码与分组图关联证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/final-machine-evidence.json"
+        },
+        {
           "label": "本地源码 python/triton/experimental/graph_fusion/_p800_model_schedule.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_p800_model_schedule.py"
         },
@@ -13863,6 +14019,58 @@
         {
           "label": "本地源码 python/test/unit/runtime/test_graph_fusion_model_inductor.py",
           "path": "/home/f/Documents/FlagTree/python/test/unit/runtime/test_graph_fusion_model_inductor.py"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_model.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model.py"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_model_pipeline.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_pipeline.py"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_whole_model_selection.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_whole_model_selection.py"
+        },
+        {
+          "label": "v46正式编译Pass单核验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/micro-summary.json"
+        },
+        {
+          "label": "手册生成源补齐记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/manual-index-notes.json"
+        },
+        {
+          "label": "v46正式源码指纹",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/formal-source-manifest.json"
+        },
+        {
+          "label": "v46编译框架与整模型复测报告",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/report.txt"
+        },
+        {
+          "label": "v46最终实际路由、精度与加速比",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json"
+        },
+        {
+          "label": "v46最终机器码同步与算术对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/final-micro-machine.json"
+        },
+        {
+          "label": "v45到v46候选源码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/f06-v45-to-v46.patch"
+        },
+        {
+          "label": "本地源码 third_party/xpu/tools/xpu-dma-opt/xpu-dma-opt.cpp",
+          "path": "/home/f/Documents/FlagTree/third_party/xpu/tools/xpu-dma-opt/xpu-dma-opt.cpp"
+        },
+        {
+          "label": "本地源码 third_party/xpu/backend/dma_pipeline.py",
+          "path": "/home/f/Documents/FlagTree/third_party/xpu/backend/dma_pipeline.py"
+        },
+        {
+          "label": "本地源码 third_party/xpu/backend/compiler.py",
+          "path": "/home/f/Documents/FlagTree/third_party/xpu/backend/compiler.py"
         }
       ],
       "related": [
@@ -13881,20 +14089,50 @@
         "曾全局关闭autotune_pointwise导致最后短行池化1.886ms；该选项也控制persistent reduction，修复后在生成归约元数据时恢复原生候选，复测0.430ms。",
         "inductor11的CLIP FP32融合LayerNorm在文本hidden state有253元素不满足0.0003门槛；旧全厂商LayerNorm可过，但漏配快速分块。inductor12补齐厂商数学×LM分块组合，不以原生回退通过替代融合候选精度验收。",
         "2026-11-21广播加法实码补充：生成bias核9fac75450c64的Folded Spill/Reload为0、无半精度转换，仍以512元素包反复读矩阵/bias，72次约8.35ms串行诊断使图变慢。采用已有fallback_handler原生广播方案，不能将所有慢点算子归为标量exp或寄存器溢出。",
-        "2026-11-21FP16分块复用验证：实际安装版_p800_model_schedule仅对全FP32指针转发buffer选项，FP16局部区域需显式构造候选。四模型512/1024分块的去来源位置TTIR相同，old/bound调用因素另行控制；CLIP336短调用1024比512平均再省0.249269ms，但PLIP/MiniLM/e5没有稳定的端到端分块收益。不能把CLIP大形状结论固化为所有模型强制1024，也不能只凭静态spill或exp条数选路。完整模型精度和反向交错多轮耗时仍是准入标准；本轮未修改正式调度。"
+        "2026-11-21FP16分块复用验证：实际安装版_p800_model_schedule仅对全FP32指针转发buffer选项，FP16局部区域需显式构造候选。四模型512/1024分块的去来源位置TTIR相同，old/bound调用因素另行控制；CLIP336短调用1024比512平均再省0.249269ms，但PLIP/MiniLM/e5没有稳定的端到端分块收益。不能把CLIP大形状结论固化为所有模型强制1024，也不能只凭静态spill或exp条数选路。完整模型精度和反向交错多轮耗时仍是准入标准；本轮未修改正式调度。",
+        "2026-11-22逐核实测确认，preserve_operator/fuse_fp32_internals两条原始dtype整图候选漏接既有p800_lm_schedule。仅接入该调度，同卡CLIP端到端197.348→115.537ms、182.283→113.724ms，全部公开输出与各自旧候选逐位相同。219次矩阵二进制/资源集合不变；SDNN合计约21.34ms不变，cluster串行115.70/102.10→29.88/29.90ms。XBLOCK1024/每核16元素改为32768的批量片段，默认两组最慢乘法无exp且无溢出。仅诊断候选，尚未改正式包；原始FP32完整精度仍2/8通过。",
+        "2026-11-22 v37正式调度修复：preserve_operator/fuse_fp32_internals漏接既有P800分块已写入_model_inductor.py，使用P800识别和scoped调度，split_addmm=False。v37实际wheel冷启动复测CLIP为115.209/113.334ms，与此前受控修复结果一致；219次矩阵二进制、入口PC、发射配置与eager相同，生成核多重集合与已验证调度完全相同。5条路径各8类公开输出SHA与v36全部一致。原始FP32门槛不变，两低精度候选仍2/8通过；正式合格路径119.537ms对99.014ms eager，为0.828313×，未宣称CLIP已全面加速。两台各75单元测试+11契约检查通过；MiniLM12轮9.200→5.366ms、1.714322×，12/12轮改善。",
+        "2026-11-22 v38资源候选修复：补齐完整模型的Cluster/SDNN候选展开，限连续、有显式尾mask的大尺寸FP16/FP32逐元素区域；保留厂商矩阵/注意力及不支持的广播、gather、归约，按实际编译资源校验。候选复用已准备算术图，无张量子图计时淘汰；完整模型所有输出对原始FP32验证后再按端到端均值选路。实际v38c包两台各83单元测试+11合同检查通过；clip正式source_fp32_mixed_grouped，99.841380→119.748282ms、0.833760倍；12轮99.370887→119.907135ms，0/12轮更快，完整输出8/8通过；minilm正式inductor_current，9.125924→5.163836ms、1.767276倍；12轮9.123945→5.179590ms，12/12轮更快，完整输出1/1通过。完整候选表与机器码见报告，不推断所有形状。",
+        "2026-11-22 v38捕获与缓存修补：首次源码分析误解析Inductor的KERNEL_NAME占位符，现只规范分析副本、不改生成模板。新增多候选共用FinalOutputCast.forward超过Dynamo默认8次重编译预算；现每个资源候选独立捕获代码对象，不调大全局上限、不去守卫。10个候选在limit=2下各两种形状、活权重更新通过；P800完整CLIP冷启动通过。",
+        "2026-11-22 v38c建图来源复核：保留原始dtype候选的219次矩阵SHA/入口/资源/次数与FP16 eager完全一致，但QuickGELU前后两类乘法替换为生成核：各36次串行launch+wait合计由1.604/2.111ms增至2.865/4.377ms。TTIR及已解码实码均为FP16读写、FP32向量乘法，生成核无exp、无Spill/Reload注释。说明相同矩阵不能代表整条路径相同；逐点实现、分块及访存/同步组织仍有差距。尚未隔离动态流水各项占比，串行时间不能直接扣普通端到端时间。本次仅复核已完成实测和只读安装源码。",
+        "2026-11-22 v39b完整候选复测：原始FP32划分交叉厂商Linear/分组实现、生成逐点/原生mul/原生add-mul-sigmoid及Cluster/SDNN；CLIP53条路径38条精度合格，MiniLM43条全合格。CLIP同一全FP32分组矩阵多集下，生成逐点120.853909ms/695次发射，原生mul128.848400ms/805次，原生全逐点125.731083ms/887次；不能统一强制厂商逐点或SDNN。正式CLIP99.522924→120.340300ms=0.827012倍；MiniLM9.165502→5.323935ms=1.721565倍，选中路径完整输出均通过。",
+        "2026-11-22 两类FP16存储乘法的逐pass与单因素验证：实际模型TTIR重新编译逐字节还原a5af1192e7ef/361bb4974aee。512字节布局在ConvertTritonToTritonXPU时形成；AsyncLoadSchedule虽开启，最终仍是读A/等A/读B/等B，关闭pass后二进制不变；MemoryInplace合并LM缓冲，StoreOp降层又在每轮向量写回后等待。P800个人Docker物理卡0，保持算术和12×64资源，仅512→1024，scale98.5407→65.8337us、multiply159.6200→107.5395us，各12/12配对轮改善；1024/2048实码相同。另组固定1024的诊断性LLVM消融，合并独立输入等待使multiply107.0139→87.3204us，再把互不重叠的向量写回等待移到块末为86.0663us，仍慢于厂商69.5151us。每核23633920元素精确通过FP32一次计算后最终舍入参考；实际SHA均匹配，6个生成二进制完整解码，算术/转换条数不变。厂商多缓冲跨块预取是剩余明确结构差别，尚未独立实现并量化。官方只读1c34edb4669d12a51ed383cd2292dd6a85f75565同样有单block调度与无条件Store fence源码；本轮未重建纯官方版、未改正式包、未复测整模型，不能声称CLIP已加速。诊断脚本曾把make_llir返回module当文本，CPU编译前失败；已改为有作用域的LLVM22→19文本钩子，失败和修复收据保留。下一步应在编译框架内按依赖合并等待、增加合法FP16分块候选及跨迭代流水，不能全局删屏障。证据：[逐pass、机器码与P800消融](</home/f/Documents/FlagTree/review-local/f06-all-models-20261119/kernel-lowering-20261122/report.txt>)。",
+        "2026-11-22 v46正式LLVM DMA调度：结构化Pass在XPU→LLVM后、LLVM19降层前执行，自动作用于Inductor及直接Triton编译；工具指纹进入编译缓存。独立输入共用等待；SCEV证明LM迭代片段不重叠后把向量写回等待移至出口；单输入双缓冲，双输入且每包≤1024B、总预算≤7168B时三缓冲。部分地址重叠、重复网格索引或无法证明下一包独立时，保留写回等待并正常重新加载；退出排空。最终工具cc9642f3在P800物理卡2复测：scale98.405572→48.190558us，厂商47.829us；multiply160.430590→71.374478us，厂商原位70.488/非原位69.638us，各12/12配对轮改善。23633920元素逐位通过，16项尾块/原位/哨兵与8项部分重叠/重复索引全部通过；8个生成核全部可解码，乘法及FP16转换静态条数不变。不是全局删除同步，也未替换厂商数学库。最终整模型结果见下条。",
+        "2026-11-22 v46最终整模型复测：CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。原始dtype模型建图、原始FP32外部参考及完整输出门槛不变；不能把CLIP局部流水收益写成整模型已超过FP16 eager。MiniLM正式路径未使用所有新流水，跨版本时间不能单独证明增益。候选、机器码、搜索时长及监控边界见本轮报告。",
+        "2026-11-22 v46剩余边界：CLIP的保留FP16候选有36次发射对应预取代码，但完整精度仍不合格；正式路径65次发射命中写回等待外提，跨块预取代码覆盖为0。正式FP32复杂融合/库调用模式尚未被本Pass覆盖。最终矩阵乘串行发射+等待32.496433ms对FP16 eager15.243221ms；保留FP16候选219次矩阵实码/配置/次数完全一致，独立端到端仍112.497270ms对99.743744ms。调用/同步及其他节点差额未完成因果拆分，不能把所有剩余问题标记已关闭。"
       ],
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
-      "historical_status": ""
+      "date": "2026-11-22",
+      "historical_status": "",
+      "production_schedule_validation": {
+        "package": "0.3.36+v51e.inductor37",
+        "report": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/report.txt",
+        "summary": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/summary.json",
+        "runtime_patches": false,
+        "scope": "P800 original-dtype candidate pointwise scheduling only"
+      },
+      "resource_candidate_validation": {
+        "package": "0.3.37+v51e.inductor38c",
+        "sha256": "e784278f79282af205313aa701cbf65df5829d8403d8f1c8798922f80f1f3cd8",
+        "scope": "eligible contiguous generated pointwise kernels; complete-model precision and latency admission",
+        "report": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+      },
+      "dma_pipeline_validation": {
+        "version": "0.3.50+v51e.inductor46",
+        "package_sha256": "ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f",
+        "tool_sha256": "cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd",
+        "results": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json",
+        "full_fp32_gate_preserved": true
+      }
     },
     {
       "id": "M59",
       "title": "额外XPU编译选项仅写元数据仍被Torch编译白名单丢弃",
       "component": "本地F06固定配置装饰器与Torch2.9延迟Triton编译适配",
-      "status": "已在两模型FP16/FP32完整输出与正式入口验证",
-      "solution": "生成源码记录buffer_size_limit和策略指纹；延迟编译只给对应JIT转交2048选项，保存转交证明。最终要求选项已转交且实际值为16至请求值内的合法2次幂，允许XPU后端因栈预算自动减半，不能只比较请求值相等；非法或丢失传参仍拒绝。compile_lock内恢复上下文，不增加热发射包装。",
-      "evidence": "修复前标记2048的候选实际元数据仍512且二进制相同；修复后主要QuickGELU实际6d010f76eb88与独立CPU编译逐字节一致，LLVM完整搬运2048字节且masked尾部保留。最终四项同包完整输出及36项CPU检查通过。",
-      "baseline": "2026-11-21 个人Docker P800物理卡0；Python3.10/Torch2.9/FlagTree0.6.1+xpu3.6，最终包0.3.11+v51e.inductor12，SHA256 905d0c65039f6687bc6338f37187db8b7b4e2b5f3c0a4cacfdf2802c9f7679dc；预热3、正式10次算术平均，单模型单卡，观察共享卡占用。",
+      "status": "v46正式编译流程及两模型完整输出已验证；MiniLM加速，CLIP仍有整模型差距",
+      "solution": "生成源码记录512/1024/2048字节缓冲与策略指纹，延迟编译只对对应JIT转交选项并核验实际合法值。FP16的2048字节候选在范围与掩码生成前选65536元素tile；FP16/FP32参数分离，避免候选联动。允许资源预算导致的合法缩减，拒绝参数丢失；compile_lock内恢复上下文，不增加热发射包装。",
+      "evidence": "两台个人Docker各137项单测及11项选路合同通过；先前真实Inductor生成65536 tile的8项尺寸检查通过，最终包的两个完整模型复测通过。FP16实际2048B缩放机器码9c2d11b00926，不能把仅元数据写2048而实码仍1024视作生效。CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。",
+      "baseline": "P800个人Docker，两台物理卡2；Python3.10/Torch2.9.0+cu129/FlagTree0.6.1+xpu3.6；F06 0.3.50+v51e.inductor46，wheel ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f，正式LLVM工具 cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd。预热3次、正式10次算术平均，并追加6轮独立对照。",
       "fix_paths": [
         "python/triton/experimental/graph_fusion/_p800_model_schedule.py:_compile_buffer_option",
         "python/triton/experimental/graph_fusion/_p800_model_schedule.py:p800_fixed_config",
@@ -13952,6 +14190,34 @@
         {
           "label": "本地源码 python/test/unit/runtime/test_graph_fusion_model_inductor.py",
           "path": "/home/f/Documents/FlagTree/python/test/unit/runtime/test_graph_fusion_model_inductor.py"
+        },
+        {
+          "label": "v46正式编译Pass单核验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/micro-summary.json"
+        },
+        {
+          "label": "手册生成源补齐记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/manual-index-notes.json"
+        },
+        {
+          "label": "v46正式源码指纹",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/formal-source-manifest.json"
+        },
+        {
+          "label": "v46编译框架与整模型复测报告",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/report.txt"
+        },
+        {
+          "label": "v46最终实际路由、精度与加速比",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json"
+        },
+        {
+          "label": "v46最终机器码同步与算术对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/final-micro-machine.json"
+        },
+        {
+          "label": "v45到v46候选源码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/f06-v45-to-v46.patch"
         }
       ],
       "related": [
@@ -13961,11 +14227,20 @@
       "notes": [
         "Torch2.9选项白名单与本地新增候选交互，不能等同FlagTree LLVM未实现2048。",
         "作用范围仅已验证的大逐点FP32固定配置；不改变整数、混合dtype、归约或其他JIT编译选项。",
-        "2026-11-21补齐合法后端缩减：旧requested==actual断言把2048请求自动降至1024误拒。CPU-only编译明确记录stack_oob=[true,false]；改为核验同一JIT实际传入选项及最终16..requested的合法2次幂，保留资源限制与缺失传参拒绝。43项CPU控制及CLIP两种输出dtype全模型通过。"
+        "2026-11-21补齐合法后端缩减：旧requested==actual断言把2048请求自动降至1024误拒。CPU-only编译明确记录stack_oob=[true,false]；改为核验同一JIT实际传入选项及最终16..requested的合法2次幂，保留资源限制与缺失传参拒绝。43项CPU控制及CLIP两种输出dtype全模型通过。",
+        "2026-11-22 v46：原始dtype分支补齐FP16 512/1024/2048字节候选；2048B候选必须在范围及mask生成前选择XBLOCK65536，否则每核仍受1024B上限。FP16分块参数与既有FP32分块分离，避免校准FP16时连带改变FP32核。混合存储dtype、归约及SDNN维持原适用规则；完整原始FP32输出通过后按完整模型端到端选路。两台个人Docker各137项单测及11项选路合同通过。最终整模型结果见下条。",
+        "2026-11-22 v46最终整模型复测：CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。原始dtype模型建图、原始FP32外部参考及完整输出门槛不变；不能把CLIP局部流水收益写成整模型已超过FP16 eager。MiniLM正式路径未使用所有新流水，跨版本时间不能单独证明增益。候选、机器码、搜索时长及监控边界见本轮报告。"
       ],
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
-      "historical_status": ""
+      "date": "2026-11-22",
+      "historical_status": "",
+      "dma_pipeline_validation": {
+        "version": "0.3.50+v51e.inductor46",
+        "package_sha256": "ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f",
+        "tool_sha256": "cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd",
+        "results": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json",
+        "full_fp32_gate_preserved": true
+      }
     },
     {
       "id": "M60",
@@ -14055,6 +14330,22 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/low-input-fp32-output-20261121/rollback.json"
         },
         {
+          "label": "CLIP最终模式的精度白名单与接口改写来源",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/report.txt"
+        },
+        {
+          "label": "生成wrapper、最终矩阵及逐点核复核证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/origin-evidence.json"
+        },
+        {
+          "label": "v39b完整候选、精度及端到端实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/report.txt"
+        },
+        {
+          "label": "最终机器码与分组图关联证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/final-machine-evidence.json"
+        },
+        {
           "label": "本地源码 python/triton/experimental/graph_fusion/_p800_model_schedule.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_p800_model_schedule.py"
         },
@@ -14086,29 +14377,38 @@
         "投影合并反例：ind18带步长QKV引入179次隐藏拷贝，完整图58.684→61.505ms；ind19虽减少发射726→653，却因生成重排核增加搬运而58.630→63.952ms。两者通过精度但因耗时被排除。ind21/22整图数值失败被严格门槛排除。实际输入中间值确认首层Q/K/V相同，但全图DCE误删masked_fill_改变了因果掩码；属于本轮本地改写缺陷M62，已定点清理修复。ind23原图与改写图8输出逐位相同，最终候选保持eager布局，不部署临时M51覆盖。",
         "本轮完整模型正式结果：float16 eager99.976468→F06123.333359ms=0.810620倍，实际外层['inductor_current']，图内候选inductor_p800_lm_native_bias_mm_grouped_proj2048；float32 eager125.085640→F06122.038388ms=1.024970倍，实际外层['inductor_current']，图内候选inductor_p800_lm_sdk_norm_native_bias_mm_grouped_proj2048；全部8个公开输出通过，FP16负优化是否消除以实测比值为准。没有重跑117/749全量。",
         "2026-11-21补充：厂商custom_ops.linear支持FP16输入和FP32 bias/out，可直接配置模式5，避免Linear结果写回FP16；GEMM与bias仍可能分核。新候选完整输出通过，但四轮正式选路没有稳定获益，未替代原分组路径。",
-        "用户要求撤回本轮低精度输入/FP32直接输出及联合校准方法，恢复v32精度选路；旧方案8个输出已经通过。此前实测未固定eager同一计算/布局路径，不能据此断言单纯删除冗余转换没有收益。保留历史实测证据与独立参数缓存修复。"
+        "用户要求撤回本轮低精度输入/FP32直接输出及联合校准方法，恢复v32精度选路；旧方案8个输出已经通过。此前实测未固定eager同一计算/布局路径，不能据此断言单纯删除冗余转换没有收益。保留历史实测证据与独立参数缓存修复。",
+        "2026-11-22 v38c建图来源复核：实际安装torch_xmlir的eager Linear和_dynamo_workaround.linear使用同一_linear/hydra_linear实现。mixed grouped在_model_inductor.py中主动把FP32 precision_linear改成aten.linear，再分解为mm和bias；实生成wrapper为9个厂商Linear+186个mm。mixed native保留218个厂商Linear但仍210次mode8+9次mode37，说明仅恢复API不会把FP32输入恢复成FP16矩阵模式。模式8在厂商最终矩阵二进制中，不是LLVM把模式37错误降层。本次没有修改该优化或恢复已撤回方案。",
+        "2026-11-22 v39b中间产物与机器码验证：自动13个低精度Linear组合把文本第10块v_proj改为低精度，原Q/K/V三路FP32分组12→11；实际矩阵发射195→197，总发射709→722。新方案12轮120.443447ms，旧合格方案120.237271ms，只有2/12轮更快；矩阵串行诊断31.570224/31.525714ms，未得到稳定整模型收益，正式保留旧路径。串行发射+等待不是纯设备时间。"
       ],
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
+      "date": "2026-11-22",
       "historical_status": ""
     },
     {
       "id": "M61",
       "title": "Profiler成功退出仍可能缺失SDNN事件或部分单元，误导计算/搬运归因",
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
+      "date": "2026-11-22",
       "historical_status": "",
       "component": "本地P800性能采集与完整性校验；未归为FlagTree源码缺陷",
-      "status": "完整采集方案及12单元覆盖已验证",
+      "status": "12单元MAC/DMA/EW覆盖已验证；SCH不完整样本显式排除",
       "solution": "检查原始日志、预期单元集合、成对事件、原始任务标签及实际机器码。缓冲不足时用duration-only信号和更大缓冲；部分单元缺失时分组采集并明确跨轮统计口径。缺失信号不能计作零，主机提交时间不能计作设备时间。",
       "evidence": "首轮返回0但dma data out of space，无SDNN事件；缩减信号、增加缓冲后得到完整成对事件。请求12单元仅取得2/5/8/11，随后补齐0/3/6/9和1/4/7/10。三轮每轮60个标记调用，真实核哈希一致，覆盖12单元。",
       "baseline": "43.179.154.78个人Docker，物理0；SDK XProfiler；每单元/形状/入口5个隔离样本。",
       "fix_paths": [
         "review-local/f06-all-models-20261119/clip-gemm-modes-20261121/run_unitgroup_profile.py",
-        "review-local/f06-all-models-20261119/clip-gemm-modes-20261121/analyze_trace_unit.py"
+        "review-local/f06-all-models-20261119/clip-gemm-modes-20261121/analyze_trace_unit.py",
+        "review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_probe.py",
+        "review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_launch.py",
+        "review-local/f06-all-models-20261119/clip-schedule-fix-20261122/analyze_coprocessors.py"
       ],
       "notes": [
-        "MAC/DMA/DS可重叠，不相加。三组不同轮次不能合成单次整卡临界路径；没有把外部同步串行诊断相加为生产端到端耗时。"
+        "MAC/DMA/DS可重叠，不相加。三组不同轮次不能合成单次整卡临界路径；没有把外部同步串行诊断相加为生产端到端耗时。",
+        "2026-11-22 SDNN协处理补采：旧配置只采MAC/DS/DMAI/DMAO/RS，漏采EW/SCH，不能推断协处理未使用。依据官方XTDK V3.4 3.1.4新增信号、分3组覆盖12单元。厂商Linear和SDNN Add在全部单元均有EW活动；Add实码ew_cfg/ewcoeff_cfg和TTXIR sdnn.ew linear互相印证，DMA负责f16↔f32搬运转换。单独downcast的TTXIR明确sdnn.dma out f32→f16，EW仅约1–2ns脉冲，不可因没有浮点转换指令认定漏算。引擎忙时间可重叠，不相加。",
+        "2026-11-22 SCH完整性边界：新增SCH采集部分事件未成对，Linear15/36、SDNN Add5/36、SDNN downcast7/36单元样本不参与耗时统计；不能给出这些样本的调度器利用率。驱动与设备时间有校准偏移，按20ms隔离调用间的中点归属事件，避免以驱动调用起点截断硬件事件。全部MAC/EW/DMA样本事件配对有效；SCH未配对原因未确定。",
+        "2026-11-22 候选覆盖边界：后端能生成SDNN协处理运算，厂商矩阵也已使用；两条整图生成的逐元素核默认Cluster，尚无通用SDNN/Cluster候选自动对照。两个已测大形状中SDNN Add/转换35.394/29.917us均慢于调好Cluster的25.178/20.565us，不能强制SDNN；不能推广为所有形状的结论。",
+        "2026-11-22 v38资源候选修复：整图SDNN候选会使用EW逐元素协处理和DMA转换，不能只数MAC。实际发射类型与TTXIR/最终实码互证；每条资源版本的厂商矩阵SHA、PC、发射配置和次数均与父路径一致。旧12单元EW采样作为既有硬件证据，非本轮整模型新profiler；SCH未成对边界继续保留。范围限已验证连续逐元素区域，不是任意算子的通用SDNN支持。"
       ],
       "related": [
         "M60"
@@ -14127,12 +14427,44 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-gemm-modes-20261121/handbook-review.json"
         },
         {
+          "label": "12单元协处理信号及配对完整性",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor-summary.json"
+        },
+        {
+          "label": "协处理中间产物和最终机器码",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/summary.json"
+        },
+        {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
+        },
+        {
+          "label": "v38逐核机器码、协处理及剩余误差边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/machine-findings.txt"
+        },
+        {
           "label": "本地源码 review-local/f06-all-models-20261119/clip-gemm-modes-20261121/run_unitgroup_profile.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-gemm-modes-20261121/run_unitgroup_profile.py"
         },
         {
           "label": "本地源码 review-local/f06-all-models-20261119/clip-gemm-modes-20261121/analyze_trace_unit.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-gemm-modes-20261121/analyze_trace_unit.py"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_probe.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_probe.py"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_launch.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/coprocessor_launch.py"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/clip-schedule-fix-20261122/analyze_coprocessors.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/analyze_coprocessors.py"
         }
       ]
     },
@@ -14267,11 +14599,11 @@
       "id": "M64",
       "title": "混合精度融合需按内部算术划区，并将边界转换并入可支持的核",
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
+      "date": "2026-11-22",
       "historical_status": "",
       "component": "F06 reviewed FP32 compute regions",
-      "status": "已恢复v32原始FP32精度选路；本轮FP32直接输出方法按用户要求撤回",
-      "solution": "新增通用连接区域改写，合并已核实内部FP32计算的FP16算子，去除区域内部舍入。保留真实低精度及未知运算、可见分支和输入别名，尊重副作用。Add+LayerNorm完整边界转换折入已有FP32模板；仍有FP32用户或副作用时拒绝折叠。完整原始FP32输出通过后，才按模型端到端耗时选择，不增加FP16 eager相等门槛。；从原始 FP32 建图可显式配置混合模块范围，保护敏感入口/块并缓存低精度参数副本，最终以所有公开输出及端到端耗时准入。",
+      "status": "v46原始dtype候选与原始FP32完整精度验证通过；CLIP精度划分仍较粗",
+      "solution": "新增通用连接区域改写，合并已核实内部FP32计算的FP16算子，去除区域内部舍入。保留真实低精度及未知运算、可见分支和输入别名，尊重副作用。Add+LayerNorm完整边界转换折入已有FP32模板；仍有FP32用户或副作用时拒绝折叠。完整原始FP32输出通过后，才按模型端到端耗时选择，不增加FP16 eager相等门槛。；从原始 FP32 建图可显式配置混合模块范围，保护敏感入口/块并缓存低精度参数副本，最终以所有公开输出及端到端耗时准入。；v39b从原始模型发现Linear组，先原生粗筛，再用实际编译后完整输出对失败组继续细分；与厂商Linear/分组实现及逐点资源选择交叉比较，最终按整模型耗时选路。",
       "evidence": "0.3.29+v51e.inductor30：70项CPU、10组P800用例通过；加法3→1次发射、Add+QuickGELU5→1；64×512 Add+LayerNorm候选6→1。受保护ReLU和矩阵最终二进制及资源参数相同。CLIP实际['inductor_current']，101.6542→122.1508ms，0.832203倍；新混合候选完整精度通过=False。",
       "baseline": "P800个人Docker，既有v51e编译器，最终包inductor30；仅单张空闲卡0。完整模型精度以原始未舍入FP32模型和输入为准。",
       "fix_paths": [
@@ -14285,7 +14617,10 @@
         "review-local/f06-all-models-20261119/model_probe.py",
         "python/triton/experimental/graph_fusion/_source_precision.py",
         "python/test/unit/runtime/test_graph_fusion_source_precision.py",
-        "python/triton/experimental/graph_fusion/_model_pipeline.py"
+        "python/triton/experimental/graph_fusion/_model_pipeline.py",
+        "python/triton/experimental/graph_fusion/_model_candidates.py",
+        "python/triton/experimental/graph_fusion/_pointwise_candidates.py",
+        "python/test/unit/runtime/test_graph_fusion_model_candidates.py"
       ],
       "related": [
         "M06",
@@ -14319,7 +14654,23 @@
         "补充N09跨模型入口方案及e5上下文修补；该修补不改机器码、不删守卫。实际生成GELU的8个静态exp位于设备库erf展开，LLVM中的tail call也必须计数；厂商GELU仍有未解码指令，未做独立算法消融，不宣称已证明其剩余设备差距的唯一根因。U19向量sigmoid库问题仍未根修，N01不覆盖其中标量展开。",
         "2026-11-21 MiniLM完整融合复核1.705倍、原始FP32完整精度通过；此前局部激活替换的未加速结论只适用于该诊断路径。整图保留6次厂商FP32 GELU，使用原始FP32建图和最后输出转换，不需要强制替换GELU。选路重测修补见M65。",
         "2026-11-21 CLIP336 v36逐核复核：正式source_fp32_mixed_grouped通过8类6533320元素，但FP16基线不合格，因此M65计时漂移复测不适用该基线。张量前向37.913→58.242ms，主机提交35.694→22.337ms；三轮串行GEMM15.272→31.517ms，QuickGELU相关11.362→8.497ms。视觉fc1/fc2矩阵是主要差额，最终mode37→mode8已用实际二进制与生成FP32中间产物对齐。此轮只定位，未修改计算策略。",
-        "2026-11-21 v36 CLIP336六类失败输出来源复核：同590份FP32 master参数和10组官方输入，保留厂商精度整图候选全部6533320元素与FP16 eager逐位一致，新增误差为零；其6类失败全部已存在于原生低精度路径。去FP32区域内部舍入后8/8输出RMSE改善，但正式末次转换感知超差由2934691降至2589767，同时新增653773、恢复998697个超差位置；不能称完全没有新增变化，也不能仅凭新增位置断言编码错误。两候选矩阵均为218次模式37和1次模式5，代码/入口/资源多集与eager相同。当前完整输出与此前逐层诊断逐位一致，5个已重放局部核的SHA也一致；旧入口舍入与索引11/12误差放大证据仍适用，未在本次重新采集逐层检查点。12轮各3次预热/10次实测：FP16 eager99.314195ms，保留精度196.701988ms(0.504897x)，去舍入182.018457ms(0.545627x)，FP32 eager末次转换124.092370ms，正式source_fp32_mixed_grouped119.848853ms(对FP16为0.828662x，对FP32为1.035407x)。正式路线8/8通过，前两条仍拒绝；不是此前N09局部QuickGELU路径的回退。未改生产算法或门槛。离线分析已按已有SHA审计方法补齐普通FP32 mm索引，并过滤解码器未知指令null，原始实测未改。"
+        "2026-11-21 v36 CLIP336六类失败输出来源复核：同590份FP32 master参数和10组官方输入，保留厂商精度整图候选全部6533320元素与FP16 eager逐位一致，新增误差为零；其6类失败全部已存在于原生低精度路径。去FP32区域内部舍入后8/8输出RMSE改善，但正式末次转换感知超差由2934691降至2589767，同时新增653773、恢复998697个超差位置；不能称完全没有新增变化，也不能仅凭新增位置断言编码错误。两候选矩阵均为218次模式37和1次模式5，代码/入口/资源多集与eager相同。当前完整输出与此前逐层诊断逐位一致，5个已重放局部核的SHA也一致；旧入口舍入与索引11/12误差放大证据仍适用，未在本次重新采集逐层检查点。12轮各3次预热/10次实测：FP16 eager99.314195ms，保留精度196.701988ms(0.504897x)，去舍入182.018457ms(0.545627x)，FP32 eager末次转换124.092370ms，正式source_fp32_mixed_grouped119.848853ms(对FP16为0.828662x，对FP32为1.035407x)。正式路线8/8通过，前两条仍拒绝；不是此前N09局部QuickGELU路径的回退。未改生产算法或门槛。离线分析已按已有SHA审计方法补齐普通FP32 mm索引，并过滤解码器未知指令null，原始实测未改。",
+        "2026-11-22 执行路径表述更正：只确认矩阵机器码相同，不能称整个融合执行路径与eager逐机器码相同。上轮捕获的保留精度路径删除186次厂商发射、加入155次生成核（总947）；去舍入路径删除295次、加入411次（362次生成核及49次FP32厂商LayerNorm，总1094），eager为978。生成代码明确有98次1024元素参数FP16→FP32转换、48次5908480元素输出FP32→FP16转换，并替换其他逐点实现。当前实现不满足“固定所有有效计算及发射配置，只删冗余转换”的前提；不能用其慢于eager来否定该优化原则。此轮为已捕获产物复核，未重新设备计时，尚未逐核量化两候选各新增成本。",
+        "2026-11-22补充分块与资源归因：CLIP原始低精度两条候选的全部8输出在P800调度改变前后逐位相同，六类精度失败保持，不能借速度改善准入。60项抽取真实生成算式的cluster/SDNN/分块/缓冲对照全部随机输入精确通过。大FP16加法388→25us、FP32降精度352→21us；低精度/混合指针未获得现有2048B缓冲策略，有进一步空间。更大缓冲仅完成局部验证，正式仍source_fp32_mixed_grouped、8/8通过、0.830248倍FP16 eager，未宣称负优化消除。诊断元数据沿用既有GPUTarget序列化修复；离线文件映射区分已匹配xpubin与未采集的raw模板IR，不伪造覆盖。",
+        "2026-11-22 v37正式调度修复：两条原始dtype候选已接入P800调度并打包v37；CLIP完整输出与各自v36逐位相同，不新增精度误差，也不解决原有FP16相对原始FP32的6类输出误差。正式选路继续source_fp32_mixed_grouped，8/8通过。MiniLM保持inductor_current且完整精度通过。矩阵219次调用实码/入口/资源与eager一致，排除本次修复改变矩阵模式。未恢复已撤销的论文方法，未放宽精度门槛。",
+        "2026-11-22 v38资源候选修复：原始FP32完整精度门槛、原始权重/输入及最终输出dtype不变。原有厂商回退图没有生成核可切资源，现明确排除扩展，不因资源枚举重编译已知不支持的精度边界。每条资源路径独立完整校验；失败路径不参与正式计时排名。clip正式source_fp32_mixed_grouped，99.841380→119.748282ms、0.833760倍；12轮99.370887→119.907135ms，0/12轮更快，完整输出8/8通过；minilm正式inductor_current，9.125924→5.163836ms、1.767276倍；12轮9.123945→5.179590ms，12/12轮更快，完整输出1/1通过。未恢复论文方法。",
+        "2026-11-22 v38新增SDNN误差边界：source_fp32_mixed_native父路径8/8通过，SDNN版本7/8；视觉last_hidden_state有49618值超阈值。真实TTXIR/实码显示exp/div转EW sigmoid查表，矩阵SHA/入口/资源完全不变。已按完整输出排除；未逐层消融证明具体首发区域，不宣称是FP16转换或单条指令唯一根因。U07注册缺项和U19向量库偏慢不能直接视为本误差已修复方案。grouped版本SDNN完整精度通过，但收益不足1%，按稳定性规则保留父路径。",
+        "2026-11-22 v38c建图来源复核：当前model_probe.py对固定CLIP336 checkpoint采用原始FP32图，只允许visual_projection、text_projection、vision层18.fc2及层23降精度，实际9个Linear和1个attention。该白名单是有限校准后的一组合格候选，不是全部混合精度划分的穷举；此前“大部分矩阵需要FP32”的表述不能解释成已证明其余节点都不能使用低精度。正式grouped为186次mode8+9次mode37，119.907ms、8/8输出通过；原始dtype保留路径能复用全部eager矩阵，但115.599ms、仅2/8通过。保留原始FP32完整门槛，不强制模式37。",
+        "2026-11-22 v39b已完成：自动发现218个Linear组，429次原生筛选得到20个低精度Linear；两机原生判定与首次编译失败逐项一致。编译后失败反馈到25次有界分组细分，得到13个Linear、完整8/8输出通过；53条完整实现/资源路径中38条通过（v39a为24条），新组合没有稳定速度收益，正式仍source_fp32_mixed_grouped。FP16 eager仅2/8通过原始FP32门槛；正式独立3+10为99.522924→120.340300ms=0.827012倍。12轮正式路径120.237271ms，对原始FP32 eager最终转换124.601414ms为1.036296倍；未消除相对FP16 eager差距，未恢复撤回的FP32直接输出论文方法。",
+        "2026-11-22顶会搜索方法有限空间实验：五组合成MLP子图（四组CLIP尺寸和一组MiniLM尺寸），原始FP32 master与三组输入全输出校验。初版按算子独立成本将两个CLIP合法组合48减到8，但丢失最快路径约6.96%/7.01%；最终代码显示native残差add后额外一次输出转换，6次发射变7次。补转换仍误剪，进一步发现原生直接探针16–27us与带编译包装生成探针74–80us混用。统一受守卫编译入口并按包含输出转换的表达式标定后，完整组合200→40，五组短名单均保留该轮完整枚举最快候选，三输入全部通过。四组CLIP组合编译首调用总和约18.94–24.85s→8.12–10.88s，单算子标定另需9.51–10.96s；MiniLM只有8组，没有剪枝收益。仅实验选择器，未更新正式整模型路径/加速比；不声称完整搜索空间已补齐或全局最优。",
+        "实验构造修补：逐点选择域必须在精度保护后读取，FP16 sigmoid已固定厂商边界时不能再向其分配无效生成/原生改写。保留所有现有精度限制；实际同dtype矩阵最终机器码/入口/资源与eager一致（FP16模式37、FP32模式8）。部分SDNN生成核跨冷编译指令不同，已记录，未据源代码或哈希相似性自动去重。",
+        "2026-11-22 整模型剪枝接入复核：v42 对注意力 mask 整数转换边界保守保留全部策略，v42a 在限定纯逐点/转换区域内补齐数值和 bool 边界，保留原始 dtype/stride/显式转换。CLIP 标定又暴露非凸区域提取错误：直连残差边将中间经过 LayerNorm/Linear 的48个 add 错并为同一区域，SDNN 编译触及事件64上限。v42b 按完整DAG检查外部路径离开再进入，禁止产生循环依赖的区域收缩；CLIP原始完整图99个实际区域、12个唯一标定表达式在P800通过，未修改模型融合调度或声称解决SDNN事件上限。v42c 将额外近似平手保护围绕预测最快值，同时保留各资源前两名和generated对照，115项CPU回归通过；完整CLIP/MiniLM对照仍需以最终comparison结果为准。",
+        "2026-11-22 整模型剪枝 v42e完成：两台P800个人Docker、各同卡冷启动对照。CLIP336路径53→45、搜索1583.066→1534.752秒（减少3.05%），MiniLM路径43→31、搜索127.929→102.231秒（减少20.09%）；包含区域标定、精度恢复和编译成本。原始FP32全部6533320/3840元素通过。正式加速比分别0.841118→0.832029、1.719414→1.746068；实际路线仍为source_fp32_mixed_grouped/inductor_current。完整枚举及正式四轮选路的全域最快、各模型12/12类别最快全部保留，损失0；共同准入和矩阵二进制无变化，最终所选路线全部机器码和发射身份不变。CLIP FP16 eager本身仍不通过原始FP32门槛，计算差距未由剪枝消除。有限候选域结论不推广为全局最优。",
+        "2026-11-22 v42e CLIP完整搜索已实际触发精度恢复：precision_1_native、precision_1_grouped两个SDNN类别保留的generated/native_mul全部不合格，自动重新开放native逐点策略。该证据验证剪枝必须检查完整输出幸存者，而非将局部速度排序直接当作准入结果；随后两条恢复路线均通过正式完整输出校验；整轮已完成，结果见最终报告。",
+        "2026-11-22 最终机器码边界：CLIP所选路线709次发射对eager978次，矩阵为186次模式8+9次模式37，对eager218次模式37+1次模式5；逐发射串行矩阵合计31.529对15.266ms（含强制等待）。另9条未选SDNN路线部分机器码有差异；示例归一化TTIR相同而事件号/指令安排不同，尚未进一步归因。MiniLM未选路线存在冷自动调优的归约配置差异，两轮均编译出相同备选。正式性能以关闭堆栈观察器的计时为主，12轮扩展计时另注M34观察开销。",
+        "2026-11-22 v44b 局部精度搜索：从原始dtype模型结构及原图依赖出发，首个试验明确为零提升并验证与原生输出逐位一致。以外部完整输出指标逐步提升区域，再在选中区域内恢复可接受的原精度子区域。复用未舍入参数和原始预处理，只改变选中区域的绑定；不调用参考模型forward来生成候选，不将低精度参数.float()冒充原始参数。输入dtype按捕获合同在区域边界恢复，相邻提升区域保持FP32中间值；完整残差块内Q/K/V同组。参数转换一致性检查不能独立证明checkpoint来源，当前调用方用half之前独立保存的原始权重与加载记录保证来源。\n\n首次v44a设备试验暴露本地新缺口：单独提升text/visual projection会让区域外的最终matmul收到FP16和FP32两个输入，P800报lhs/rhs dtype不同。查M45/M56/M64后，没有吞掉该执行错误，而是捕获原始dtype图，沿中间操作传播区域来源，对mm/bmm/matmul及cat/stack等同dtype汇合算子形成联合选择约束；提升与撤销必须一起作用于约束组。该问题属于本地候选构造，不是新的LLVM或厂商计算错误。新增双塔归一化后矩阵乘CPU反例、真实Dynamo单图捕获、输入副作用/输出别名拒绝及原始源值校验。两台个人Docker各133项单测、11项选路合同通过。\n\nv44b实测阶段：MiniLM原始dtype已通过，精度搜索仅1次、零提升，最终9.100080→6.309676ms=1.442242倍；相对v43a正式路线、最终二进制SHA/PC/资源/单元/核数/次数集合均不变。CLIP通过87次原生完整输出试验找到39/44区域提升的配置，联合矩阵乘错误未再出现；这不证明区域内部每个算子都必须FP32，也未穷举所有细粒度精度划分。最终编译后63条候选23条通过；选中captured_local_0_fuse_fp32_internals_inductor_generated，8类6533320元素全部通过；正式99.834561→128.890014ms=0.774572倍，仍慢于FP16 eager（该eager本身6类输出不满足原始FP32门槛）。新图保留5个原精度区域，其余39个提升；矩阵216次模式8，串行矩阵15.210→33.185ms，不能将串行差额直接当作端到端差额。实际图为厂商Flash Attention，没有短行Softmax/显式contiguous命中，排除该绕行遗漏为本例主因。发现既有FP32列主权重与联合QKV候选尚未接入原始dtype分支，正在按M60既有约束补接，不改变低精度节点。\n\n证据：[本轮报告](/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-precision-search-20261122/report.txt)；[问题及既有手册核对](/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-precision-search-20261122/handbook-review.json)；[MiniLM无回退与机器码核对](/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-precision-search-20261122/minilm-no-regression.json)；[局部精度实现](/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_local_precision.py)。\n\n2026-11-22 v45候选补齐已完成P800验证：原始dtype分支新增grouped实现，仅对已是FP32的冻结Linear参数复用M60列主权重与联合QKV布局；低精度Linear保持原厂商边界。两台各134项单元测试与11项契约通过。CLIP80条候选36条通过，选中captured_local_0_preserve_operator_grouped_generated，完整8类6533320元素通过，正式100.099969→123.463821ms=0.810764倍；同进程原最佳126.775996→123.847441ms，六轮均改善2.310%，仍未超过FP16 eager。矩阵219→195次、总发射847→690次；只证明补齐布局有效，未解决整块提升过粗及逐点全局策略的组合缺口。MiniLM8.973646→6.254673ms=1.434711倍，完整3840元素通过，选中路径全二进制/配置/次数与v44b相同。控制连接中断后沿M20恢复，远端正常完成未重跑；尾段有518.752秒占用采样缺口，不宣称全程独占。\n\n本轮进一步确认生成核效率问题与候选空间问题并存：保留原精度候选的219次矩阵实码/PC/资源/单元/核数/次数完全等同eager，8类输出SHA一致，整模型仍115.946039ms对100.327369ms；两者在原始FP32门槛均6/8类不合格。QuickGELU两侧36次乘法的串行对照见M58补录。\n\n证据：[原始dtype布局候选补齐](</home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-layout-search-20261122/report.txt>) · [源码差异](</home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-layout-search-20261122/runtime-changes.patch>) · [双机CPU回归](</home/f/Documents/FlagTree/review-local/f06-all-models-20261119/local-layout-search-20261122/cpu-summary.json>)。",
+        "2026-11-22 v46最终整模型复测：CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。原始dtype模型建图、原始FP32外部参考及完整输出门槛不变；不能把CLIP局部流水收益写成整模型已超过FP16 eager。MiniLM正式路径未使用所有新流水，跨版本时间不能单独证明增益。候选、机器码、搜索时长及监控边界见本轮报告。",
+        "2026-11-22 v46剩余边界：CLIP的保留FP16候选有36次发射对应预取代码，但完整精度仍不合格；正式路径65次发射命中写回等待外提，跨块预取代码覆盖为0。正式FP32复杂融合/库调用模式尚未被本Pass覆盖。最终矩阵乘串行发射+等待32.496433ms对FP16 eager15.243221ms；保留FP16候选219次矩阵实码/配置/次数完全一致，独立端到端仍112.497270ms对99.743744ms。调用/同步及其他节点差额未完成因果拆分，不能把所有剩余问题标记已关闭。"
       ],
       "refs": [
         {
@@ -14511,6 +14862,122 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-error-origin-20261121/history-comparison.json"
         },
         {
+          "label": "整图并非只删转换：实际发射和生成代码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-error-origin-20261121/execution-diff-20261122.json"
+        },
+        {
+          "label": "CLIP逐核、资源与调度因果验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/report.txt"
+        },
+        {
+          "label": "本轮手册复核与实验边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-kernel-root-20261122/handbook-review.json"
+        },
+        {
+          "label": "v37完整精度及矩阵机器码一致性",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-schedule-fix-20261122/summary.json"
+        },
+        {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
+        },
+        {
+          "label": "v38逐核机器码、协处理及剩余误差边界",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/machine-findings.txt"
+        },
+        {
+          "label": "CLIP最终模式的精度白名单与接口改写来源",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/report.txt"
+        },
+        {
+          "label": "生成wrapper、最终矩阵及逐点核复核证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/origin-evidence.json"
+        },
+        {
+          "label": "自动候选边界与编译反馈说明",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/candidate-contract.txt"
+        },
+        {
+          "label": "v39b完整候选、精度及端到端实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/report.txt"
+        },
+        {
+          "label": "最终机器码与分组图关联证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/final-machine-evidence.json"
+        },
+        {
+          "label": "P800有限候选空间剪枝实验与边界成本反例",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/report.txt"
+        },
+        {
+          "label": "五组尺寸完整枚举、短名单与机器码汇总",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/search-pruning-1795334747268822198/summary.json"
+        },
+        {
+          "label": "FP32厂商Linear编译接口修补",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/fp32-vendor-abi.patch"
+        },
+        {
+          "label": "50项精度保护和FakeTensor回归",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/search-pruning-20261122/cpu-regression.json"
+        },
+        {
+          "label": "整模型剪枝本轮手册检查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/handbook-review.json"
+        },
+        {
+          "label": "修正后的真实区域与成本剪枝实现",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_pruning.py"
+        },
+        {
+          "label": "非凸残差标定导致SDNN事件超限的原始结果",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/pruning-v42a-ead8c3d95e1c2da7bf3a-float16-1795337557088567504-calibrated-cost-smoke/status.json"
+        },
+        {
+          "label": "依赖边界修正后CLIP标定通过",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/pruning-v42b-ead8c3d95e1c2da7bf3a-float16-1795337871678764673-calibrated-cost-smoke/status.json"
+        },
+        {
+          "label": "115项CPU验证和包环境",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/tensor-pipeline-package-validation-43.179.154.78-861b694f199ff34e.json"
+        },
+        {
+          "label": "MiniLM完整模型最终剪枝对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/comparison-minilm.json"
+        },
+        {
+          "label": "完整模型最终包双机CPU检查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/tensor-pipeline-package-validation-43.179.154.78-f168bae18dfd6609.json"
+        },
+        {
+          "label": "CLIP剪枝后完整精度恢复证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/clip-precision-recovery-evidence.json"
+        },
+        {
+          "label": "整模型最终剪枝与机器码报告",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/report.txt"
+        },
+        {
+          "label": "CLIP完整枚举与剪枝覆盖",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/comparison-clip336.json"
+        },
+        {
+          "label": "完整运行源码哈希核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/final-runtime-source-verification.json"
+        },
+        {
+          "label": "CLIP最终eager矩阵与发射对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/clip-final-eager-machine-comparison.json"
+        },
+        {
+          "label": "本轮运行时代码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/pruning-runtime.patch"
+        },
+        {
           "label": "本地源码 python/triton/experimental/graph_fusion/_model.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model.py"
         },
@@ -14553,6 +15020,34 @@
         {
           "label": "本地源码 python/triton/experimental/graph_fusion/_model_pipeline.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_pipeline.py"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_model_candidates.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_candidates.py"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_pointwise_candidates.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_pointwise_candidates.py"
+        },
+        {
+          "label": "本地源码 python/test/unit/runtime/test_graph_fusion_model_candidates.py",
+          "path": "/home/f/Documents/FlagTree/python/test/unit/runtime/test_graph_fusion_model_candidates.py"
+        },
+        {
+          "label": "v46正式编译修复与整模型实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/report.txt"
+        },
+        {
+          "label": "v46最终实际路由、精度与加速比",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json"
+        },
+        {
+          "label": "v46最终机器码同步与算术对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/final-micro-machine.json"
+        },
+        {
+          "label": "v45到v46候选源码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/f06-v45-to-v46.patch"
         }
       ],
       "layer_precision_audit": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/layer-precision-20261121/summary.json",
@@ -14659,13 +15154,20 @@
         "report": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-error-origin-20261121/report.txt",
         "summary": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-error-origin-20261121/summary.json",
         "run": "clip-error-origin-ead8c3d95e1c2da7bf3a-float16-1795274103022384098"
+      },
+      "dma_pipeline_validation": {
+        "version": "0.3.50+v51e.inductor46",
+        "package_sha256": "ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f",
+        "tool_sha256": "cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd",
+        "results": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json",
+        "full_fp32_gate_preserved": true
       }
     },
     {
       "id": "M65",
       "title": "整模型基线短暂波动使稳定快候选直接回退，缺少有界复测",
       "group": "全清单测试与环境兼容",
-      "date": "2026-11-21",
+      "date": "2026-11-22",
       "historical_status": "",
       "component": "本地F06整模型选路 _whole_model_selection.select_whole_model",
       "status": "已打包 v36；P800 三次独立冷启动选中融合，36/36 配对轮加速",
@@ -14731,6 +15233,34 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-v36-profile-20261121/summary.json"
         },
         {
+          "label": "v38完整资源候选、精度与端到端复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/report.txt"
+        },
+        {
+          "label": "v38原始计时和逐核机器码分析",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-resource-candidates-20261122/summary.json"
+        },
+        {
+          "label": "CLIP最终模式的精度白名单与接口改写来源",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/report.txt"
+        },
+        {
+          "label": "生成wrapper、最终矩阵及逐点核复核证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/clip-route-origin-20261122/origin-evidence.json"
+        },
+        {
+          "label": "v39b完整候选、精度及端到端实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/report.txt"
+        },
+        {
+          "label": "最终机器码与分组图关联证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/final-machine-evidence.json"
+        },
+        {
+          "label": "剪枝与正式资源门槛联合复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/full-model-pruning-20261122/report.txt"
+        },
+        {
           "label": "本地源码 python/triton/experimental/graph_fusion/_whole_model_selection.py",
           "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_whole_model_selection.py"
         },
@@ -14741,6 +15271,22 @@
         {
           "label": "本地源码 python/test/unit/runtime/test_graph_fusion_whole_model_selection.py",
           "path": "/home/f/Documents/FlagTree/python/test/unit/runtime/test_graph_fusion_whole_model_selection.py"
+        },
+        {
+          "label": "v46正式编译修复与整模型实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/report.txt"
+        },
+        {
+          "label": "v46最终实际路由、精度与加速比",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json"
+        },
+        {
+          "label": "v46最终机器码同步与算术对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/final-micro-machine.json"
+        },
+        {
+          "label": "v45到v46候选源码差异",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/f06-v45-to-v46.patch"
         }
       ],
       "related": [
@@ -14759,7 +15305,84 @@
         "已写本地源码并验证；既有v35 wheel及749模型结果未改。本机缺Torch的CPU试跑未执行测试，转用个人Docker已有Python后全部通过，无依赖安装。",
         "2026-11-21 v36正式包复核：73项单元测试及11项CPU合同通过；三次冷启动热态端到端实测稳定加速。冷启动指新进程重新编译/校准，所报速度不含首次编译。旧v35包及全量历史结果未覆盖。仅覆盖固定MiniLM输入，未推断所有模型。",
         "局部GELU补充消融将同二进制9.293377ms降至9.043327ms，对同轮eager9.041996ms仅持平，4/12轮胜出。其根因与正式入口误拒分开记录；未将未达稳定收益的局部替换加入v36。",
-        "2026-11-21 CLIP336 v36逐核复核：正式source_fp32_mixed_grouped通过8类6533320元素，但FP16基线不合格，因此M65计时漂移复测不适用该基线。张量前向37.913→58.242ms，主机提交35.694→22.337ms；三轮串行GEMM15.272→31.517ms，QuickGELU相关11.362→8.497ms。视觉fc1/fc2矩阵是主要差额，最终mode37→mode8已用实际二进制与生成FP32中间产物对齐。此轮只定位，未修改计算策略。"
+        "2026-11-21 CLIP336 v36逐核复核：正式source_fp32_mixed_grouped通过8类6533320元素，但FP16基线不合格，因此M65计时漂移复测不适用该基线。张量前向37.913→58.242ms，主机提交35.694→22.337ms；三轮串行GEMM15.272→31.517ms，QuickGELU相关11.362→8.497ms。视觉fc1/fc2矩阵是主要差额，最终mode37→mode8已用实际二进制与生成FP32中间产物对齐。此轮只定位，未修改计算策略。",
+        "2026-11-22 v38资源候选修复：资源胜者必须相对其合格父路径稳定改善，尤其FP16 eager未过原始FP32门槛时，不能仅因没有preferred就接受噪声胜者。保留1%收益、正反顺序、75%胜出轮次、5%漂移及有界重测；正式返回直接调用对象，热路径不添加资源路由层。",
+        "2026-11-22 v38c建图来源复核：本轮17条CLIP候选的完整模型选路是在预先构造的有限算术/资源候选中选择，并非自动穷举精度、厂商Linear ABI及厂商/生成逐点实现。固定图的SDNN/Cluster展开不改变矩阵精度。当前结果表明候选空间和图来源仍有缺口，不能把未找到全局最优都归因于计时选择器。正式仍source_fp32_mixed_grouped；本次没有更改选择规则或发布新实卡计时。",
+        "2026-11-22 v39b保持完整输出优先、完整模型计时选路：CLIP新精度划分虽通过但无稳定收益，未强制替换既有合格入口。SDNN旧混合资源候选119.983816ms相对120.237271ms仅约0.21%收益，低于1%阈值，保留父路径。新13个Linear的SDNN生成候选只有7/8输出通过，拒绝准入。MiniLM选择auto_precision_0_grouped_generated，12/12轮快于eager，独立3+10加速1.721565倍。",
+        "2026-11-22 v42e剪枝保留完整模型资源收益门槛。正式完整枚举均值最快为CLIP的source_fp32_mixed_grouped__sdnn、MiniLM的inductor_current__sdnn，均仍在短名单；不足相对父路线1%收益时继续选父路线。恢复精度失败类别时必须先准备惰性父图，父路线精度失败不等于变体失败。最终两模型均无最快类别遗漏，实际热调用不增加剪枝或选路包装。",
+        "2026-11-22 v46最终整模型复测：CLIP336 99.400163→124.846005ms=0.796182倍，实际captured_local_0_fuse_fp32_internals_grouped_generated，完整6533320元素通过；MiniLM 9.255528→6.212640ms=1.489790倍，实际captured_fuse_fp32_internals_inductor_generated，完整3840元素通过。原始dtype模型建图、原始FP32外部参考及完整输出门槛不变；不能把CLIP局部流水收益写成整模型已超过FP16 eager。MiniLM正式路径未使用所有新流水，跨版本时间不能单独证明增益。候选、机器码、搜索时长及监控边界见本轮报告。"
+      ],
+      "dma_pipeline_validation": {
+        "version": "0.3.50+v51e.inductor46",
+        "package_sha256": "ad0d4e1fadc7d9f6b3859740e40e492b873c9efb9db63af4c744a9aa3208861f",
+        "tool_sha256": "cc9642f30616fa19c240f203ddeaae94f04224e72cfb70eb583d27b384d97abd",
+        "results": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/dma-pipeline-20261122/summary.json",
+        "full_fp32_gate_preserved": true
+      }
+    },
+    {
+      "id": "M66",
+      "title": "关闭CUDA Graph执行后仍做分区分析，原生残差图触发重复符号遍历",
+      "group": "全清单测试与环境兼容",
+      "date": "2026-11-22",
+      "historical_status": "",
+      "component": "本地F06编译配置；实际Torch 2.9 InputsKernel/ExternKernel/MultiOutput符号遍历",
+      "status": "本地规避通过：两模型完整复测、93项CPU单元+11项约束、14项P800小例",
+      "solution": "F06各完整图compile_fx配置在triton.cudagraphs=False的同时显式设置graph_partition=False。仅关闭不使用的CUDA Graph分区分析，保留正常Inductor融合、Dynamo完整捕获及形状守卫；不修改已安装Torch，也不删除符号或动态守卫。这是F06当前执行模式的规避，不声称修好了上游递归算法。",
+      "evidence": "CLIP新增原生逐点候选冷编译占用CPU而设备空闲；只读采样栈有227层get_free_symbol_uses，进入Scheduler.get_graph_partition_symbol_inputs。实际IR源码对共享输入递归，无去重；CPU复现深度4/8/12/16分别访问叶节点16/256/4096/65536次，GPU未初始化。仅终止核对归属的本次未完成编译进程，原生设备复查通过。v39a的24层残差、120原生逐点节点用例0.768秒完成冷编译及首执行，完整输出通过、编译配置恢复。",
+      "baseline": "43.179.154.78物理0号卡，既有个人Docker；Torch2.9.0+cu129，FlagTree0.6.1+xpu3.6。v39冷编译记录不作为有效加速结果；v39a wheel SHA256 8e77f7d98ec81e0030ba2c6d14db30c7e0ca18887899e7810828c1c0147a569f。",
+      "fix_paths": [
+        "python/triton/experimental/graph_fusion/_model_inductor.py",
+        "review-local/f06-all-models-20261119/model-candidate-search-20261122/pilot.py"
+      ],
+      "related": [
+        "M58",
+        "M64",
+        "M65",
+        "N09"
+      ],
+      "notes": [
+        "问题手册此前没有同题修复；新增M66。不是设备多cluster超时或LLVM计算错误。",
+        "只读诊断严格核对本次运行目录与进程参数；未终止其他进程、重置设备或修改主机环境。",
+        "2026-11-22完整复测完成：v39b两机各93项单元测试和11项选路约束、14项P800小例通过；CLIP全部53路径完成编译及完整输出/计时/机器码诊断，MiniLM43路径完成。两模型各12轮对照完成，无此前重复符号遍历卡住。所选CLIP8/8、MiniLM1/1完整输出通过；本项仍是关闭未使用CUDA Graph分区分析的本地规避，不宣称修复上游递归算法。"
+      ],
+      "refs": [
+        {
+          "label": "实际个人编译进程采样栈",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/candidate-compile-stack-host.json"
+        },
+        {
+          "label": "实际安装符号遍历与分区源码",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/installed-symbol-traversal.json"
+        },
+        {
+          "label": "共享图CPU复现",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/symbol-dag-reproduction.json"
+        },
+        {
+          "label": "P800组合与24层残差完整验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/candidate-pilot-group0-1795306624126501035.json"
+        },
+        {
+          "label": "实际新包CPU验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/tensor-pipeline-package-validation-43.179.154.78-8e77f7d98ec81e00.json"
+        },
+        {
+          "label": "v39b完整候选、精度及端到端实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/report.txt"
+        },
+        {
+          "label": "最终机器码与分组图关联证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/final-machine-evidence.json"
+        },
+        {
+          "label": "本地源码 python/triton/experimental/graph_fusion/_model_inductor.py",
+          "path": "/home/f/Documents/FlagTree/python/triton/experimental/graph_fusion/_model_inductor.py"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/model-candidate-search-20261122/pilot.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model-candidate-search-20261122/pilot.py"
+        }
       ]
     }
   ],
@@ -14798,7 +15421,7 @@
     },
     {
       "path": "/home/f/Documents/FlagTree/reports/issue-fixes/model-benchmark-updates-20261119.json",
-      "sha256": "fab8124844c01fcb77fbd7a452bb2cd4bc5f0c33fcbddb2746b0c4ce01ce034e"
+      "sha256": "06dbb109e4c13ce5b04f2e79af31f5125e1e7a6302c56255f813d032fbb90a82"
     },
     {
       "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/issue-handbook-lookups.json",
@@ -14902,7 +15525,7 @@
     },
     {
       "path": "/home/f/Documents/FlagTree/packaging/f06/README.md",
-      "sha256": "010c4e2a6f97ea8a17346a967295fb54c690980593e86f09ce84ec784c8cef88"
+      "sha256": "efcc30219fadcbb3c5cb7f7671ae55cbc1fafd300d86ae6470f117f0f2c939fa"
     },
     {
       "path": "/home/f/Documents/FlagTree/work/2026-11-13/13项源码修复-官方Issue与PR核对.md",

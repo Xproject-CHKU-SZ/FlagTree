@@ -31,6 +31,7 @@ def _compact_kernel_name(name):
     return f"{prefix}_{digest}"
 
 from .launch_config import DEFAULT_LAUNCH, resolve_launch_config
+from . import dma_pipeline
 
 # The desensitized LLVM 19 package ships no `opt`; the read-in step is
 # `opt`-only, so disable it when the staged toolchain lacks it.  An explicit
@@ -153,6 +154,7 @@ def _xtdk_lld_version(tool_dir: str) -> str:
 # [raise FrozenInstanceError]
 @dataclass(frozen=True)
 class XPUOptions:
+    xpu_dma_pipeline: int = 2
     kl3_softmax_shift: bool = False
     # Dense, out-of-place add-softmax. The second GM pointer is read-only
     # throughout the launch and does not alias an output.
@@ -912,7 +914,8 @@ class XPUBackend(BaseBackend):
         # the LLVM 22 verifier or backend.
         triple = f"xpu{opt.arch}-baidu-none-gnu"
         proc = f"xpu{opt.arch}"
-        ir_text = llvm19_toolchain.downgrade_ir(mod._ir_for_lowering(), "xpu")
+        scheduled_ir = dma_pipeline.optimize_ir(mod._ir_for_lowering(), metadata, opt.xpu_dma_pipeline)
+        ir_text = llvm19_toolchain.downgrade_ir(scheduled_ir, "xpu")
         # Merge the payloads in after the downgrade (they are LLVM 19 text).
         try:
             ir_text = merge_raw_payloads(ir_text, metadata, "xpu", opt.arch)
@@ -999,7 +1002,7 @@ class XPUBackend(BaseBackend):
         # `codegen_key()` also carries the stamp's table tag, the table digests
         # and the LLVM 19 bin dir the tools come from.
         tool_dir = XPUBackend.path_to_xpu_compile_tool(self.target)
-        flags = " ".join(_LLC_EXTRA) + " " + llvm19_toolchain.codegen_key("xpu")
+        flags = " ".join(_LLC_EXTRA) + " " + llvm19_toolchain.codegen_key("xpu") + " " + dma_pipeline.codegen_key()
         return f"{_xtdk_lld_version(tool_dir)}-{self.target}-{flags}-kernel-name-v1-{_KERNEL_NAME_MAX_BYTES}"
 
     def parse_options(self, options: dict) -> object:

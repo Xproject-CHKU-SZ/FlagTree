@@ -1,5 +1,6 @@
 """Operator boundaries retain native dtype semantics before compiler lowering."""
 import copy
+import operator
 import unittest
 
 import torch
@@ -175,6 +176,35 @@ class PrecisionBoundaryTests(unittest.TestCase):
                 _lower_reviewed(_linear._opoverload, _linear)
                 self.assertEqual(lowerings[_linear._opoverload](x, x, None), 'native')
                 self.assertIs(called[-1], torch.ops._dynamo_workaround.linear.default)
+
+    def test_original_dtype_pooling_keeps_reductions_and_explicit_dtype(self):
+        class Model(torch.nn.Module):
+            def forward(self, x):
+                y = F.dropout(x, p=.5, training=False)
+                return torch.stack((F.normalize(y, p=2., dim=-1), y)), torch.sum(y, dim=-1), y.sum(), y.sum(dim=0, dtype=torch.float32), y
+        for dtype in (torch.float16, torch.bfloat16):
+            x = torch.randn(3, 4).to(dtype).t()
+            gm = capture(Model(), (x,)); rows = preserve_native_compute(gm)
+            self.assertFalse([r for r in rows if r['action'] == 'native_candidate_required'])
+            got, want = gm(x), Model()(x)
+            torch.testing.assert_close(got, want, atol=0, rtol=0)
+            self.assertEqual(got[0].dtype, dtype)
+            self.assertEqual(got[1].dtype, dtype)
+            self.assertEqual(got[3].dtype, torch.float32)
+            self.assertEqual(got[4].data_ptr(), x.data_ptr())
+
+    def test_iadd_keeps_mutation_and_aliases(self):
+        graph = fx.Graph(); x = graph.placeholder('x'); y = graph.placeholder('y')
+        z = graph.call_function(operator.iadd, (x, y)); graph.output((x, z))
+        gm = fx.GraphModule({}, graph)
+        for n in (x, y, z): n.meta['example_value'] = torch.ones(4).half()
+        before = gm.code
+        rows = preserve_native_compute(gm)
+        self.assertEqual(before, gm.code)
+        self.assertEqual(rows[0]['action'], 'retain_dtype_mutation')
+        value = torch.ones(4).half(); got = gm(value, value.clone())
+        self.assertTrue(torch.equal(value, torch.full_like(value, 2)))
+        self.assertEqual(got[0].data_ptr(), got[1].data_ptr())
 
 
 if __name__ == '__main__':

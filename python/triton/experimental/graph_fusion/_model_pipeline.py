@@ -9,6 +9,29 @@ class _CompiledPipeline:
         self._f06_capture = compiled._f06_capture
         self._f06_scope = 'complete_tensor_forward'
         self._f06_source_precision = source_precision
+        self._f06_resource_factory = None
+        self._f06_resource_candidates = None
+        self._f06_resource_allowlist = None
+        self._f06_buffer_factory = None
+        self._f06_buffer_candidates = None
+
+    def _f06_buffer_variants(self):
+        if self._f06_buffer_factory is None:
+            return {}
+        if self._f06_buffer_candidates is None:
+            self._f06_buffer_candidates = self._f06_buffer_factory()
+        return self._f06_buffer_candidates
+
+    def _f06_resource_variants(self):
+        """Cold-only expansion, after the baseline graph has been prepared."""
+        if self._f06_resource_factory is None:
+            return {}
+        if self._f06_resource_candidates is None:
+            self._f06_resource_candidates = self._f06_resource_factory()
+        if self._f06_resource_allowlist is not None:
+            return {kind: call for kind, call in self._f06_resource_candidates.items()
+                    if kind in self._f06_resource_allowlist}
+        return self._f06_resource_candidates
 
     def __call__(self, *args, **kwargs):
         prepared = self.prepare(*args, **kwargs)
@@ -43,6 +66,12 @@ def compile_pipeline(tensor_model, *, prepare, output_template=None, source_prec
     never widens a rounded checkpoint. ``output_template`` supplies only the
     public output structure and dtypes; final casts belong to the captured
     graph, after the complete model forward. Output sizes may change normally.
+
+    With the default resource_policy='auto', select_model_routes expands a
+    prepared P800 pipeline into independent Cluster and SDNN alternatives.
+    They preserve the prepared arithmetic graph and require the caller's full
+    original-FP32 output validator and complete-model latency measurement.
+    Calling this pipeline alone retains its baseline resource schedule.
     """
     from ._model import compile_model
     if not callable(prepare):
@@ -103,4 +132,54 @@ def compile_pipeline(tensor_model, *, prepare, output_template=None, source_prec
                 return tree_unflatten(result, spec)
 
         tensor_model = FinalOutputCast(tensor_model).eval()
-    return _CompiledPipeline(prepare, compile_model(tensor_model, fullgraph=True, **kwargs), source_precision)
+    result = _CompiledPipeline(prepare, compile_model(tensor_model, fullgraph=True, **kwargs), source_precision)
+    if kwargs.get('resource_policy','auto') == 'auto':
+        def resource_variants():
+            import torch
+            from ._p800_inductor_gelu import _on_p800
+            if not any(x.device.type == 'cuda' and _on_p800(x.device)
+                       for x in (*tensor_model.parameters(), *tensor_model.buffers())):
+                return {}
+            # A precision-boundary rejection can leave the original vendor
+            # graph as the baseline. It has no generated kernel to retarget;
+            # do not relabel another rejected compile as a resource candidate.
+            if not result._f06_audit or any(r.get('route') == 'original' for r in result._f06_audit):
+                for record in result._f06_audit:
+                    record['resource_enumeration'] = 'skipped_original_vendor_fallback'
+                return {}
+            options = dict(kwargs)
+            options.pop('audit', None)
+            options.pop('resource_policy', None)
+            if options.get('precision_policy','fp32_reference') == 'fp32_reference':
+                choices = {r.get('route') for r in result._f06_audit}
+                # Mirror the prepared arithmetic graph. Resource alternatives
+                # must not perform an inner tensor-only timing elimination.
+                if len(choices) != 1 or None in choices or 'original' in choices:
+                    return {}
+                options['graph_choice'] = choices.pop()
+            return {kind:compile_pipeline(tensor_model, prepare=prepare,
+                        source_precision=source_precision, resource_policy=kind, **options)
+                    for kind in ('cluster','sdnn')}
+        result._f06_resource_factory = resource_variants
+    if (kwargs.get('precision_policy') in ('preserve_operator', 'fuse_fp32_internals')
+            and kwargs.get('resource_policy', 'auto') != 'sdnn'
+            and 'pointwise_buffer_bytes' not in (kwargs.get('precision_options') or {})):
+        def buffer_variants():
+            # The historical field includes homogeneous FP32 kernels as well.
+            # Smaller packets may enable dependency-safe multi-buffer DMA.
+            if not any(r.get('fp16_buffer_kernels') for r in result._f06_audit):
+                return {}
+            options = dict(kwargs)
+            options.pop('audit', None)
+            variants = {}
+            for size in (512, 1024):
+                precision = dict(options.get('precision_options') or {}, pointwise_buffer_bytes=size)
+                call = compile_pipeline(tensor_model, prepare=prepare, source_precision=source_precision,
+                    **dict(options, precision_options=precision))
+                # The resource dimension is expanded independently by the
+                # parent. These are complete-model buffer candidates only.
+                call._f06_resource_factory = None
+                variants['lm'+str(size)] = call
+            return variants
+        result._f06_buffer_factory = buffer_variants
+    return result

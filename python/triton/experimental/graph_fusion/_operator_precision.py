@@ -180,6 +180,16 @@ def _norm_fake(x, p, dim, keepdim):
     return x.norm(p=p, dim=dim, keepdim=keepdim)
 
 
+@torch.library.custom_op('flagtree_p800::precision_normalize', mutates_args=())
+def _normalize(x: torch.Tensor, p: float, dim: int, eps: float) -> torch.Tensor:
+    return F.normalize(x, p=p, dim=dim, eps=eps)
+
+
+@_normalize.register_fake
+def _normalize_fake(x, p, dim, eps):
+    return F.normalize(x, p=p, dim=dim, eps=eps)
+
+
 def preserve_native_compute(gm):
     """Protect reviewed pure native entries; retain all other original nodes.
 
@@ -194,21 +204,72 @@ ops. Unknown arithmetic is not authorized for FP32 promotion by this pass.
           torch.ops.aten.matmul.default: 'matmul'}
     pure = {torch.sigmoid: torch.ops.aten.sigmoid.default, torch.exp: torch.ops.aten.exp.default,
             torch.sqrt: torch.ops.aten.sqrt.default, torch.cat: torch.ops.aten.cat.default,
+            torch.stack: torch.ops.aten.stack.default,
             F.scaled_dot_product_attention: torch.ops.aten.scaled_dot_product_attention.default}
     views = {'view', 'reshape', 'flatten', 'transpose', 'permute', 'expand', 'unsqueeze',
              'squeeze', 't', 'contiguous', 'clone', 'detach', 'to', 'type_as', 'float', 'half', 'bfloat16'}
     widened_pointwise = (operator.add, operator.mul, torch.add, torch.mul)
     for node in gm.graph.nodes:
         row = by_name.get(node.name)
-        if row is None or not row['contains_low_precision']:
+        if row is None:
             continue
-        op, args = None, None
-        if node.op == 'call_function' and node.target is _linear._opoverload:
-            make_fallback(node.target, warn=False)
-            _lower_reviewed(node.target, _linear)
-            row.update(action='native_compute_boundary', retained_entry=str(node.target))
+        # The captured vendor entry needs the reviewed fake ABI for FP32 too.
+        # Otherwise AOT can execute Hydra's data_ptr checks on FakeTensors.
+        # Preserve only an already captured vendor/custom Linear here; this
+        # must not turn an ordinary FP32 aten.linear into a forced fallback.
+        if node.op == 'call_function' and (node.target is _linear._opoverload or
+                str(node.target) in ('_dynamo_workaround.linear', '_dynamo_workaround.linear.default')):
+            bound = dict(zip(('input', 'weight', 'bias'), node.args), **node.kwargs)
+            if len(node.args) <= 3 and not set(bound) - {'input', 'weight', 'bias'} and {'input', 'weight'} <= set(bound):
+                node.target = _linear._opoverload
+                node.args = (bound['input'], bound['weight'], bound.get('bias'))
+                node.kwargs = {}
+                make_fallback(node.target, warn=False)
+                _lower_reviewed(node.target, _linear)
+                row.update(action='native_compute_boundary', retained_entry=str(node.target))
+            else:
+                row['action'] = 'native_candidate_required'
             node.meta['f06_precision_contract'] = dict(row)
             continue
+        if not row['contains_low_precision']:
+            continue
+        op, args = None, None
+        if node.op == 'call_function' and node.target is F.dropout:
+            bound = dict(zip(('input', 'p', 'training', 'inplace'), node.args), **node.kwargs)
+            if (len(node.args) <= 4 and not set(bound)-{'input', 'p', 'training', 'inplace'}
+                    and 'input' in bound and bound.get('training', True) is False):
+                # Evaluation dropout aliases its input. Leave the original
+                # operation for AOT, rather than pretending it returns a copy.
+                row['action'] = 'retain_inference_identity'
+                node.meta['f06_precision_contract'] = dict(row)
+                continue
+        if node.op == 'call_function' and node.target is operator.iadd:
+            if (len(node.args) == 2 and not node.kwargs and
+                    all(isinstance(_value(n), torch.Tensor) for n in node.args)):
+                # AOT functionalization must see the mutation and its aliases.
+                # Do not replace this with the pure add custom operator.
+                row['action'] = 'retain_dtype_mutation'
+                node.meta['f06_precision_contract'] = dict(row)
+                continue
+        if ((node.op == 'call_function' and node.target is torch.sum) or
+                (node.op == 'call_method' and node.target == 'sum')):
+            bound = dict(zip(('input', 'dim', 'keepdim'), node.args), **node.kwargs)
+            dim = bound.get('dim')
+            if (len(node.args) <= 3 and not set(bound)-{'input', 'dim', 'keepdim', 'dtype'}
+                    and 'input' in bound and type(bound.get('keepdim', False)) is bool
+                    and (dim is None or type(dim) is int or isinstance(dim, (tuple, list))
+                         and all(type(d) is int for d in dim))):
+                target = torch.ops.aten.sum.dim_IntList
+                opaque = _native_schema(target)
+                make_fallback(opaque, warn=False)
+                _lower_direct(opaque, target)
+                node.op, node.target = 'call_function', opaque
+                node.args = (bound['input'], [dim] if type(dim) is int else dim,
+                             bound.get('keepdim', False))
+                node.kwargs = {'dtype': bound['dtype']} if 'dtype' in bound else {}
+                row.update(action='native_compute_boundary', retained_entry=str(opaque))
+                node.meta['f06_precision_contract'] = dict(row)
+                continue
         if node.op == 'call_function' and str(node.target) == 'flagtree_p800.model_layernorm.default':
             row.update(action='reviewed_fp32_template', internal_arithmetic='FP32', accumulator='FP32',
                        rounding='template final stores only', retained_entry=str(node.target))
@@ -266,6 +327,15 @@ ops. Unknown arithmetic is not authorized for FP32 promotion by this pass.
                          isinstance(dim, (list, tuple)) and all(type(v) is int for v in dim))):
                 op, args = _norm, (bound['input'], float(bound.get('p', 2)),
                     [dim] if type(dim) is int else list(dim) if dim is not None else None, bound.get('keepdim', False))
+        elif node.op == 'call_function' and node.target is F.normalize:
+            bound = dict(zip(('input', 'p', 'dim', 'eps', 'out'), node.args), **node.kwargs)
+            if (len(node.args) <= 5 and not set(bound)-{'input', 'p', 'dim', 'eps', 'out'}
+                    and 'input' in bound and bound.get('out') is None
+                    and type(bound.get('p', 2.)) in (int, float)
+                    and type(bound.get('dim', 1)) is int
+                    and type(bound.get('eps', 1e-12)) in (int, float)):
+                op, args = _normalize, (bound['input'], float(bound.get('p', 2.)),
+                                       bound.get('dim', 1), float(bound.get('eps', 1e-12)))
         if op is not None:
             target = op._opoverload
             make_fallback(target, warn=False)

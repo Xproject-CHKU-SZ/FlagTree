@@ -38,10 +38,10 @@ def source_mixed_candidate(gm, example_inputs, *, fp16_modules, fp32_modules=(),
     from torch._guards import detect_fake_mode
     from torch._subclasses.fake_tensor import FakeTensorMode
     allowed=tuple(fp16_modules);protected=tuple(fp32_modules);ops=set(fp16_ops)
-    if (not allowed or not ops or ops-{'linear','attention'} or
+    if (not ops or ops-{'linear','attention'} or
             any(not isinstance(p,str) or not p or p.startswith('.') or p.endswith('.')
                 for p in (*allowed,*protected))):
-        raise ValueError('Explicit nonempty module scopes and reviewed compute kinds are required')
+        raise ValueError('Explicit module scopes and reviewed compute kinds are required')
     # Output-only casts in the public dtype wrapper are allowed. Ingress values
     # must be original FP32; this API never restores an already rounded source.
     if any(isinstance(x,torch.Tensor) and x.is_floating_point() and x.dtype!=torch.float32

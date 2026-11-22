@@ -7,6 +7,72 @@ from triton.experimental.graph_fusion._model_pipeline import compile_pipeline
 
 
 class PipelineTests(unittest.TestCase):
+    def test_resource_candidates_keep_independent_guarded_capture_caches(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.weight = torch.nn.Parameter(torch.tensor(1.0004))
+            def forward(self, x):
+                return {'value': x * self.weight - 1000}
+        model = Model().eval()
+        template = {'value': torch.empty(1, dtype=torch.float16)}
+        limit = torch._dynamo.config.recompile_limit
+        with torch._dynamo.config.patch(recompile_limit=2), \
+             patch('triton.experimental.graph_fusion._model_inductor.inductor_backend', self.backend):
+            routes = [compile_pipeline(model, prepare=lambda x: ((x,), {}),
+                        source_precision='float32', output_template=template,
+                        resource_policy=('cluster' if i % 2 else 'sdnn'),
+                        vendor_capture=False) for i in range(10)]
+            with torch.no_grad():
+                for n in (3, 5):
+                    x = torch.full((n,), 1000.)
+                    for run in routes:
+                        torch.testing.assert_close(run(x)['value'], model(x)['value'].half(), atol=0, rtol=0)
+                self.assertEqual(len(self.graphs), 20)
+                model.weight.add_(.1)
+                for run in reversed(routes):
+                    torch.testing.assert_close(run(x)['value'], model(x)['value'].half(), atol=0, rtol=0)
+                self.assertEqual(len(self.graphs), 20)
+        self.assertEqual(torch._dynamo.config.recompile_limit, limit)
+
+    def test_resource_expansion_mirrors_prepared_graph_and_keeps_preprocessing_live(self):
+        from types import SimpleNamespace
+        prepared=[];options=[]
+        class Model:
+            def parameters(self):return [SimpleNamespace(device=torch.device('cuda',0))]
+            def buffers(self):return []
+        class Compiled:
+            _f06_capture='test'
+            def __init__(self,audit):self._f06_audit=audit
+            def __call__(self,x):return x+1
+        def compile_model(model,**kwargs):
+            options.append(kwargs)
+            audit=kwargs.get('audit',[])
+            if kwargs.get('resource_policy','auto')=='auto':audit.append(dict(route='inductor_p800_lm2048'))
+            return Compiled(audit)
+        def prepare(x):prepared.append(x);return ((x,),{})
+        with patch('triton.experimental.graph_fusion._model.compile_model',compile_model), \
+             patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',return_value=True):
+            base=compile_pipeline(Model(),prepare=prepare,resource_policy='auto')
+            self.assertEqual(base(3),4)
+            variants=base._f06_resource_variants()
+            self.assertIs(base._f06_resource_variants(),variants)
+            self.assertEqual(set(variants),{'cluster','sdnn'})
+            for kind,call in variants.items():
+                self.assertEqual(call(4),5)
+                self.assertEqual(call._f06_resource_variants(),{})
+            for option in options[1:]:
+                self.assertEqual(option['graph_choice'],'inductor_p800_lm2048')
+                self.assertTrue(option['fullgraph'])
+            self.assertEqual(prepared,[3,4,4])
+            # An unsupported native-precision boundary retains eager. There
+            # are no generated pointwise kernels to turn into SDNN candidates.
+            base._f06_audit[:]=[dict(route='original',rejected=[dict(reason='unreviewed boundary')])]
+            base._f06_resource_candidates=None
+            self.assertEqual(base._f06_resource_variants(),{})
+            self.assertEqual(len(options),3)
+            self.assertEqual(base._f06_audit[0]['resource_enumeration'],'skipped_original_vendor_fallback')
+
     def setUp(self):
         torch._dynamo.reset()
         self.graphs = []

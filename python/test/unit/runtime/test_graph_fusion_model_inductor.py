@@ -23,6 +23,138 @@ def trace(model, args):
 
 
 class WholeGraphTests(unittest.TestCase):
+    def test_fixed_resource_graph_is_not_eliminated_by_inner_tensor_timing(self):
+        from unittest.mock import patch
+        from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
+        from triton.experimental.graph_fusion._model_inductor import inductor_backend
+        mode=FakeTensorMode()
+        value=FakeTensor(mode,torch.empty(4,device='meta'),torch.device('cuda',0))
+        audit=[];prepared=lambda x:x
+        with patch('torch._inductor.compile_fx.compile_fx',return_value=prepared), \
+             patch('torch._inductor.lowering.make_fallback'), \
+             patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',return_value=True), \
+             patch('triton.experimental.graph_fusion._model_inductor._SelectGraph',side_effect=AssertionError('inner selection')):
+            result=inductor_backend(tolerance=dict(atol=.003,rtol=.003),environment_key='resource',audit=audit,
+                resource_policy='sdnn',graph_choice='inductor_p800_lm2048')(fx.symbolic_trace(torch.nn.Identity()),(value,))
+        self.assertIs(result,prepared)
+        self.assertEqual(audit[0]['state'],'awaiting_complete_model_validation')
+        self.assertTrue(audit[0]['requires_original_fp32_model_validation'])
+
+    def test_sdnn_resource_eligibility_keeps_extent_masks_and_memory_layout(self):
+        from triton.experimental.graph_fusion._p800_model_schedule import sdnn_pointwise_eligibility
+        source='''
+@triton_heuristics.fixed_config(config={'XBLOCK':32768})
+@triton.jit
+def generated(in_ptr0,out_ptr0,xnumel,XBLOCK):
+    xoffset=tl.program_id(0)*XBLOCK
+    xindex=xoffset+tl.arange(0,XBLOCK)[:]
+    xmask=xindex<xnumel
+    x0=xindex
+    a=tl.load(in_ptr0+x0,xmask).to(tl.float32)
+    b=a*tl.sigmoid(a*1.702)
+    tl.store(out_ptr0+x0,b,xmask)
+'''
+        signature={'in_ptr0':'*fp16','out_ptr0':'*fp16','xnumel':'i32'}
+        self.assertTrue(sdnn_pointwise_eligibility(source,signature)[0])
+        from torch._inductor.utils import Placeholder
+        template=source.replace('def generated(', 'def '+str(Placeholder.KERNEL_NAME)+'(')
+        self.assertTrue(sdnn_pointwise_eligibility(template,signature)[0])
+        self.assertIn(str(Placeholder.KERNEL_NAME),template)
+        for changed in (source.replace('x0=xindex','x0=xindex%1024'),
+                        source.replace('in_ptr0+x0,xmask','in_ptr0+x0'),
+                        source.replace('tl.store(out_ptr0+x0,b,xmask)','tl.store(out_ptr0+x0,b,a>0)'),
+                        source.replace('tl.sigmoid','libdevice.unreviewed')):
+            self.assertFalse(sdnn_pointwise_eligibility(changed,signature)[0])
+        self.assertFalse(sdnn_pointwise_eligibility(source,dict(signature,in_ptr0='*i64'))[0])
+
+    def test_sdnn_option_survives_deferred_compile_and_restores_global_compile(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        import triton
+        from triton.experimental.graph_fusion._p800_model_schedule import p800_sdnn_config
+        fn=object();seen=[]
+        binary=SimpleNamespace(metadata=SimpleNamespace(buffer_size_limit=512,is_sdnn=True,effective_resource_kind='sdnn'))
+        def compile(source,**kwargs):
+            seen.append(kwargs['options']);return binary
+        def fixed_config(**kwargs):
+            self.assertEqual(kwargs['config']['XBLOCK'],131072)
+            def decorate(function):
+                return SimpleNamespace(_precompile_config=lambda:triton.compile(SimpleNamespace(fn=function),options={}))
+            return decorate
+        with patch('triton.compile',compile),patch('torch._inductor.runtime.triton_heuristics.fixed_config',fixed_config):
+            tuner=p800_sdnn_config(config={'XBLOCK':32768},triton_meta={})(fn)
+            self.assertEqual(seen,[])
+            self.assertIs(tuner._precompile_config(),binary)
+            self.assertEqual(seen,[dict(resource_kind='sdnn',buffer_size_limit=512)])
+            self.assertIs(triton.compile,compile)
+
+    def test_original_dtype_candidates_use_scoped_schedule_only_on_p800(self):
+        from unittest.mock import patch
+        from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
+        from torch._inductor.virtualized import V
+        from torch._inductor.codegen.triton import TritonKernel
+        from triton.experimental.graph_fusion._model_inductor import inductor_backend
+        mode = FakeTensorMode()
+        fake = FakeTensor(mode, torch.empty(4, device='meta', dtype=torch.float16),
+                          torch.device('cuda', 0))
+        cpu = torch.empty(4, dtype=torch.float16)
+        for policy in ('preserve_operator', 'fuse_fp32_internals'):
+            for value, detected, expected in ((fake, True, True), (fake, False, False),
+                                               (cpu, True, False)):
+                with self.subTest(policy=policy, device=value.device, p800=detected):
+                    gm = fx.symbolic_trace(torch.nn.Identity())
+                    audit, observed = [], []
+                    before, body = V.choices, TritonKernel.codegen_body
+                    prepared = lambda x: x
+                    def compile_candidate(graph, inputs, **kwargs):
+                        observed.append(V.choices is not before)
+                        self.assertEqual(inputs, (value,))
+                        return prepared
+                    with patch('torch._inductor.compile_fx.compile_fx', compile_candidate), \
+                            patch('torch._inductor.lowering.make_fallback'), \
+                            patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',
+                                  return_value=detected):
+                        result = inductor_backend(tolerance=dict(atol=.003, rtol=.003),
+                            environment_key='schedule-dispatch', audit=audit,
+                            precision_policy=policy)(gm, (value,))
+                    self.assertEqual(observed, [expected])
+                    self.assertIs(result, prepared)
+                    self.assertIs(V.choices, before)
+                    self.assertIs(TritonKernel.codegen_body, body)
+                    self.assertEqual(audit[0]['pointwise_schedule'], 'p800_lm' if expected else 'default')
+                    self.assertTrue(audit[0]['requires_original_fp32_model_validation'])
+                    self.assertEqual(audit[0]['state'], 'awaiting_complete_model_validation')
+
+    def test_original_dtype_compile_failure_restores_schedule_and_keeps_native_candidate(self):
+        from unittest.mock import patch
+        from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
+        from torch._inductor.virtualized import V
+        from torch._inductor.codegen.triton import TritonKernel
+        from triton.experimental.graph_fusion._model_inductor import inductor_backend
+        mode = FakeTensorMode()
+        value = FakeTensor(mode, torch.empty(4, device='meta', dtype=torch.float16),
+                           torch.device('cuda', 0))
+        for policy in ('preserve_operator', 'fuse_fp32_internals'):
+            with self.subTest(policy=policy):
+                before, body = V.choices, TritonKernel.codegen_body
+                audit, observed = [], []
+                def fail_compile(*args, **kwargs):
+                    observed.append(V.choices is not before)
+                    raise RuntimeError('controlled compile failure')
+                with patch('torch._inductor.compile_fx.compile_fx', fail_compile), \
+                        patch('torch._inductor.lowering.make_fallback'), \
+                        patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',
+                              return_value=True):
+                    result = inductor_backend(tolerance=dict(atol=.003, rtol=.003),
+                        environment_key='schedule-failure', audit=audit,
+                        precision_policy=policy)(fx.symbolic_trace(torch.nn.Identity()), (value,))
+                self.assertEqual(observed, [True])
+                self.assertIs(result(value), value)
+                self.assertIs(V.choices, before)
+                self.assertIs(TritonKernel.codegen_body, body)
+                self.assertEqual(audit[0]['route'], 'original')
+                self.assertIn('controlled compile failure', audit[0]['rejected'][0]['error'])
+
     def test_grouped_projection_complete_outputs_and_versioned_weights(self):
         from triton.experimental.graph_fusion._p800_model_gemm import grouped_projection_candidate, GroupedProjectionPack
         class Model(torch.nn.Module):
@@ -347,7 +479,7 @@ class WholeGraphTests(unittest.TestCase):
         gm=trace(Other(),(torch.randn(2,3,45),))
         self.assertFalse(preserve_short_softmax(gm))
 
-    def test_lm_options_are_explicit_scoped_and_only_apply_to_fp32_pointwise(self):
+    def test_lm_options_cover_homogeneous_half_without_changing_mixed_conversions(self):
         from types import SimpleNamespace
         from unittest.mock import patch
         from torch._inductor.codegen.triton import TritonKernel
@@ -358,6 +490,7 @@ class WholeGraphTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'restore'):
                 with p800_lm_schedule(buffer_bytes=2048):
                     for signature, fixed, expected in [({'a':'*fp32','b':'*fp32'},True,2048),
+                                                      ({'a':'*fp16','b':'*fp16'},True,2048),
                                                       ({'a':'*fp32','b':'*i64'},True,None),
                                                       ({'a':'*fp32','b':'*fp16'},True,None),
                                                       ({'a':'*fp32'},False,None)]:
@@ -367,6 +500,57 @@ class WholeGraphTests(unittest.TestCase):
                     raise RuntimeError('restore')
             self.assertIs(TritonKernel.codegen_body,body)
         self.assertIs(V.choices,original)
+
+    def test_half_tile_selected_before_mask_generation(self):
+        from types import SimpleNamespace
+        from torch._inductor.virtualized import V
+        from triton.experimental.graph_fusion._p800_model_schedule import p800_lm_schedule
+        from unittest.mock import patch
+        feature = SimpleNamespace(numel=98304, reduction_numel=1, buf_accesses=lambda: {'a': [], 'b': []})
+        before = V.choices
+        for dtypes, size, expected in [((torch.float16,torch.float16),2048,65536),
+                                      ((torch.float16,torch.float16),1024,32768),
+                                      ((torch.float16,torch.float32),2048,32768),
+                                      ((torch.float32,torch.float32),2048,32768)]:
+            graph = SimpleNamespace(sizevars=SimpleNamespace(size_hint=lambda x,**kw:x),
+                get_dtype=lambda name:dict(zip(('a','b'),dtypes))[name])
+            with V.set_graph_handler(graph), patch.object(before,'triton_kernel_kwargs',side_effect=lambda *args:args[-1]):
+                with p800_lm_schedule(buffer_bytes=size):
+                    result = V.choices.triton_kernel_kwargs(None,feature,None,{})
+                    self.assertEqual(result['fixed_config']['XBLOCK'],expected)
+        self.assertIs(V.choices,before)
+
+    def test_fp32_packet_tile_matches_buffer_and_is_audited(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from torch._inductor.virtualized import V
+        from torch._inductor.codegen.triton import TritonKernel
+        from triton.experimental.graph_fusion._p800_model_schedule import p800_lm_schedule
+        feature=SimpleNamespace(numel=98305,reduction_numel=1,buf_accesses=lambda:{'a':[]})
+        graph=SimpleNamespace(sizevars=SimpleNamespace(size_hint=lambda x,**kw:x),get_dtype=lambda _:torch.float32)
+        before=V.choices
+        with patch.object(TritonKernel,'codegen_body',return_value=None), V.set_graph_handler(graph), patch.object(before,'triton_kernel_kwargs',side_effect=lambda *a:a[-1]):
+            for size in (512,1024,2048):
+                audit=[]
+                with p800_lm_schedule(buffer_bytes=size,buffer_audit=audit):
+                    result=V.choices.triton_kernel_kwargs(None,feature,None,{})
+                    self.assertEqual(result['fixed_config']['XBLOCK'],size*16)
+                    kernel=SimpleNamespace(triton_meta={'signature':{'a':'*fp32'}},fixed_config=True)
+                    TritonKernel.codegen_body(kernel)
+                    self.assertEqual(audit,[dict(storage='float32',requested=size)])
+
+    def test_half_candidates_keep_existing_fp32_buffer(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from torch._inductor.codegen.triton import TritonKernel
+        from triton.experimental.graph_fusion._p800_model_schedule import p800_lm_schedule
+        with patch.object(TritonKernel,'codegen_body',return_value=None):
+            for size in (512,1024,2048):
+                with p800_lm_schedule(buffer_bytes=2048,fp16_buffer_bytes=size):
+                    for dtype,want in [('fp16',size),('fp32',2048)]:
+                        kernel=SimpleNamespace(triton_meta={'signature':{'a':'*'+dtype,'b':'*'+dtype}},fixed_config=True)
+                        TritonKernel.codegen_body(kernel)
+                        self.assertEqual(kernel.triton_meta['buffer_size_limit'],want)
 
     def test_short_softmax_preserves_explicit_output_and_aliases(self):
         from triton.experimental.graph_fusion._p800_model_schedule import preserve_short_softmax

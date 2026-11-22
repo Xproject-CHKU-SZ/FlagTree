@@ -4,6 +4,7 @@ Rewrites happen before AOTAutograd; Inductor owns allocation, scheduling and
 kernel generation. No Python region module remains on the warm execution path.
 """
 import copy
+from contextlib import nullcontext
 import math
 import operator
 import statistics
@@ -312,12 +313,20 @@ class _SelectGraph:
 
 
 def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp32_reference',
-                     precision_options=None):
+                     precision_options=None, resource_policy='auto', graph_choice=None,
+                     _cost_graph_observer=None, _capture_cost_graph=False):
     """Compile complete graph candidates and select by synchronized host latency."""
     if precision_policy not in ('fp32_reference', 'preserve_operator', 'fuse_fp32_internals', 'source_fp32_mixed'):
         raise ValueError('Unknown operator precision policy: ' + str(precision_policy))
-    if precision_options and precision_policy != 'source_fp32_mixed':
+    if precision_options and precision_policy not in ('source_fp32_mixed', 'preserve_operator', 'fuse_fp32_internals'):
         raise ValueError('Precision module scopes require the original FP32 mixed policy')
+    if _capture_cost_graph and (_cost_graph_observer is None or precision_policy not in (
+            'source_fp32_mixed', 'preserve_operator', 'fuse_fp32_internals')):
+        raise ValueError('Cost capture requires an observer and an explicit precision policy')
+    if resource_policy not in ('auto','cluster','sdnn'):
+        raise ValueError('Unknown whole-graph pointwise resource policy')
+    if graph_choice is not None and (precision_policy != 'fp32_reference' or resource_policy == 'auto'):
+        raise ValueError('An explicit resource candidate is required for a fixed graph choice')
     def backend(gm, example_inputs):
         from torch._inductor.compile_fx import compile_fx
         from torch._inductor.lowering import make_fallback
@@ -325,12 +334,15 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
         # symbol. Keep this op in the vendor runtime, including its bounds checks.
         # Registration is local to this explicitly activated inference process.
         from ._p800_inductor_gelu import _on_p800
-        if any(isinstance(x, torch.Tensor) and x.device.type == 'cuda' and _on_p800(x.device)
-               for x in example_inputs):
+        on_p800 = any(isinstance(x, torch.Tensor) and x.device.type == 'cuda' and _on_p800(x.device)
+                       for x in example_inputs)
+        if on_p800:
             make_fallback(torch.ops.aten.embedding.default, warn=False)
             make_fallback(torch.ops.aten.index.Tensor, warn=False)
             # Noncontiguous transpose + cat is miscompiled by this XPU backend.
             make_fallback(torch.ops.aten.cat.default, warn=False, override_decomp=True)
+        if resource_policy == 'sdnn' and not on_p800:
+            raise ValueError('SDNN whole-graph candidates require a P800 device')
         original = copy.deepcopy(gm)
         if precision_policy == 'source_fp32_mixed':
             from ._source_precision import source_mixed_candidate, SourceParameterPack
@@ -338,6 +350,7 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             from ._p800_model_layernorm import rewrite, preserve_unmatched_norms, preserve_vendor_gelu, preserve_vendor_tanh
             options = dict(precision_options or {})
             schedule = options.pop('fp32_schedule', 'native')
+            pointwise_policy = options.pop('pointwise_policy', 'generated')
             if schedule not in ('native', 'inductor', 'grouped'):
                 raise ValueError('Unknown source FP32 schedule: ' + str(schedule))
             mixed, examples, indices, scopes = source_mixed_candidate(
@@ -369,6 +382,10 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                     if grouped is not None:
                         mixed, examples, groups, additions = grouped
                         regions += additions
+            from ._pointwise_candidates import preserve_pointwise
+            if _cost_graph_observer is not None:
+                _cost_graph_observer(mixed, examples)
+            pointwise = preserve_pointwise(mixed, pointwise_policy)
             record = dict(backend='inductor_whole_graph', environment_key=environment_key,
                 precision_policy=precision_policy, precision_options=precision_options,
                 precision_contracts=contracts, source_precision_scopes=scopes,
@@ -376,13 +393,20 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                 original_fp32_sources_retained=True, graph_code=mixed.code, regions=regions,
                 rejected=[], state='awaiting_complete_model_validation',
                 route='inductor_source_fp32_mixed_'+schedule, requires_original_fp32_model_validation=True)
+            record.update(pointwise_implementation=pointwise_policy, native_pointwise_regions=pointwise)
+            record.update(pointwise_resource_policy=resource_policy, pointwise_resource_candidates=[])
             audit.append(record)
             unresolved = [r['node'] for r in contracts if r['action']=='native_candidate_required']
             if unresolved:raise ValueError('Unreviewed mixed boundary: '+', '.join(unresolved))
             from ._p800_model_schedule import p800_lm_schedule
-            with p800_lm_schedule(buffer_bytes=2048, split_addmm=True):
-                body=compile_fx(mixed, examples, config_patches={
-                    'triton.cudagraphs': False, 'compile_threads': 1, 'max_autotune': False,
+            with p800_lm_schedule(buffer_bytes=2048, split_addmm=True,
+                    resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates']):
+                body=mixed.forward if _capture_cost_graph else compile_fx(mixed, examples, config_patches={
+                    # CUDA graph execution is disabled. Its independent
+                    # partition pass recursively revisits shared fallback IR
+                    # in residual DAGs and is unnecessary for this entry.
+                    'triton.cudagraphs': False, 'graph_partition': False,
+                    'compile_threads': 1, 'max_autotune': False,
                     'max_autotune_gemm': False, 'triton.autotune_pointwise': False, 'shape_padding': False})
             if groups:
                 from ._p800_model_gemm import GroupedProjectionPack
@@ -398,6 +422,17 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             # complete model entry, before selecting or caching this candidate.
             from ._operator_precision import preserve_native_compute
             from ._p800_model_layernorm import preserve_unmatched_norms, preserve_vendor_gelu, preserve_vendor_tanh
+            options = dict(precision_options or {})
+            pointwise_policy = options.pop('pointwise_policy', 'generated')
+            require_compiled = options.pop('require_compiled', False)
+            linear_schedule = options.pop('linear_schedule', 'native')
+            pointwise_buffer_bytes = options.pop('pointwise_buffer_bytes', 2048)
+            if pointwise_buffer_bytes not in (512, 1024, 2048):
+                raise ValueError('Unsupported captured pointwise buffer size')
+            if linear_schedule not in ('native', 'inductor', 'grouped'):
+                raise ValueError('Unknown captured Linear schedule: '+str(linear_schedule))
+            if options:
+                raise ValueError('Unknown captured-precision options: ' + str(sorted(options)))
             protected = copy.deepcopy(gm)
             fp32_regions = []
             if precision_policy == 'fuse_fp32_internals':
@@ -412,6 +447,38 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             preserve_vendor_gelu(protected)
             preserve_vendor_tanh(protected)
             precision = preserve_native_compute(protected)
+            exposed = []
+            if linear_schedule in ('inductor', 'grouped'):
+                from ._operator_precision import _linear
+                for node in protected.graph.nodes:
+                    if node.op == 'call_function' and node.target is _linear._opoverload:
+                        # Packing is an implementation choice for an existing
+                        # FP32 contraction. Never widen a captured low-precision
+                        # contraction to make it eligible for this schedule.
+                        if linear_schedule == 'grouped' and _value(node.args[0]).dtype != torch.float32:
+                            continue
+                        # Keep the captured input/weight/output dtypes. The
+                        # candidate changes lowering, not the precision graph.
+                        exposed.append(dict(node=node.name, input_dtype=str(_value(node.args[0]).dtype),
+                                            output_dtype=str(_value(node).dtype)))
+                        node.target = torch.ops.aten.linear.default
+                protected.recompile()
+            packs, groups, layout_regions = [], [], []
+            if linear_schedule == 'grouped':
+                from ._p800_model_gemm import packed_weight_candidate, grouped_projection_candidate
+                packed = packed_weight_candidate(protected, example_inputs)
+                if packed is not None:
+                    protected, example_inputs, packs, additions = packed
+                    layout_regions += additions
+                grouped = grouped_projection_candidate(protected, example_inputs)
+                if grouped is not None:
+                    protected, example_inputs, groups, additions = grouped
+                    layout_regions += additions
+            from ._pointwise_candidates import preserve_pointwise
+            if _cost_graph_observer is not None:
+                _cost_graph_observer(protected, example_inputs)
+            pointwise_domain = preserve_pointwise(protected, 'native', dry_run=True)
+            pointwise = preserve_pointwise(protected, pointwise_policy)
             candidate_name = ('inductor_fp32_compute_regions' if precision_policy == 'fuse_fp32_internals'
                               else 'inductor_preserve_precision')
             record = dict(backend='inductor_whole_graph', environment_key=environment_key,
@@ -421,6 +488,15 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                           regions=[], rejected=[], candidate_regions={'original': [],
                           candidate_name: precision + fp32_regions}, graph_code=protected.code,
                           requires_original_fp32_model_validation=True)
+            record.update(pointwise_implementation=pointwise_policy,
+                          native_pointwise_regions=pointwise,
+                          pointwise_choice_domains=pointwise_domain,
+                          execution_precision='captured_per_operator',
+                          forced_fp32_inputs=False, capture_source='original_dtype',
+                          captured_input_dtypes=[str(x.dtype) for x in example_inputs if isinstance(x, torch.Tensor)],
+                          original_graph_code=original.code,
+                          linear_schedule=linear_schedule, exposed_linears=exposed,
+                          layout_regions=layout_regions)
             audit.append(record)
             prepared = original.forward
             record.update(state='awaiting_complete_model_validation', route='original')
@@ -428,13 +504,33 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                 unresolved = [r['node'] for r in precision if r['action'] == 'native_candidate_required']
                 if unresolved:
                     raise ValueError('Native precision boundary has no reviewed lowering: ' + ', '.join(unresolved))
-                prepared = compile_fx(protected, example_inputs,
-                    config_patches={'triton.cudagraphs': False, 'compile_threads': 1,
-                                    'max_autotune': False, 'max_autotune_gemm': False,
-                                    'triton.autotune_pointwise': False, 'shape_padding': False})
+                from ._p800_model_schedule import p800_lm_schedule
+                # These graphs retain native contraction precision, but their
+                # generated pointwise kernels need the same P800 tiling as the
+                # FP32 candidates. Do not split addmm across precision boundaries.
+                record.update(pointwise_resource_policy=resource_policy, pointwise_resource_candidates=[])
+                record.update(pointwise_buffer_bytes=pointwise_buffer_bytes, fp16_buffer_kernels=[])
+                schedule = (p800_lm_schedule(buffer_bytes=pointwise_buffer_bytes, fp16_buffer_bytes=pointwise_buffer_bytes, split_addmm=linear_schedule == 'grouped',
+                            resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates'],
+                            buffer_audit=record['fp16_buffer_kernels'])
+                            if on_p800 else nullcontext())
+                with schedule:
+                    prepared = protected.forward if _capture_cost_graph else compile_fx(protected, example_inputs,
+                        config_patches={'triton.cudagraphs': False, 'graph_partition': False, 'compile_threads': 1,
+                                        'max_autotune': False, 'max_autotune_gemm': False,
+                                        'triton.autotune_pointwise': False, 'shape_padding': False})
+                if groups:
+                    from ._p800_model_gemm import GroupedProjectionPack
+                    prepared = GroupedProjectionPack(prepared, groups)
+                if packs:
+                    from ._p800_model_gemm import pack_column_major
+                    prepared = _ParameterPack(prepared, packs, transform=pack_column_major)
+                record['pointwise_schedule'] = 'p800_lm' if on_p800 else 'default'
                 record['route'] = candidate_name
             except Exception as exc:
                 record['rejected'].append(dict(route=candidate_name, reason='compile', error=str(exc)))
+                if resource_policy != 'auto' or require_compiled:
+                    raise
             # The original native route is already an independent whole-model
             # candidate. Do not choose between them using an inner FP16 gate or
             # subgraph timing: that could hide a faster FP32-accurate candidate.
@@ -455,8 +551,9 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                           'original': [], 'inductor': linear, 'inductor_f06': linear + patterns},
                       graph_code=optimized.code, vendor_norm_fallbacks=vendor_norms)
         audit.append(record)
+        record.update(pointwise_resource_policy=resource_policy, pointwise_resource_candidates=[])
         candidates = {'original': original.forward}
-        patches = {'triton.cudagraphs': False, 'compile_threads': 1,
+        patches = {'triton.cudagraphs': False, 'graph_partition': False, 'compile_threads': 1,
                    'max_autotune': False, 'max_autotune_gemm': False,
                    # The XPU event/cache-flush pointwise calibration can stall
                    # at synchronization even with valid-timestamp guards (F41).
@@ -497,12 +594,26 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             except Exception as exc:
                 record['rejected'].append(dict(route='inductor_f06_fp32', reason='metadata inference', error=str(exc)))
         for name, graph in graphs:
+            if graph_choice is not None:
+                related = {name}
+                if name.startswith('inductor_p800_lm') and name.endswith('2048'):
+                    related.add(name[:-4]+'_packed_gemm2048')
+                    if '_native_bias_mm' in name:
+                        related.add(name[:-4]+'_grouped_proj2048')
+                if graph_choice not in related:
+                    continue
             record['preparing'] = 'compile:' + name
             try:
                 if name.startswith('inductor_p800_lm'):
                     from ._p800_model_schedule import p800_lm_schedule
                     with p800_lm_schedule(buffer_bytes=2048 if name.endswith('2048') else None,
-                                          split_addmm='_native_bias_mm' in name):
+                                          split_addmm='_native_bias_mm' in name,
+                                          resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates']):
+                        candidates[name] = compile_fx(graph, example_inputs, config_patches=patches)
+                elif resource_policy != 'auto' and on_p800:
+                    from ._p800_model_schedule import p800_lm_schedule
+                    with p800_lm_schedule(buffer_bytes=2048, resource_kind=resource_policy,
+                                          resource_audit=record['pointwise_resource_candidates']):
                         candidates[name] = compile_fx(graph, example_inputs, config_patches=patches)
                 else:
                     candidates[name] = compile_fx(graph, example_inputs, config_patches=patches)
@@ -517,7 +628,8 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                         packed_graph, examples, indices, regions = packed
                         record['preparing'] = 'compile:' + packed_name
                         from ._p800_model_schedule import p800_lm_schedule
-                        with p800_lm_schedule(buffer_bytes=2048, split_addmm='_native_bias_mm' in name):
+                        with p800_lm_schedule(buffer_bytes=2048, split_addmm='_native_bias_mm' in name,
+                                resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates']):
                             body = compile_fx(packed_graph, examples, config_patches=patches)
                         candidates[packed_name] = _ParameterPack(body, indices, transform=pack_column_major)
                         record['candidate_regions'][packed_name] = record['candidate_regions'][name] + regions
@@ -538,7 +650,8 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                         if grouped is not None:
                             grouped_graph, examples, groups, regions = grouped
                             record['preparing'] = 'compile:' + grouped_name
-                            with p800_lm_schedule(buffer_bytes=2048, split_addmm=True):
+                            with p800_lm_schedule(buffer_bytes=2048, split_addmm=True,
+                                    resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates']):
                                 body = compile_fx(grouped_graph, examples, config_patches=patches)
                             body = GroupedProjectionPack(body, groups)
                             if packed_indices:
@@ -577,5 +690,12 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                         record['packed_parameters']=len(indices)
                     except Exception as exc:
                         record['rejected'].append(dict(route='inductor_f06_fp32_packed',reason='compile',error=str(exc)))
+        if graph_choice is not None:
+            if graph_choice not in candidates:
+                raise RuntimeError('Requested whole-graph resource candidate did not compile: '+str(record['rejected']))
+            record.update(route=graph_choice, state='awaiting_complete_model_validation',
+                          requires_original_fp32_model_validation=True)
+            record.pop('preparing', None)
+            return candidates[graph_choice]
         return _SelectGraph(candidates, reference, tolerance, record)
     return backend

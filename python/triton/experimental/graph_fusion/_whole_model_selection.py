@@ -16,13 +16,16 @@ class ModelRoute:
 
 def select_whole_model(routes, *, validation_inputs, validate, measure,
                        record, rounds=4, preferred=None, minimum_gain=0.01,
-                       max_remeasurements=1):
+                       max_remeasurements=1, expanded_routes=None):
     """Validate all supplied examples, then compare complete-route means.
 
     ``measure(call)`` must include input preparation, output conversion and
     completion synchronization, and return positive finite raw seconds.
     Explicit calibration keeps candidate compilation outside steady timing.
     No candidate is accepted on a subgraph-only correctness result.
+    Prepared pipelines may supply resource variants; these undergo the same
+    complete-output gate. Optional expanded_routes receives the named callable
+    map for subsequent diagnostics. The returned callable has no warm router.
     """
     if rounds < 2 or rounds % 2:
         raise ValueError('Use an even number of forward/reverse rounds')
@@ -35,9 +38,11 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
     record.pop('gain_check', None)
     record.pop('timing_attempts', None)
     record.update(state='validating', scope='complete_model_call', rejected=[], candidates={}, rounds=rounds,
-                  minimum_gain=minimum_gain, statistic='arithmetic_mean_of_raw_seconds')
+                  minimum_gain=minimum_gain, statistic='arithmetic_mean_of_raw_seconds', resource_variants={})
     valid = {}
-    for name, route in routes.items():
+    pending = list(routes.items())
+    all_routes = dict(routes)
+    for name, route in pending:
         # A device execution failure can poison the context. Propagate it,
         # rather than attempting another route on the same context.
         route.activate()
@@ -58,6 +63,23 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
             valid[name] = route
             record['candidates'][name] = dict(validated_examples=len(validation_inputs),
                                               raw_seconds=[], round_means=[])
+        for factory_name in ('_f06_resource_variants', '_f06_buffer_variants'):
+            variants = getattr(route.call, factory_name, None)
+            if variants is None:
+                continue
+            # Even a precision-rejected baseline may have a valid resource
+            # alternative. Each is validated on every complete public output.
+            for kind, call in variants().items():
+                candidate = name + '__' + kind
+                if candidate in all_routes:
+                    raise ValueError('Duplicate whole-model resource candidate: '+candidate)
+                alternative = ModelRoute(call, route.activate)
+                all_routes[candidate] = alternative
+                pending.append((candidate, alternative))
+                record['resource_variants'][candidate] = dict(parent=name, resource=kind,
+                    dimension='buffer' if factory_name == '_f06_buffer_variants' else 'resource')
+    if expanded_routes is not None:
+        expanded_routes.update(all_routes)
     if not valid:
         record['state'] = 'no_valid_route'
         raise RuntimeError('No complete model route passed the output contract')
@@ -80,11 +102,17 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
         means = {name: statistics.mean(item['raw_seconds'])
                  for name, item in record['candidates'].items()}
         winner = min(means, key=means.get)
-        if preferred in valid and means[winner] >= means[preferred] * (1 - minimum_gain):
-            winner = preferred
-        if preferred in valid and winner != preferred:
+        comparison = preferred
+        parent = record['resource_variants'].get(winner, {}).get('parent')
+        if parent in valid and (comparison not in valid or means[parent] < means[comparison]):
+            # A resource change must improve its complete baseline stably,
+            # including when original-dtype eager failed the FP32 contract.
+            comparison = parent
+        if comparison in valid and means[winner] >= means[comparison] * (1 - minimum_gain):
+            winner = comparison
+        if comparison in valid and winner != comparison:
             chosen = record['candidates'][winner]['round_means']
-            baseline = record['candidates'][preferred]['round_means']
+            baseline = record['candidates'][comparison]['round_means']
             wins = sum(a < b * (1 - minimum_gain) for a, b in zip(chosen, baseline))
             both_orders = all(statistics.mean(chosen[offset::2]) <
                               statistics.mean(baseline[offset::2]) * (1 - minimum_gain)
@@ -94,7 +122,7 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
             stationary = max(chosen_spread, baseline_spread) <= 0.05
             consistent = wins >= math.ceil(0.75 * rounds) and both_orders
             stable = consistent and stationary
-            record['gain_check'] = dict(candidate=winner, preferred=preferred,
+            record['gain_check'] = dict(candidate=winner, preferred=comparison,
                                         winning_rounds=wins, rounds=rounds,
                                         both_orders_faster=both_orders,
                                         candidate_round_spread=chosen_spread,
@@ -115,7 +143,7 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
                 record.pop('gain_check', None)
                 continue
             if not stable:
-                winner = preferred
+                winner = comparison
         break
     valid[winner].activate()
     record.update(state='selected', route=winner, mean_seconds=means)

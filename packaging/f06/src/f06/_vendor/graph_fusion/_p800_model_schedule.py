@@ -4,6 +4,7 @@ Inductor generates pointwise bodies using LM-sized packets. Short softmax and
 explicit non-contiguous copies retain the vendor implementations as graph nodes.
 """
 from contextlib import contextmanager
+import ast
 import copy
 import hashlib
 from pathlib import Path
@@ -92,11 +93,11 @@ def _split_fp32_addmm(enabled):
 
 
 @contextmanager
-def _compile_buffer_option(fn, buffer_bytes):
+def _compile_buffer_option(fn, buffer_bytes, resource_kind=None):
     """Torch 2.9's whitelist drops XPU metadata; bind it to this JIT only."""
     import triton
     from torch._dynamo.convert_frame import compile_lock
-    if buffer_bytes != 2048:
+    if buffer_bytes not in (512, 1024, 2048):
         raise ValueError('Unsupported model schedule buffer size')
     with compile_lock:
         original = triton.compile
@@ -105,6 +106,8 @@ def _compile_buffer_option(fn, buffer_bytes):
             matching = getattr(source, 'fn', None) is fn
             if matching:
                 kwargs['options'] = dict(kwargs.get('options') or {}, buffer_size_limit=buffer_bytes)
+                if resource_kind is not None:
+                    kwargs['options']['resource_kind'] = resource_kind
             result = original(source, *args, **kwargs)
             if matching:
                 forwarded.append(result)
@@ -148,6 +151,98 @@ def p800_fixed_config(*args, **kwargs):
         tuner._precompile_config = compile_config
         return tuner
     return apply
+
+
+def _p800_resource_config(kind, *args, **kwargs):
+    """Persist an EW/DMA candidate through Inductor's deferred compilation.
+
+    No calibration or routing is performed here. The complete pipeline is an
+    independent candidate in select_whole_model, including preprocessing.
+    """
+    from torch._inductor.runtime.triton_heuristics import fixed_config
+    buffer_bytes = 512 if kind == 'sdnn' else kwargs['triton_meta'].get('buffer_size_limit',512)
+    if kind == 'sdnn':
+        kwargs['config'] = dict(kwargs['config'], XBLOCK=131072)
+    kwargs['triton_meta'] = dict(kwargs['triton_meta'], buffer_size_limit=buffer_bytes)
+    decorate = fixed_config(*args, **kwargs)
+    def apply(fn):
+        tuner = decorate(fn)
+        original = tuner._precompile_config
+        def compile_config(*a, **kw):
+            with _compile_buffer_option(fn, buffer_bytes, kind) as forwarded:
+                result = original(*a, **kw)
+            binary = getattr(result, 'kernel', result)
+            tuner.p800_buffer_choice = _validate_buffer_option(binary, buffer_bytes, forwarded)
+            if (getattr(binary.metadata, 'is_sdnn', None) != (kind == 'sdnn')
+                    or getattr(binary.metadata, 'effective_resource_kind', None) != kind):
+                raise RuntimeError('P800 candidate compiled for a different resource')
+            return result
+        tuner._precompile_config = compile_config
+        return tuner
+    return apply
+
+
+def p800_sdnn_config(*args, **kwargs):
+    return _p800_resource_config('sdnn', *args, **kwargs)
+
+
+def p800_cluster_config(*args, **kwargs):
+    return _p800_resource_config('cluster', *args, **kwargs)
+
+
+def sdnn_pointwise_eligibility(source, signature):
+    """Prove direct elementwise memory access; leave gathers/reductions native.
+
+    A dtype alone does not imply a layout supported by the SDNN pipeline.
+    This check never rewrites expressions, masks, output aliases or casts.
+    """
+    pointers = {k:v for k,v in signature.items() if isinstance(v,str) and v.startswith('*')}
+    if not pointers or any(v not in ('*fp16','*fp32') for v in pointers.values()):
+        return False, 'non_fp16_fp32_pointer'
+    # Inductor calls codegen_kernel before replacing its non-Python kernel-name
+    # placeholders. Normalize only the analysis copy; return source unchanged.
+    from torch._inductor.utils import Placeholder
+    analysis = source.replace(str(Placeholder.KERNEL_NAME), '_f06_analysis_kernel')
+    analysis = analysis.replace(str(Placeholder.DESCRIPTIVE_NAME), '_f06_analysis_kernel')
+    tree = ast.parse(analysis)
+    functions = [n for n in tree.body if isinstance(n,ast.FunctionDef)]
+    if len(functions) != 1:
+        return False, 'non_single_kernel_source'
+    fn = functions[0]
+    aliases = {'xindex'}
+    for statement in fn.body:
+        if (isinstance(statement,ast.Assign) and isinstance(statement.value,ast.Name)
+                and statement.value.id in aliases):
+            aliases.update(t.id for t in statement.targets if isinstance(t,ast.Name))
+    memories = []
+    for node in ast.walk(ast.Module(body=fn.body, type_ignores=[])):
+        if isinstance(node,(ast.For,ast.While,ast.If)):
+            return False, 'control_flow'
+        if not isinstance(node,ast.Call):
+            continue
+        name = ast.unparse(node.func)
+        if name in ('tl.load','tl.store'):
+            memories.append(node)
+            address = node.args[0]
+            if not (isinstance(address,ast.BinOp) and isinstance(address.op,ast.Add)
+                    and isinstance(address.left,ast.Name) and address.left.id in pointers
+                    and isinstance(address.right,ast.Name) and address.right.id in aliases):
+                return False, 'non_contiguous_or_broadcast_address'
+            mask_index = 1 if name == 'tl.load' else 2
+            mask = (node.args[mask_index] if len(node.args) > mask_index else
+                    next((kw.value for kw in node.keywords if kw.arg == 'mask'), None))
+            # A larger tile must not reuse an implicit divisibility assumption
+            # from the Cluster tile and access beyond the logical tensor tail.
+            if not isinstance(mask,ast.Name) or mask.id != 'xmask':
+                return False, 'missing_or_non_extent_mask'
+        elif name.endswith('.to'):
+            continue
+        elif name not in ('tl.program_id','tl.arange','tl.full','tl.sigmoid','tl.exp',
+                           'tl.sqrt','tl.rsqrt','tl.minimum','tl.maximum','tl.where'):
+            return False, 'unsupported_call:' + name
+    if not memories:
+        return False, 'no_memory_ops'
+    return True, 'contiguous_elementwise_ew_dma'
 
 
 def preserve_short_softmax(gm):
@@ -199,7 +294,10 @@ def preserve_block_transpose(gm):
 
 
 @contextmanager
-def p800_lm_schedule(buffer_bytes=None, split_addmm=False):
+def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto', resource_audit=None,
+                     buffer_audit=None, fp16_buffer_bytes=None):
+    if resource_kind not in ('auto','cluster','sdnn'):
+        raise ValueError('Unknown P800 pointwise resource')
     from torch._dynamo.convert_frame import compile_lock
     from torch._inductor import config
     from torch._inductor.codegen.triton import FixedTritonConfig, TritonKernel
@@ -207,6 +305,7 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False):
     original = V.choices
     original_body = TritonKernel.codegen_body
     original_kernel = TritonKernel.codegen_kernel
+    half_buffer_bytes = buffer_bytes if fp16_buffer_bytes is None else fp16_buffer_bytes
 
     def codegen_kernel(kernel, *args, **kwargs):
         # Torch's flag name is broader than it sounds: persistent reductions
@@ -218,24 +317,35 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False):
                 source = original_kernel(kernel, *args, **kwargs)
         else:
             source = original_kernel(kernel, *args, **kwargs)
-        if kernel.triton_meta and kernel.triton_meta.get('buffer_size_limit') == 2048:
-            marker = '@triton_heuristics.fixed_config('
+        marker = '@triton_heuristics.fixed_config('
+        use_sdnn = False
+        explicit_resource = resource_kind != 'auto' and not kernel.inside_reduction and kernel.fixed_config
+        if resource_kind == 'sdnn' and not kernel.inside_reduction and kernel.fixed_config:
+            use_sdnn, reason = sdnn_pointwise_eligibility(source, kernel.triton_meta['signature'])
+            if resource_audit is not None:
+                resource_audit.append(dict(source_sha256=hashlib.sha256(source.encode()).hexdigest(),
+                    requested='sdnn', effective='sdnn' if use_sdnn else 'cluster', reason=reason))
+        if explicit_resource or kernel.triton_meta and kernel.triton_meta.get('buffer_size_limit') in (512, 1024, 2048):
             if source.count(marker) != 1:
                 raise RuntimeError('Unrecognized fixed-config code generation')
             identity = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
-            source = ('from triton.experimental.graph_fusion._p800_model_schedule import p800_fixed_config\n'
-                      '# P800 model schedule policy: '+identity+'\n' + source.replace(marker, '@p800_fixed_config('))
+            decorator = ('p800_sdnn_config' if use_sdnn else 'p800_cluster_config') if explicit_resource else 'p800_fixed_config'
+            source = ('from triton.experimental.graph_fusion._p800_model_schedule import '+decorator+'\n'
+                      '# P800 model schedule policy: '+identity+'\n' + source.replace(marker, '@'+decorator+'('))
         return source
 
     def codegen_body(kernel):
         meta = kernel.triton_meta
         if buffer_bytes is not None and kernel.fixed_config and meta is not None:
             pointers = [v for v in meta['signature'].values() if isinstance(v, str) and v.startswith('*')]
-            if pointers and all(v == '*fp32' for v in pointers):
+            if pointers and (set(pointers) == {'*fp32'} or set(pointers) == {'*fp16'}):
                 # Persist the option in generated code and its cache key. Apply
-                # it only to the fixed large pointwise FP32 kernels, not integer
+                # it only to homogeneous FP16/FP32 pointwise kernels, not integer
                 # masks, conversions or reduction kernels.
-                meta['buffer_size_limit'] = buffer_bytes
+                requested = half_buffer_bytes if set(pointers) == {'*fp16'} else buffer_bytes
+                meta['buffer_size_limit'] = requested
+                if buffer_audit is not None:
+                    buffer_audit.append(dict(storage='float16' if set(pointers) == {'*fp16'} else 'float32', requested=requested))
         return original_body(kernel)
 
     class Choices:
@@ -249,7 +359,23 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False):
             numel = V.graph.sizevars.size_hint(features.numel, fallback=0)
             reduction = V.graph.sizevars.size_hint(features.reduction_numel, fallback=0)
             if reduction == 1 and numel >= 65536:
-                tile = FixedTritonConfig({'XBLOCK': 32768, 'num_warps': 4, 'num_stages': 1})
+                # Decide before range/mask generation. At 32768 elements a
+                # 64-core FP16 tile is capped at 1024 bytes/core, regardless
+                # of a requested 2048-byte LM limit.
+                block = 32768
+                import torch
+                names = features.buf_accesses()
+                if buffer_bytes is not None and names and all(V.graph.get_dtype(n) == torch.float32 for n in names):
+                    # Match one packet per core. A smaller LM limit alone
+                    # creates an inner tile loop and prevents lookahead across
+                    # the outer grid iteration. Decide before emitting masks.
+                    block = buffer_bytes * 16
+                if half_buffer_bytes == 2048 and resource_kind != 'sdnn':
+                    import torch
+                    names = features.buf_accesses()
+                    if names and all(V.graph.get_dtype(n) == torch.float16 for n in names):
+                        block = 65536
+                tile = FixedTritonConfig({'XBLOCK': block, 'num_warps': 4, 'num_stages': 1})
                 return dict(kwargs, fixed_config=tile)
             return kwargs
 

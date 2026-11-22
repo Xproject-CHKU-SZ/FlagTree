@@ -751,7 +751,8 @@ def check_pybind11_abi(cache):
 
 
 def collect_xpu_backend_package_data(backend):
-    files = []
+    # Explicit pattern is retained even before CMake builds the executable.
+    files = ["bin/xpu-dma-opt"]
     driver_c = Path(backend.backend_dir) / "driver.c"
     if driver_c.exists():
         files.append("driver.c")

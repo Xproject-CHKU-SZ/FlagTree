@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import threading
 
-__version__ = '0.3.35+v51e.inductor36'
+__version__ = '0.3.51+v51e.inductor47'
 _LOCK = threading.RLock()
 _ROOT = Path(__file__).resolve().parent
 
@@ -108,6 +108,10 @@ def select_model_routes(routes, **kwargs):
     return activate().select_model_routes(routes, **kwargs)
 
 
+def model_candidate_routes(model, **kwargs):
+    return activate().model_candidate_routes(model, **kwargs)
+
+
 def __getattr__(name):
     if name in ('autotune_resource_backend', 'resource_backend', 'calibrate_resources',
                 'p800_inductor_options', 'default_registry'):
@@ -115,5 +119,5 @@ def __getattr__(name):
     raise AttributeError(name)
 
 
-__all__ = ['compile', 'compile_model', 'compile_pipeline', 'select_model_routes', 'activate', 'verify', 'doctor', 'manifest', '__version__',
+__all__ = ['compile', 'compile_model', 'compile_pipeline', 'select_model_routes', 'model_candidate_routes', 'activate', 'verify', 'doctor', 'manifest', '__version__',
            'autotune_resource_backend', 'p800_inductor_options']

@@ -109,6 +109,7 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include) # For #include "
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 add_subdirectory(device)
+add_subdirectory(tools/xpu-dma-opt)
 add_subdirectory(include)
 
 # The XPU-owned TritonGPUIR Dialect.cpp replacement
@@ -146,7 +147,7 @@ endif()
 #
 # Deferred for the same reason as above: the targets do not exist yet here.
 cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL
-  add_dependencies triton TritonXPUTableGen TritonXPUAttrDefsIncGen)
+  add_dependencies triton TritonXPUTableGen TritonXPUAttrDefsIncGen xpu-dma-opt)
 
 add_subdirectory(lib)
 

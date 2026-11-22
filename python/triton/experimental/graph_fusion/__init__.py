@@ -28,6 +28,12 @@ def select_model_routes(routes, **kwargs):
     return select_whole_model(routes, **kwargs)
 
 
+def model_candidate_routes(model, **kwargs):
+    """Discover bounded precision partitions and full-model implementations."""
+    from ._model_candidates import model_candidate_routes as prepare
+    return prepare(model, **kwargs)
+
+
 def p800_inductor_options():
     """Enable P800 FP32 region arithmetic and the native inference templates."""
     from torch._inductor import config
@@ -51,6 +57,7 @@ __all__ = [
     "compile_model",
     "compile_pipeline",
     "select_model_routes",
+    "model_candidate_routes",
     "p800_inductor_options",
     "composition_candidates",
     "cross_call_candidate",

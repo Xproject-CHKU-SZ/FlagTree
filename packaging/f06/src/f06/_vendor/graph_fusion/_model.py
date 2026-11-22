@@ -190,7 +190,9 @@ def partition_backend(*, tolerance, environment_key, audit):
 
 def compile_model(model, *, tolerance=None, environment_key='f06-model-v1',
                   audit=None, fullgraph=True, dynamic=False, vendor_capture=True,
-                  precision_policy='fp32_reference', precision_options=None):
+                  precision_policy='fp32_reference', precision_options=None,
+                  resource_policy='auto', graph_choice=None,
+                  _cost_graph_observer=None, _capture_cost_graph=False):
     """Compile an inference model through Inductor and select its full-graph route."""
     if model.training:
         raise ValueError('F06 whole-model compilation requires model.eval()')
@@ -206,9 +208,30 @@ def compile_model(model, *, tolerance=None, environment_key='f06-model-v1',
         tolerance = dict(atol=.0003, rtol=.0003) if dtype == torch.float32 else dict(
             atol=.03 if dtype == torch.bfloat16 else .003, rtol=.003)
     from ._model_inductor import inductor_backend
+    if resource_policy != 'auto' or precision_policy == 'source_fp32_mixed' or precision_options:
+        # Dynamo caches by Python code object. Independent resource backends
+        # applied to the same model.forward otherwise consume its shared
+        # recompile budget (CLIP has more than eight complete alternatives).
+        # Give each cold candidate its own capture boundary, not a larger
+        # global budget or an unguarded callable. Dynamo inlines the wrapper.
+        import types
+        class ResourceCapture(torch.nn.Module):
+            def __init__(self, original):
+                super().__init__()
+                self.model = original
+
+            def forward(self, *args, **kwargs):
+                return self.model(*args, **kwargs)
+
+        forward = ResourceCapture.forward
+        ResourceCapture.forward = types.FunctionType(
+            forward.__code__.replace(), forward.__globals__, forward.__name__,
+            forward.__defaults__, forward.__closure__)
+        model = ResourceCapture(model).eval()
     compiled = torch.compile(model, backend=inductor_backend(tolerance=tolerance,
         environment_key=environment_key, audit=records, precision_policy=precision_policy,
-        precision_options=precision_options),
+        precision_options=precision_options, resource_policy=resource_policy, graph_choice=graph_choice,
+        _cost_graph_observer=_cost_graph_observer, _capture_cost_graph=_capture_cost_graph),
         fullgraph=fullgraph, dynamic=dynamic)
     compiled._f06_audit = records
     compiled._f06_capture = capture

@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: f06-p800
-Version: 0.3.35+v51e.inductor36
+Version: 0.3.51+v51e.inductor47
 Summary: Explicit P800 inference fusion and resource autotuning
 License-Expression: MIT
 Requires-Python: >=3.10
@@ -73,7 +73,41 @@ with torch.no_grad():
     output = optimized(raw_inputs)
 ```
 
-To capture an unrounded FP32 graph and keep a lower-precision public output,
+The default `model_candidate_routes` search captures the supplied model with
+its original operator and tensor dtypes (`capture_source='original_dtype'`).
+It does not cast the input model to FP32 or force low-precision Linear outputs
+back to FP32. Preserve a separate, unrounded FP32 model and original inputs for
+the complete-output validator; that reference is not used to construct the
+candidate graph. Captured dtype-dependent branches and explicit conversions
+remain in the graph.
+
+The current domain compares native versus Inductor Linear lowering, generated
+versus native pointwise implementations, reviewed FP32-internal fusion regions,
+and eligible Cluster/SDNN schedules. A matrix or low-precision arithmetic node
+does not become FP32 arithmetic merely because its surrounding region is fused.
+Unknown precision boundaries reject compilation explicitly; an uncompiled FX
+fallback is not reported as a compiled candidate. This is a bounded domain, not
+an exhaustive mixed-precision search. If no candidate passes the original-FP32
+output contract, report no admissible route rather than replacing the graph
+with the FP32 reference.
+
+Optional `source_tensors`, `source_prepare`, and `precision_score` arguments
+enable bounded local precision refinement. Sources must be frozen, original
+FP32 tensors whose cast exactly reproduces the captured state. Their model
+forward is never used to construct a candidate. Search starts with zero
+promoted regions and checks bitwise agreement with the original application,
+then expands precision in discovered branches and refines the selected regions.
+Residual blocks stay together, including their Q/K/V projections. Adjacent
+promoted regions retain FP32 intermediates; native regions restore their
+observed input dtype at the boundary. Public outputs keep their original dtype.
+Tied state, unobserved regions, input mutations, and floating output aliases
+currently reject local refinement rather than silently changing semantics.
+Native screening proposes regions only: all compiled variants still require
+complete-output validation and whole-model timing. This finite search neither
+proves that a failed native profile cannot pass after compilation nor covers
+every possible subregion partition.
+
+For an explicitly requested legacy experiment, to capture an unrounded FP32 graph and keep a lower-precision public output,
 retain the original FP32 model and processor inputs before creating the eager
 comparison model. Pass `source_precision="float32"` and `output_template` to
 `compile_pipeline`; the template supplies output structure and dtypes only.
@@ -81,6 +115,8 @@ The entry rejects low-precision parameters, prepared floating inputs, and
 active autocast. Widening a rounded checkpoint cannot recover its precision.
 Final output conversions are graph nodes; P800 uses the vendor conversion
 when narrowing, so live FP32 intermediates remain available to other outputs.
+The old FP32-rooted automatic search is accessible only with
+`capture_source='legacy_fp32'`; it is not the default candidate source.
 
 The P800 FP32 schedule candidate retains short last-axis softmax (2–128 values)
 and explicit noncontiguous copies as vendor graph nodes. Large pointwise work
@@ -122,6 +158,46 @@ Numerical or output-contract rejection should raise `AssertionError` or
 `ValueError` from the validator. Execution failures propagate immediately;
 another route must not be tried after a device execution fault. Invalid timing
 clears the winner and is never cached.
+
+On P800, a prepared `compile_pipeline(..., resource_policy='auto')` also supplies
+Cluster and SDNN resource alternatives to `select_model_routes`. These mirror
+the prepared arithmetic graph; they do not replace vendor matrix kernels or
+relax the original-FP32 output contract. SDNN alternatives currently cover large
+contiguous FP16/FP32 pointwise kernels with explicit extent masks, including EW
+arithmetic and DMA format conversion. Broadcasts, gathers and reductions retain
+their existing implementation. The audit records each accepted/excluded SDNN
+proposal and the actual compiled resource is checked before execution.
+
+Each resource alternative is validated and timed as a complete application
+call, without inner tensor-only resource selection. A change must stably improve
+its valid parent route, even when native low-precision eager failed the accuracy
+gate. Vendor-only fallback graphs are not relabelled as resource candidates.
+Pass `expanded_routes={}` to the selector to retain the expanded named callables
+for diagnostics; the returned winner still has no per-call selection wrapper.
+Calling a pipeline directly retains its baseline schedule. Use the selector and
+a validator built from original FP32 weights and inputs to enable resource
+comparison safely.
+
+`model_candidate_routes(..., pruning='calibrated')` optionally shortlists the
+pointwise implementation policies before complete-model selection. The default
+`pruning='none'` retains the full configured domain for comparison. Calibration
+uses actual precision/Linear-rewritten graph regions, their boundary conversions,
+shapes, dtypes and strides, with the same guarded compilation entry for every
+policy. Regions cannot cross an outside dependency and rejoin through a residual
+edge. Each resource retains its two cheapest policies, policies within 3% of the
+fastest, and the generated implementation; unknown domains retain all policies.
+Precision partitions and Linear schedules are preserved. Resource shortlists
+are kept separately, with the required auto parents retained for the existing
+complete-model gain check.
+
+If all retained policies in a pruned precision/Linear/resource family fail the
+complete original-FP32 output contract, the omitted policies in that family are
+reopened. This validation and its compilation cost are part of cold search.
+Every returned candidate still passes the normal complete-model selection gate;
+there is no per-inference pruning or output cache. Local costs are a heuristic,
+so an exhaustive comparison remains necessary to establish fast-path coverage
+for a given workload. The `record['pruning']` audit contains regional costs,
+resource shortlists, precision recovery and calibration times.
 
 A native FP32 candidate should preserve the original FP32 model before applying
 FP16 to the comparison model. Run the original adapter entirely in FP32 and use

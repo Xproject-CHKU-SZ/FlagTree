@@ -5,6 +5,81 @@ from triton.experimental.graph_fusion._whole_model_selection import ModelRoute, 
 
 
 class SelectionTests(unittest.TestCase):
+    def test_buffer_variants_require_full_outputs_and_complete_latency(self):
+        good = lambda value: (value, value)
+        bad = lambda value: (value, value + 1)
+        class Pipeline:
+            def __call__(self, value): return value, value
+            def _f06_buffer_variants(self): return {'lm512': bad, 'lm1024': good}
+        base = Pipeline(); record = {}; measured = []
+        def validate(name, out, args, kwargs):
+            if out != (args[0], args[0]): raise AssertionError('auxiliary output')
+        def measure(fn):
+            measured.append(fn)
+            return [.005 if fn is good else .01]
+        selected = select_whole_model({'graph': ModelRoute(base)},
+            validation_inputs=[((2,), {}), ((3,), {})], validate=validate,
+            measure=measure, record=record)
+        self.assertIs(selected, good)
+        self.assertNotIn(bad, measured)
+        self.assertEqual(record['route'], 'graph__lm1024')
+        self.assertEqual(record['resource_variants']['graph__lm1024']['dimension'], 'buffer')
+
+    def test_resource_near_tie_keeps_valid_parent_when_native_precision_fails(self):
+        class Pipeline:
+            def __call__(self):return 'parent'
+            def _f06_resource_variants(self):return {'sdnn':alternative}
+        base=Pipeline();alternative=lambda:'sdnn';record={}
+        def validate(name,out,args,kwargs):
+            if name=='native':raise AssertionError('FP32 reference failed')
+        result=select_whole_model({'native':ModelRoute(lambda:'bad'),'graph':ModelRoute(base)},
+            validation_inputs=[((),{})],validate=validate,measure=lambda fn:[.01 if fn is base else .00995],
+            record=record,preferred='native')
+        self.assertIs(result,base)
+        self.assertEqual(record['route'],'graph')
+
+    def test_resource_variants_are_validated_as_complete_calls_before_timing(self):
+        measured=[];expanded={};record={};calls=[]
+        class Pipeline:
+            def __init__(self, kind):self.kind=kind
+            def __call__(self, value):
+                calls.append((self.kind,value))
+                return {'main':value, 'aux':0 if self.kind=='sdnn' else 1}
+            def _f06_resource_variants(self):
+                self.assert_prepared = any(k==self.kind for k,_ in calls)
+                if self.kind=='base':return {'cluster':cluster,'sdnn':sdnn}
+                return {}
+        base=Pipeline('base');cluster=Pipeline('cluster');sdnn=Pipeline('sdnn')
+        def validate(name, output, args, kwargs):
+            if output['aux']!=1:raise AssertionError('Full auxiliary output failed')
+        def measure(fn):
+            measured.append(fn.kind)
+            return [.002 if fn.kind=='cluster' else .01]
+        selected=select_whole_model({'graph':ModelRoute(base)},
+            validation_inputs=[((2,),{}),((3,),{})], validate=validate,measure=measure,
+            record=record,rounds=4,expanded_routes=expanded)
+        self.assertIs(selected,cluster)
+        self.assertTrue(base.assert_prepared)
+        self.assertNotIn('sdnn',measured)
+        self.assertEqual(record['route'],'graph__cluster')
+        self.assertEqual(record['rejected'][0]['route'],'graph__sdnn')
+        self.assertEqual(set(expanded),{'graph','graph__cluster','graph__sdnn'})
+        self.assertEqual(record['candidates']['graph__cluster']['validated_examples'],2)
+        self.assertEqual(calls,[('base',2),('base',3),('cluster',2),('cluster',3),('sdnn',2)])
+
+    def test_rejected_baseline_does_not_hide_valid_sdnn_variant(self):
+        good=lambda x:x
+        class Bad:
+            def __call__(self,x):return x+1
+            def _f06_resource_variants(self):return {'sdnn':good}
+        def validate(name,out,args,kwargs):
+            if out!=args[0]:raise AssertionError('original FP32 mismatch')
+        record={}
+        selected=select_whole_model({'graph':ModelRoute(Bad())},validation_inputs=[((3,),{})],
+            validate=validate,measure=lambda fn:[.01],record=record)
+        self.assertIs(selected,good)
+        self.assertEqual(record['route'],'graph__sdnn')
+
     def select(self, native, fused, *, record=None, **options):
         record = {} if record is None else record
         routes = {name: ModelRoute(lambda n=name: n) for name in ('native', 'fused', 'incorrect')}
