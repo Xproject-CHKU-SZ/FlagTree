@@ -1,0 +1,297 @@
+# Copyright 2025-     FlagOS Contributors
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Dockerfile to obtain the FlagTree wheel, then assemble a Debian package.
+#
+# Three stages, two of which produce /wheels/flagtree-*.whl; which one runs is
+# decided by FLAGTREE_WHEEL_STAGE, from the backend's "wheel" column in
+# packaging/backends.conf. BuildKit only builds the stage the assembler
+# actually copies from, so an index build never pays for the compile.
+#   1a. wheel-builder: heavy stage with CMake/Ninja/LLVM that compiles the
+#       flagtree wheel from source (~36 min).
+#   1b. wheel-index:   light stage that downloads the wheel the backend's own
+#       delivery workflow published, for backends built on vendor hardware
+#       this packaging has no access to.
+#   2.  deb-assembler: light stage that renders debian/control for the backend
+#       and runs dpkg-buildpackage to wrap the wheel into a .deb. It does NOT
+#       recompile.
+#
+# Build (through the helper, which fills the build args from backends.conf):
+#   bash packaging/debian/build-helpers/build-flagtree.sh nvidia
+#
+# COPY-narrowing: the wheel-builder COPYs only the paths the build
+# needs (python/, third_party/, include/, lib/, cmake/, bin/,
+# CMakeLists.txt, *.toml, LICENSE, README*). It deliberately does NOT
+# copy packaging/, docs/, .github/, dockerfiles/, etc. — that way edits
+# to debian/control or rpm/specs/ don't invalidate the 36-min wheel
+# build cache. The deb-assembler stage gets packaging/debian via its
+# own narrow COPY.
+#
+# FLAGTREE_BACKEND notes: FlagTree's "default" backend IS nvidia (no
+# nvidia.py module exists in setup_tools/utils/). Setting
+# FLAGTREE_BACKEND=nvidia would make setup_helper.py try to import a
+# missing module and silently produce an empty stub. We unset the env
+# var explicitly in the wheel-build RUN.
+
+ARG DEB_BASE_IMAGE=ubuntu:24.04
+# PYTHON_VERSION: empty = the base image's default python3 (24.04: 3.12).
+# Set e.g. 3.12 on ubuntu:22.04 to build the FlagOS DEB ABI-matrix row
+# (ubuntu22.04 + python3.12, FEP-0019) from the deadsnakes PPA; both stages
+# then use that interpreter, so the wheel, the .deb and the smoke test agree.
+ARG PYTHON_VERSION=
+ARG MAX_JOBS=4
+# DEB_VERSION_SUFFIX: "auto" appends +<id><version> (e.g. +ubuntu22.04) to the
+# package version so rows built for different releases can coexist in one apt
+# suite (Docker CE does the same with ~ubuntu.22.04~jammy). "+" sorts above the
+# plain changelog version, so an unsuffixed package already installed from an
+# earlier build upgrades cleanly. Empty keeps the changelog version.
+ARG DEB_VERSION_SUFFIX=auto
+
+# Backend to package: selects the binary package name, the rendered
+# debian/control and, through FLAGTREE_WHEEL_STAGE, where the wheel comes
+# from. build-flagtree.sh fills all of these from packaging/backends.conf.
+ARG FLAGTREE_BACKEND=nvidia
+ARG FLAGTREE_WHEEL_STAGE=wheel-builder
+# Index to download a published wheel from, and an optional exact local
+# version to pin (e.g. metax3.6); see packaging/build-helpers/fetch-wheel.sh.
+ARG FLAGTREE_PYPI_INDEX=
+ARG FLAGTREE_WHEEL_LOCAL=
+# Path fragments to keep away from dpkg-shlibdeps; see debian/rules.
+ARG SHLIBDEPS_EXCLUDE=
+
+# ---------- Stage 1: build the wheel ----------
+FROM ${DEB_BASE_IMAGE} AS wheel-builder
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG PYTHON_VERSION
+ARG MAX_JOBS
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV VIRTUAL_ENV=/opt/flagtree-build-venv
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+ENV PIP_ROOT_USER_ACTION=ignore
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-dev python3-venv \
+        build-essential cmake ninja-build git \
+        zlib1g zlib1g-dev libxml2 libxml2-dev nlohmann-json3-dev \
+        wget curl ca-certificates software-properties-common gnupg \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Optional non-default interpreter (deadsnakes PPA), made the default python3.
+RUN if [ -n "${PYTHON_VERSION}" ] && ! python3 --version 2>&1 | grep -q " ${PYTHON_VERSION}\."; then \
+        add-apt-repository -y ppa:deadsnakes/ppa && apt-get update && \
+        apt-get install -y --no-install-recommends \
+            python${PYTHON_VERSION} python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv && \
+        update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
+        apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi && python3 --version
+
+# Ubuntu 24.04 marks /usr Python as externally managed (PEP 668). Keep all
+# wheel-builder pip installs inside a venv instead of mutating system Python.
+RUN python3 -m venv "${VIRTUAL_ENV}" && \
+    python -m pip install --no-cache-dir --upgrade pip setuptools wheel build
+
+WORKDIR /src
+# Dependency layer first so source edits don't invalidate it.
+COPY python/requirements.txt /src/python/requirements.txt
+RUN python -m pip install --no-cache-dir -r python/requirements.txt
+
+# Narrow COPY: only the paths the wheel build needs, so packaging-only
+# edits (specs, debian/, helpers) do NOT invalidate the ~50 min wheel
+# layer. setup.py / pyproject.toml / MANIFEST.in live at the repo root
+# since the post-#607 restructure.
+COPY python /src/python
+COPY third_party /src/third_party
+COPY include /src/include
+COPY lib /src/lib
+COPY cmake /src/cmake
+COPY bin /src/bin
+COPY test /src/test
+COPY unittest /src/unittest
+COPY CMakeLists.txt pyproject.toml setup.py MANIFEST.in LICENSE README.md /src/
+
+# Build wheel with MAX_JOBS capped to reduce peak RAM. Spike timing on a
+# 4-core builder: ~36 min wall.
+# FLAGTREE_DEFAULT_BACKENDS=nvidia,amd matches the historical package
+# contents and keeps the tileir backend (GCC >= 13 + cuda-tile
+# submodule) out of the distro build.
+# The trailing rm keeps only /wheels in this layer: the CMake build
+# tree and the LLVM tarball cache (~/.triton) would otherwise add
+# several GB and push CI runners into ENOSPC.
+# The wheel version: setup.py falls back to a stale hardcoded version when
+# FLAGTREE_WHEEL_VERSION is unset, so the build script passes the changelog's
+# upstream version here. Declared right before the wheel RUN so that only
+# this layer is invalidated when the version bumps.
+ARG FLAGTREE_WHEEL_VERSION=
+RUN unset FLAGTREE_BACKEND && \
+    FLAGTREE_WHEEL_VERSION="${FLAGTREE_WHEEL_VERSION}" \
+    JSON_SYSPATH=/usr \
+    FLAGTREE_DEFAULT_BACKENDS=nvidia,amd \
+    MAX_JOBS=${MAX_JOBS} python -m pip wheel . --no-build-isolation --no-deps -w /wheels -v && \
+    ls -lh /wheels/ && \
+    test -n "$(ls /wheels/flagtree-*.whl 2>/dev/null)" && \
+    rm -rf /src/build /root/.triton
+
+# ---------- Stage 1b: download a published wheel ----------
+# For backends whose wheel is built by their own delivery workflow on vendor
+# hardware. Nothing here needs a vendor SDK; the wheel is taken as published
+# and its sha256 is checked against the index.
+FROM ${DEB_BASE_IMAGE} AS wheel-index
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG PYTHON_VERSION
+ARG FLAGTREE_BACKEND
+ARG FLAGTREE_PYPI_INDEX
+ARG FLAGTREE_WHEEL_LOCAL
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 curl ca-certificates software-properties-common gnupg \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# fetch-wheel.sh accepts only a wheel tagged for the python3 it runs under, so
+# the interpreter has to be the packaging one before the download, not after.
+RUN if [ -n "${PYTHON_VERSION}" ] && ! python3 --version 2>&1 | grep -q " ${PYTHON_VERSION}\."; then \
+        add-apt-repository -y ppa:deadsnakes/ppa && apt-get update && \
+        apt-get install -y --no-install-recommends python${PYTHON_VERSION} && \
+        update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
+        apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi && python3 --version
+
+COPY packaging/build-helpers/fetch-wheel.sh /ctx/fetch-wheel.sh
+
+# Declared last so a version bump invalidates only the download. A wheel
+# re-published under an unchanged name is not noticed by the layer cache;
+# the sha256 the index served is echoed into the build log either way.
+ARG FLAGTREE_WHEEL_VERSION=
+RUN FLAGTREE_PYPI_INDEX="${FLAGTREE_PYPI_INDEX}" \
+    FLAGTREE_WHEEL_LOCAL="${FLAGTREE_WHEEL_LOCAL}" \
+    bash /ctx/fetch-wheel.sh \
+        "${FLAGTREE_BACKEND}" "${FLAGTREE_WHEEL_VERSION}" /wheels
+
+# ---------- The wheel the assembler uses ----------
+# Aliasing the selected stage keeps the choice in one build arg: a FROM reads
+# the global ARG in every builder, where a COPY --from does not, and only the
+# stage named here gets built.
+FROM ${FLAGTREE_WHEEL_STAGE} AS wheel-src
+
+# ---------- Stage 2: assemble the .deb ----------
+FROM ${DEB_BASE_IMAGE} AS deb-assembler
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG PYTHON_VERSION
+ARG DEB_VERSION_SUFFIX
+ARG FLAGTREE_BACKEND
+ARG SHLIBDEPS_EXCLUDE
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PIP_ROOT_USER_ACTION=ignore
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        debhelper dh-python python3-all python3-pip python3-setuptools \
+        python3-wheel devscripts fakeroot lintian software-properties-common gnupg \
+        curl ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Same interpreter as the wheel-builder stage, so the .deb is assembled,
+# installed and smoke-tested with the CPython the wheel was built for.
+# The distro's python3-pip / dh-python are written for the distro python; on
+# a newer interpreter they need a pip that lives in /usr/local (ahead of
+# /usr/lib/python3/dist-packages on sys.path) plus setuptools, whose
+# _distutils_hack keeps `import distutils` working on Python >= 3.12.
+RUN if [ -n "${PYTHON_VERSION}" ] && ! python3 --version 2>&1 | grep -q " ${PYTHON_VERSION}\."; then \
+        add-apt-repository -y ppa:deadsnakes/ppa && apt-get update && \
+        apt-get install -y --no-install-recommends \
+            python${PYTHON_VERSION} python${PYTHON_VERSION}-venv && \
+        update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
+        curl -sS https://bootstrap.pypa.io/get-pip.py | python3 && \
+        python3 -m pip install --no-cache-dir setuptools wheel && \
+        apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi && python3 --version && python3 -m pip --version
+
+WORKDIR /build
+COPY packaging/backends.conf /build/backends.conf
+COPY packaging/build-helpers /build/build-helpers
+COPY packaging/debian /build/debian
+COPY --from=wheel-src /wheels /build/dist
+
+# debian/control and the package's lintian overrides are rendered here rather
+# than committed, so the backend name lives in exactly one place.
+RUN bash debian/build-helpers/render-packaging.sh "${FLAGTREE_BACKEND}"
+
+# The wheel's cp tag decides the package's python dependency and must match the
+# interpreter the .deb is assembled and smoke-tested with. Fail here, where the
+# base image is still nameable, rather than at import time.
+RUN wheel="$(ls -1 /build/dist/flagtree-*.whl | head -1)" && \
+    want="$(python3 -c 'import sys; print("cp%d%d" % sys.version_info[:2])')" && \
+    case "$(basename "${wheel}")" in \
+        *-"${want}"-"${want}"-*) echo "wheel matches ${want}: $(basename "${wheel}")" ;; \
+        *) echo "ERROR: $(basename "${wheel}") is not built for ${want};" >&2; \
+           echo "       set PYTHON_VERSION / the backend's base image in packaging/backends.conf" >&2; \
+           exit 1 ;; \
+    esac
+
+# debian/source/format = "3.0 (native)" -> no orig.tar.gz needed.
+ENV WHEEL_DIR=/build/dist
+ENV FLAGTREE_BACKEND=${FLAGTREE_BACKEND}
+ENV SHLIBDEPS_EXCLUDE=${SHLIBDEPS_EXCLUDE}
+
+# Per-release version suffix (see DEB_VERSION_SUFFIX above).
+RUN if [ "${DEB_VERSION_SUFFIX}" = "auto" ]; then \
+        . /etc/os-release && suffix="+${ID}${VERSION_ID}"; \
+    else suffix="${DEB_VERSION_SUFFIX}"; fi && \
+    if [ -n "${suffix}" ]; then \
+        base="$(dpkg-parsechangelog -l debian/changelog -SVersion)" && \
+        DEBFULLNAME="FlagOS Contributors" DEBEMAIL="contact@flagos.io" \
+        dch -b -v "${base}${suffix}" -D unstable --force-distribution \
+            "Rebuild for $(. /etc/os-release && echo "${PRETTY_NAME}")." && \
+        echo "Package version: $(dpkg-parsechangelog -l debian/changelog -SVersion)"; \
+    fi
+
+RUN dpkg-buildpackage -us -uc -b && \
+    ls -lh /python3-flagtree-*.deb
+
+# Run lintian against the produced .deb — surface packaging warnings
+# (unused-license-paragraph, no-manual-page, missing-build-dependency, etc.)
+# in the build log without failing the build.
+RUN lintian --info --display-info /python3-flagtree-*.deb || true
+
+# Smoke test: install the freshly built deb and import the package.
+# Catches the "installs fine, fails at import" class (missing libs,
+# bad rpath, glibc mismatch) that dpkg-buildpackage alone cannot see.
+# triton's backend discovery imports the compiler module of every installed
+# backend, so a backend whose module reaches for its vendor SDK or for torch
+# there cannot be imported here at all; its row sets smoke=install and only
+# the install is asserted (see packaging/backends.conf).
+ARG FLAGTREE_SMOKE=import
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends /python3-flagtree-*.deb && \
+    if [ "${FLAGTREE_SMOKE}" = install ]; then \
+        python3 -c "import importlib.util as u; print('triton installed at', u.find_spec('triton').submodule_search_locations[0])" && \
+        echo "smoke=install: importing triton needs prerequisites the ${FLAGTREE_BACKEND} backend brings in"; \
+    else \
+        python3 -c "import triton; print(getattr(triton, '__version__', 'import ok'))"; \
+    fi && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ---------- Stage 3: just the .deb output ----------
+FROM scratch AS deb-output
+COPY --from=deb-assembler /python3-flagtree-*.deb /output/
+COPY --from=deb-assembler /flagtree_*.changes /output/

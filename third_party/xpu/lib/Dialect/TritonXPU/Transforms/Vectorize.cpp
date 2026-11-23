@@ -478,6 +478,14 @@ struct TritonXPUVectorizePass
             binOp.replaceAllUsesWith(newBinOp.getResult());
             binOp.erase();
           })
+          .Case<math::FmaOp>([&](auto fmaOp) {
+            OpBuilder builder(fmaOp);
+            auto vector = builder.create<triton::xpu::VMacFOp>(
+                fmaOp.getLoc(), getVectorType(fmaOp.getType()),
+                fmaOp.getA(), fmaOp.getB(), fmaOp.getC());
+            fmaOp.replaceAllUsesWith(vector.getResult());
+            fmaOp.erase();
+          })
           .Case<MATH_UNARY_OP>([&](auto unaryOp) {
             auto newVectorizedTensorTy =
                 getVectorType(unaryOp.getResult().getType());
@@ -2462,6 +2470,128 @@ struct TritonXPUVectorizePass
                                "unordered placement.\n");
   }
 
+  // A contiguous column buffer is already in LM. Keep it in vector registers
+  // when broadcasting over rows, instead of loading every lane into a scalar
+  // register and packing it back. The scalar path remains necessary for masks,
+  // discrete pointers and lane-permuted BF16 boundaries.
+  void vectorizeLMBroadcastSource(ModuleOp &mod) {
+    // The caller guarantees read-only, non-aliasing column arguments. Reserve
+    // the same upper SM window as TLE staging, never the reduction scratch.
+    // Refuse kernels already using either staging allocator.
+    bool shared = mod->hasAttr("flagtree.row_shared");
+    mod.walk([&](Operation *op) {
+      if (isa<triton::xpu::StageSMOp>(op) || op->hasAttr("xpu.mem_scope"))
+        shared = false;
+    });
+    int64_t smTop = 256 * 1024;
+    SmallVector<triton::xpu::BroadcastOp> broadcasts;
+    mod.walk([&](triton::xpu::BroadcastOp op) { broadcasts.push_back(op); });
+    for (auto bc : broadcasts) {
+      auto resultTy = dyn_cast<RankedTensorType>(bc.getType());
+      auto srcTy = dyn_cast<RankedTensorType>(bc.getSrc().getType());
+      if (!resultTy || !srcTy || srcTy.getRank() != 2 ||
+          srcTy.getShape()[0] != 1 || srcTy.getShape()[1] <= 1 ||
+          !isa<VectorType>(resultTy.getElementType()) ||
+          isa<VectorType>(srcTy.getElementType()))
+        continue;
+      SmallVector<Operation *> chain;
+      Value source = bc.getSrc();
+      while (auto cvt = source.getDefiningOp<triton::xpu::ConvertLayoutOp>()) {
+        auto inTy = dyn_cast<RankedTensorType>(cvt.getOperand().getType());
+        auto outTy = cast<RankedTensorType>(source.getType());
+        if (!inTy || inTy != outTy)
+          break;
+        chain.push_back(cvt);
+        source = cvt.getOperand();
+      }
+      auto ext = source.getDefiningOp<arith::ExtFOp>();
+      if (ext) {
+        chain.push_back(ext);
+        source = ext.getIn();
+      }
+      auto load = source.getDefiningOp<triton::xpu::LoadOp>();
+      auto loadTy = dyn_cast<RankedTensorType>(source.getType());
+      if (!load || !loadTy || loadTy.getRank() != 2 ||
+          loadTy.getShape() != srcTy.getShape() ||
+          loadTy.getEncoding() != srcTy.getEncoding() ||
+          load.getStride() != 1 || load.getIsDiscrete() || load.getMask() ||
+          load.getOther() || load.getIndex() || load.getBf16Tofp32Unordered())
+        continue;
+      Type elem = loadTy.getElementType();
+      if (!(elem.isF16() || elem.isF32()) ||
+          (ext && !(elem.isF16() && srcTy.getElementType().isF32())) ||
+          (!ext && elem != srcTy.getElementType()))
+        continue;
+      auto ptrTy = dyn_cast<RankedTensorType>(load.getPtr().getType());
+      if (!ptrTy || ptrTy.getShape() != loadTy.getShape())
+        continue;
+      auto ptrElem = dyn_cast<PointerType>(ptrTy.getElementType());
+      if (!ptrElem || ptrElem.getAddressSpace() != 0 ||
+          ptrElem.getPointeeType() != elem)
+        continue;
+      unsigned width = 512 / elem.getIntOrFloatBitWidth();
+      if (getTotalElemsPerThread(loadTy) == 0 ||
+          getTotalElemsPerThread(loadTy) % width != 0 ||
+          loadTy.getShape().back() % width != 0)
+        continue;
+      OpBuilder builder(bc);
+      auto *vectorLoad = builder.clone(*load.getOperation());
+      vectorLoad->getResult(0).setType(getVectorType(loadTy));
+      auto gm = load.getPtr().getDefiningOp<triton::xpu::GM2LMOp>();
+      auto addptr = gm ? gm.getPtr().getDefiningOp<triton::AddPtrOp>() : triton::AddPtrOp();
+      auto splat = addptr ? addptr.getPtr().getDefiningOp<triton::SplatOp>() : triton::SplatOp();
+      Value offset = addptr ? addptr.getOffset() : Value();
+      while (offset) {
+        if (auto cvt = offset.getDefiningOp<triton::xpu::ConvertLayoutOp>())
+          offset = cvt.getOperand();
+        else if (auto expand = offset.getDefiningOp<triton::ExpandDimsOp>())
+          offset = expand.getSrc();
+        else
+          break;
+      }
+      auto range = offset ? offset.getDefiningOp<triton::xpu::MakeRangeOp>() : triton::xpu::MakeRangeOp();
+      int64_t columns = loadTy.getShape()[1];
+      int64_t bytes = columns * elem.getIntOrFloatBitWidth() / 8;
+      if (shared && gm && !gm.getLen() && !gm.getOther() &&
+          gm.getOffsetState() == 1 && splat && isa<BlockArgument>(splat.getSrc()) &&
+          range && range.getStart() == 0 && range.getEnd() == columns &&
+          !range.getLoopIndex() && !range.getUnrollIndex() && columns <= 2048 && bytes % 64 == 0 &&
+          smTop - bytes >= 128 * 1024 &&
+          isa<triton::FuncOp>(bc->getParentOp())) {
+        smTop -= bytes;
+        auto i32 = builder.getI32Type();
+        auto len = builder.create<arith::ConstantIntOp>(bc.getLoc(), i32, columns);
+        auto smOffset = builder.create<arith::ConstantIntOp>(bc.getLoc(), i32, smTop);
+        auto smElem = PointerType::get(elem, 2);
+        auto stage = builder.create<triton::xpu::StageSMOp>(
+            bc.getLoc(), smElem, splat.getSrc(), len, smOffset, len, MemorySyncMode::SYNC);
+        stage->setAttr("xpu.readonly_column", builder.getUnitAttr());
+        auto smTy = RankedTensorType::get(ptrTy.getShape(), smElem, ptrTy.getEncoding());
+        Value base = builder.create<triton::SplatOp>(bc.getLoc(), smTy, stage);
+        Value ptr = builder.create<triton::AddPtrOp>(bc.getLoc(), smTy, base, addptr.getOffset());
+        vectorLoad->setOperand(0, ptr);
+        vectorLoad->moveAfter(ptr.getDefiningOp());
+        vectorLoad->setAttr("xpu.shared_column", builder.getUnitAttr());
+        mod->setAttr("xpu.row_shared_bytes", builder.getI64IntegerAttr(256 * 1024 - smTop));
+      }
+      Value value = vectorLoad->getResult(0);
+      builder.setInsertionPointAfter(vectorLoad);
+      if (ext)
+        value = builder.create<triton::xpu::VExtFOp>(
+            ext.getLoc(), getVectorType(srcTy), value);
+      bc.getSrcMutable().assign(value);
+      bc->setAttr("xpu.fast_interface", builder.getStringAttr("lm_vector_broadcast"));
+      // Do not mutate another user's scalar chain or read its dead pointers.
+      for (Operation *op : chain)
+        if (op->use_empty())
+          op->erase();
+      if (load->use_empty())
+        load->erase();
+      if (gm && gm->use_empty())
+        gm->erase();
+    }
+  }
+
   void collapseTLEBroadcastSource(ModuleOp &mod) {
     SmallVector<triton::xpu::BroadcastOp> bcOps;
     mod.walk([&](triton::xpu::BroadcastOp bcOp) { bcOps.push_back(bcOp); });
@@ -2869,6 +2999,7 @@ struct TritonXPUVectorizePass
     // The chains feeding the TLE segment's [1xN] broadcasts are still scalar at
     // this point; pull them into vector form so the broadcast does not have to
     // pack its source lane by lane.
+    vectorizeLMBroadcastSource(mod);
     collapseTLEBroadcastSource(mod);
     // After every TLE memory op has its final form: the decision needs to see
     // whether any plain tle_vload/tle_vstore is left.
@@ -3012,7 +3143,8 @@ struct TritonXPUVectorizePass
     }
 
     // MAC Optimization offline
-    if (VMAC_Fusion) {
+    auto fpFusion = mod->getAttrOfType<BoolAttr>("triton_xpu.enable_fp_fusion");
+    if (VMAC_Fusion && fpFusion && fpFusion.getValue()) {
       mod.walk([&](triton::xpu::VvmulFOp vvmulFOp) { // must walk after svOpt
         vvmulFOps.insert(vvmulFOp);
       });

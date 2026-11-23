@@ -59,5 +59,66 @@ class ModelPrecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'non-tensor'):
             compare_model_outputs(dict(ref,count=4),ref,dict(atol=0,rtol=0))
 
+    def test_eager_budget_accepts_same_existing_error_without_relaxing_default(self):
+        ref = {'hidden': torch.zeros(4)}
+        eager = {'hidden': torch.full((4,), .5, dtype=torch.float16)}
+        tol = dict(atol=.003, rtol=.003)
+        with self.assertRaises(AssertionError):
+            compare_model_outputs(eager, ref, tol, output_template=eager)
+        rows = []
+        compare_model_outputs(eager, ref, tol, output_template=eager, eager_baseline=eager, records=rows)
+        self.assertEqual(rows[0]['candidate_error_metrics'], rows[0]['eager_error_metrics'])
+        self.assertEqual(rows[0]['error_metric_regressions'], [])
+        self.assertEqual(rows[0]['error_budget_margin'], 0.)
+
+    def test_eager_budget_is_per_output_not_per_element(self):
+        ref = torch.zeros(2)
+        eager = torch.tensor([1., .125], dtype=torch.float16)
+        actual = torch.tensor([.5, .5], dtype=torch.float16)
+        compare_model_outputs(actual, ref, dict(atol=.003, rtol=.003), eager_baseline=eager)
+
+    def test_eager_budget_requires_each_metric_independently(self):
+        cases = [
+            (torch.zeros(4), [1., 0., 0., 0.], [.75] * 4, 'rmse'),
+            (torch.tensor([100., 0., 0., 0.]), [100.5, .5, .5, .5], [100.75, 0., 0., 0.], 'max_abs'),
+            (torch.tensor([100., 0.]), [101., 0.], [100., .5], 'max_normalized_abs'),
+        ]
+        for ref, eager, actual, metric in cases:
+            rows = []
+            with self.subTest(metric=metric), self.assertRaisesRegex(AssertionError, metric):
+                compare_model_outputs(torch.tensor(actual, dtype=torch.float16), ref,
+                    dict(atol=.003, rtol=.003), eager_baseline=torch.tensor(eager, dtype=torch.float16), records=rows)
+            self.assertEqual(rows[0]['error_metric_regressions'], [metric])
+
+    def test_eager_budget_does_not_trade_error_between_output_leaves(self):
+        ref = dict(embedding=torch.zeros(100), logits=torch.zeros(1))
+        eager = dict(embedding=torch.ones(100).half(), logits=torch.zeros(1).half())
+        actual = dict(embedding=torch.zeros(100).half(), logits=torch.tensor([.001]).half())
+        rows = []
+        with self.assertRaisesRegex(AssertionError, 'logits'):
+            compare_model_outputs(actual, ref, dict(atol=.003, rtol=.003),
+                                  eager_baseline=eager, records=rows)
+        self.assertEqual([x['passed'] for x in rows], [True, False])
+
+    def test_eager_budget_nonfinite_reference_and_output_contracts(self):
+        ref = torch.tensor([1., float('nan'), float('inf'), -float('inf')])
+        eager = ref.half()
+        compare_model_outputs(eager, ref, dict(atol=.003, rtol=.003), eager_baseline=eager)
+        for actual, baseline in ((torch.tensor([float('inf'), float('nan'), float('inf'), -float('inf')]).half(), eager),
+                                 (eager, torch.ones(4).half()), (eager, eager.float())):
+            with self.assertRaises(AssertionError):
+                compare_model_outputs(actual, ref, dict(atol=.003, rtol=.003), eager_baseline=baseline)
+        with self.assertRaisesRegex(AssertionError, 'FP32'):
+            compare_model_outputs(eager, ref.half(), dict(atol=.003, rtol=.003), eager_baseline=eager)
+        with self.assertRaisesRegex(AssertionError, 'structure'):
+            compare_model_outputs(eager, ref, dict(atol=.003, rtol=.003), eager_baseline={'x': eager})
+
+    def test_eager_budget_sparse_empty_and_non_tensor_leaves(self):
+        ref = dict(x=torch.eye(3).to_sparse(), empty=torch.empty(0), count=3)
+        eager = dict(x=ref['x'].half(), empty=ref['empty'].half(), count=3)
+        compare_model_outputs(eager, ref, dict(atol=.003, rtol=.003), eager_baseline=eager)
+        with self.assertRaisesRegex(AssertionError, 'non-tensor'):
+            compare_model_outputs(eager, ref, dict(atol=.003, rtol=.003), eager_baseline=dict(eager, count=4))
+
 
 if __name__=='__main__':unittest.main()

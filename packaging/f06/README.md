@@ -79,7 +79,25 @@ Unknown precision boundaries reject compilation explicitly; an uncompiled FX
 fallback is not reported as a compiled candidate. This is a bounded domain, not
 an exhaustive mixed-precision search. If no candidate passes the original-FP32
 output contract, report no admissible route rather than replacing the graph
-with the FP32 reference.
+with the FP32 reference or the uncaptured eager model.
+
+Local candidates also reuse the original nine-family template registry on the
+captured original-dtype FX graph. Each detected family is proposed separately;
+an all-family plan and a plan combined with detected QuickGELU regions are
+included when applicable, with 512/1024-byte buffer alternatives. This is a
+bounded set of plans, not exhaustive subset enumeration. Opaque vendor Linear
+calls are not split into artificial matmul/bias nodes just to force a match.
+
+An intermediate used outside a region becomes an additional region output.
+For example, Add + LayerNorm can return both the rounded residual sum and the
+normalized result. Contiguous pure matches preserve the surrounding operation
+order; intervening computation or mutation is not moved across a region.
+Native matrix and ReLU boundaries and graph-visible dtype rounding are retained.
+Generated region wrappers receive live tensor arguments and retain context,
+layout and alias guards; no inputs, outputs or preprocessing values are cached.
+Recognized regions without a supported runtime specialization are not presented
+as compiled candidates. Every complete candidate still goes through the same
+full-output validator and end-to-end selector, with no whole-model eager entry.
 
 Optional `source_tensors`, `source_prepare`, and `precision_score` arguments
 enable bounded local precision refinement. Sources must be frozen, original
@@ -139,11 +157,21 @@ The callback must include the whole adapter, final conversion and completion
 synchronization. Selection uses arithmetic means across alternating route
 orders, rejects invalid timing, and returns the chosen callable directly.
 Activation and compilation are outside the measured steady-state region.
-Set `preferred` to the validated original native route when avoiding regressions
-is the priority. An alternative needs the requested mean gain in at least three
-of four rounds, in both measurement orders, with no more than 5% spread between
-round means for either route. An unstable comparison retains the valid native
-entry. These checks run only during calibration; no router is added to hot calls.
+Pass the routes returned by the candidate factory, without adding the uncaptured
+eager model or setting it as `preferred`. Keep native eager and the original
+FP32 model outside selection as accuracy and timing controls. Vendor operator
+implementations remain available within generated graphs; this does not make
+the complete eager application a candidate. A generated route may still be
+slower than the external eager control, and that slowdown must be reported.
+If every candidate fails validation, selection reports `no_valid_route` and
+does not substitute eager.
+
+The general selector still supports a supplied `preferred` route. Resource
+alternatives also retain their generated parent as a stability comparison.
+Such an alternative needs the requested mean gain in at least three of four
+rounds, in both measurement orders, with no more than 5% spread between round
+means for either route. An unstable comparison retains the valid comparison
+route. These checks run only during calibration; no router is added to hot calls.
 Numerical or output-contract rejection should raise `AssertionError` or
 `ValueError` from the validator. Execution failures propagate immediately;
 another route must not be tried after a device execution fault. Invalid timing
@@ -236,6 +264,22 @@ is not by itself evidence of a single generated kernel. Compilation failures
 and failed accuracy checks are recorded, and no candidate is selected unless
 its outputs pass. GPU execution faults should be treated as a device-health
 failure before continuing measurements.
+
+`select_model_routes` also records `interface_audit` after calibration. Each
+validated route is marked `selected`, `slower_measured`, or `similar_time`, with
+its measured time and the selected replacement for a slower route. These labels
+apply only to that complete model, validated inputs and calibration. They are
+not a global blacklist for other shapes or dtypes. The returned callable invokes
+the selected route directly; reading the audit adds no warm-call dispatch.
+
+The P800 local Add+LayerNorm search retains the original schedules and compares
+producer reuse, shared column loading, and tree reduction independently. Actual
+buffer sizes after compiler resource adjustment are recorded. Tree reduction
+can change floating-point accumulation order, so it receives the same complete
+output validation as every other candidate. No resource limit or precision
+threshold is raised to admit a candidate. The matching FlagTree compiler is a
+separate prerequisite; installing this Python wheel alone does not install the
+XPU lowering changes.
 
 Whole-model input shapes are static: Dynamo recompiles when their guards
 change. Training, autograd, arbitrary dynamic shapes, and full downstream

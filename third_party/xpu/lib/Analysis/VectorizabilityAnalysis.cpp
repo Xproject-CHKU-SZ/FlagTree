@@ -131,6 +131,9 @@ VecTyCoverage processOpVecTyCoverage(Operation *op, bool allowSmemVec,
                                      bool allowTleVec) {
   if (!op)
     return VecTyCoverage::None;
+  if (auto fma = dyn_cast<math::FmaOp>(op))
+    return getElementTypeOrSelf(fma.getType()).isF32()
+               ? VecTyCoverage::Full : VecTyCoverage::None;
   // Order matters: the two conditional kinds must be tested before the blanket
   // lists, or `arith::TruncIOp` would read as uncovered and
   // ExternElementwiseOp as fully covered.
@@ -750,6 +753,11 @@ bool VectorizabilityAnalysis::vectorize(Operation *op, OperationTree &visited,
         auto lhs = binOp.getLhs();
         auto rhs = binOp.getRhs();
         isVectorized = binLikeOpVectorize(lhs, rhs, visited, vectorizedOps);
+      })
+      .Case<math::FmaOp>([&](auto fmaOp) {
+        isVectorized = getElementTypeOrSelf(fmaOp.getType()).isF32() &&
+            binLikeOpVectorize(fmaOp.getA(), fmaOp.getB(), visited, vectorizedOps) &&
+            binLikeOpVectorize(fmaOp.getA(), fmaOp.getC(), visited, vectorizedOps);
       })
       .Case<MATH_UNARY_OP>([&](auto unaryOp) {
         isVectorized = vectorize(unaryOp.getOperand().getDefiningOp(), visited,

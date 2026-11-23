@@ -137,14 +137,22 @@ class SelectionTests(unittest.TestCase):
         result, counts = self.select([.01]*4, [.005]*4)
         self.assertEqual(result['route'], 'fused')
         self.assertEqual(counts['native'], 4)
+        audit=result['interface_audit']
+        self.assertEqual(audit['native']['status'],'slower_measured')
+        self.assertEqual(audit['native']['replacement'],'fused')
+        self.assertEqual(audit['native']['relative_to_selected'],2.)
+        self.assertEqual(audit['fused']['status'],'selected')
+        self.assertNotIn('incorrect',audit)
 
     def test_invalid_fresh_timing_cannot_publish_a_winner(self):
         for bad in (float('nan'), float('inf'), 0, -1):
-            record = {'route': 'stale', 'mean_seconds': {'stale': .001}}
+            record = {'route': 'stale', 'mean_seconds': {'stale': .001},
+                      'interface_audit': {'stale': {'status': 'selected'}}}
             with self.assertRaisesRegex(RuntimeError, 'Invalid complete-model timing'):
                 self.select([.01, .012, .01, .01, bad], [.005]*8, record=record)
             self.assertNotIn('route', record)
             self.assertNotIn('mean_seconds', record)
+            self.assertNotIn('interface_audit', record)
             self.assertEqual(record['state'], 'invalid_timing')
 
     def test_fresh_execution_failure_is_not_swallowed(self):

@@ -33,6 +33,9 @@ class Model(torch.nn.Module):
 
 
 class LocalPrecisionTests(unittest.TestCase):
+    def setUp(self):
+        torch._dynamo.reset()
+
     def setup_space(self):
         torch.manual_seed(42)
         master = Model().eval().requires_grad_(False)
@@ -155,6 +158,77 @@ class LocalPrecisionTests(unittest.TestCase):
             self.assertEqual(space.close_selected({'left'}),{'left','right'})
             self.assertEqual(space.remove_regions({'left','right'},{'right'}),set())
             torch.testing.assert_close(space.build({'left'})(x),master(x),atol=0,rtol=0)
+
+    def test_operator_refinement_preserves_original_values_and_residual_dtype(self):
+        with torch.no_grad():
+            master, low, x, coarse, _ = self.setup_space()
+            record = {}
+            fine, seed = coarse.refined(coarse.groups, record)
+            self.assertEqual(len(fine.groups), 8)
+            self.assertEqual(record['granularity'], 'operator')
+            self.assertTrue(record['zero_promotion_bitwise_equal'])
+            torch.testing.assert_close(fine.build(seed)(x), master(x), atol=0, rtol=0)
+            candidate = fine.build(seed - {'layers.0.q_proj'})
+            expected = master.entry(x)
+            expected = (expected + low.layers[0].q_proj(expected.half()) +
+                        master.layers[0].k_proj(expected) + master.layers[0].v_proj(expected))
+            expected = master.layers[1](expected)
+            torch.testing.assert_close(candidate(x), (master.end(expected), expected), atol=0, rtol=0)
+
+    def test_operator_attention_keeps_qkv_joint(self):
+        class Attention(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.q = torch.nn.Linear(4, 4)
+                self.k = torch.nn.Linear(4, 4)
+                self.v = torch.nn.Linear(4, 4)
+                self.out = torch.nn.Linear(4, 4)
+            def forward(self, x):
+                value = torch.nn.functional.scaled_dot_product_attention(self.q(x), self.k(x), self.v(x))
+                return x + self.out(value)
+        with torch.no_grad():
+            master = torch.nn.Sequential(Attention()).eval().requires_grad_(False)
+            low = copy.deepcopy(master).half()
+            x = torch.randn(1, 2, 4)
+            space = LocalPrecisionSpace(low, source_tensors=dict(master.named_parameters()),
+                prepare=lambda x: ((x.half(),), {}), source_prepare=lambda x: ((x,), {}),
+                validation_inputs=[((x,), {})], record={}, granularity='operator')
+            self.assertEqual(space.close_selected({'0.q'}), {'0.q', '0.k', '0.v'})
+            self.assertEqual(space.remove_regions(set(space.groups), {'0.k'}), {'0.out'})
+            torch.testing.assert_close(space.build(space.groups)(x), master(x), atol=0, rtol=0)
+
+    def test_refinement_keeps_failed_native_screen_for_compiled_validation(self):
+        from triton.experimental.graph_fusion._local_precision import refine_local_precision_profiles
+        with torch.no_grad():
+            master, low, x, coarse, _ = self.setup_space()
+            record = {}
+            fine, seed = coarse.refined(coarse.groups, record)
+            wanted, template, scores = master(x), low(x.half()), {}
+            def validate(name, output, args, kwargs):
+                rows = []
+                try:
+                    compare_model_outputs(output, wanted, dict(atol=0., rtol=0.),
+                        output_template=template, records=rows)
+                finally:
+                    scores[name] = (sum(not r['passed'] for r in rows),
+                        sum(r.get('elements_outside_uncast_tolerance', 0) for r in rows))
+            profiles = refine_local_precision_profiles(fine, seed, output_template=template,
+                validation_inputs=[((x,), {})], validate=validate, score=scores.__getitem__,
+                record=record, max_trials=24)
+            self.assertEqual(len(profiles), 2)
+            self.assertTrue(profiles[0]['native_screen_passed'])
+            self.assertFalse(profiles[1]['native_screen_passed'])
+            self.assertTrue(all(p['compiled_validation_required'] for p in profiles))
+            self.assertLessEqual(len(record['trials']), 24)
+
+    def test_refinement_retains_earlier_passing_precision_margin(self):
+        from triton.experimental.graph_fusion._local_precision import _refinement_proposals
+        rows=[dict(selected=['a','b','c'],passed=True,rank=[0,0,.01],promoted_state_elements=300),
+              dict(selected=['a','b'],passed=True,rank=[0,0,.02],promoted_state_elements=200),
+              dict(selected=['a'],passed=True,rank=[0,1,.02],promoted_state_elements=100),
+              dict(selected=[],passed=False,rank=[1,2,.03],promoted_state_elements=0)]
+        proposals=_refinement_proposals(rows,rows[2])
+        self.assertEqual([r['selected'] for r in proposals],[['a'],[],['a','b']])
 
 
 if __name__ == '__main__':

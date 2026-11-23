@@ -14,6 +14,15 @@ class _CompiledPipeline:
         self._f06_resource_allowlist = None
         self._f06_buffer_factory = None
         self._f06_buffer_candidates = None
+        self._f06_gemm_factory = None
+        self._f06_gemm_candidates = None
+
+    def _f06_gemm_variants(self):
+        if self._f06_gemm_factory is None:
+            return {}
+        if self._f06_gemm_candidates is None:
+            self._f06_gemm_candidates = self._f06_gemm_factory()
+        return self._f06_gemm_candidates
 
     def _f06_buffer_variants(self):
         if self._f06_buffer_factory is None:
@@ -182,4 +191,34 @@ def compile_pipeline(tensor_model, *, prepare, output_template=None, source_prec
                 variants['lm'+str(size)] = call
             return variants
         result._f06_buffer_factory = buffer_variants
+    precision = kwargs.get('precision_options') or {}
+    if (kwargs.get('precision_policy') in ('preserve_operator', 'fuse_fp32_internals')
+            and kwargs.get('resource_policy', 'auto') == 'auto'
+            and precision.get('linear_schedule') in ('inductor', 'grouped')
+            and precision.get('pointwise_policy', 'generated') == 'generated'
+            and precision.get('matmul_policy', 'native') == 'native'):
+        def gemm_variants():
+            import torch
+            from ._p800_inductor_gelu import _on_p800
+            if not any(x.device.type == 'cuda' and _on_p800(x.device)
+                       for x in (*tensor_model.parameters(), *tensor_model.buffers())):
+                return {}
+            if not any(any(x.get('input_dtype') == 'torch.float32' for x in r.get('exposed_linears', []))
+                       for r in result._f06_audit):
+                return {}
+            variants = {}
+            for policy in ('tuned', 'full_k'):
+                options = dict(kwargs)
+                options.pop('audit', None)
+                options['precision_options'] = dict(precision, matmul_policy=policy)
+                candidate = compile_pipeline(tensor_model, prepare=prepare,
+                    source_precision=source_precision, **options)
+                # Preserve the complete output gate and avoid a recursive
+                # cross product of resource, packet and matrix alternatives.
+                candidate._f06_resource_factory = None
+                candidate._f06_buffer_factory = None
+                candidate._f06_gemm_factory = None
+                variants['gemm_'+policy] = candidate
+            return variants
+        result._f06_gemm_factory = gemm_variants
     return result

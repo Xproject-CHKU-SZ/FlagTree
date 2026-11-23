@@ -345,6 +345,14 @@ benchmark_updates = json.loads(benchmark_updates_path.read_text())
 by_id = {i['id']: i for i in items}
 for update in benchmark_updates['updates']:
     item = by_id[update['id']]
+    # A verified extension may supersede an incomplete historical fix. Keep
+    # its old evidence and notes, while displaying the current repair scope.
+    for field in ('status', 'solution', 'evidence', 'baseline', 'date'):
+        if field in update:
+            item[field] = update[field]
+    for path in update.get('fix_paths', []):
+        if path not in item['fix_paths']:
+            item['fix_paths'].append(path)
     item['notes'].extend(update.get('notes', []))
     item['refs'].extend(ref(r['label'], r['path']) for r in update.get('refs', []))
 for extra in benchmark_updates['items']:

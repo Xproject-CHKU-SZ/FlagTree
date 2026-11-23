@@ -35,7 +35,9 @@ class _InputBoundary(torch.nn.Module):
                 value = values[i]
                 if not isinstance(value, torch.Tensor) or not value.is_floating_point():
                     raise ValueError('Precision-region input kind changed')
-                values[i] = value.to(dtype=torch.float32 if self.promoted else dtype)
+                target = torch.float32 if self.promoted else dtype
+                if value.dtype != target:
+                    values[i] = value.to(dtype=target)
         prepared, keywords = tree_unflatten(values, spec)
         # No return cast: adjacent promoted regions share FP32 intermediates.
         # The next native region restores its own captured input contract.
@@ -44,16 +46,20 @@ class _InputBoundary(torch.nn.Module):
 
 class LocalPrecisionSpace:
     def __init__(self, model, *, source_tensors, prepare, source_prepare,
-                 validation_inputs, record):
+                 validation_inputs, record, granularity='block', _captured_graphs=None):
         if model.training or torch.is_grad_enabled() or any(p.requires_grad for p in model.parameters()):
             raise ValueError('Local precision search requires frozen inference')
         if not validation_inputs or not callable(source_prepare):
             raise ValueError('Original unrounded preprocessing and examples are required')
+        if granularity not in ('block', 'operator'):
+            raise ValueError('Unknown precision-region granularity')
         self.model, self.prepare = model, source_prepare
+        self.native_prepare = prepare
+        self.validation_inputs = validation_inputs
         self.sources = dict(source_tensors)
         self.original = _state(model)
         self.record = record
-        self.groups, self.contracts = {}, {}
+        self.groups, self.contracts, self.boundaries = {}, {}, set()
         # Tied state needs an indivisible precision group. Reject rather than
         # silently assigning two precisions to a shared mutable tensor.
         ids = [id(v) for v in self.original.values()]
@@ -77,10 +83,19 @@ class LocalPrecisionSpace:
             names = [n for n, v in self.original.items() if v.is_floating_point() and
                      (n.startswith(path+'.') if path else True)]
             if path and names and not repeated and not has_repeated:
-                # Whole residual blocks remain regions; Q/K/V are not split.
-                self.groups[path] = dict(kind='module', path=path, tensors=names,
-                                         coarse=path.split('.')[0])
-                return
+                own_state = list(module.named_parameters(recurse=False)) + list(module.named_buffers(recurse=False))
+                state_children = any(any(v.is_floating_point() for v in
+                    list(child.parameters()) + list(child.buffers())) for _, child in children)
+                # Preserve modules mixing direct state and child operations:
+                # their internal functional dtype joins need an explicit
+                # boundary before they can safely be split further.
+                refine = (granularity == 'operator' and state_children and
+                          not any(v.is_floating_point() for _, v in own_state))
+                if not refine:
+                    self.groups[path] = dict(kind='module', path=path, tensors=names,
+                                             coarse=path.split('.')[0])
+                    return
+                self.boundaries.add(path)
             for name, value in list(module.named_parameters(recurse=False)) + list(module.named_buffers(recurse=False)):
                 if value.is_floating_point():
                     full = path+'.'+name if path else name
@@ -119,10 +134,11 @@ class LocalPrecisionSpace:
                     raise ValueError('Precision-region returns a floating input alias: '+path)
             return hook
         try:
-            for key, group in self.groups.items():
-                if group['kind'] == 'module':
-                    handles.append(model.get_submodule(group['path']).register_forward_pre_hook(observe(key), with_kwargs=True))
-                    handles.append(model.get_submodule(group['path']).register_forward_hook(check_effects(key), with_kwargs=True))
+            paths = {k:g['path'] for k,g in self.groups.items() if g['kind']=='module'}
+            paths.update({path:path for path in self.boundaries})
+            for key, path in paths.items():
+                handles.append(model.get_submodule(path).register_forward_pre_hook(observe(key), with_kwargs=True))
+                handles.append(model.get_submodule(path).register_forward_hook(check_effects(key), with_kwargs=True))
             for args, kwargs in validation_inputs:
                 prepared, keywords = prepare(*args, **kwargs)
                 result = model(*prepared, **keywords)
@@ -141,6 +157,7 @@ class LocalPrecisionSpace:
         enable_vendor_capture()
         self.joints, joins = [], []
         same_dtype = {torch.matmul, torch.mm, torch.bmm, operator.matmul, torch.cat, torch.stack,
+                      torch.nn.functional.scaled_dot_product_attention,
                       torch.ops.aten.mm.default, torch.ops.aten.bmm.default,
                       torch.ops.aten.matmul.default, torch.ops.aten.cat.default, torch.ops.aten.stack.default}
         def inspect_graph(gm, inputs):
@@ -155,13 +172,24 @@ class LocalPrecisionSpace:
                     self.joints.append(upstream)
                     joins.append(dict(node=node.name,operator=str(node.target),regions=sorted(upstream)))
             return gm.forward
-        captured = torch.compile(model,backend=inspect_graph,fullgraph=True)
-        for args, kwargs in validation_inputs:
-            prepared, keywords = prepare(*args, **kwargs)
-            result = captured(*prepared, **keywords)
-            del result
-        del captured
+        self.captured_graphs = []
+        if _captured_graphs is not None:
+            for graph in _captured_graphs:
+                inspect_graph(graph, None)
+            self.captured_graphs = list(_captured_graphs)
+        else:
+            def capture_graph(gm, inputs):
+                self.captured_graphs.append(gm)
+                return inspect_graph(gm, inputs)
+            captured = torch.compile(model, backend=capture_graph, fullgraph=True)
+            for args, kwargs in validation_inputs:
+                prepared, keywords = prepare(*args, **kwargs)
+                result = captured(*prepared, **keywords)
+                del result
+            del captured
         record.update(source='original_dtype_module_structure', source_forward_used=False,
+            granularity=granularity,
+            refined_input_boundaries=sorted(self.boundaries),
             unrounded_state_verified=True, input_mutation_and_output_alias_checked=True,
             groups=copy.deepcopy(self.groups),
             same_dtype_joins=joins,
@@ -176,6 +204,19 @@ class LocalPrecisionSpace:
             torch.testing.assert_close(baseline(*raw_args, **raw_kw), model(*low_args, **low_kw),
                                        atol=0, rtol=0)
         record['zero_promotion_bitwise_equal'] = True
+
+    def refined(self, selected, record):
+        """Refine structure from the original dtype model, never from an FP32 graph."""
+        fine = LocalPrecisionSpace(self.model, source_tensors=self.sources,
+            prepare=self.native_prepare, source_prepare=self.prepare,
+            validation_inputs=self.validation_inputs, record=record, granularity='operator',
+            _captured_graphs=self.captured_graphs)
+        promoted = {name for key in self.close_selected(selected) for name in self.groups[key]['tensors']}
+        seed = {key for key, group in fine.groups.items() if set(group['tensors']) <= promoted}
+        covered = {name for key in seed for name in fine.groups[key]['tensors']}
+        if covered != promoted:
+            raise ValueError('Refined precision groups must partition the original promoted state')
+        return fine, fine.close_selected(seed)
 
     def close_selected(self, selected):
         selected = set(selected)
@@ -213,6 +254,15 @@ class LocalPrecisionSpace:
             container = model.get_submodule(parent) if parent else model
             child = container._modules[field]
             container._modules[field] = _InputBoundary(child, self.contracts[key], key in selected).eval()
+        # Wrapping leaves alone leaves raw source inputs on residual bypasses.
+        # Preserve each split parent's original boundary when all descendants
+        # stay native; promote its residual stream only with a selected child.
+        for path in sorted(self.boundaries, key=lambda p:p.count('.'), reverse=True):
+            parent, _, field = path.rpartition('.')
+            container = model.get_submodule(parent) if parent else model
+            promoted = any(self.groups[key]['path'].startswith(path+'.') for key in selected)
+            container._modules[field] = _InputBoundary(container._modules[field],
+                self.contracts[path], promoted).eval()
         return model.eval().requires_grad_(False)
 
 
@@ -296,3 +346,94 @@ def discover_local_precision_profiles(space, *, output_template, validation_inpu
                   screening_failure_is_not_compiled_rejection=True)
     return [dict(selected=sorted(accepted), origin=passing['name'],
                  source='original_dtype_with_local_source_bindings')]
+
+
+def refine_local_precision_profiles(space, seed, *, output_template, validation_inputs,
+                                    validate, score, record, max_trials=64, progress=None):
+    """Restore smaller native regions, retaining one failed screen for compilation.
+
+    A native screen is a search heuristic, not the compiled numerical contract.
+    The caller retains its original coarse route and validates every resulting
+    compiled route. Q/K/V and other captured same-dtype joins remain indivisible.
+    """
+    from ._whole_model_selection import output_cast_like
+    if type(max_trials) is not int or max_trials < 1:
+        raise ValueError('A finite refinement budget is required')
+    record['trials'] = []
+    cache = {}
+    started = time.perf_counter()
+
+    def evaluate(selected):
+        selected = space.close_selected(selected)
+        key = tuple(sorted(selected))
+        if key in cache:
+            return cache[key]
+        if len(record['trials']) >= max_trials:
+            return None
+        name = 'operator_precision_probe_' + str(len(record['trials']))
+        candidate = space.build(selected)
+        passed, ranks, errors = True, [], []
+        for args, kwargs in validation_inputs:
+            values, keywords = space.prepare(*args, **kwargs)
+            output = output_cast_like(candidate(*values, **keywords), output_template)
+            try:
+                validate(name, output, args, kwargs)
+            except (AssertionError, ValueError) as exc:
+                passed = False
+                errors.append(str(exc)[:1000])
+            rank = tuple(float(x) for x in score(name))
+            if not rank or not all(math.isfinite(x) and x >= 0 for x in rank):
+                raise ValueError('Precision ranking must be finite and nonnegative')
+            ranks.append(rank)
+            del output
+        row = dict(name=name, selected=list(key), passed=passed, rank=list(max(ranks)), errors=errors,
+                   promoted_state_elements=sum(space.original[n].numel() for k in key for n in space.groups[k]['tensors']))
+        record['trials'].append(row)
+        cache[key] = row
+        del candidate
+        if progress:
+            progress()
+        return row
+
+    accepted = space.close_selected(seed)
+    passing = evaluate(accepted)
+    if not passing['passed']:
+        record.update(state='refined_seed_failed', seconds=time.perf_counter()-started)
+        return []
+    pending = [tuple(sorted(accepted))]
+    while pending and len(record['trials']) < max_trials:
+        group = pending.pop(0)
+        row = evaluate(space.remove_regions(accepted, group))
+        if row is None:
+            break
+        if row['passed']:
+            accepted, passing = set(row['selected']), row
+        elif len(group) > 1:
+            middle = len(group) // 2
+            pending[:0] = [group[:middle], group[middle:]]
+    # Always keep the best passing refined profile. Also compile the nearest
+    # failed native screen: fusion may remove the rounding that made it fail.
+    # It receives exactly the same complete-output gate as all other routes.
+    proposals = _refinement_proposals(record['trials'], passing)
+    record.update(state='refined_profiles_ready', selected_regions=sorted(accepted),
+                  seconds=time.perf_counter()-started, budget_exhausted=bool(pending),
+                  compiled_validation_required=True)
+    return [dict(selected=row['selected'], origin=row['name'], native_screen_passed=row['passed'],
+                 source='original_dtype_operator_regions', compiled_validation_required=True)
+            for row in proposals]
+
+
+def _refinement_proposals(trials, passing):
+    proposals = [passing]
+    failed = [r for r in trials if not r['passed']]
+    if failed:
+        proposals.append(min(failed, key=lambda r:(r['rank'], r['promoted_state_elements'])))
+    # A last-rounding allowance can make a native screen pass right on its
+    # boundary. Preserve one earlier passing precision assignment with a
+    # better violation rank, rather than only compiling that fragile endpoint.
+    # This does not change any tolerance or replace compiled validation.
+    guarded = min((r for r in trials if r['passed']),
+                  key=lambda r:(r['rank'][:2], r['promoted_state_elements']))
+    if guarded['selected'] != passing['selected']:
+        proposals.append(guarded)
+    return proposals

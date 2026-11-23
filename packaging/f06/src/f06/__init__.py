@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import threading
 
-__version__ = '0.3.51+v51e.inductor47'
+__version__ = '0.3.76+v51e.inductor59'
 _LOCK = threading.RLock()
 _ROOT = Path(__file__).resolve().parent
 

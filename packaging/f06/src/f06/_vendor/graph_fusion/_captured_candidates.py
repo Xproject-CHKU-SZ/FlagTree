@@ -41,7 +41,8 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
     if any(supplied) and not all(supplied):
         raise ValueError('Local search requires source tensors, original preprocessing and precision score together')
     if all(supplied):
-        from ._local_precision import LocalPrecisionSpace, discover_local_precision_profiles
+        from ._local_precision import (LocalPrecisionSpace, discover_local_precision_profiles,
+                                       refine_local_precision_profiles)
         local_record = record['local_precision_search'] = {}
         space = LocalPrecisionSpace(model, source_tensors=source_tensors, prepare=prepare,
             source_prepare=source_prepare, validation_inputs=validation_inputs, record=local_record)
@@ -51,6 +52,16 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
         record['local_precision_profiles'] = profiles
         for index, profile in enumerate(profiles):
             profile_models['local_'+str(index)+'_'] = (space.build(profile['selected']), source_prepare)
+        if profiles:
+            fine_record = record['operator_precision_search'] = {}
+            fine, seed = space.refined(profiles[0]['selected'], fine_record)
+            fine_profiles = refine_local_precision_profiles(fine, seed,
+                output_template=output_template, validation_inputs=validation_inputs,
+                validate=validate, score=precision_score, record=fine_record,
+                max_trials=max_precision_trials, progress=progress)
+            record['operator_precision_profiles'] = fine_profiles
+            for index, profile in enumerate(fine_profiles):
+                profile_models['operator_'+str(index)+'_'] = (fine.build(profile['selected']), source_prepare)
         record['fp32_reference_role'] = 'external_validator; explicit_unrounded_values_for_local_regions_only'
 
     def create(precision, linear, policy, prefix=''):
@@ -149,5 +160,31 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
     record['pruning'].update(survivor_validation_seconds=time.perf_counter()-validation_started,
         proposed_implementations=len(families)*len(pointwise_policies),
         kept_implementations=len(routes))
+    # Whole-graph lowering can introduce costs outside the profitable region.
+    # Enumerate local fusion as another complete-model implementation, keeping
+    # vendor calls elsewhere. Do not prune it using whole-graph timings or
+    # accept it on activation-only numerical checks.
+    from ._local_fusion import local_fusion_candidate_routes
+    local_record = record['local_fusion'] = {}
+    local_routes = local_fusion_candidate_routes(model, prepare=prepare,
+        validation_inputs=validation_inputs, record=local_record)
+    for name, route in local_routes.items():
+        assert name not in routes
+        routes[name] = route
+        record['implementations'][name] = dict(scope='complete_model_with_local_fusion',
+            audit=route.call._f06_audit, capture_source='original_dtype',
+            requires_complete_compiled_validation=True)
+    from ._template_local_fusion import template_local_candidate_routes
+    template_record = record['local_templates'] = {}
+    template_routes = template_local_candidate_routes(model, prepare=prepare,
+        validation_inputs=validation_inputs, record=template_record)
+    for name, route in template_routes.items():
+        assert name not in routes
+        routes[name] = route
+        record['implementations'][name] = dict(scope='complete_model_with_local_templates',
+            audit=route.call._f06_audit, capture_source='original_dtype',
+            requires_complete_compiled_validation=True)
+    if progress:
+        progress()
     record.update(state='compiled_proposals_ready',candidate_construction_seconds=time.perf_counter()-started)
     return routes

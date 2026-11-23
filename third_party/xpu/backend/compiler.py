@@ -155,10 +155,20 @@ def _xtdk_lld_version(tool_dir: str) -> str:
 @dataclass(frozen=True)
 class XPUOptions:
     xpu_dma_pipeline: int = 2
+    # Conservative storage spans, in signature order, for runtime alias guards.
+    # Empty unless a caller can prove static, nonnegative tensor layouts.
+    xpu_sdnn_tensor_bytes: tuple = ()
     kl3_softmax_shift: bool = False
     # Dense, out-of-place add-softmax. The second GM pointer is read-only
     # throughout the launch and does not alias an output.
     kl3_row_softmax: bool = False
+    # Independent schedules: reuse preserves the arithmetic; tree changes the
+    # reduction order and therefore requires the caller's numerical admission.
+    xpu_reduction_reuse: bool = False
+    xpu_reduction_half_cache: bool = False
+    xpu_reduction_tree: bool = False
+    # Requires read-only column arguments and no alias with any write operand.
+    xpu_row_shared: bool = False
     resource_kind: str = "auto"
     arch: int = 3
     assert arch in [2, 3, 4, 5], "Invalid XPU ARCH"
@@ -389,6 +399,9 @@ class XPUBackend(BaseBackend):
 
     @staticmethod
     def make_ttxir(mod, metadata, opt):
+        # Contraction can happen before LLVM: carry the option into the XPU
+        # vectorizer as well as the final target-machine configuration.
+        mod.set_attr("triton_xpu.enable_fp_fusion", ir.builder(mod.context).get_bool_attr(opt.enable_fp_fusion))
         metadata["xpu_arch"] = opt.arch
         metadata["is_tle"] = XPUBackend.is_tle_kernel(mod)
         from .resource_context import effective_sdnn
@@ -413,6 +426,12 @@ class XPUBackend(BaseBackend):
                                                                    and _needs_scale_args) else []
         metadata["shared"] = (-1)  # TODO: invalid value, just to keep CompiledKernel _init_handles() success
 
+        if opt.arch == 3 and opt.xpu_reduction_reuse:
+            mod.set_attr("flagtree.reduction_reuse", ir.builder(mod.context).get_unit_attr())
+        if opt.arch == 3 and opt.xpu_reduction_reuse and opt.xpu_reduction_half_cache:
+            mod.set_attr("flagtree.reduction_half_cache", ir.builder(mod.context).get_unit_attr())
+        if opt.arch == 3 and opt.xpu_row_shared:
+            mod.set_attr("flagtree.row_shared", ir.builder(mod.context).get_unit_attr())
         max_buffer_size = metadata["buffer_size_limit"]
         tle_smem_vec = not metadata["isCloseTLESmemVec"]
         tle_vec = not metadata["isCloseTLEVec"]
@@ -760,6 +779,8 @@ class XPUBackend(BaseBackend):
 
     @staticmethod
     def make_llir(mod, metadata, opt):
+        if opt.xpu_reduction_tree and opt.arch == 3:
+            mod.set_attr("flagtree.reduction_tree", ir.builder(mod.context).get_unit_attr())
         if opt.kl3_softmax_shift and opt.arch == 3:
             mod.set_attr("flagtree.kl3_softmax_shift", ir.builder(mod.context).get_unit_attr())
         if opt.kl3_row_softmax and opt.arch == 3:

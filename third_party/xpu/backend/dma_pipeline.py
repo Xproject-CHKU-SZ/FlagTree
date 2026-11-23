@@ -19,14 +19,21 @@ def codegen_key():
 def optimize_ir(ir, metadata, mode):
     if mode not in (0, 1, 2):
         raise ValueError('xpu_dma_pipeline must be 0 (off), 1 (sync), or 2 (prefetch)')
-    if not mode or metadata.get('is_sdnn') or metadata.get('arch') != 3:
+    if not mode or metadata.get('arch') != 3:
         return ir
-    if 'llvm.xpu.gm2lm_v3' not in ir or 'llvm.xpu.lm2gm_v3' not in ir:
-        return ir
+    if metadata.get('is_sdnn'):
+        bounds = metadata.get('xpu_sdnn_tensor_bytes', ())
+        if not bounds or not all(type(n) is int and 0 < n <= 1 << 40 for n in bounds):
+            return ir
+        args = ['--sdnn-bounds=' + ','.join(map(str, bounds))]
+    else:
+        if 'llvm.xpu.gm2lm_v3' not in ir or 'llvm.xpu.lm2gm_v3' not in ir:
+            return ir
+        args = ['--pipeline' if mode == 2 else '--sync']
     path = tool_path()
     if not path.is_file():
         raise RuntimeError('XPU DMA pass is enabled but xpu-dma-opt is not packaged')
-    result = subprocess.run([str(path), '--pipeline' if mode == 2 else '--sync'],
+    result = subprocess.run([str(path), *args],
                             input=ir, text=True, capture_output=True, timeout=60)
     if result.returncode:
         raise RuntimeError('XPU DMA scheduling failed: ' + result.stderr[-4000:])

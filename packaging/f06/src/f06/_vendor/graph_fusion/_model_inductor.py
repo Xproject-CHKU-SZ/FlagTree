@@ -426,6 +426,11 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             pointwise_policy = options.pop('pointwise_policy', 'generated')
             require_compiled = options.pop('require_compiled', False)
             linear_schedule = options.pop('linear_schedule', 'native')
+            matmul_policy = options.pop('matmul_policy', 'native')
+            if matmul_policy not in ('native', 'tuned', 'full_k'):
+                raise ValueError('Unknown captured matrix policy')
+            if matmul_policy in ('tuned', 'full_k') and (not on_p800 or linear_schedule not in ('inductor', 'grouped')):
+                raise ValueError('Tuned matrix candidates require the P800 Inductor schedule')
             pointwise_buffer_bytes = options.pop('pointwise_buffer_bytes', 2048)
             if pointwise_buffer_bytes not in (512, 1024, 2048):
                 raise ValueError('Unsupported captured pointwise buffer size')
@@ -452,6 +457,8 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                 from ._operator_precision import _linear
                 for node in protected.graph.nodes:
                     if node.op == 'call_function' and node.target is _linear._opoverload:
+                        if matmul_policy in ('tuned', 'full_k') and _value(node.args[0]).dtype != torch.float32:
+                            continue
                         # Packing is an implementation choice for an existing
                         # FP32 contraction. Never widen a captured low-precision
                         # contraction to make it eligible for this schedule.
@@ -496,6 +503,7 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                           captured_input_dtypes=[str(x.dtype) for x in example_inputs if isinstance(x, torch.Tensor)],
                           original_graph_code=original.code,
                           linear_schedule=linear_schedule, exposed_linears=exposed,
+                          matmul_policy=matmul_policy, matrix_candidates=[],
                           layout_regions=layout_regions)
             audit.append(record)
             prepared = original.forward
@@ -514,7 +522,14 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                             resource_kind=resource_policy, resource_audit=record['pointwise_resource_candidates'],
                             buffer_audit=record['fp16_buffer_kernels'])
                             if on_p800 else nullcontext())
-                with schedule:
+                matrix_scope = nullcontext()
+                if matmul_policy in ('tuned', 'full_k'):
+                    from ._p800_gemm_candidates import p800_gemm_candidates
+                    device = next(x.device for x in example_inputs
+                                  if isinstance(x, torch.Tensor) and x.device.type == 'cuda')
+                    matrix_scope = p800_gemm_candidates(device, record['matrix_candidates'],
+                        full_k=matmul_policy == 'full_k', native_bias=linear_schedule == 'grouped')
+                with schedule, matrix_scope:
                     prepared = protected.forward if _capture_cost_graph else compile_fx(protected, example_inputs,
                         config_patches={'triton.cudagraphs': False, 'graph_partition': False, 'compile_threads': 1,
                                         'max_autotune': False, 'max_autotune_gemm': False,

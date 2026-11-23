@@ -15,7 +15,17 @@ The pass:
 - Groups adjacent GM-to-LM transfers only for distinct underlying allocations,
   with no intervening memory access; one common completion wait remains.
 - Moves a vector-loop store wait to its unique exit only when ScalarEvolution
-  proves that consecutive iterations access disjoint LM slices.
+  proves that consecutive iterations access disjoint LM slices. Readonly SM
+  column loads do not block this LM proof. Multiple waits can be merged when
+  intervening stores are independent; a store-to-load dependency, overlapping
+  write, volatile/atomic access, or unknown memory effect keeps the waits.
+- Skips a wholly inactive row iteration only after a CFG/effect proof: its
+  scratch is fresh and does not escape, inner loops have known finite trips,
+  the inactive path has no visible output, and the row has no collective.
+  The existing latch drain and progress arithmetic remain. Partial masks,
+  live-out accumulators, unknown calls and cross-core synchronization are not
+  bypassed. The count is recorded as `skipped_empty_rows` (transformed loops,
+  not the dynamic number of skipped rows).
 - Recognizes flat dense packets with a common bounded index and one output.
   Single-input packets use two buffers. Two-input packets up to 1024 bytes use
   three buffers to overlap output transfer with the successor's compute. Other

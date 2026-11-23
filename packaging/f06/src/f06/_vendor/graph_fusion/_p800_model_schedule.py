@@ -8,10 +8,13 @@ import ast
 import copy
 import hashlib
 from pathlib import Path
+from threading import RLock, get_ident
 
 import torch
 import torch.nn.functional as F
 from torch._inductor.lowering import make_fallback
+
+_BACKEND_OPTION_LOCK = RLock()
 
 
 @torch.library.custom_op('flagtree_p800::model_contiguous', mutates_args=())
@@ -93,21 +96,37 @@ def _split_fp32_addmm(enabled):
 
 
 @contextmanager
-def _compile_buffer_option(fn, buffer_bytes, resource_kind=None):
+def _compile_buffer_option(fn, buffer_bytes, resource_kind=None, *, sdnn_tensor_bytes=None,
+                           reduction_reuse=False, reduction_tree=False, row_shared=False,
+                           reduction_half_cache=False, fp_fusion=None, unroll_control=None):
     """Torch 2.9's whitelist drops XPU metadata; bind it to this JIT only."""
     import triton
-    from torch._dynamo.convert_frame import compile_lock
     if buffer_bytes not in (512, 1024, 2048):
         raise ValueError('Unsupported model schedule buffer size')
-    with compile_lock:
+    # Template precompilation runs in threads while the graph's parent holds
+    # Dynamo's compile_lock and waits for them. Reacquiring that lock here
+    # deadlocks. Serialize only this temporary hook, and match the worker too.
+    with _BACKEND_OPTION_LOCK:
         original = triton.compile
+        owner = get_ident()
         forwarded = []
         def compile_with_option(source, *args, **kwargs):
-            matching = getattr(source, 'fn', None) is fn
+            matching = get_ident() == owner and getattr(source, 'fn', None) is fn
             if matching:
                 kwargs['options'] = dict(kwargs.get('options') or {}, buffer_size_limit=buffer_bytes)
+                if reduction_reuse or reduction_tree or row_shared:
+                    kwargs['options'].update(xpu_reduction_reuse=bool(reduction_reuse),
+                                             xpu_reduction_half_cache=bool(reduction_half_cache),
+                                             xpu_reduction_tree=bool(reduction_tree),
+                                             xpu_row_shared=bool(row_shared))
+                if unroll_control is not None:
+                    kwargs['options']['isCloseUnrollControl'] = not bool(unroll_control)
+                if fp_fusion is not None:
+                    kwargs['options']['enable_fp_fusion'] = bool(fp_fusion)
                 if resource_kind is not None:
                     kwargs['options']['resource_kind'] = resource_kind
+                if sdnn_tensor_bytes is not None:
+                    kwargs['options']['xpu_sdnn_tensor_bytes'] = sdnn_tensor_bytes
             result = original(source, *args, **kwargs)
             if matching:
                 forwarded.append(result)
@@ -149,6 +168,118 @@ def p800_fixed_config(*args, **kwargs):
             tuner.p800_buffer_choice = _validate_buffer_option(binary, buffer_bytes, forwarded)
             return result
         tuner._precompile_config = compile_config
+        return tuner
+    return apply
+
+
+def _row_reduction_configs(size_hints, configs, reduction_hint, signature, metadata):
+    """Extend inner reductions within a bounded per-program footprint on P800.
+
+    These are additional schedules of the generated expression, not alternative
+    normalization formulas. Keep the original candidates and all generated masks.
+    """
+    from torch._inductor.runtime.hints import ReductionHint
+    import triton
+    pointers = [v for v in signature.values() if isinstance(v, str) and v.startswith('*')]
+    if (set(size_hints) != {'x', 'r0_'} or reduction_hint != ReductionHint.INNER
+            or metadata.get('no_x_dim') or metadata.get('mutated_arg_names')
+            or not pointers or any(v not in ('*fp16', '*bf16', '*fp32') for v in pointers)):
+        return configs
+    rows, width = size_hints['x'], size_hints['r0_']
+    if (type(rows) is not int or type(width) is not int or rows < 4
+            or not 256 <= width <= 2048 or width & (width - 1)):
+        return configs
+    result = list(configs)
+    existing = {c.kwargs.get('XBLOCK') for c in configs}
+    for block in (4, 16, 64):
+        if block <= rows and block * width <= 65536 and block not in existing:
+            result.append(triton.Config({'XBLOCK': block}, num_warps=8, num_stages=1))
+    return result
+
+
+def _row_host_bench(tuner, launcher, *args, with_profiler=False, **kwargs):
+    """Use synchronized wall time; invalid device events must not select a tile.
+
+    Preserve Inductor's mutation/reset handling. This runs only during tuning;
+    the cached launcher retains the normal direct hot path.
+    """
+    import math
+    import statistics
+    import time
+    device = tuner.get_device_interface()
+    stream = device.get_raw_stream(device.current_device())
+    copies = tuner.copy_args_to_cpu_if_needed(*args, **kwargs)
+    def call():
+        cloned, cloned_kw = tuner.maybe_clone_args(copies, *args, **kwargs)
+        tuner.reset_to_zero_args(*args, **kwargs)
+        try:
+            launcher(*cloned, **cloned_kw, stream=stream)
+        finally:
+            tuner.restore_args_from_cpu(copies)
+    for _ in range(3):
+        call()
+    device.synchronize()
+    samples = []
+    for _ in range(7):
+        start = time.perf_counter_ns()
+        call()
+        device.synchronize()
+        elapsed = (time.perf_counter_ns() - start) / 1e6
+        if not math.isfinite(elapsed) or elapsed <= 0:
+            raise RuntimeError('Invalid P800 row reduction calibration time')
+        samples.append(elapsed)
+    measured = statistics.median(samples)
+    tuner.p800_row_timings.append(dict(config=dict(launcher.config.kwargs),
+                                      samples_ms=samples, median_ms=measured))
+    return measured
+
+
+def p800_persistent_reduction(size_hints, reduction_hint=False, triton_meta=None,
+                              filename=None, inductor_meta=None):
+    """Persist the row search in generated code, including independent workers."""
+    from torch._inductor.runtime import triton_heuristics as h
+    meta = dict(inductor_meta or {}, reduction_hint=reduction_hint)
+    hints = dict(size_hints)
+    if meta.get('no_x_dim'):
+        hints['x'] = 1
+    original = h._persistent_reduction_configs(hints, reduction_hint, meta)
+    configs = _row_reduction_configs(hints, original, reduction_hint,
+                                    (triton_meta or {}).get('signature', {}), meta)
+    meta['persistent_reduction'] = True
+    configs = h._maybe_filter_configs_for_tma_restrictions(meta, configs)
+    meta.pop('persistent_reduction')
+    decorate = h.cached_autotune(hints, configs, triton_meta=triton_meta,
+        inductor_meta=meta, filename=filename, heuristic_type=h.HeuristicType.PERSISTENT_REDUCTION)
+    def apply(fn):
+        tuner = decorate(fn)
+        tuner.p800_row_candidates = [dict(c.kwargs) for c in configs]
+        tuner.p800_row_timings = []
+        # These fields must survive Torch's backend-option whitelist in the
+        # asynchronous compiler worker, just like the fixed-config path.
+        requested = (triton_meta or {}).get('buffer_size_limit', 512)
+        reuse = bool((triton_meta or {}).get('xpu_reduction_reuse', False))
+        half_cache = bool((triton_meta or {}).get('xpu_reduction_half_cache', False))
+        tree = bool((triton_meta or {}).get('xpu_reduction_tree', False))
+        shared = bool((triton_meta or {}).get('xpu_row_shared', False))
+        original = tuner._precompile_config
+        def compile_config(*a, **kw):
+            with _compile_buffer_option(fn, requested, reduction_reuse=reuse,
+                                         reduction_tree=tree, row_shared=shared,
+                                         reduction_half_cache=half_cache) as forwarded:
+                result = original(*a, **kw)
+            binary = getattr(result, 'kernel', result)
+            choice = _validate_buffer_option(binary, requested, forwarded)
+            cfg = a[0] if a else kw['cfg']
+            tuner.p800_row_interfaces.append(dict(choice, reuse=reuse, tree=tree, shared=shared,
+                half_cache=half_cache,
+                interface='generated_cached_launcher',
+                configuration=dict(cfg.kwargs)))
+            return result
+        tuner.p800_row_interfaces = []
+        tuner._precompile_config = compile_config
+        if len(configs) > 1:
+            from functools import partial
+            tuner.bench = partial(_row_host_bench, tuner)
         return tuner
     return apply
 
@@ -295,17 +426,43 @@ def preserve_block_transpose(gm):
 
 @contextmanager
 def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto', resource_audit=None,
-                     buffer_audit=None, fp16_buffer_bytes=None):
+                     buffer_audit=None, fp16_buffer_bytes=None,
+                     reduction_reuse=False, reduction_tree=False, row_shared=False,
+                     reduction_half_cache=False):
     if resource_kind not in ('auto','cluster','sdnn'):
         raise ValueError('Unknown P800 pointwise resource')
     from torch._dynamo.convert_frame import compile_lock
     from torch._inductor import config
-    from torch._inductor.codegen.triton import FixedTritonConfig, TritonKernel
+    from torch._inductor.codegen.triton import FixedTritonConfig, TritonKernel, TritonScheduling
     from torch._inductor.virtualized import V
     original = V.choices
     original_body = TritonKernel.codegen_body
     original_kernel = TritonKernel.codegen_kernel
+    original_benchmark_codegen = TritonScheduling.generate_kernel_code_from_nodes
     half_buffer_bytes = buffer_bytes if fp16_buffer_bytes is None else fp16_buffer_bytes
+
+    def benchmark_codegen(scheduler, nodes, benchmark_kernel=False, hint_override=None):
+        # Torch's standalone fusion benchmark constructs TritonKernel directly
+        # and skips triton_kernel_kwargs. Benchmark the schedule that will
+        # actually execute, before generating its ranges and masks.
+        if any(n.is_template() for n in nodes):
+            return original_benchmark_codegen(scheduler, nodes, benchmark_kernel, hint_override)
+        _, (numel, rnumel) = max(nodes, key=lambda n: int(n.is_reduction())).group
+        if V.graph.sizevars.size_hint(rnumel, fallback=0) != 1:
+            return original_benchmark_codegen(scheduler, nodes, benchmark_kernel, hint_override)
+        from torch._inductor.codegen.simd_kernel_features import SIMDKernelFeatures
+        from torch._inductor.utils import Placeholder
+        node_schedule = scheduler.generate_node_schedule(nodes, numel, rnumel)
+        features = SIMDKernelFeatures(node_schedule, numel, rnumel)
+        kwargs = V.choices.triton_kernel_kwargs(scheduler.kernel_type, features, [numel, rnumel], {})
+        if kwargs.get('fixed_config') is None:
+            return original_benchmark_codegen(scheduler, nodes, benchmark_kernel, hint_override)
+        tiling = scheduler.select_tiling(node_schedule, numel, rnumel)
+        kernel = scheduler.kernel_type(tiling, features=features, **kwargs)
+        scheduler.codegen_node_schedule_with_kernel(node_schedule, kernel)
+        with config.patch('benchmark_kernel', benchmark_kernel), V.set_kernel_handler(kernel):
+            source = kernel.codegen_kernel()
+        return source.replace(str(Placeholder.KERNEL_NAME), 'triton_')
 
     def codegen_kernel(kernel, *args, **kwargs):
         # Torch's flag name is broader than it sounds: persistent reductions
@@ -317,6 +474,12 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto',
                 source = original_kernel(kernel, *args, **kwargs)
         else:
             source = original_kernel(kernel, *args, **kwargs)
+        row_marker = '@triton_heuristics.persistent_reduction('
+        if kernel.inside_reduction and source.count(row_marker) == 1:
+            identity = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
+            source = ('from triton.experimental.graph_fusion._p800_model_schedule import p800_persistent_reduction\n'
+                      '# P800 row schedule policy: ' + identity + '\n' +
+                      source.replace(row_marker, '@p800_persistent_reduction('))
         marker = '@triton_heuristics.fixed_config('
         use_sdnn = False
         explicit_resource = resource_kind != 'auto' and not kernel.inside_reduction and kernel.fixed_config
@@ -325,7 +488,8 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto',
             if resource_audit is not None:
                 resource_audit.append(dict(source_sha256=hashlib.sha256(source.encode()).hexdigest(),
                     requested='sdnn', effective='sdnn' if use_sdnn else 'cluster', reason=reason))
-        if explicit_resource or kernel.triton_meta and kernel.triton_meta.get('buffer_size_limit') in (512, 1024, 2048):
+        if explicit_resource or (not kernel.inside_reduction and kernel.triton_meta
+                                and kernel.triton_meta.get('buffer_size_limit') in (512, 1024, 2048)):
             if source.count(marker) != 1:
                 raise RuntimeError('Unrecognized fixed-config code generation')
             identity = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
@@ -336,6 +500,15 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto',
 
     def codegen_body(kernel):
         meta = kernel.triton_meta
+        if getattr(kernel, 'inside_reduction', False) and meta is not None:
+            pointers = [v for v in meta['signature'].values() if isinstance(v, str) and v.startswith('*')]
+            if pointers and all(v in ('*fp16', '*bf16', '*fp32') for v in pointers):
+                if buffer_bytes is not None:
+                    meta['buffer_size_limit'] = half_buffer_bytes if set(pointers) == {'*fp16'} else buffer_bytes
+                meta['xpu_reduction_reuse'] = bool(reduction_reuse)
+                meta['xpu_reduction_half_cache'] = bool(reduction_half_cache)
+                meta['xpu_reduction_tree'] = bool(reduction_tree)
+                meta['xpu_row_shared'] = bool(row_shared)
         if buffer_bytes is not None and kernel.fixed_config and meta is not None:
             pointers = [v for v in meta['signature'].values() if isinstance(v, str) and v.startswith('*')]
             if pointers and (set(pointers) == {'*fp32'} or set(pointers) == {'*fp16'}):
@@ -392,7 +565,9 @@ def p800_lm_schedule(buffer_bytes=None, split_addmm=False, resource_kind='auto',
         try:
             TritonKernel.codegen_body = codegen_body
             TritonKernel.codegen_kernel = codegen_kernel
+            TritonScheduling.generate_kernel_code_from_nodes = benchmark_codegen
             yield
         finally:
             TritonKernel.codegen_body = original_body
             TritonKernel.codegen_kernel = original_kernel
+            TritonScheduling.generate_kernel_code_from_nodes = original_benchmark_codegen

@@ -15,6 +15,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <map>
 #include <functional>
 #include <climits>
@@ -22,7 +23,7 @@
 using namespace llvm;
 
 namespace {
-struct Stats { unsigned loads=0, stores=0, pipelines=0; } stats;
+struct Stats { unsigned loads=0, stores=0, pipelines=0, emptyRows=0; } stats;
 static bool named(Instruction *I, StringRef N) {
   auto *C=dyn_cast<CallInst>(I);
   return C && C->getCalledFunction() && C->getCalledFunction()->getName()==N;
@@ -79,22 +80,35 @@ static bool hoistStores(Function &F, FunctionAnalysisManager &AM) {
     if (L->getNumBlocks()!=1 || !L->getUniqueExitBlock()) continue;
     auto *BB=L->getHeader(), *Exit=L->getUniqueExitBlock();
     if (Exit->getSinglePredecessor()!=BB) continue;
-    Instruction *Wait=nullptr; bool OK=true,SawStore=false;
+    SmallVector<Instruction *> Waits;
+    Instruction *LastMemory=nullptr;
+    bool OK=true,SawStore=false;
     struct Span { int64_t lo=INT64_MAX,hi=INT64_MIN,step=0; };
+    struct Access { AllocaInst *base; int64_t lo,hi; };
     std::map<AllocaInst *,Span> Spans;
+    SmallVector<Access> Accesses;
     for (Instruction &I:*BB) {
-      if (fence(&I)) { if (Wait) { OK=false; break; } Wait=&I; continue; }
+      if (fence(&I)) { Waits.push_back(&I); continue; }
       Value *Ptr=nullptr; Type *Ty=nullptr;
       if (auto *R=dyn_cast<LoadInst>(&I)) {
         if (R->isVolatile() || R->isAtomic()) { OK=false; break; }
         Ptr=R->getPointerOperand();Ty=R->getType();
+        // LM waits do not order SM. A readonly SM column load neither aliases
+        // an LM store nor needs an LM iteration-span proof. Writes/calls with
+        // unknown SM effects are still rejected below.
+        if (Ptr->getType()->getPointerAddressSpace()==2) {
+          LastMemory=&I;
+          continue;
+        }
+        // An intermediate wait may order a same-iteration store->load chain.
+        // Keep that chain rather than treating disjoint iterations as enough.
+        if (!Waits.empty()) { OK=false; break; }
       } else if (auto *W=dyn_cast<StoreInst>(&I)) {
         if (W->isVolatile() || W->isAtomic()) { OK=false; break; }
         Ptr=W->getPointerOperand();Ty=W->getValueOperand()->getType();SawStore=true;
       } else if (!pure(&I) && !isa<PHINode,BranchInst>(I)) { OK=false; break; }
       if (!Ptr) continue;
-      // Nothing may access local memory after the candidate wait.
-      if (Wait) { OK=false; break; }
+      LastMemory=&I;
       auto *A=local(Ptr); auto *AR=dyn_cast<SCEVAddRecExpr>(SE.getSCEV(Ptr));
       if (!A || !AR || AR->getLoop()!=L || !AR->isAffine()) { OK=false; break; }
       auto *Step=dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE));
@@ -102,12 +116,25 @@ static bool hoistStores(Function &F, FunctionAnalysisManager &AM) {
       if (!Step || !Start || DL.getTypeStoreSize(Ty).isScalable()) { OK=false; break; }
       int64_t S=Step->getAPInt().getSExtValue(),O=Start->getAPInt().getSExtValue();
       if (S<=0 || O<0) { OK=false; break; }
+      uint64_t Bytes=DL.getTypeStoreSize(Ty).getFixedValue();
+      if (Bytes>uint64_t(INT64_MAX-O)) { OK=false; break; }
+      int64_t End=O+int64_t(Bytes);
+      // After an intermediate wait, only independent stores may proceed.
+      // Reject RAW/WAW overlap within this iteration as well as across it.
+      if (!Waits.empty())
+        for (const auto &A:Accesses)
+          if (A.base==local(Ptr) && O<A.hi && A.lo<End) OK=false;
+      if (!OK) break;
+      Accesses.push_back({A,O,End});
       Span &P=Spans[A]; if (P.step && P.step!=S) { OK=false; break; }
-      P.step=S;P.lo=std::min(P.lo,O);P.hi=std::max(P.hi,O+(int64_t)DL.getTypeStoreSize(Ty).getFixedValue());
+      P.step=S;P.lo=std::min(P.lo,O);P.hi=std::max(P.hi,End);
     }
     for (auto &[A,P]:Spans) if (P.hi-P.lo>P.step) OK=false;
-    if (OK && SawStore && Wait && !Spans.empty()) {
-      Wait->moveBefore(&*Exit->getFirstInsertionPt());++stats.stores;Changed=true;
+    if (OK && SawStore && !Waits.empty() && !Spans.empty() &&
+        LastMemory && LastMemory->comesBefore(Waits.back())) {
+      auto *Last=Waits.pop_back_val();
+      for (auto *Wait:Waits) Wait->eraseFromParent();
+      Last->moveBefore(&*Exit->getFirstInsertionPt());++stats.stores;Changed=true;
     }
   }
   return Changed;
@@ -465,15 +492,21 @@ static bool pipelineLoop(Loop *L, Function &F, LoopInfo &LI, ScalarEvolution &SE
   ++stats.pipelines;return true;
 }
 
+#include "SDNNReuse.h"
+#include "EmptyRow.h"
+
 class XPUDmaPipelinePass : public PassInfoMixin<XPUDmaPipelinePass> {
   bool Pipeline;
 public:
   explicit XPUDmaPipelinePass(bool P):Pipeline(P){}
   PreservedAnalyses run(Function &F,FunctionAnalysisManager &AM) {
+    if (!F.isDeclaration() && !SDNNBounds.empty())
+      return sdnnReuse(F, AM) ? PreservedAnalyses::none() : PreservedAnalyses::all();
     if(F.isDeclaration() || !F.getParent()->getTargetTriple().getArchName().starts_with("xpu3") ||
        F.getFnAttribute("target-features").getValueAsString().contains("cdnn"))return PreservedAnalyses::all();
     bool Changed=groupLoads(F);if(Changed)AM.invalidate(F,PreservedAnalyses::none());
     Changed|=hoistStores(F,AM);AM.invalidate(F,PreservedAnalyses::none());
+    Changed|=skipEmptyRows(F,AM);AM.invalidate(F,PreservedAnalyses::none());
     if(Pipeline) {
       auto &LI=AM.getResult<LoopAnalysis>(F);
       auto &SE=AM.getResult<ScalarEvolutionAnalysis>(F);
@@ -485,6 +518,15 @@ public:
 }
 int main(int argc,char **argv) {
   bool Pipeline=argc>1 && StringRef(argv[1])=="--pipeline";
+  for(int I=1;I<argc;++I) {
+    StringRef A(argv[I]);
+    if(A.consume_front("--sdnn-bounds=")) {
+      SmallVector<StringRef> Parts;A.split(Parts,',');
+      for(StringRef P:Parts){uint64_t N;if(P.getAsInteger(10,N)||!N||N>(1ULL<<40))return 2;SDNNBounds.push_back(N);}
+    }
+    if(A=="--sdnn-dma-only")SDNNOnlyDMA=true;
+    if(A=="--sdnn-weights-only")SDNNOnlyWeights=true;
+  }
   auto Input=MemoryBuffer::getSTDIN();if(!Input){errs()<<"stdin error\n";return 2;}
   // Public LLVM's IRReader auto-upgrade verifies cc124 as AMDGPU before
   // analyses can run. Normalize only kernel definitions while parsing, and
@@ -514,6 +556,6 @@ int main(int argc,char **argv) {
   bool Bad=verifyModule(*M,&errs());for(auto [F,ID]:CC)F->setCallingConv(ID);
   if(Bad)return 3;
   for(const auto &Name:KernelNames)if(auto *F=M->getFunction(Name))F->setCallingConv(CallingConv::AMDGPU_Gfx_WholeWave);
-  errs()<<"{\"grouped_load_waits\":"<<stats.loads<<",\"hoisted_store_waits\":"<<stats.stores<<",\"pipelined_loops\":"<<stats.pipelines<<"}\n";
-  if(stats.loads+stats.stores+stats.pipelines)M->print(outs(),nullptr);else outs()<<(*Input)->getBuffer();
+  errs()<<"{\"grouped_load_waits\":"<<stats.loads<<",\"hoisted_store_waits\":"<<stats.stores<<",\"pipelined_loops\":"<<stats.pipelines<<",\"skipped_empty_rows\":"<<stats.emptyRows<<",\"sdnn_cached_dma\":"<<SDNNPackets<<",\"sdnn_cached_ds\":"<<SDNNShuffles<<"}\n";
+  if(stats.loads+stats.stores+stats.pipelines+stats.emptyRows+SDNNPackets+SDNNShuffles)M->print(outs(),nullptr);else outs()<<(*Input)->getBuffer();
 }

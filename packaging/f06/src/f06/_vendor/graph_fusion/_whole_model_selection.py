@@ -37,6 +37,7 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
     record.pop('mean_seconds', None)
     record.pop('gain_check', None)
     record.pop('timing_attempts', None)
+    record.pop('interface_audit', None)
     record.update(state='validating', scope='complete_model_call', rejected=[], candidates={}, rounds=rounds,
                   minimum_gain=minimum_gain, statistic='arithmetic_mean_of_raw_seconds', resource_variants={})
     valid = {}
@@ -63,7 +64,7 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
             valid[name] = route
             record['candidates'][name] = dict(validated_examples=len(validation_inputs),
                                               raw_seconds=[], round_means=[])
-        for factory_name in ('_f06_resource_variants', '_f06_buffer_variants'):
+        for factory_name in ('_f06_resource_variants', '_f06_buffer_variants', '_f06_gemm_variants'):
             variants = getattr(route.call, factory_name, None)
             if variants is None:
                 continue
@@ -77,7 +78,8 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
                 all_routes[candidate] = alternative
                 pending.append((candidate, alternative))
                 record['resource_variants'][candidate] = dict(parent=name, resource=kind,
-                    dimension='buffer' if factory_name == '_f06_buffer_variants' else 'resource')
+                    dimension={'_f06_buffer_variants': 'buffer', '_f06_resource_variants': 'resource',
+                               '_f06_gemm_variants': 'matrix'}[factory_name])
     if expanded_routes is not None:
         expanded_routes.update(all_routes)
     if not valid:
@@ -147,6 +149,17 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
         break
     valid[winner].activate()
     record.update(state='selected', route=winner, mean_seconds=means)
+    # Audit only at preparation time. The returned callable remains the chosen
+    # direct entry; warm calls do not repeat validation, ranking or dispatch.
+    record['interface_audit'] = {
+        name: dict(status=('selected' if name == winner else
+                           'slower_measured' if elapsed > means[winner] * (1 + minimum_gain)
+                           else 'similar_time'),
+                   mean_seconds=elapsed, relative_to_selected=elapsed / means[winner],
+                   replacement=winner if elapsed > means[winner] * (1 + minimum_gain) else None,
+                   scope='this validated complete model and calibration')
+        for name, elapsed in means.items()
+    }
     return valid[winner].call
 
 

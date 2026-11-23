@@ -101,6 +101,7 @@ using OperationTree = llvm::SetVector<mlir::Operation *>;
   FN(arith::AndIOp, triton::xpu::VvandIOp)                                     \
   FN(arith::XOrIOp, triton::xpu::VvxorIOp)                                     \
   FN(arith::OrIOp, triton::xpu::VvorIOp)                                       \
+  FN(math::FmaOp, triton::xpu::VMacFOp)                                       \
   FN(math::ExpOp, triton::xpu::VExpFOp)                                        \
   FN(math::AbsFOp, triton::xpu::VAbsFOp)                                       \
   FN(math::LogOp, triton::xpu::VLogFOp)                                        \

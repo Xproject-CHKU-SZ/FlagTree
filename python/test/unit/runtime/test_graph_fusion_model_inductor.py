@@ -23,6 +23,216 @@ def trace(model, args):
 
 
 class WholeGraphTests(unittest.TestCase):
+    def test_native_row_bias_candidate_keeps_fp32_order_and_strided_weights(self):
+        from triton.experimental.graph_fusion._p800_gemm_candidates import _native_row_bias_mm
+        torch.manual_seed(53)
+        a = torch.randn(17, 32)
+        w = torch.randn(23, 32)
+        bias = torch.randn(23)
+        for rhs in (w.t(), w.t().contiguous()):
+            out = torch.empty(17, 23)
+            expected = torch.mm(a, rhs) + bias
+            actual = _native_row_bias_mm(bias.expand(17, 23), a, rhs, out=out)
+            self.assertIs(actual, out)
+            torch.testing.assert_close(actual, expected, atol=0, rtol=0)
+        with self.assertRaises(AssertionError):
+            _native_row_bias_mm(bias.expand(17, 23), a, w.t(), out=out, beta=0)
+
+    def test_sdnn_matrix_epilogue_retains_nonlinear_cluster_boundary(self):
+        from types import SimpleNamespace
+        from triton.experimental.graph_fusion._p800_gemm_candidates import template_boundary_eligibility
+        def candidate(operations):
+            body=SimpleNamespace(get_nodes=lambda:[SimpleNamespace(op='call_method',target=x) for x in operations])
+            return SimpleNamespace(get_nodes=lambda:[SimpleNamespace(_body=body)])
+        self.assertTrue(template_boundary_eligibility(candidate(['load','add','add','to_dtype','store']))[0])
+        self.assertFalse(template_boundary_eligibility(candidate(['load','mul','sigmoid','mul','store']))[0])
+        self.assertFalse(template_boundary_eligibility(candidate(['load','exp','store']))[0])
+        self.assertFalse(template_boundary_eligibility(candidate(['unknown_future_op']))[0])
+        self.assertFalse(template_boundary_eligibility(SimpleNamespace(get_nodes=lambda:[object()]))[0])
+
+    def test_sdnn_epilogue_accepts_real_inductor_index_bookkeeping(self):
+        import sympy
+        from types import SimpleNamespace
+        from torch._inductor.loop_body import LoopBody
+        from torch._inductor.virtualized import V, ops
+        from torch._inductor.sizevars import SizeVarAllocator
+        from triton.experimental.graph_fusion._p800_gemm_candidates import template_boundary_eligibility
+        i=sympy.Symbol('i',integer=True)
+        def body(index,reduction):
+            x=ops.load('a',index[0])
+            ops.store('b',index[0],ops.add(x,ops.constant(1,torch.float32)))
+        with V.set_graph_handler(SimpleNamespace(sizevars=SizeVarAllocator())):
+            loop=LoopBody(body,([i],[]),{i:16},[i],[])
+        node=SimpleNamespace(get_nodes=lambda:[SimpleNamespace(_body=loop)])
+        self.assertTrue(template_boundary_eligibility(node)[0])
+
+    def test_p800_gemm_candidates_do_not_change_low_precision_or_small_matrices(self):
+        from types import SimpleNamespace
+        from triton.experimental.graph_fusion._p800_gemm_candidates import eligible_shape
+        def node(shape, dtype=torch.float32):
+            return SimpleNamespace(get_size=lambda:shape,get_dtype=lambda:dtype)
+        self.assertEqual(eligible_shape(node([5770,1024]),node([1024,4096])),(5770,4096,1024))
+        self.assertIsNone(eligible_shape(node([5770,1024],torch.float16),node([1024,4096],torch.float16)))
+        self.assertIsNone(eligible_shape(node([64,1024]),node([1024,4096])))
+        self.assertIsNone(eligible_shape(node([10,577,1024]),node([10,1024,577])))
+        self.assertIsNone(eligible_shape(node([5770,1024]),node([512,4096])))
+
+    def test_p800_gemm_tiles_preserve_existing_heuristic_state(self):
+        from dataclasses import dataclass
+        from triton.experimental.graph_fusion._p800_gemm_candidates import extended_configs
+        @dataclass(frozen=True)
+        class Config:
+            block_m:int=128
+            block_n:int=128
+            block_k:int=64
+            num_stages:int=3
+            num_warps:int=8
+        original=[Config()];expanded=extended_configs(original)
+        self.assertEqual(original,[Config()])
+        self.assertIs(expanded[0],original[0])
+        self.assertEqual(len(expanded),8)
+        self.assertIn(Config(256,256,128),expanded)
+        self.assertEqual(extended_configs(expanded),expanded)
+
+    def test_p800_gemm_scope_restores_lowerings_and_memory_heuristic_on_error(self):
+        from contextlib import nullcontext
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from torch._inductor import config
+        from torch._inductor.lowering import lowerings
+        from torch._inductor.kernel import mm as registration
+        from torch._inductor.scheduler import Scheduler
+        from torch._inductor.template_heuristics.triton import BaseConfigHeuristic
+        from triton.experimental.graph_fusion._p800_gemm_candidates import p800_gemm_candidates
+        nodes=[SimpleNamespace(get_size=lambda:[1024,1024],get_dtype=lambda:torch.float32)]*2
+        original_checker=BaseConfigHeuristic._get_exceeding_shared_memory_checker
+        original_configs=BaseConfigHeuristic.get_mm_configs
+        original_fuse=Scheduler.can_fuse
+        original_speedup=Scheduler.speedup_by_fusion
+        def fail(*args,**kw):
+            self.assertTrue(config.max_autotune_gemm)
+            self.assertEqual(config.max_autotune_gemm_backends,'ATEN,TRITON')
+            self.assertIsNone(BaseConfigHeuristic._get_exceeding_shared_memory_checker(None))
+            raise ValueError('deliberate lowering failure')
+        audit=[]
+        with patch.dict(lowerings,{torch.ops.aten.mm.default:fail}), \
+             patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',return_value=True), \
+             patch('triton.experimental.graph_fusion._p800_matmul.native_template_eligibility',return_value=nullcontext()), \
+             config.patch({'max_autotune_gemm':False}):
+            with self.assertRaisesRegex(ValueError,'deliberate'):
+                with p800_gemm_candidates(torch.device('cuda:0'),audit):
+                    template=SimpleNamespace(is_template=lambda:True)
+                    nonlinear=SimpleNamespace(is_template=lambda:False,get_nodes=lambda:[SimpleNamespace(_body=SimpleNamespace(
+                        get_nodes=lambda:[SimpleNamespace(op='call_method',target='sigmoid')]))])
+                    # Even a template shortcut in the original scheduler must
+                    # not reach its nonlinear epilogue path.
+                    self.assertFalse(Scheduler.can_fuse(object(),template,nonlinear))
+                    self.assertFalse(Scheduler.can_fuse(object(),nonlinear,template))
+                    lowerings[torch.ops.aten.mm.default](*nodes)
+            self.assertIs(lowerings[torch.ops.aten.mm.default],fail)
+            self.assertFalse(config.max_autotune_gemm)
+        self.assertEqual(len(audit),3)
+        self.assertIs(Scheduler.can_fuse,original_fuse)
+        self.assertIs(Scheduler.speedup_by_fusion,original_speedup)
+        self.assertIs(BaseConfigHeuristic._get_exceeding_shared_memory_checker,original_checker)
+        self.assertIs(BaseConfigHeuristic.get_mm_configs,original_configs)
+
+    def test_p800_full_k_retains_one_dot_after_native_preprocessing(self):
+        from types import SimpleNamespace
+        from torch._inductor import config
+        from torch._inductor.virtualized import V
+        from torch._inductor.sizevars import SizeVarAllocator
+        from triton.experimental.graph_fusion._p800_gemm_candidates import full_k_configs
+        from torch._inductor.template_heuristics.triton import BaseConfigHeuristic
+        heuristic = BaseConfigHeuristic()
+        for k in (512, 1024):
+            raw = full_k_configs(heuristic.mm_configs, k)
+            self.assertTrue(raw)
+            with V.set_graph_handler(SimpleNamespace(sizevars=SizeVarAllocator())), \
+                    config.patch({'max_autotune_prune_choices_based_on_shared_mem': False}):
+                configs = list(heuristic.preprocess_mm_configs(5770, 1024, k, raw))
+            self.assertTrue(configs)
+            self.assertTrue(all(c.kwargs['BLOCK_K'] >= k for c in configs))
+            pipelined_groups = {c.kwargs['GROUP_M'] for c in configs
+                                if c.kwargs['BLOCK_M'] == 64
+                                and c.kwargs['BLOCK_N'] == 256
+                                and c.num_stages == 2}
+            self.assertEqual(pipelined_groups, {8, 32, 64})
+        self.assertEqual(full_k_configs([], 1024), [])
+        for k in (768, 3072, 4096):
+            self.assertEqual(full_k_configs(heuristic.mm_configs, k), [])
+
+    def test_full_k_epilogue_benchmarks_tiles_excluded_by_unfused_order(self):
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from unittest.mock import Mock, patch
+        from torch._inductor import ir, config
+        from triton.experimental.graph_fusion._p800_gemm_candidates import benchmark_full_k_epilogue
+        first, second, invalid = [Mock(spec=ir.TritonTemplateCallerBase) for _ in range(3)]
+        for c, name in zip((first, second, invalid), ('first', 'second', 'invalid')):
+            c.name=name; c.description=name
+        multi=Mock(spec=ir.MultiTemplateBuffer)
+        multi.get_dtype.return_value=torch.float32;multi.get_size.return_value=[5770,1024]
+        multi.choice_timings.return_value={object():.10,first:.30,second:.40,invalid:float('nan')}
+        multi.swap_as_triton_caller.side_effect=lambda _:nullcontext()
+        multi._choice_timings={}
+        n1=SimpleNamespace(is_template=lambda:True,get_template_node=lambda:multi,
+            get_nodes=lambda:[SimpleNamespace(get_device=lambda:torch.device('cuda:0'))])
+        n2=SimpleNamespace(is_template=lambda:False,get_device=lambda:torch.device('cuda:0'),get_nodes=lambda:[SimpleNamespace(_body=SimpleNamespace(
+            get_nodes=lambda:[SimpleNamespace(op='call_method',target='add')]))])
+        scheduler=Mock();scheduler.benchmark_fused_nodes.return_value=(.05,'pointwise.py')
+        scheduler.benchmark_codegened_module.side_effect=[(.05,'pointwise.py'),(.20,'first.py'),(.09,'second.py')]
+        audit=[]
+        with config.patch({'multi_kernel_hints':[]}),patch('torch._inductor.codecache.PyCodeCache.load'):
+            self.assertTrue(benchmark_full_k_epilogue(scheduler,n1,n2,audit))
+        self.assertEqual(scheduler.benchmark_codegened_module.call_count,3)
+        multi.finalize_as_triton_caller.assert_called_once_with(second)
+        self.assertTrue(all(r['excluded_by_old_bound'] for r in audit[0]['candidates']))
+        self.assertEqual(audit[0]['selected'],'second')
+        self.assertEqual(multi._choice_timings[None],{first:.20,second:.09})
+
+    def test_full_k_epilogue_rejects_slow_or_invalid_fused_results(self):
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from unittest.mock import Mock,patch
+        from torch._inductor import ir,config
+        from triton.experimental.graph_fusion._p800_gemm_candidates import benchmark_full_k_epilogue
+        c=Mock(spec=ir.TritonTemplateCallerBase);c.name='candidate';c.description='candidate'
+        multi=Mock(spec=ir.MultiTemplateBuffer);multi.get_dtype.return_value=torch.float32
+        multi.get_size.return_value=[5770,1024];multi.choice_timings.return_value={object():.10,c:.30}
+        multi.swap_as_triton_caller.side_effect=lambda _:nullcontext();multi._choice_timings={}
+        n1=SimpleNamespace(is_template=lambda:True,get_template_node=lambda:multi,
+            get_nodes=lambda:[SimpleNamespace(get_device=lambda:torch.device('cuda:0'))])
+        body=SimpleNamespace(get_nodes=lambda:[SimpleNamespace(op='call_method',target='to_dtype')])
+        n2=SimpleNamespace(is_template=lambda:False,get_device=lambda:torch.device('cuda:0'),get_nodes=lambda:[SimpleNamespace(_body=body)])
+        s=Mock();s.benchmark_fused_nodes.return_value=(.05,'pointwise.py')
+        with config.patch({'multi_kernel_hints':[]}),patch('torch._inductor.codecache.PyCodeCache.load'):
+            for value in (.2,0.,-1.,float('nan'),float('inf')):
+                s.benchmark_codegened_module.side_effect=[(.05,'pointwise.py')]+[(value,'candidate.py')]*3
+                self.assertFalse(benchmark_full_k_epilogue(s,n1,n2,[]))
+            body.get_nodes=lambda:[SimpleNamespace(op='call_method',target='sigmoid')]
+            self.assertIsNone(benchmark_full_k_epilogue(s,n1,n2,[]))
+        multi.finalize_as_triton_caller.assert_not_called()
+        self.assertEqual(multi._choice_timings,{})
+
+    def test_full_k_epilogue_invalid_measurements_are_retried_and_evicted(self):
+        import tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from triton.experimental.graph_fusion._p800_gemm_candidates import _valid_epilogue_timing
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'kernel.py';source.write_text('')
+            cache=source.with_suffix('.kernel_perf');values=iter([-4.,float('nan'),.12])
+            def measure(module,device):
+                self.assertFalse(cache.exists())
+                value=next(values);cache.write_text(str(value));return value,str(source)
+            scheduler=SimpleNamespace(benchmark_codegened_module=measure);record={}
+            with patch('torch._inductor.codecache.cache_dir',return_value=directory):
+                value,_=_valid_epilogue_timing(scheduler,SimpleNamespace(__file__=str(source)),None,record)
+            self.assertEqual(value,.12);self.assertEqual(float(cache.read_text()),.12)
+            self.assertEqual(record['invalid_measurements'],['-4.0','nan'])
+
     def test_fixed_resource_graph_is_not_eliminated_by_inner_tensor_timing(self):
         from unittest.mock import patch
         from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
@@ -539,6 +749,28 @@ def generated(in_ptr0,out_ptr0,xnumel,XBLOCK):
                     TritonKernel.codegen_body(kernel)
                     self.assertEqual(audit,[dict(storage='float32',requested=size)])
 
+    def test_fusion_benchmark_uses_execution_tile_before_mask_generation(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch, Mock
+        from torch._inductor.virtualized import V
+        from torch._inductor.codegen.triton import TritonScheduling
+        from triton.experimental.graph_fusion._p800_model_schedule import p800_lm_schedule
+        features = SimpleNamespace(numel=5908480, reduction_numel=1, buf_accesses=lambda: {'a': []})
+        graph = SimpleNamespace(sizevars=SimpleNamespace(size_hint=lambda x, **kw: x), get_dtype=lambda _: torch.float32)
+        node = SimpleNamespace(is_template=lambda: False, is_reduction=lambda: False, group=('cuda', (5908480, 1)))
+        kernel = SimpleNamespace(codegen_kernel=lambda: 'verified schedule')
+        constructor = Mock(return_value=kernel)
+        scheduler = SimpleNamespace(generate_node_schedule=lambda *a: [node], select_tiling=lambda *a: {'x': 5908480},
+            kernel_type=constructor, codegen_node_schedule_with_kernel=Mock())
+        original = TritonScheduling.generate_kernel_code_from_nodes
+        with V.set_graph_handler(graph), patch('torch._inductor.codegen.simd_kernel_features.SIMDKernelFeatures', return_value=features):
+            with p800_lm_schedule(buffer_bytes=1024):
+                source = TritonScheduling.generate_kernel_code_from_nodes(scheduler, [node], True)
+                self.assertEqual(source, 'verified schedule')
+                self.assertEqual(constructor.call_args.kwargs['fixed_config']['XBLOCK'], 16384)
+                scheduler.codegen_node_schedule_with_kernel.assert_called_once_with([node], kernel)
+        self.assertIs(TritonScheduling.generate_kernel_code_from_nodes, original)
+
     def test_half_candidates_keep_existing_fp32_buffer(self):
         from types import SimpleNamespace
         from unittest.mock import patch
@@ -634,6 +866,112 @@ def generated(in_ptr0,out_ptr0,xnumel,XBLOCK):
             self.assertEqual(result.stride(),expected.stride())
             self.assertNotEqual(result.data_ptr(),x.data_ptr())
             torch.testing.assert_close(result,expected,atol=0,rtol=0,equal_nan=True)
+
+    def test_sdnn_tensor_spans_are_conservative_and_reject_unknown_layouts(self):
+        from types import SimpleNamespace
+        from torch._inductor.codegen.common import TensorArg
+        from triton.experimental.graph_fusion._p800_gemm_candidates import static_tensor_spans
+        def node(size,stride,offset=0):
+            return SimpleNamespace(get_size=lambda:size,get_stride=lambda:stride,
+                                   get_layout=lambda:SimpleNamespace(offset=offset))
+        args=[TensorArg('arg0','x',torch.float32),TensorArg('arg1','w',torch.float16)]
+        nodes={'x':node((3,5),(8,1),2),'w':node((5,7),(1,5))}
+        self.assertEqual(static_tensor_spans(args,nodes.get),(92,70))
+        for bad in (node((3,5),(-5,1)),node((0,5),(5,1)),node((3,5),(5,1),-1),None):
+            nodes['x']=bad
+            self.assertEqual(static_tensor_spans(args,nodes.get),())
+        self.assertEqual(static_tensor_spans([object()],nodes.get),())
+
+    def test_sdnn_autotune_output_need_not_be_in_global_graph(self):
+        from types import SimpleNamespace
+        from torch._inductor.codegen.common import TensorArg
+        from triton.experimental.graph_fusion._p800_gemm_candidates import template_tensor_spans
+        output=SimpleNamespace(get_name=lambda:'buf_out',get_size=lambda:(7,11),
+            get_stride=lambda:(11,1),get_layout=lambda:SimpleNamespace(offset=0))
+        kernel=SimpleNamespace(input_nodes=[],output_node=output)
+        def lookup(name):
+            raise RuntimeError('Failed to find buffer matching name '+name)
+        self.assertEqual(template_tensor_spans(kernel,[TensorArg('out','buf_out',torch.float32)],lookup),(308,))
+        self.assertEqual(template_tensor_spans(kernel,[TensorArg('other','missing',torch.float32)],lookup),())
+        larger=SimpleNamespace(get_name=lambda:'buf_out',get_size=lambda:(11,11),
+            get_stride=lambda:(11,1),get_layout=lambda:SimpleNamespace(offset=0))
+        kernel.input_nodes=[larger]
+        self.assertEqual(template_tensor_spans(kernel,[TensorArg('out','buf_out',torch.float32)],lookup),(484,))
+
+    def test_sdnn_bounds_reach_only_matching_deferred_compile(self):
+        import triton
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from triton.experimental.graph_fusion._p800_model_schedule import _compile_buffer_option
+        fn=object();bounds=(4096,8192,2048)
+        def compile(source,**kw):return kw
+        with patch.object(triton,'compile',compile):
+            with _compile_buffer_option(fn,512,sdnn_tensor_bytes=bounds):
+                result=triton.compile(SimpleNamespace(fn=fn),options={'debug':True})
+                self.assertEqual(result['options']['xpu_sdnn_tensor_bytes'],bounds)
+                other=triton.compile(SimpleNamespace(fn=object()),options={'debug':True})
+                self.assertEqual(other['options'],{'debug':True})
+            self.assertIs(triton.compile,compile)
+
+    def test_sdnn_deferred_compile_binding_can_cross_process_boundary(self):
+        import pickle
+        from functools import partial
+        from types import SimpleNamespace
+        from triton.experimental.graph_fusion._p800_gemm_candidates import _precompile_sdnn_config
+        tuner=SimpleNamespace(triton_meta={'xpu_sdnn_tensor_bytes':(2048,4096)})
+        tuner._precompile_config=partial(_precompile_sdnn_config,tuner)
+        restored=pickle.loads(pickle.dumps(tuner))
+        self.assertIs(restored._precompile_config.func,_precompile_sdnn_config)
+        self.assertIs(restored._precompile_config.args[0],restored)
+
+    def test_sdnn_template_imports_preserve_decorator_indentation(self):
+        import ast
+        from pathlib import Path
+        from triton.experimental.graph_fusion._p800_gemm_candidates import _sdnn_template_source
+        original = '\n            @triton_heuristics.template(\n                triton_meta={},\n            )\n            @triton.jit\n'
+        for text in (original, __import__('textwrap').dedent(original)):
+            source = _sdnn_template_source(text, (64,128), Path(__file__))
+            module = ast.parse(source + 'def kernel(x, y):\n    return x + y\n')
+            self.assertEqual(len(module.body[-1].decorator_list),2)
+            self.assertIn("'xpu_sdnn_tensor_bytes': (64, 128)",source)
+
+    def test_backend_options_do_not_wait_for_parent_graph_lock(self):
+        import threading
+        import triton
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from torch._dynamo.convert_frame import compile_lock
+        from triton.experimental.graph_fusion._p800_model_schedule import _compile_buffer_option
+        done=threading.Event();errors=[];results=[];fn=object()
+        def worker():
+            try:
+                with _compile_buffer_option(fn,512,sdnn_tensor_bytes=(64,128)):
+                    results.append(triton.compile(SimpleNamespace(fn=fn)))
+            except BaseException as exc:errors.append(exc)
+            finally:done.set()
+        with patch.object(triton,'compile',lambda source,**kw:kw) as original:
+            with compile_lock:
+                t=threading.Thread(target=worker);t.start()
+                finished=done.wait(5)
+            t.join(5)
+            self.assertTrue(finished,'worker waited for parent compile_lock')
+            self.assertFalse(errors)
+            self.assertEqual(results[0]['options']['xpu_sdnn_tensor_bytes'],(64,128))
+            self.assertIs(triton.compile,original)
+
+    def test_backend_options_do_not_leak_to_unrelated_compile_thread(self):
+        import threading
+        import triton
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from triton.experimental.graph_fusion._p800_model_schedule import _compile_buffer_option
+        fn=object();seen=[]
+        with patch.object(triton,'compile',lambda source,**kw:kw):
+            with _compile_buffer_option(fn,512,sdnn_tensor_bytes=(64,128)):
+                t=threading.Thread(target=lambda:seen.append(triton.compile(SimpleNamespace(fn=fn))))
+                t.start();t.join(5)
+                self.assertFalse(t.is_alive())
+                self.assertEqual(seen,[{}])
 
 
 if __name__=='__main__':unittest.main()

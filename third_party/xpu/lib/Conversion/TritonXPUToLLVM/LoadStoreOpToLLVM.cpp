@@ -237,6 +237,244 @@ struct LoadStoreConversionBase {
     rewriter.setInsertionPointToStart(continuation);
   }
 
+  // Represent integer additions modulo their original width. Extensions stay
+  // outside this proof: the endpoint pointer check below detects signed and
+  // unsigned wrap instead of assuming that an index addition cannot overflow.
+  struct DMAIndexForm {
+    llvm::DenseMap<Value, uint64_t> terms;
+    uint64_t constant = 0;
+  };
+
+  // Conversion constructs aggregate insert/extract chains before the LLVM
+  // canonicalizer runs. Look through exact scalar projections for analysis
+  // without changing the values used by the actual memory operations.
+  static Value resolveDMAValue(Value value) {
+    for (unsigned depth = 0; depth < 32; ++depth) {
+      auto extract = value.getDefiningOp<LLVM::ExtractValueOp>();
+      if (!extract || extract.getPosition().size() != 1)
+        break;
+      Value aggregate = extract.getContainer();
+      bool found = false;
+      for (unsigned entry = 0; entry < 4096; ++entry) {
+        auto insert = aggregate.getDefiningOp<LLVM::InsertValueOp>();
+        if (!insert || insert.getPosition().size() != 1)
+          break;
+        if (insert.getPosition() == extract.getPosition()) {
+          value = insert.getValue();
+          found = true;
+          break;
+        }
+        aggregate = insert.getContainer();
+      }
+      if (!found)
+        break;
+    }
+    return value;
+  }
+
+  static void collectDMAIndex(Value value, uint64_t scale, DMAIndexForm &form,
+                              unsigned &budget) {
+    value = resolveDMAValue(value);
+    if (budget) {
+      --budget;
+      if (auto op = value.getDefiningOp<LLVM::ConstantOp>()) {
+        if (auto attr = dyn_cast<IntegerAttr>(op.getValue())) {
+          form.constant += scale * attr.getValue().getZExtValue();
+          return;
+        }
+      }
+      if (auto op = value.getDefiningOp<LLVM::AddOp>()) {
+        collectDMAIndex(op.getLhs(), scale, form, budget);
+        collectDMAIndex(op.getRhs(), scale, form, budget);
+        return;
+      }
+      if (auto op = value.getDefiningOp<LLVM::SubOp>()) {
+        collectDMAIndex(op.getLhs(), scale, form, budget);
+        collectDMAIndex(op.getRhs(), -scale, form, budget);
+        return;
+      }
+    }
+    form.terms[value] += scale;
+  }
+
+  // A common scalar GEP base plus indices b, b+1, ... modulo the same width.
+  // This is deliberately narrower than offsetState: gathers, modulo, different
+  // extensions and layouts without this proof retain the full dynamic checks.
+  static bool unitDMAIndexSequence(ArrayRef<Value> ptrs, unsigned byteWidth,
+                                    SmallVectorImpl<Value> &indices) {
+    if (ptrs.empty())
+      return false;
+    Value base;
+    Type elementType, indexType;
+    unsigned extension = 0;
+    DMAIndexForm first;
+    uint64_t mask = 0;
+    for (auto [i, ptr] : llvm::enumerate(ptrs)) {
+      auto gep = resolveDMAValue(ptr).getDefiningOp<LLVM::GEPOp>();
+      if (!gep || gep.getRawConstantIndices().size() != 1 ||
+          gep.getDynamicIndices().size() != 1 ||
+          !gep.getElemType().isIntOrFloat() ||
+          (gep.getElemType().getIntOrFloatBitWidth() + 7) / 8 != byteWidth)
+        return false;
+      Value index = resolveDMAValue(gep.getDynamicIndices()[0]);
+      unsigned ext = 0;
+      if (auto op = index.getDefiningOp<LLVM::SExtOp>()) {
+        index = resolveDMAValue(op.getArg());
+        ext = 1;
+      } else if (auto op = index.getDefiningOp<LLVM::ZExtOp>()) {
+        index = resolveDMAValue(op.getArg());
+        ext = 2;
+      }
+      auto type = dyn_cast<IntegerType>(index.getType());
+      if (!type || type.getWidth() > 64 || type.getWidth() < 2 ||
+          ptrs.size() >= (uint64_t(1) << (type.getWidth() - 1)))
+        return false;
+      if (!i) {
+        base = resolveDMAValue(gep.getBase());
+        elementType = gep.getElemType();
+        indexType = type;
+        extension = ext;
+        mask = type.getWidth() == 64 ? ~uint64_t(0) : (uint64_t(1) << type.getWidth()) - 1;
+      } else if (resolveDMAValue(gep.getBase()) != base || gep.getElemType() != elementType ||
+                 type != indexType || ext != extension) {
+        return false;
+      }
+      DMAIndexForm form;
+      unsigned budget = 256;
+      collectDMAIndex(index, 1, form, budget);
+      for (auto &term : form.terms)
+        term.second &= mask;
+      SmallVector<Value> zeros;
+      for (const auto &term : form.terms)
+        if (term.second == 0)
+          zeros.push_back(term.first);
+      for (Value value : zeros)
+        form.terms.erase(value);
+      if (!i)
+        first = form;
+      else if (form.terms != first.terms || ((form.constant - first.constant) & mask) != i)
+        return false;
+      indices.push_back(index);
+    }
+    return true;
+  }
+
+  static bool intervalDMAPredicate(ArrayRef<Value> predicates,
+                                    ArrayRef<Value> indices, bool &isSigned) {
+    if (predicates.size() != indices.size() || predicates.empty())
+      return false;
+    auto first = resolveDMAValue(predicates[0]).getDefiningOp<LLVM::ICmpOp>();
+    if (!first)
+      return false;
+    auto kind = first.getPredicate();
+    isSigned = kind == LLVM::ICmpPredicate::slt || kind == LLVM::ICmpPredicate::sle ||
+               kind == LLVM::ICmpPredicate::sgt || kind == LLVM::ICmpPredicate::sge;
+    if (!isSigned && kind != LLVM::ICmpPredicate::ult && kind != LLVM::ICmpPredicate::ule &&
+        kind != LLVM::ICmpPredicate::ugt && kind != LLVM::ICmpPredicate::uge)
+      return false;
+    for (auto [predicate, index] : llvm::zip(predicates, indices)) {
+      auto cmp = resolveDMAValue(predicate).getDefiningOp<LLVM::ICmpOp>();
+      if (!cmp || resolveDMAValue(cmp.getLhs()) != index ||
+          resolveDMAValue(cmp.getRhs()) != resolveDMAValue(first.getRhs()) ||
+          cmp.getPredicate() != kind)
+        return false;
+    }
+    return true;
+  }
+
+  // Low zero bits survive modular integer arithmetic. This proof deliberately
+  // does not infer ranges from signed comparisons or from arbitrary divisions.
+  static unsigned dmaKnownLowZeros(Value value, unsigned depth = 0) {
+    value = resolveDMAValue(value);
+    auto type = dyn_cast<IntegerType>(value.getType());
+    if (!type || depth > 32)
+      return 0;
+    unsigned width = type.getWidth();
+    if (auto op = value.getDefiningOp<LLVM::ConstantOp>())
+      if (auto attr = dyn_cast<IntegerAttr>(op.getValue()))
+        return std::min(width, attr.getValue().countTrailingZeros());
+    Operation *op = value.getDefiningOp();
+    if (!op)
+      return 0;
+    if (isa<LLVM::BitcastOp>(op) && op->getOperand(0).getType() == type)
+      return dmaKnownLowZeros(op->getOperand(0), depth + 1);
+    if (isa<LLVM::SExtOp, LLVM::ZExtOp, LLVM::TruncOp>(op))
+      return std::min(width, dmaKnownLowZeros(op->getOperand(0), depth + 1));
+    if (op->getNumOperands() != 2)
+      return 0;
+    unsigned a = dmaKnownLowZeros(op->getOperand(0), depth + 1);
+    unsigned b = dmaKnownLowZeros(op->getOperand(1), depth + 1);
+    if (isa<LLVM::MulOp>(op))
+      return std::min(width, a + b);
+    if (isa<LLVM::AndOp>(op))
+      return std::max(a, b);
+    if (isa<LLVM::AddOp, LLVM::SubOp, LLVM::OrOp, LLVM::XOrOp>(op))
+      return std::min(a, b);
+    if (isa<LLVM::ShlOp>(op)) {
+      auto shift = resolveDMAValue(op->getOperand(1)).getDefiningOp<LLVM::ConstantOp>();
+      if (shift)
+        if (auto attr = dyn_cast<IntegerAttr>(shift.getValue())) {
+          uint64_t amount = attr.getValue().getLimitedValue();
+          if (amount < width)
+            return std::min(width, a + unsigned(amount));
+        }
+    }
+    return 0;
+  }
+
+  // A power-of-two packet starting at a multiple of its length cannot cross
+  // either the signed or unsigned boundary of its original index type. With
+  // a uniform predicate and independently proved LM continuity, there is no
+  // partial-lane case to emit. Avoid retaining N cold addresses across DMA.
+  static bool exactUniformDMAPacket(ArrayRef<Value> gmPtrs,
+                                     ArrayRef<Value> lmPtrs,
+                                     ArrayRef<Value> predicates,
+                                     unsigned byteWidth) {
+    size_t count = gmPtrs.size();
+    if (count < 2 || (count & (count - 1)) || lmPtrs.size() < count ||
+        predicates.empty())
+      return false;
+    Value valid = resolveDMAValue(predicates.front());
+    if (!llvm::all_of(predicates, [&](Value value) {
+          return resolveDMAValue(value) == valid;
+        }))
+      return false;
+    SmallVector<Value> gmIndices, lmIndices;
+    if (!unitDMAIndexSequence(gmPtrs, byteWidth, gmIndices) ||
+        !unitDMAIndexSequence(lmPtrs.take_front(count), byteWidth, lmIndices))
+      return false;
+    unsigned bits = 0;
+    for (size_t n = count; n > 1; n >>= 1)
+      ++bits;
+    return dmaKnownLowZeros(gmIndices.front()) >= bits &&
+           dmaKnownLowZeros(lmIndices.front()) >= bits;
+  }
+
+  // Keep addresses needed only by the exceptional lane path inside that path.
+  // Otherwise they stay live across the bulk DMA and spill hundreds of global
+  // pointers even when every packet takes the fast branch. Clone only pure
+  // arithmetic; loads, calls and block arguments retain their original values.
+  static Value slowDMAValue(Value value, ConversionPatternRewriter &rewriter,
+                            llvm::DenseMap<Value, Value> &cache,
+                            unsigned depth = 0) {
+    value = resolveDMAValue(value);
+    if (auto it = cache.find(value); it != cache.end())
+      return it->second;
+    Operation *op = value.getDefiningOp();
+    if (!op || depth >= 32 || op->getNumResults() != 1 ||
+        !isa<LLVM::GEPOp, LLVM::AddOp, LLVM::SubOp, LLVM::MulOp,
+             LLVM::AndOp, LLVM::OrOp, LLVM::XOrOp, LLVM::ShlOp,
+             LLVM::SExtOp, LLVM::ZExtOp, LLVM::TruncOp, LLVM::BitcastOp,
+             LLVM::PtrToIntOp, LLVM::IntToPtrOp, LLVM::ICmpOp>(op))
+      return value;
+    IRMapping mapping;
+    for (Value operand : op->getOperands())
+      mapping.map(operand, slowDMAValue(operand, rewriter, cache, depth + 1));
+    Value result = rewriter.clone(*op, mapping)->getResult(0);
+    cache[value] = result;
+    return result;
+  }
+
   // Coalesce only after checking the actual predicate and both pointer views.
   // This does not infer a prefix from an arbitrary comparison or assume that
   // a fixed stride survives a modulo wrap. Partial/non-contiguous tiles retain
@@ -248,17 +486,42 @@ struct LoadStoreConversionBase {
                                bool toLocal) const {
     Value zero = i32_val(0);
     Value bytes = i32_val(byteWidth);
+    if (exactUniformDMAPacket(gmPtrs, lmPtrs, predicates, byteWidth)) {
+      Value size = i32_val(gmPtrs.size() * byteWidth);
+      if (toLocal)
+        createGuardedGM2LMOp(rewriter, ctx, loc, gmPtrs.front(), lmPtrs.front(),
+                            zero, size, predicates.front());
+      else
+        createGuardedLM2GMOp(rewriter, ctx, loc, lmPtrs.front(), gmPtrs.front(),
+                            zero, size, predicates.front());
+      return;
+    }
     Block *merge = nullptr;
+    bool unitStride = false;
     if (gmPtrs.size() > 1) {
       Value complete = int_val(1, 1);
       Value gmBase = ptrtoint(i64_ty, gmPtrs[0]);
       Value lmBase = ptrtoint(i32_ty, lmPtrs[0]);
+      SmallVector<Value> indices;
+      unitStride = unitDMAIndexSequence(gmPtrs, byteWidth, indices);
+      bool signedPredicate = false;
+      bool interval = unitStride && intervalDMAPredicate(predicates, indices, signedPredicate);
+      if (interval) {
+        // In addition to pointer continuity, check monotonicity in the mask's
+        // comparison domain (signed and unsigned wraps are different).
+        Value ordered = rewriter.create<LLVM::ICmpOp>(loc,
+            signedPredicate ? LLVM::ICmpPredicate::sle : LLVM::ICmpPredicate::ule,
+            indices.front(), indices.back());
+        complete = and_(complete, ordered);
+      }
       for (size_t i = 0; i < gmPtrs.size(); ++i) {
-        complete = and_(complete, predicates[predicates.size() == 1 ? 0 : i]);
+        if (!interval || i == 0 || i + 1 == gmPtrs.size())
+          complete = and_(complete, predicates[predicates.size() == 1 ? 0 : i]);
         if (i) {
-          complete = and_(complete,
-              icmp_eq(ptrtoint(i64_ty, gmPtrs[i]),
-                      add(gmBase, i64_val(i * byteWidth))));
+          if (!unitStride || i + 1 == gmPtrs.size())
+            complete = and_(complete,
+                icmp_eq(ptrtoint(i64_ty, gmPtrs[i]),
+                        add(gmBase, i64_val(i * byteWidth))));
           complete = and_(complete,
               icmp_eq(ptrtoint(i32_ty, lmPtrs[i]),
                       add(lmBase, i32_val(i * byteWidth))));
@@ -281,10 +544,14 @@ struct LoadStoreConversionBase {
       rewriter.create<LLVM::BrOp>(loc, ValueRange{}, merge);
       rewriter.setInsertionPointToEnd(individual);
     }
+    llvm::DenseMap<Value, Value> slowValues;
     for (size_t i = 0; i < gmPtrs.size(); ++i) {
-      Value gm = bitcast(gmPtrs[i], ptr_ty(ctx, 1));
+      Value gmPtr = unitStride ? slowDMAValue(gmPtrs[i], rewriter, slowValues) : gmPtrs[i];
+      Value gm = bitcast(gmPtr, ptr_ty(ctx, 1));
       Value lm = bitcast(lmPtrs[i], ptr_ty(ctx, 0));
       Value valid = predicates[predicates.size() == 1 ? 0 : i];
+      if (unitStride)
+        valid = slowDMAValue(valid, rewriter, slowValues);
       if (toLocal)
         createGuardedGM2LMOp(rewriter, ctx, loc, gm, lm, zero, bytes, valid);
       else
@@ -1884,6 +2151,32 @@ struct XPULoadOpConversion : public ConvertOpToLLVMPattern<triton::xpu::LoadOp>,
            "this case should be transformed to normal load before lowering");
     Value llPtr = adaptor.getPtr();
     Value llIndex = adaptor.getIndex();
+
+    // A proven read-only column staged by Vectorize. It keeps its global
+    // column index in SM; unlike LM it must never cast the base to addrspace 0.
+    if (op->hasAttr("xpu.shared_column")) {
+      auto ty = cast<RankedTensorType>(res.getType());
+      auto vec = dyn_cast<VectorType>(ty.getElementType());
+      if (!vec || op.getStride() != 1 || op.getMask() || op.getOther() ||
+          op.getIsDiscrete() || op.getBf16Tofp32Unordered())
+        return rewriter.notifyMatchFailure(op, "invalid shared column vector load");
+      auto ptrs = unpackLLElements(loc, llPtr, rewriter);
+      auto llVec = typeConverter->convertType(vec);
+      auto llElem = typeConverter->convertType(vec.getElementType());
+      unsigned count = getTotalElemsPerThread(ty);
+      unsigned lanes = vec.getNumElements();
+      Value base = ptrs.front();
+      if (llIndex) {
+        Value offset = mul(llIndex, i32_val(count * lanes));
+        base = gep(ptr_ty(ctx, 2), llElem, base, offset);
+      }
+      SmallVector<Value> values;
+      for (unsigned i = 0; i < count; ++i)
+        values.push_back(load(llVec, gep(ptr_ty(ctx, 2), llElem, base, i32_val(i * lanes))));
+      auto llvmTy = typeConverter->convertType(ty);
+      rewriter.replaceOp(op, {packLLElements(loc, typeConverter, values, rewriter, llvmTy)});
+      return success();
+    }
 
     // Determine Type
     Type ptrTy = ptr.getType();

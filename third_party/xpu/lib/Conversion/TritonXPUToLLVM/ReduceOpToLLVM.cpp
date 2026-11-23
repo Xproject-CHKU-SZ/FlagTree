@@ -824,8 +824,10 @@ private:
   static bool collapseSoftmaxPacket(ConversionPatternRewriter &rewriter,
                                     triton::xpu::ReduceOp op,
                                     SmallVector<Value> &accs) {
+    auto module = op->getParentOfType<ModuleOp>();
     if (accs.size() != 1 ||
-        !op->getParentOfType<ModuleOp>()->hasAttr("flagtree.kl3_row_softmax"))
+        (!module->hasAttr("flagtree.kl3_row_softmax") &&
+         !module->hasAttr("flagtree.reduction_tree")))
       return false;
     auto vec = dyn_cast<VectorType>(accs.front().getType());
     if (!vec || vec.isScalable() || vec.getRank() != 1 ||
@@ -983,6 +985,40 @@ private:
     // different paths within one op.
     bool useRegion =
         vectorized && regionCombineEnabled() && canInterpretCombine(*combineOp);
+
+    // The requested 16-lane numerical tree is independent of whether the
+    // producer vectorizes. Pack an exact scalar packet without reassociation.
+    if (!vectorized && operandType.getRank() == 2 && op.getAxis() == 1 &&
+        rowsPerCore == 1 && offsets.size() == 16 && srcValues.size() == 16 &&
+        op->getParentOfType<ModuleOp>()->hasAttr("flagtree.reduction_tree")) {
+      SmallVector<Value> lanes(16);
+      bool exact = true;
+      for (unsigned i = 0; i < 16; ++i) {
+        auto column = offsets[i][1];
+        if (offsets[i][0] != 0 || column >= 16 || lanes[column] ||
+            srcValues[i].size() != 1 || !srcValues[i][0].getType().isF32()) {
+          exact = false;
+          break;
+        }
+        lanes[column] = srcValues[i][0];
+      }
+      if (exact) {
+        auto loc = op.getLoc();
+        auto ty = VectorType::get({16}, rewriter.getF32Type());
+        Value packet = rewriter.create<LLVM::UndefOp>(loc, ty);
+        for (unsigned i = 0; i < 16; ++i)
+          packet = rewriter.create<LLVM::InsertElementOp>(loc, ty, packet,
+                                                          lanes[i], i32_val(i));
+        SmallVector<Value> folded{packet};
+        if (collapseSoftmaxPacket(rewriter, op, folded)) {
+          auto key = offsets.front();
+          key[op.getAxis()] = 0;
+          accs[key] = folded;
+          indices[key] = srcIndices.front();
+          return;
+        }
+      }
+    }
 
     // reduce within threads
     for (int i = 0; i < offsets.size(); ++i) {

@@ -2547,6 +2547,77 @@ public:
 
   // `iterNum` is decided by the caller: it has to be known before
   // findDiscretePtrChain() rewrites the pointer chain.
+  // Compute only the first register tile used to initialize a reduction.
+  // Extracting a prefix after computing the whole row can keep every vector
+  // live, because target select intrinsics are not all eliminated by LLVM DCE.
+  static bool isRowValueOperation(Operation *op) {
+    // These value-only XPU operations do not all carry MLIR's Pure trait.
+    // Keep the explicit list narrow; never erase DMA, stores, calls or syncs.
+    return isa<triton::xpu::VSelectOp, triton::xpu::VExtFOp,
+               triton::xpu::VTruncFOp, triton::xpu::VConstOp,
+               triton::xpu::VSplatOp, triton::xpu::VvaddFOp,
+               triton::xpu::VvsubFOp, triton::xpu::VvmulFOp,
+               triton::xpu::VvdivFOp, triton::xpu::OutRangeOp,
+               triton::xpu::ExtractOp, triton::xpu::ExtractSliceOp,
+               triton::xpu::SvaddFOp, triton::xpu::SvsubFOp,
+               triton::xpu::SvmulFOp>(op);
+  }
+
+  Value tileReductionInitializer(MLIRContext *context,
+                                 triton::xpu::ExtractSliceOp slice,
+                                 int64_t iterNum) {
+    auto module = slice->getParentOfType<ModuleOp>();
+    if (!module->hasAttr("flagtree.row_shared"))
+      return slice;
+    auto ty = dyn_cast<RankedTensorType>(slice.getTensor().getType());
+    if (!ty || ty.getRank() != 2 || !isa<VectorType>(ty.getElementType()))
+      return slice;
+    auto layout = dyn_cast_or_null<triton::xpu::ClusterLayoutAttr>(ty.getEncoding());
+    if (!layout || layout.getSizePerCore()[0] != 1)
+      return slice;
+    auto root = slice.getTensor().getDefiningOp();
+    if (!root)
+      return slice;
+    SetVector<Operation *> excluded, visited, tree, outer;
+    getExcludeChainOps(module, excluded);
+    SmallVector<SetVector<Operation *>> trees;
+    getDAG(root, visited, trees, excluded, false);
+    for (auto &part : trees)
+      for (auto *op : part)
+        tree.insert(op);
+    if (!tree.count(root) || llvm::any_of(tree, [&](Operation *op) {
+          return op->getNumRegions() || op->getBlock() != slice->getBlock() ||
+                 (!isMemoryEffectFree(op) && !isRowValueOperation(op) &&
+                  !isa<triton::xpu::LoadOp>(op));
+        }))
+      return slice;
+    tree = sortOpTree(tree);
+    getOuterChain(tree, outer);
+    OpBuilder builder(slice);
+    auto loc = slice.getLoc();
+    auto zero = builder.create<arith::ConstantIndexOp>(loc, 0);
+    auto index = builder.create<arith::IndexCastOp>(loc, builder.getI32Type(), zero);
+    IRMapping mapping;
+    createLoopBody(context, builder, loc, iterNum, tree, outer, index, mapping);
+    auto result = mapping.lookup(slice.getTensor());
+    assert(result.getType() == slice.getType() && "reduction initial tile type mismatch");
+    module->setAttr("xpu.tiled_reduction_initializer", builder.getUnitAttr());
+    return result;
+  }
+
+  void eraseUnusedRowValues(ModuleOp m) {
+    if (!m->hasAttr("xpu.tiled_reduction_initializer"))
+      return;
+    SmallVector<Operation *> values;
+    m.walk([&](Operation *op) {
+      if (isRowValueOperation(op))
+        values.push_back(op);
+    });
+    for (Operation *op : llvm::reverse(values))
+      if (op->use_empty())
+        op->erase();
+  }
+
   void unrollControlReduce(MLIRContext *context,
                            SetVector<Operation *> &unrollOpTree,
                            Operation *insertPt, ValueRange &iterArgs,
@@ -2567,12 +2638,15 @@ public:
         auto extractSliceOp = builder.create<triton::xpu::ExtractSliceOp>(
             loc, iterArgs[i].getType(), iterArgs[i]);
         setTensorType(context, extractSliceOp, iterNum, isOuter);
+        Value initial = tileReductionInitializer(context, extractSliceOp, iterNum);
         auto inUnrollOpTree = [&](OpOperand &operand) {
           return unrollOpTree.count(operand.getOwner());
         };
-        iterArgs[i].replaceUsesWithIf(extractSliceOp.getResult(),
+        iterArgs[i].replaceUsesWithIf(initial,
                                       inUnrollOpTree);
-        newIterArgs[i] = extractSliceOp.getResult();
+        newIterArgs[i] = initial;
+        if (initial != extractSliceOp.getResult())
+          extractSliceOp.erase();
       }
       // 2. Unroll control
       // 2.1 Create forOp
@@ -3133,6 +3207,10 @@ public:
                           reduceOp.getInputTypes()[0], numCol, numUnroll,
                           /*loopResults=*/reduceOperandNum)
                 .iterNum;
+        // Reusing the producer must not change the grouping of floating-point
+        // additions merely because the consumer DAG is now cheaper.
+        if (auto saved = reduceOp->getAttrOfType<IntegerAttr>("xpu.pre_cache_iter_num"))
+          iterNum = saved.getInt();
         if (iterNum <= 1)
           return;
         // 1. Copy Defined Op Chain of Reduce Operand for InitArgs
@@ -3386,13 +3464,108 @@ public:
     unrollControl(context, unrollOpTrees, plan, /*postReduce=*/true);
   }
 
+  // Reuse a rounded elementwise producer shared by several reductions and the
+  // epilogue. Materialize it in a fresh LM buffer before splitting consumer
+  // DAGs; otherwise each consumer clones the same arithmetic and cast chain.
+  // This schedule is independently selectable and keeps the rounded value.
+  void cacheReductionProducer(ModuleOp &m, MLIRContext *context) {
+    if (!m->hasAttr("flagtree.reduction_reuse"))
+      return;
+    // Freeze each original within-core reduction plan before changing any
+    // producer. Resource validation still applies to the resulting kernel;
+    // this does not promise equivalence across separately chosen layouts.
+    SetVector<Operation *> originalExcluded;
+    getExcludeChainOps(m, originalExcluded);
+    m.walk([&](triton::xpu::ReduceOp reduce) {
+      int64_t columns = 1, unroll = 1;
+      getUnrollInfoReduce(reduce, columns, unroll);
+      if (!canTile(reduce, reduce.getInputTypes()[0], columns, unroll))
+        return;
+      SetVector<Operation *> visited, probe;
+      SmallVector<SetVector<Operation *>> trees;
+      for (unsigned i = 0; i + 1 < reduce.getNumOperands(); ++i)
+        if (auto *def = reduce.getOperands()[i].getDefiningOp())
+          getDAG(def, visited, trees, originalExcluded, false);
+      for (auto &tree : trees)
+        for (auto *op : tree)
+          probe.insert(op);
+      int64_t iterations = decideIterNum("reduce", reduce, probe,
+          reduce.getInputTypes()[0], columns, unroll,
+          reduce.getNumOperands() - 1).iterNum;
+      reduce->setAttr("xpu.pre_cache_iter_num", OpBuilder(context).getI64IntegerAttr(iterations));
+    });
+    SmallVector<triton::xpu::VExtFOp> candidates;
+    m.walk([&](triton::xpu::VExtFOp ext) {
+      auto narrow = ext.getOperand().getDefiningOp<triton::xpu::VTruncFOp>();
+      if (!narrow || !narrow.getOperand().getDefiningOp<triton::xpu::VvaddFOp>() ||
+          ext.getResult().hasOneUse())
+        return;
+      auto ty = dyn_cast<RankedTensorType>(ext.getType());
+      if (!ty || ty.getRank() != 2 || !isa<VectorType>(ty.getElementType()) ||
+          !getElementTypeOrSelf(ty.getElementType()).isF32())
+        return;
+      auto layout = dyn_cast_or_null<triton::xpu::ClusterLayoutAttr>(ty.getEncoding());
+      // One row per core avoids a second row-stride contract in the cache.
+      // Bound the additional LM allocation independently of the register tile.
+      if (!layout || layout.getSizePerCore()[0] != 1 ||
+          getTotalElemsPerThread(ty) * getNumInVector(ty.getElementType()) > 1024)
+        return;
+      candidates.push_back(ext);
+    });
+    for (auto ext : candidates) {
+      auto ty = cast<RankedTensorType>(ext.getType());
+      auto narrowTy = cast<RankedTensorType>(ext.getOperand().getType());
+      // The value has already crossed the model's FP16 rounding boundary.
+      // Storing that exact rounded representation halves the extra LM budget;
+      // storing FP32 can otherwise force a multi-core row despite eliminating
+      // arithmetic. Widen after loading, preserving every numerical boundary.
+      // BF16 has separate placement rules: retain its existing FP32 cache.
+      bool packedHalf = m->hasAttr("flagtree.reduction_half_cache") &&
+                        getElementTypeOrSelf(narrowTy.getElementType()).isF16();
+      auto cacheTy = packedHalf ? narrowTy : ty;
+      Value stored = packedHalf ? ext.getOperand() : ext.getResult();
+      int64_t lanes = getNumInVector(cacheTy.getElementType());
+      OpBuilder builder(ext);
+      builder.setInsertionPointAfter(ext);
+      auto buffer = builder.create<triton::xpu::AllocaOp>(
+          ext.getLoc(), createPointerType(cacheTy, lanes), getTensorSize(cacheTy) * lanes);
+      auto store = builder.create<triton::xpu::StoreOp>(
+          ext.getLoc(), buffer, stored, Value(), Value(), -1, false,
+          Dtype::UNKNOWN, MemorySyncMode::SYNC);
+      auto load = builder.create<triton::xpu::LoadOp>(
+          ext.getLoc(), cacheTy, buffer, Value(), Value(), Value(), 1,
+          -1, false, false, false, MemorySyncMode::SYNC);
+      Value reused = load;
+      if (packedHalf)
+        reused = builder.create<triton::xpu::VExtFOp>(ext.getLoc(), ty, load);
+      ext.getResult().replaceUsesWithIf(reused, [&](OpOperand &use) {
+        return use.getOwner() != store.getOperation();
+      });
+      if (packedHalf) {
+        ext.erase();
+        m->setAttr("xpu.rounded_half_cache", builder.getUnitAttr());
+      }
+      SetVector<Operation *> excluded, visited;
+      getExcludeChainOps(m, excluded);
+      SmallVector<SetVector<Operation *>> trees;
+      getDAG(store, visited, trees, excluded);
+      if (!trees.empty()) {
+        auto plan = planIterNums(trees, "reduction-producer-cache");
+        unrollControl(context, trees, plan);
+      }
+      m->setAttr("xpu.fast_producer_reuse", builder.getUnitAttr());
+    }
+  }
+
   void reductionUnrollControl(ModuleOp &m, MLIRContext *context) {
+    cacheReductionProducer(m, context);
     // 1. Unroll Control for Reduce For
     forUnrollControl(m, context);
     // 2. Create For for ReduceWithinCore
     createReduceWithinCore(m, context);
     // 3. Deal with BroadCastOp/ReduceOp to StoreOp
     postReduceUnrollControl(m, context);
+    eraseUnusedRowValues(m);
     // 4. Calculate discrete offset in the runtime
     createDiscreteOffset(m);
     // 5. Check Def-Use Shape Match

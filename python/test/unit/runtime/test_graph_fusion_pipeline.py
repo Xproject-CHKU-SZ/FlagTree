@@ -7,6 +7,44 @@ from triton.experimental.graph_fusion._model_pipeline import compile_pipeline
 
 
 class PipelineTests(unittest.TestCase):
+    def test_matrix_candidates_are_cold_scoped_and_keep_full_pipeline(self):
+        for schedule in ('inductor', 'grouped'):
+            from types import SimpleNamespace
+            options=[];prepared=[]
+            class Model:
+                def parameters(self):return [SimpleNamespace(device=torch.device('cuda:0'))]
+                def buffers(self):return []
+            class Compiled:
+                _f06_capture='test'
+                def __init__(self):
+                    self._f06_audit=[dict(exposed_linears=[dict(input_dtype='torch.float32')])]
+                def __call__(self,x):return x+1
+            def compile_model(model,**kwargs):
+                options.append(kwargs);return Compiled()
+            def prepare(x):prepared.append(x);return ((x,),{})
+            with patch('triton.experimental.graph_fusion._model.compile_model',compile_model), \
+                 patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',return_value=True):
+                base=compile_pipeline(Model(),prepare=prepare,precision_policy='fuse_fp32_internals',
+                    precision_options=dict(linear_schedule=schedule))
+                self.assertEqual(len(options),1)
+                variants=base._f06_gemm_variants();self.assertIs(base._f06_gemm_variants(),variants)
+                self.assertEqual(set(variants),{'gemm_tuned','gemm_full_k'})
+                new=variants['gemm_tuned'];self.assertEqual(new(3),4)
+                self.assertEqual(prepared,[3])
+                self.assertEqual(options[-2]['precision_options']['matmul_policy'],'tuned')
+                self.assertEqual(options[-1]['precision_options']['matmul_policy'],'full_k')
+                self.assertEqual(new._f06_gemm_variants(),{})
+                self.assertEqual(new._f06_resource_variants(),{})
+                self.assertEqual(new._f06_buffer_variants(),{})
+                base._f06_gemm_candidates=None
+                base._f06_audit[0]['exposed_linears'][0]['input_dtype']='torch.float16'
+                self.assertEqual(base._f06_gemm_variants(),{})
+                base._f06_gemm_candidates=None
+                base._f06_audit[0]['exposed_linears'][0]['input_dtype']='torch.float32'
+                with patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800',return_value=False):
+                    self.assertEqual(base._f06_gemm_variants(),{})
+            self.assertEqual(len(options),3)
+
     def test_resource_candidates_keep_independent_guarded_capture_caches(self):
         class Model(torch.nn.Module):
             def __init__(self):

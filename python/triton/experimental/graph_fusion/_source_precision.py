@@ -13,7 +13,9 @@ from torch import fx
 def module_path(node):
     stack=list(node.meta.get('nn_module_stack',{}).values())
     if not stack:return ''
-    path=re.sub(r"^L\['self'\]\.?",'',str(stack[-1][0]))
+    # Dynamo uses ``fn`` for top-level Sequential/module wrappers and ``self``
+    # for a directly captured forward. Both refer to the captured root.
+    path=re.sub(r"^L\['(?:self|fn)'\]\.?",'',str(stack[-1][0]))
     path=re.sub(r"_modules\['([^']+)'\]",r'\1',path)
     return re.sub(r'\[(\d+)\]',r'.\1',path).strip('.')
 
