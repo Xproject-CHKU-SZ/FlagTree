@@ -169,6 +169,9 @@ class XPUOptions:
     xpu_reduction_tree: bool = False
     # Requires read-only column arguments and no alias with any write operand.
     xpu_row_shared: bool = False
+    # Only for the ordered two-pass row template: readonly inputs, freshly
+    # allocated disjoint output, and one complete row per physical core.
+    xpu_ordered_row_reuse: bool = False
     resource_kind: str = "auto"
     arch: int = 3
     assert arch in [2, 3, 4, 5], "Invalid XPU ARCH"

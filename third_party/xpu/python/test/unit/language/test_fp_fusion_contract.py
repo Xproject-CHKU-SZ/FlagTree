@@ -58,17 +58,23 @@ def test_cache_only_change_preserves_fixed_row_algorithm(n,high_bias):
     b=((torch.arange(count)%17-8)/32).half().cuda()
     w=((torch.arange(n)%13+3)/16).half().cuda()
     shift=((torch.arange(n)%7-3)/16).half().cuda()
-    outputs=[]
+    outputs=[];layouts=[]
     for reuse in (False,True):
         residual=torch.full((count+128,),-73,dtype=torch.float16,device='cuda')
         out=torch.full_like(residual,-73)
         kernel=normalized_residual[(2,)](a,b,w,shift,residual[64:],out[64:],rows,n,
             triton.next_power_of_2(n),True,num_warps=8,num_stages=1,
-            buffer_size_limit=2048,xpu_row_shared=True,
+            # 2048 is an upper bound: stack-budget retuning chose 128 for the
+            # uncached kernel but 256 for the cached one. Pin a jointly legal
+            # size and verify the resulting geometry, not just the request.
+            buffer_size_limit=128,xpu_row_shared=True,
             xpu_reduction_reuse=reuse,xpu_reduction_half_cache=reuse,enable_fp_fusion=False)
+        assert kernel.metadata.buffer_size_limit==128
+        layouts.append(kernel.asm['ttxir'].splitlines()[0])
         if reuse and n==1024:assert "xpu.fast_producer_reuse" in kernel.asm["ttxir"]
         r,y=residual.cpu(),out.cpu()
         assert bool((y[:64]==-73).all() and (y[64+rows*n:]==-73).all())
         assert torch.equal(r[64:64+rows*n],(a[:rows*n].float()+b[:rows*n].float()).half().cpu())
         outputs.append((r,y))
+    assert layouts[0]==layouts[1]
     assert all(torch.equal(a,b) for a,b in zip(*outputs))

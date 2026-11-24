@@ -869,10 +869,50 @@ struct TritonXPUCoreTilingPass
     });
   }
 
+  // A short pointwise row must not be assigned one logical column to each
+  // of 64 cores: columns beyond its arange extent would still execute memory
+  // operations. For rectangular FP32 computation with enough rows, use one
+  // row per core via the existing grouping transformation. Do not change
+  // explicit groups, reductions, scans, matrix operations or mixed widths.
+  void groupShortPointwiseRows(ModuleOp &mod) {
+    if (this->groupsPerCluster != 1 || this->tritonAutoCoreTiling)
+      return;
+    int64_t columns = 0, maxRows = 0;
+    bool incompatible = false, fp32 = false;
+    auto inspect = [&](Type type) {
+      auto t = dyn_cast<RankedTensorType>(type);
+      if (!t)
+        return;
+      if (t.getRank() > 2) {
+        incompatible = true;
+        return;
+      }
+      if (t.getRank() != 2 || t.getShape()[0] <= 1 || t.getShape()[1] <= 1)
+        return;
+      if (columns && columns != t.getShape()[1])
+        incompatible = true;
+      columns = t.getShape()[1];
+      maxRows = std::max(maxRows, t.getShape()[0]);
+      fp32 |= t.getElementType().isF32();
+    };
+    mod.walk([&](Operation *op) {
+      if (isa<triton::ReduceOp, triton::ScanOp, triton::DotOp>(op))
+        incompatible = true;
+      for (Value result : op->getResults())
+        inspect(result.getType());
+      for (Value operand : op->getOperands())
+        inspect(operand.getType());
+    });
+    if (!incompatible && fp32 && columns > 1 && columns < this->coreNum &&
+        maxRows >= this->coreNum && maxRows % this->coreNum == 0)
+      this->groupsPerCluster = this->coreNum;
+  }
+
   void runOnOperation() override {
     mlir::MLIRContext *context = &getContext();
     mlir::ModuleOp mod = getOperation();
 
+    groupShortPointwiseRows(mod);
     if (this->tritonAutoCoreTiling) {
       computeAutoGroupsPerCluster(mod);
       LLVM_DEBUG(llvm::dbgs() << "CoreTiling AutoTiling: "

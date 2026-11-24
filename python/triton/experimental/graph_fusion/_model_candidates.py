@@ -285,9 +285,10 @@ def model_candidate_routes(model, *, prepare, output_template, validation_inputs
                            source_prepare=None, precision_score=None):
     """Search the original execution graph; FP32 validation stays external.
 
-    The historical FP32-rooted search requires explicit opt-in. Original-dtype
-    search only uses explicitly supplied unrounded tensors for local precision
-    upgrades. It never obtains a graph from a reference model.
+    The P800 cold preflight selects FP32-only search when every compute node
+    has a reviewed FP32 arithmetic contract. Otherwise the original precision
+    boundaries remain the search origin. FP32 values come from explicit source
+    bindings, never from widening a rounded checkpoint or a reference forward.
     """
     if capture_source == 'original_dtype':
         from ._captured_candidates import captured_model_candidate_routes

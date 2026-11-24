@@ -46,7 +46,8 @@ class _InputBoundary(torch.nn.Module):
 
 class LocalPrecisionSpace:
     def __init__(self, model, *, source_tensors, prepare, source_prepare,
-                 validation_inputs, record, granularity='block', _captured_graphs=None):
+                 validation_inputs, record, granularity='block', _captured_graphs=None,
+                 arithmetic_reviewed_sdk=None):
         if model.training or torch.is_grad_enabled() or any(p.requires_grad for p in model.parameters()):
             raise ValueError('Local precision search requires frozen inference')
         if not validation_inputs or not callable(source_prepare):
@@ -59,6 +60,10 @@ class LocalPrecisionSpace:
         self.sources = dict(source_tensors)
         self.original = _state(model)
         self.record = record
+        if arithmetic_reviewed_sdk is not None and type(arithmetic_reviewed_sdk) is not bool:
+            raise ValueError('Arithmetic SDK review must be a bool or None')
+        self.arithmetic_reviewed_sdk = arithmetic_reviewed_sdk
+        self.arithmetic_contracts = None
         self.groups, self.contracts, self.boundaries = {}, {}, set()
         # Tied state needs an indivisible precision group. Reject rather than
         # silently assigning two precisions to a shared mutable tensor.
@@ -195,6 +200,11 @@ class LocalPrecisionSpace:
             same_dtype_joins=joins,
             native_input_contracts={k:[str(d) for d in v[1]] for k, v in self.contracts.items()},
             selected_regions=[], trials=[])
+        if arithmetic_reviewed_sdk is not None:
+            from ._arithmetic_boundaries import arithmetic_contract
+            self.arithmetic_contracts = [arithmetic_contract(gm, reviewed_sdk=arithmetic_reviewed_sdk)
+                                         for gm in self.captured_graphs]
+            record['arithmetic_boundary_checks'] = []
         # Zero changes must reproduce the captured application, including its
         # input narrowing. This prevents preprocessing from biasing screening.
         baseline = self.build(())
@@ -210,7 +220,7 @@ class LocalPrecisionSpace:
         fine = LocalPrecisionSpace(self.model, source_tensors=self.sources,
             prepare=self.native_prepare, source_prepare=self.prepare,
             validation_inputs=self.validation_inputs, record=record, granularity='operator',
-            _captured_graphs=self.captured_graphs)
+            _captured_graphs=self.captured_graphs, arithmetic_reviewed_sdk=self.arithmetic_reviewed_sdk)
         promoted = {name for key in self.close_selected(selected) for name in self.groups[key]['tensors']}
         seed = {key for key, group in fine.groups.items() if set(group['tensors']) <= promoted}
         covered = {name for key in seed for name in fine.groups[key]['tensors']}
@@ -263,7 +273,13 @@ class LocalPrecisionSpace:
             promoted = any(self.groups[key]['path'].startswith(path+'.') for key in selected)
             container._modules[field] = _InputBoundary(container._modules[field],
                 self.contracts[path], promoted).eval()
-        return model.eval().requires_grad_(False)
+        model.eval().requires_grad_(False)
+        if self.arithmetic_contracts is not None:
+            from ._arithmetic_boundaries import verify_candidate_boundaries
+            verify_candidate_boundaries(model, prepare=self.prepare,
+                validation_inputs=self.validation_inputs, contracts=self.arithmetic_contracts,
+                reviewed_sdk=self.arithmetic_reviewed_sdk, record=self.record['arithmetic_boundary_checks'])
+        return model
 
 
 def discover_local_precision_profiles(space, *, output_template, validation_inputs,
@@ -285,8 +301,16 @@ def discover_local_precision_profiles(space, *, output_template, validation_inpu
             return cache[key]
         if len(record['trials']) >= max_trials:
             return None
-        candidate = space.build(key)
         name = 'local_precision_probe_'+str(len(record['trials']))
+        from ._arithmetic_boundaries import ArithmeticBoundaryError
+        try:
+            candidate = space.build(key)
+        except ArithmeticBoundaryError as exc:
+            row = dict(name=name, phase=phase, selected=list(key), passed=False,
+                       arithmetic_boundary_passed=False, errors=[str(exc)], rank=None)
+            record['trials'].append(row); cache[key] = row
+            if progress: progress()
+            return row
         passed = True; errors = []; ranks = []
         for args, kwargs in validation_inputs:
             prepared, keywords = space.prepare(*args, **kwargs)
@@ -318,10 +342,25 @@ def discover_local_precision_profiles(space, *, output_template, validation_inpu
     passing = None
     while coarse and len(record['trials']) < max_trials:
         proposals = []
-        for coarse_key, group in coarse.items():
+        split = False
+        for coarse_key, group in list(coarse.items()):
             if group <= accepted:continue
             row = evaluate(accepted | group, 'expand_from_original_dtype')
-            if row is not None: proposals.append((coarse_key, group, row))
+            if row is not None and row.get('arithmetic_boundary_passed', True):
+                proposals.append((coarse_key, group, row))
+            elif row is not None:
+                # A coarse region may mix proven FP32 and protected native
+                # operations. Retry its discovered leaves, keeping captured
+                # same-dtype joins intact through close_selected().
+                coarse.pop(coarse_key)
+                if len(group) > 1:
+                    for key in sorted(group):
+                        coarse[coarse_key + '::' + key] = {key}
+                    split = True
+                    record.setdefault('arithmetic_splits', []).append(
+                        dict(group=coarse_key, regions=sorted(group)))
+        if not proposals and split:
+            continue
         if not proposals: break
         chosen, group, row = min(proposals, key=lambda x:(not x[2]['passed'], x[2]['rank'], x[2]['promoted_state_elements']))
         accepted = set(row['selected']); coarse.pop(chosen)
@@ -371,7 +410,15 @@ def refine_local_precision_profiles(space, seed, *, output_template, validation_
         if len(record['trials']) >= max_trials:
             return None
         name = 'operator_precision_probe_' + str(len(record['trials']))
-        candidate = space.build(selected)
+        from ._arithmetic_boundaries import ArithmeticBoundaryError
+        try:
+            candidate = space.build(selected)
+        except ArithmeticBoundaryError as exc:
+            row = dict(name=name, selected=list(key), passed=False,
+                       arithmetic_boundary_passed=False, errors=[str(exc)], rank=None)
+            record['trials'].append(row); cache[key] = row
+            if progress: progress()
+            return row
         passed, ranks, errors = True, [], []
         for args, kwargs in validation_inputs:
             values, keywords = space.prepare(*args, **kwargs)
@@ -425,7 +472,7 @@ def refine_local_precision_profiles(space, seed, *, output_template, validation_
 
 def _refinement_proposals(trials, passing):
     proposals = [passing]
-    failed = [r for r in trials if not r['passed']]
+    failed = [r for r in trials if not r['passed'] and r.get('arithmetic_boundary_passed', True)]
     if failed:
         proposals.append(min(failed, key=lambda r:(r['rank'], r['promoted_state_elements'])))
     # A last-rounding allowance can make a native screen pass right on its

@@ -16,6 +16,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 #include <map>
 #include <functional>
 #include <climits>
@@ -494,6 +495,8 @@ static bool pipelineLoop(Loop *L, Function &F, LoopInfo &LI, ScalarEvolution &SE
 
 #include "SDNNReuse.h"
 #include "EmptyRow.h"
+#include "LoopReadCache.h"
+#include "OrderedRowReuse.h"
 
 class XPUDmaPipelinePass : public PassInfoMixin<XPUDmaPipelinePass> {
   bool Pipeline;
@@ -504,7 +507,12 @@ public:
       return sdnnReuse(F, AM) ? PreservedAnalyses::none() : PreservedAnalyses::all();
     if(F.isDeclaration() || !F.getParent()->getTargetTriple().getArchName().starts_with("xpu3") ||
        F.getFnAttribute("target-features").getValueAsString().contains("cdnn"))return PreservedAnalyses::all();
-    bool Changed=groupLoads(F);if(Changed)AM.invalidate(F,PreservedAnalyses::none());
+    if(OrderedRowRequested) {
+      bool Changed=orderedRowReuse(F,AM,Pipeline);
+      return Changed?PreservedAnalyses::none():PreservedAnalyses::all();
+    }
+    bool Changed=cacheLoopReads(F,AM);if(Changed)AM.invalidate(F,PreservedAnalyses::none());
+    Changed|=groupLoads(F);if(Changed)AM.invalidate(F,PreservedAnalyses::none());
     Changed|=hoistStores(F,AM);AM.invalidate(F,PreservedAnalyses::none());
     Changed|=skipEmptyRows(F,AM);AM.invalidate(F,PreservedAnalyses::none());
     if(Pipeline) {
@@ -526,6 +534,7 @@ int main(int argc,char **argv) {
     }
     if(A=="--sdnn-dma-only")SDNNOnlyDMA=true;
     if(A=="--sdnn-weights-only")SDNNOnlyWeights=true;
+    if(A=="--ordered-row")OrderedRowRequested=true;
   }
   auto Input=MemoryBuffer::getSTDIN();if(!Input){errs()<<"stdin error\n";return 2;}
   // Public LLVM's IRReader auto-upgrade verifies cc124 as AMDGPU before
@@ -556,6 +565,6 @@ int main(int argc,char **argv) {
   bool Bad=verifyModule(*M,&errs());for(auto [F,ID]:CC)F->setCallingConv(ID);
   if(Bad)return 3;
   for(const auto &Name:KernelNames)if(auto *F=M->getFunction(Name))F->setCallingConv(CallingConv::AMDGPU_Gfx_WholeWave);
-  errs()<<"{\"grouped_load_waits\":"<<stats.loads<<",\"hoisted_store_waits\":"<<stats.stores<<",\"pipelined_loops\":"<<stats.pipelines<<",\"skipped_empty_rows\":"<<stats.emptyRows<<",\"sdnn_cached_dma\":"<<SDNNPackets<<",\"sdnn_cached_ds\":"<<SDNNShuffles<<"}\n";
-  if(stats.loads+stats.stores+stats.pipelines+stats.emptyRows+SDNNPackets+SDNNShuffles)M->print(outs(),nullptr);else outs()<<(*Input)->getBuffer();
+  errs()<<"{\"grouped_load_waits\":"<<stats.loads<<",\"hoisted_store_waits\":"<<stats.stores<<",\"pipelined_loops\":"<<stats.pipelines<<",\"skipped_empty_rows\":"<<stats.emptyRows<<",\"sdnn_cached_dma\":"<<SDNNPackets<<",\"sdnn_cached_ds\":"<<SDNNShuffles<<",\"loop_cached_reads\":"<<LoopCachedReads<<",\"ordered_resident_rows\":"<<OrderedRows<<",\"ordered_compact_rounds\":"<<OrderedRoundPacks<<"}\n";
+  if(stats.loads+stats.stores+stats.pipelines+stats.emptyRows+SDNNPackets+SDNNShuffles+LoopCachedReads+OrderedRows)M->print(outs(),nullptr);else outs()<<(*Input)->getBuffer();
 }

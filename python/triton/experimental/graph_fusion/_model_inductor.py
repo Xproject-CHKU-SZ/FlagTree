@@ -193,6 +193,8 @@ def promote_whole_graph(gm, example_inputs=None):
         return torch.float32 if isinstance(v,torch.dtype) and v in (torch.float16,torch.bfloat16) else v
     for node in list(graph.nodes):
         node.args=tree_map(dtype32,node.args);node.kwargs=tree_map(dtype32,node.kwargs)
+        if node.op == 'call_method' and node.target in ('half', 'bfloat16'):
+            node.target = 'float'
     first=next(n for n in graph.nodes if n.op not in ('placeholder','get_attr'))
     for node in list(graph.nodes):
         if node.op in ('placeholder','get_attr') and dtypes.get(node) in (torch.float16,torch.bfloat16):
@@ -425,6 +427,10 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             options = dict(precision_options or {})
             pointwise_policy = options.pop('pointwise_policy', 'generated')
             require_compiled = options.pop('require_compiled', False)
+            fp32_arithmetic_only = options.pop('fp32_arithmetic_only', False)
+            arithmetic_boundaries = options.pop('arithmetic_boundaries', None)
+            if type(fp32_arithmetic_only) is not bool:
+                raise ValueError('fp32_arithmetic_only must be a bool')
             linear_schedule = options.pop('linear_schedule', 'native')
             matmul_policy = options.pop('matmul_policy', 'native')
             if matmul_policy not in ('native', 'tuned', 'full_k'):
@@ -439,6 +445,28 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
             if options:
                 raise ValueError('Unknown captured-precision options: ' + str(sorted(options)))
             protected = copy.deepcopy(gm)
+            arithmetic_boundary_audit = None
+            if arithmetic_boundaries is not None:
+                from ._arithmetic_boundaries import check_arithmetic_boundaries
+                arithmetic_boundaries = dict(arithmetic_boundaries)
+                if on_p800 and arithmetic_boundaries['reviewed_sdk']:
+                    from ._p800_arithmetic_runtime import reviewed_runtime
+                    arithmetic_boundaries['reviewed_sdk'] = reviewed_runtime()['matched']
+                arithmetic_boundary_audit = check_arithmetic_boundaries(
+                    protected, **arithmetic_boundaries)
+            if fp32_arithmetic_only:
+                if any(isinstance(x, torch.Tensor) and x.is_floating_point() and x.dtype != torch.float32
+                       for x in example_inputs):
+                    raise ValueError('FP32-only graph requires original FP32 inputs and state')
+                # Dynamo can produce a new graph for a new shape/branch. The
+                # initial preflight does not authorize unknown future compute.
+                from ._arithmetic_search import graph_arithmetic
+                rows = graph_arithmetic(protected, reviewed_sdk=True)
+                unresolved = [r['node'] for r in rows if r['arithmetic'] not in ('none', 'conversion', 'fp32')
+                              and r['operator'] != 'flagtree_p800.final_cast.default']
+                if unresolved:
+                    raise ValueError('FP32-only graph gained unreviewed arithmetic: ' + ', '.join(unresolved))
+                promote_whole_graph(protected, example_inputs)
             fp32_regions = []
             if precision_policy == 'fuse_fp32_internals':
                 from ._fp32_compute_regions import fuse_fp32_compute_regions
@@ -505,6 +533,11 @@ def inductor_backend(*, tolerance, environment_key, audit, precision_policy='fp3
                           linear_schedule=linear_schedule, exposed_linears=exposed,
                           matmul_policy=matmul_policy, matrix_candidates=[],
                           layout_regions=layout_regions)
+            if arithmetic_boundary_audit is not None:
+                record['arithmetic_boundaries'] = arithmetic_boundary_audit
+            if fp32_arithmetic_only:
+                record.update(execution_precision='fp32_arithmetic_only',
+                    capture_source='verified_fp32_arithmetic', forced_fp32_inputs=True)
             audit.append(record)
             prepared = original.forward
             record.update(state='awaiting_complete_model_validation', route='original')

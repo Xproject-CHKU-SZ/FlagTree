@@ -10,7 +10,8 @@ class DmaTests(unittest.TestCase):
     def test_prefetch_keeps_math_and_restores_kernel_convention(self):
         before=Path(__file__).with_name('dma-dense-multiply.ll').read_text();after,stats=self.run_ir()
         self.assertEqual(stats,dict(grouped_load_waits=1,hoisted_store_waits=1,pipelined_loops=1,
-                                   skipped_empty_rows=0,sdnn_cached_dma=0,sdnn_cached_ds=0))
+                                   skipped_empty_rows=0,sdnn_cached_dma=0,sdnn_cached_ds=0,loop_cached_reads=0,
+                                   ordered_resident_rows=0,ordered_compact_rounds=0))
         self.assertIn('amdgpu_gfx_whole_wave void @dense_mul',after);self.assertIn('dma.ready = phi',after)
         for op in ['fmul <16 x float>', 'vfloat2fp16_l.rn', 'vfp162float_l.rn', 'load <32 x half>', 'store <32 x half>']:
             self.assertEqual(before.count(op),after.count(op),op)

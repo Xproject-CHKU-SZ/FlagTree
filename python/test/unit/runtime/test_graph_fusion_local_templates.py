@@ -30,6 +30,34 @@ class Layer(torch.nn.Module):
 
 
 class TemplateLocalTests(unittest.TestCase):
+    def test_region_packet_rejects_mutation_extra_launch_and_escaping_view(self):
+        from triton.experimental.graph_fusion._p800_region_launch import _plan
+        source='''def call(args):
+    a,b,w,t=args
+    args.clear()
+    assert_size_stride(a,(3,4),(4,1))
+    assert_size_stride(b,(3,4),(4,1))
+    assert_size_stride(w,(4,),(1,))
+    assert_size_stride(t,(4,),(1,))
+    with torch.cuda._DeviceGuard(0):
+        torch.cuda.set_device(0)
+        out=empty_strided_cuda((2,3,4),(12,4,1),torch.float16)
+        stream=get_raw_stream(0)
+        kernel.run(a,b,w,t,out,1,1,1,stream=stream)
+        del a
+        del b
+        del w
+        del t
+    return (reinterpret_tensor(out,(3,4),(4,1),0),reinterpret_tensor(out,(3,4),(4,1),12))
+'''
+        self.assertIsNotNone(_plan(source,'kernel'))
+        for changed in (source.replace('    args.clear()', '    args.clear()\n    a.add_(1)'),
+                        source.replace('        del a', '        kernel.run(a,b,w,t,out,1,1,1,stream=stream)\n        del a'),
+                        source.replace('(4,1),12)', '(4,1),13)'),
+                        source.replace('torch.float16','torch.int16'),
+                        source.replace('kernel.run(a,b,w,t', 'kernel.run(b,a,w,t')):
+            self.assertIsNone(_plan(changed,'kernel'))
+
     def graph(self, fn):
         return fx.symbolic_trace(fn)
 
@@ -145,6 +173,27 @@ class TemplateLocalTests(unittest.TestCase):
                 patch.object(local,'_supported_args',side_effect=supported),
                 patch.object(local,'compile_region',side_effect=compile))
 
+    def test_cached_layout_checks_live_aliases_offsets_and_context(self):
+        # CPU tensors stand in for a previously admitted layout. Production
+        # admission remains CUDA-only; this exercises the hit predicate itself.
+        with torch.no_grad():
+            a,b=torch.randn(4,8),torch.randn(4,8)
+            signature=local._key((a,b))
+            self.assertTrue(local._matches_args((a,b),signature))
+            self.assertTrue(local._matches_args((a+1,b+1),signature))
+            self.assertFalse(local._matches_args((a,a),signature))
+            self.assertFalse(local._matches_args((a.flatten()[1:].view(1,31),b),signature))
+            self.assertFalse(local._matches_args((a.t(),b),signature))
+            self.assertFalse(local._matches_args((a.double(),b),signature))
+            self.assertFalse(local._matches_args((a,),signature))
+            self.assertFalse(local._matches_args((a,3),signature))
+            with patch.object(local,'_ambient_supported',return_value=False):
+                self.assertFalse(local._matches_args((a,b),signature))
+            with torch.inference_mode():
+                self.assertFalse(local._matches_args((a,b),signature))
+        with torch.enable_grad():
+            self.assertFalse(local._matches_args((a,b),signature))
+
     def test_factory_makes_generated_routes_and_keeps_live_weights_and_inputs(self):
         model=Layer().eval();x=torch.randn(2,4);record={};p=self.patches()
         with torch.no_grad(),p[0],p[1],p[2] as compile:
@@ -167,6 +216,28 @@ class TemplateLocalTests(unittest.TestCase):
                 torch.testing.assert_close(route.call(changed),model(changed),atol=0,rtol=0)
             self.assertEqual(compile.call_count,before)
             self.assertNotIn('native_original_dtype',routes)
+
+    def test_native_cached_guard_retains_alias_offset_mode_and_live_inputs(self):
+        with torch.no_grad():
+            a,b=torch.randn(4,8),torch.randn(4,8)
+            check=local._make_args_guard((a,b))
+            self.assertTrue(check((a,b)))
+            self.assertTrue(check((a+1,b+1)))
+            self.assertFalse(check((a,a)))
+            self.assertFalse(check((torch.randn(64)[32:].view(4,8),b)))
+            self.assertFalse(check((a.t(),b)))
+            self.assertFalse(check((a.double(),b)))
+            self.assertFalse(check((a,)))
+            self.assertFalse(check((a,3)))
+            self.assertFalse(check((a.requires_grad_(),b)))
+            a.requires_grad_(False)
+            self.assertFalse(check((torch._neg_view(a),b)))
+            with torch.inference_mode():
+                self.assertFalse(check((a,b)))
+            with patch.object(local,'_ambient_supported',return_value=False):
+                self.assertFalse(check((a,b)))
+        with torch.enable_grad():
+            self.assertFalse(check((a,b)))
 
     def test_row_alternatives_keep_precision_changes_separate(self):
         self.assertEqual(local._template_schedules(('add_gelu',),(512,)), [('lm512',512,{})])

@@ -55,7 +55,7 @@ def _static_call(source, binding):
     return dev, layouts, shape, stride, itemgetter(*(names.index(n) for n in tensor_names[:-1])), constants
 
 
-def _packet_for_launcher(launcher, binary, layouts, shape, stride, constants, empty, stream, dev):
+def _packet_for_launcher(launcher, binary, layouts, shape, stride, constants, empty, stream, dev, *, dtype=None):
     """Resolve the static Inductor launch using opaque argument markers, once."""
     from ._p800_bound_launch import _pack_launch
     import torch
@@ -110,10 +110,11 @@ def _packet_for_launcher(launcher, binary, layouts, shape, stride, constants, em
     words = tuple(None if type(v) is not int else v for v in runtime_args)
     # The normal SDNN tensor ABI passes numel beside each live pointer.
     import math
-    counts = tuple(math.prod(layout[0]) for layout in layouts) + (math.prod(shape),)
+    counts = (tuple(math.prod(layout[0]) for layout in layouts) + (math.prod(shape),)
+              if binary.metadata.is_sdnn else (None,) * (len(layouts) + 1))
     header = args[:6] + (None, None, None)
     fn = _pack_launch(runner.launch, header, words, slots, counts, empty,
-                      (shape, stride, torch.float32), stream, dev)
+                      (shape, stride, torch.float32 if dtype is None else dtype), stream, dev)
     state = getattr(fn, '__self__', None)
     if type(state) is not tuple or len(state) != 13:
         return None

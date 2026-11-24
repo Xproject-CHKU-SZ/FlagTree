@@ -98,11 +98,14 @@ def _split_fp32_addmm(enabled):
 @contextmanager
 def _compile_buffer_option(fn, buffer_bytes, resource_kind=None, *, sdnn_tensor_bytes=None,
                            reduction_reuse=False, reduction_tree=False, row_shared=False,
-                           reduction_half_cache=False, fp_fusion=None, unroll_control=None):
+                           reduction_half_cache=False, fp_fusion=None, unroll_control=None,
+                           ordered_row_reuse=False, dma_pipeline=None):
     """Torch 2.9's whitelist drops XPU metadata; bind it to this JIT only."""
     import triton
     if buffer_bytes not in (512, 1024, 2048):
         raise ValueError('Unsupported model schedule buffer size')
+    if dma_pipeline is not None and (type(dma_pipeline) is not int or dma_pipeline not in (0, 1, 2)):
+        raise ValueError('Unsupported DMA schedule')
     # Template precompilation runs in threads while the graph's parent holds
     # Dynamo's compile_lock and waits for them. Reacquiring that lock here
     # deadlocks. Serialize only this temporary hook, and match the worker too.
@@ -121,6 +124,10 @@ def _compile_buffer_option(fn, buffer_bytes, resource_kind=None, *, sdnn_tensor_
                                              xpu_row_shared=bool(row_shared))
                 if unroll_control is not None:
                     kwargs['options']['isCloseUnrollControl'] = not bool(unroll_control)
+                if ordered_row_reuse:
+                    kwargs['options']['xpu_ordered_row_reuse'] = True
+                if dma_pipeline is not None:
+                    kwargs['options']['xpu_dma_pipeline'] = dma_pipeline
                 if fp_fusion is not None:
                     kwargs['options']['enable_fp_fusion'] = bool(fp_fusion)
                 if resource_kind is not None:

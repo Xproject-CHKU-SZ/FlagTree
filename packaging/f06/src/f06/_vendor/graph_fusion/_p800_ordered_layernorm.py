@@ -33,17 +33,29 @@ def p800_ordered_config(*args, **kwargs):
     from torch._inductor.runtime.triton_heuristics import template
     from ._p800_model_schedule import _compile_buffer_option, _validate_buffer_option
     decorate = template(*args, **kwargs)
+    width = kwargs.get('inductor_meta', {}).get('config_args', {}).get('N', 0)
+    resident = type(width) is int and 128 <= width <= 1024 and width % 64 == 0
     def apply(fn):
         tuner = decorate(fn)
         original = tuner._precompile_config
         def compile_config(*a, **kw):
-            with _compile_buffer_option(fn, 2048, reduction_tree=True, fp_fusion=False, unroll_control=False) as forwarded:
+            with _compile_buffer_option(fn, 2048, reduction_tree=True, fp_fusion=False,
+                                        unroll_control=False, row_shared=True,
+                                        ordered_row_reuse=resident,
+                                        # Correct prefetching is available in mode 2,
+                                        # but does not yet show a stable E2E gain
+                                        # for this ordered multi-output candidate.
+                                        dma_pipeline=1 if resident else None) as forwarded:
                 result = original(*a, **kw)
             binary = getattr(result, 'kernel', result)
             tuner.p800_buffer_choice = _validate_buffer_option(binary, 2048, forwarded)
             if (binary.metadata.enable_fp_fusion or not binary.metadata.xpu_reduction_tree
-                    or not binary.metadata.isCloseUnrollControl):
+                    or not binary.metadata.isCloseUnrollControl or not binary.metadata.xpu_row_shared):
                 raise RuntimeError('Ordered LayerNorm arithmetic options were dropped')
+            if resident and (not binary.metadata.xpu_ordered_row_reuse or
+                             binary.metadata.xpu_dma_pipeline != 1 or
+                             not binary.metadata.dma_pipeline.get('ordered_row_requested')):
+                raise RuntimeError('Ordered LayerNorm row residency was dropped')
             return result
         tuner._precompile_config = compile_config
         return tuner
@@ -72,37 +84,38 @@ def _grid(outputs, m, n, meta):
     return ((m + meta['ROWS'] - 1) // meta['ROWS'], 1, 1)
 
 
-# Four 16-lane FP32 vectors per step; two independent ordered accumulators.
+# Pack both independent 16-lane accumulators into a 32-element tensor. Each
+# narrow input then occupies a full FP16 vector; widening retains two FP32
+# vectors. Their addition precedes the same 8/4/2/1 within-vector reduction.
 _SOURCE = '''
 from triton.experimental.graph_fusion._p800_ordered_layernorm import p800_ordered_config
 {{def_kernel("A", "B", "W", "SHIFT")}}
     Out = {{output_pointer()}}
     row = tl.program_id(0) * ROWS + tl.arange(0, ROWS)[:, None]
-    lane = tl.arange(0, 16)[None, :]
-    s0 = tl.full((ROWS, 16), 0.0, tl.float32)
-    s1 = tl.full((ROWS, 16), 0.0, tl.float32)
-    q0 = tl.full((ROWS, 16), 0.0, tl.float32)
-    q1 = tl.full((ROWS, 16), 0.0, tl.float32)
+    lane = tl.arange(0, 32)[None, :]
+    offset = (lane // 16) * 32 + lane % 16
+    total = tl.full((ROWS, 32), 0.0, tl.float32)
+    squares = tl.full((ROWS, 32), 0.0, tl.float32)
     for block in range(N // 64):
 '''
-for j in range(4):
-    _SOURCE += f'''        c{j} = block * 64 + {j*16} + lane
+for j in range(2):
+    _SOURCE += f'''        c{j} = block * 64 + {j*16} + offset
         a{j} = tl.load(A + row * N + c{j}, row < M, other=0).to(tl.float32)
         b{j} = tl.load(B + (row % BROWS) * N + c{j}, row < M, other=0).to(tl.float32)
         z{j} = (a{j} + b{j}).to(tl.float16).to(tl.float32)
 '''
-_SOURCE += '''        s0 = (s0 + z0) + z1
-        s1 = (s1 + z2) + z3
-        q0 = tl.fma(z1, z1, tl.fma(z0, z0, q0))
-        q1 = tl.fma(z3, z3, tl.fma(z2, z2, q1))
-    mean = tl.div_rn(tl.sum(s0 + s1, 1), N)[:, None]
-    square_mean = tl.div_rn(tl.sum(q0 + q1, 1), N)[:, None]
+_SOURCE += '''        total = (total + z0) + z1
+        squares = tl.fma(z1, z1, tl.fma(z0, z0, squares))
+    mean = tl.div_rn(tl.sum(total, 1), N)[:, None]
+    square_mean = tl.div_rn(tl.sum(squares, 1), N)[:, None]
     variance = square_mean - mean * mean
     inv = tl.rsqrt(variance + EPS)
     for block in range(N // 64):
 '''
-for j in range(4):
-    _SOURCE += f'''        c{j} = block * 64 + {j*16} + lane
+# Affine output has no accumulator grouping constraint. Write consecutive
+# 32-element FP16 packets so each DMA covers a full 64-byte cache line.
+for j in range(2):
+    _SOURCE += f'''        c{j} = block * 64 + {j*32} + lane
         a{j} = tl.load(A + row * N + c{j}, row < M, other=0).to(tl.float32)
         b{j} = tl.load(B + (row % BROWS) * N + c{j}, row < M, other=0).to(tl.float32)
         z{j} = (a{j} + b{j}).to(tl.float16).to(tl.float32)
@@ -110,7 +123,7 @@ for j in range(4):
         t{j} = tl.load(SHIFT + c{j}).to(tl.float32)
         v{j} = (z{j} - mean) * inv
 '''
-    _SOURCE += (f'        y{j} = tl.fma(v{j}, w{j}, t{j})\n' if j < 2 else
+    _SOURCE += (f'        y{j} = tl.fma(v{j}, w{j}, t{j})\n' if j == 0 else
                 f'        y{j} = (v{j} * w{j}) + t{j}\n')
     _SOURCE += f'''        if DUAL:
             tl.store(Out + row * N + c{j}, z{j}.to(tl.float16), row < M)

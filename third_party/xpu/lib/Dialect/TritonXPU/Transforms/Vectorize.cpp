@@ -2514,8 +2514,30 @@ struct TritonXPUVectorizePass
       if (!load || !loadTy || loadTy.getRank() != 2 ||
           loadTy.getShape() != srcTy.getShape() ||
           loadTy.getEncoding() != srcTy.getEncoding() ||
-          load.getStride() != 1 || load.getIsDiscrete() || load.getMask() ||
+          load.getIsDiscrete() || load.getMask() ||
           load.getOther() || load.getIndex() || load.getBf16Tofp32Unordered())
+        continue;
+      // GM continuity and LM continuity are different properties. Unknown
+      // GM offsets can still be staged into a dense, fresh local allocation.
+      // Recognize only that direct unmasked staging chain; views, indexed
+      // loads, padded rows and strided staging keep their existing path.
+      auto staged = load.getPtr().getDefiningOp<triton::xpu::GM2LMOp>();
+      auto allocation = staged && staged.getBufPtr()
+                            ? staged.getBufPtr().getDefiningOp<triton::xpu::AllocaOp>()
+                            : triton::xpu::AllocaOp();
+      // In the normal pipeline Alloca runs after Vectorize. An unallocated
+      // ordinary GM2LM receives the same dense alloca there; never apply this
+      // to a user-provided view or a special/discrete staging mode.
+      bool denseAllocation = staged && (!staged.getBufPtr() ||
+                             (allocation && allocation.getType() == load.getPtr().getType() &&
+                              allocation.getSize() == getTotalElemsPerThread(loadTy)));
+      bool denseStaging = load.getStride() == INT32_MIN && staged && denseAllocation &&
+                          !staged.getLen() && !staged.getOther() &&
+                          !staged.getSVOpt() && !staged.getAtomicSim() &&
+                          staged.getOffsetState() == static_cast<int32_t>(OffsetState::Unknown) &&
+                          staged.getFixedStride() == INT32_MIN &&
+                          staged.getTensorColSize() == -1;
+      if (load.getStride() != 1 && !denseStaging)
         continue;
       Type elem = loadTy.getElementType();
       if (!(elem.isF16() || elem.isF32()) ||
@@ -2536,6 +2558,8 @@ struct TritonXPUVectorizePass
         continue;
       OpBuilder builder(bc);
       auto *vectorLoad = builder.clone(*load.getOperation());
+      if (denseStaging)
+        cast<triton::xpu::LoadOp>(vectorLoad).setStride(1);
       vectorLoad->getResult(0).setType(getVectorType(loadTy));
       auto gm = load.getPtr().getDefiningOp<triton::xpu::GM2LMOp>();
       auto addptr = gm ? gm.getPtr().getDefiningOp<triton::AddPtrOp>() : triton::AddPtrOp();

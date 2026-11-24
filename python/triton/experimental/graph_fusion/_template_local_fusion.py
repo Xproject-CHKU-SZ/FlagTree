@@ -133,6 +133,46 @@ def _key(args):
     return tuple(_signature(x) for x in args)
 
 
+def _matches_args(args, signature):
+    """Check an already admitted layout without repeating its static facts.
+
+    Equal sizes/strides/dtype/device prove the original nonempty contiguous
+    supported layout. Storage offset/alignment and aliasing remain live checks.
+    With offset zero, data_ptr is also the storage base; query it only once.
+    """
+    if (len(args) != len(signature) or torch.is_grad_enabled() or not _ambient_supported()
+            or any(type(x) not in (torch.Tensor, torch.nn.Parameter)
+                   or x.layout != torch.strided or x.storage_offset() != 0 for x in args)
+            or _key(args) != signature):
+        return False
+    pointers = tuple(x.data_ptr() for x in args)
+    return not any(p % 64 for p in pointers) and len(set(pointers)) == len(pointers)
+
+
+def _make_args_guard(args):
+    """Let Torch check the admitted tensor metadata in one native operation.
+
+    Contents and addresses remain live. TensorGuards does not check offsets,
+    aliases or inference mode, so those contracts are retained explicitly.
+    """
+    guards = torch._C._dynamo.guards
+    check = guards.TensorGuards(*args, dynamic_dims_sizes=None, dynamic_dims_strides=None).check
+    inference = torch.is_inference_mode_enabled()
+    types_ = tuple(type(x) for x in args)
+
+    def matches(values):
+        if (len(values) != len(types_) or torch.is_grad_enabled()
+                or torch.is_inference_mode_enabled() != inference or not _ambient_supported()
+                or any(type(x) is not ty for x, ty in zip(values, types_))
+                or not check(*values)
+                or any(x.layout != torch.strided or x.storage_offset() != 0
+                       or x.is_conj() or x.is_neg() for x in values)):
+            return False
+        pointers = tuple(x.data_ptr() for x in values)
+        return not any(p % 64 for p in pointers) and len(set(pointers)) == len(pointers)
+    return matches
+
+
 def _protect_contractions(gm):
     """Retain vendor matrix and ReLU arithmetic, including low-dtype modes."""
     from ._operator_precision import _matmul, _relu, _lower_reviewed
@@ -212,7 +252,8 @@ def compile_region(gm, args, buffer_bytes, record):
                          timings=getattr(kernel,'p800_row_timings',[]))
                     for name,kernel in kernels if hasattr(kernel,'p800_row_candidates')],
         call_boundary='guarded_generated_wrapper', precision='preserve_operator_boundaries')
-    return call
+    from ._p800_region_launch import prepare
+    return prepare(module, args, record) or call
 
 
 class _Region(torch.nn.Module):
@@ -226,13 +267,13 @@ class _Region(torch.nn.Module):
         self.last = None
 
     def forward(self, *args):
+        hit = self.last
+        if hit is not None and hit[2](args):
+            return hit[1](*args)
         owner = self._owner()
         if not _supported_args(args):
             return self.graph(*args)
         signature = _key(args)
-        hit = self.last
-        if hit is not None and hit[0] == signature:
-            return hit[1](*args)
         key = (self.graph.code, signature)
         call = owner.bindings.get(key)
         if call is None:
@@ -243,7 +284,7 @@ class _Region(torch.nn.Module):
             call = compile_region(self.graph, args, owner.buffer_bytes, proof)
             owner.bindings[key] = call
             owner.record['compiled_regions'].append(proof)
-        self.last = (signature, call)
+        self.last = (signature, call, _make_args_guard(args))
         return call(*args)
 
 

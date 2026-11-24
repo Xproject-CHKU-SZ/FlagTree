@@ -6,6 +6,40 @@ import triton.language as tl
 
 
 @triton.jit
+def staged_column_affine(a, w, b, out, rows, N: tl.constexpr, GAP: tl.constexpr):
+    row = tl.program_id(0) * 64 + tl.arange(0, 64)[:, None]
+    lane = tl.arange(0, 32)[None, :]
+    offset = (lane // 16) * 32 + lane % 16 if GAP else lane
+    for block in range(N // 64):
+        col = block * 64 + offset
+        value = tl.load(a + row * N + col, row < rows, other=0).to(tl.float32)
+        weight = tl.load(w + col).to(tl.float32)
+        bias = tl.load(b + col).to(tl.float32)
+        tl.store(out + row * N + col, value * weight + bias, row < rows)
+
+
+@pytest.mark.parametrize('dtype', [torch.float16, torch.float32])
+@pytest.mark.parametrize('gap', [False, True])
+def test_dense_local_parameter_staging_vectorizes_unknown_global_stride(dtype, gap):
+    rows, n = 65, 128
+    a = ((torch.arange(rows*n) % 61 - 30) / 8).to(dtype).reshape(rows, n)
+    w = ((torch.arange(n) % 9 - 4) / 8).to(dtype)
+    b = ((torch.arange(n) % 13 - 6) / 8).to(dtype)
+    storage = torch.full((rows*n + 128,), -73, dtype=dtype, device='cuda')
+    k = staged_column_affine[(2,)](a.cuda(), w.cuda(), b.cuda(), storage[64:], rows,
+        n, gap, num_warps=8, num_stages=1, is_sdnn=False,
+        buffer_size_limit=2048, enable_fp_fusion=False, isCloseUnrollControl=True)
+    columns = torch.arange(n) % 64
+    valid = columns % 32 < 16 if gap else columns < 32
+    expected = torch.full((rows, n), -73, dtype=dtype)
+    expected[:, valid] = (a[:, valid].float()*w[valid].float()+b[valid].float()).to(dtype)
+    actual = storage.cpu()
+    assert torch.equal(actual[64:-64].reshape(rows, n), expected)
+    assert bool((actual[:64] == -73).all() and (actual[-64:] == -73).all())
+    assert 'lm_vector_broadcast' in k.asm['ttxir']
+
+
+@triton.jit
 def row_affine(a, gamma, beta, output, rows, stride: tl.constexpr,
                N: tl.constexpr, X: tl.constexpr, R: tl.constexpr,
                HOLES: tl.constexpr):

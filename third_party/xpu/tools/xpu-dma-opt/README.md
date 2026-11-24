@@ -60,3 +60,42 @@ also supported with `LLVM_DIR` pointing to the matching LLVM development tree.
 Run `test/test_dma_pipeline.py` with `XPU_DMA_OPT` set to the built executable.
 Device verification must additionally exercise tails, exact and partial aliases,
 repeated grid indices, and complete model output contracts.
+
+## Ordered two-pass row residency
+
+`xpu_ordered_row_reuse=True` opts an ordered Add/LayerNorm template into
+`--ordered-row`. The caller must provide readonly inputs and a fresh, disjoint
+output. It is not a general alias-analysis shortcut. The integration requires
+64 cores, explicit contraction boundaries, and FP16 rows of 128–1024 elements
+in multiples of 64. The pass additionally proves the actual two-loop layout,
+complete packet coverage, common row guards, exact RN conversions and disjoint
+output slices, with total known LM allocations bounded by 7168 bytes.
+
+The two inputs are loaded once into separate LM rows. The first phase keeps
+the original accumulation order and saves the rounded residual in the consumed
+input row. The second phase reuses it; gamma and beta are cached in a reserved
+SM window for that launch only. All cores partition the parameter transfer and
+participate in both unconditional barriers, including cores without valid rows.
+The residual and normalized output have separate live buffers. Whole-row output
+transfers occur after the vector stores complete and drain before LM refill.
+
+Contiguous vector loads use the existing low/high FP16 conversion instructions
+to preserve lane order without scalar packet assembly. This does not change
+rounding mode, reassociate the reduction, or persist parameters between launches.
+Existing shared allocations and unknown effects reject this transformation.
+If LLVM simplification produces an unproved layout, the backend retries the
+ordinary scheduling pass on the original IR and records `ordered_row_fallback`.
+Successful transforms record `ordered_resident_rows`; the integration also
+checks `ordered_row_requested` to distinguish fallback from dropped options.
+
+The pass can additionally bypass an invalid row's reduction and affine loops.
+This requires a common row predicate, no live values leaving those loops,
+no unknown effects or collectives in the bypassed region, and a safe grid
+latch. Parameter collectives remain unconditional outside the row loop, and
+the latch still drains outstanding transfers. Only branches governed by that
+same predicate are folded in the valid-row body. The pass records
+`skipped_empty_rows` separately; failure of this extra proof keeps normal
+masked-row execution without disabling proven row residency.
+
+`test_ordered_row_reuse.py` checks the LLVM proof boundaries;
+`test_ordered_row_driver.py` checks safe retry and resource-contract enforcement.

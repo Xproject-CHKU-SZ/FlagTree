@@ -250,6 +250,12 @@ struct LoadStoreConversionBase {
   // without changing the values used by the actual memory operations.
   static Value resolveDMAValue(Value value) {
     for (unsigned depth = 0; depth < 32; ++depth) {
+      if (auto cast = value.getDefiningOp<LLVM::BitcastOp>()) {
+        if (cast.getArg().getType() == value.getType()) {
+          value = cast.getArg();
+          continue;
+        }
+      }
       auto extract = value.getDefiningOp<LLVM::ExtractValueOp>();
       if (!extract || extract.getPosition().size() != 1)
         break;
@@ -272,16 +278,53 @@ struct LoadStoreConversionBase {
     return value;
   }
 
+  // Lane arithmetic has not necessarily been canonicalized when memory ops
+  // are lowered. Fold only fully constant integer expressions for the proof;
+  // never evaluate dynamic division or change the actual address expression.
+  static std::optional<APInt> constantDMAIndex(Value value, unsigned depth = 0) {
+    value = resolveDMAValue(value);
+    if (depth > 24)
+      return std::nullopt;
+    if (auto op = value.getDefiningOp<LLVM::ConstantOp>())
+      if (auto attr = dyn_cast<IntegerAttr>(op.getValue()))
+        if (auto type = dyn_cast<IntegerType>(value.getType()))
+          return attr.getValue().sextOrTrunc(type.getWidth());
+    auto *op = value.getDefiningOp();
+    if (!op || op->getNumOperands() != 2 ||
+        !isa<LLVM::AddOp, LLVM::SubOp, LLVM::MulOp,
+             LLVM::SDivOp, LLVM::SRemOp, LLVM::UDivOp, LLVM::URemOp>(op))
+      return std::nullopt;
+    auto rhs = constantDMAIndex(op->getOperand(1), depth + 1);
+    // Core tiling leaves expressions such as thread_id % 1 in the lane
+    // offset until a later canonicalization. Their value is already exact.
+    if (rhs && isa<LLVM::SRemOp, LLVM::URemOp>(op) && rhs->isOne())
+      return APInt(rhs->getBitWidth(), 0);
+    if (rhs && isa<LLVM::MulOp>(op) && rhs->isZero())
+      return *rhs;
+    auto lhs = constantDMAIndex(op->getOperand(0), depth + 1);
+    if (!lhs || !rhs || lhs->getBitWidth() != rhs->getBitWidth())
+      return std::nullopt;
+    if (isa<LLVM::AddOp>(op)) return *lhs + *rhs;
+    if (isa<LLVM::SubOp>(op)) return *lhs - *rhs;
+    if (isa<LLVM::MulOp>(op)) return *lhs * *rhs;
+    if (rhs->isZero()) return std::nullopt;
+    if (isa<LLVM::SDivOp, LLVM::SRemOp>(op) &&
+        lhs->isMinSignedValue() && rhs->isAllOnes())
+      return std::nullopt;
+    if (isa<LLVM::SDivOp>(op)) return (lhs->sdiv)(*rhs);
+    if (isa<LLVM::SRemOp>(op)) return (lhs->srem)(*rhs);
+    if (isa<LLVM::UDivOp>(op)) return (lhs->udiv)(*rhs);
+    return (lhs->urem)(*rhs);
+  }
+
   static void collectDMAIndex(Value value, uint64_t scale, DMAIndexForm &form,
                               unsigned &budget) {
     value = resolveDMAValue(value);
     if (budget) {
       --budget;
-      if (auto op = value.getDefiningOp<LLVM::ConstantOp>()) {
-        if (auto attr = dyn_cast<IntegerAttr>(op.getValue())) {
-          form.constant += scale * attr.getValue().getZExtValue();
-          return;
-        }
+      if (auto constant = constantDMAIndex(value)) {
+        form.constant += scale * constant->getZExtValue();
+        return;
       }
       if (auto op = value.getDefiningOp<LLVM::AddOp>()) {
         collectDMAIndex(op.getLhs(), scale, form, budget);
@@ -390,9 +433,8 @@ struct LoadStoreConversionBase {
     if (!type || depth > 32)
       return 0;
     unsigned width = type.getWidth();
-    if (auto op = value.getDefiningOp<LLVM::ConstantOp>())
-      if (auto attr = dyn_cast<IntegerAttr>(op.getValue()))
-        return std::min(width, attr.getValue().countTrailingZeros());
+    if (auto constant = constantDMAIndex(value))
+      return std::min(width, constant->countTrailingZeros());
     Operation *op = value.getDefiningOp();
     if (!op)
       return 0;
@@ -475,6 +517,29 @@ struct LoadStoreConversionBase {
     return result;
   }
 
+  static unsigned segmentedDMARun(ArrayRef<Value> ptrs, unsigned byteWidth) {
+    if (ptrs.size() <= 2)
+      return 0;
+    SmallVector<Value> indices;
+    if (unitDMAIndexSequence(ptrs, byteWidth, indices))
+      return 0;
+    for (size_t count = ptrs.size() / 2; count > 1; count /= 2) {
+      if (ptrs.size() % count)
+        continue;
+      bool runs = true;
+      for (size_t first = 0; first < ptrs.size(); first += count) {
+        indices.clear();
+        if (!unitDMAIndexSequence(ptrs.slice(first, count), byteWidth, indices)) {
+          runs = false;
+          break;
+        }
+      }
+      if (runs)
+        return count;
+    }
+    return 0;
+  }
+
   // Coalesce only after checking the actual predicate and both pointer views.
   // This does not infer a prefix from an arbitrary comparison or assume that
   // a fixed stride survives a modulo wrap. Partial/non-contiguous tiles retain
@@ -483,7 +548,26 @@ struct LoadStoreConversionBase {
                                MLIRContext *ctx, Location loc,
                                ArrayRef<Value> gmPtrs, ArrayRef<Value> lmPtrs,
                                ArrayRef<Value> predicates, unsigned byteWidth,
-                               bool toLocal) const {
+                               bool toLocal, unsigned contiguousRun = 0) const {
+    // Recognize periodic gaps even when axis analysis lost continuity through
+    // layout operations. Every chosen run retains its dynamic checks below.
+    if (contiguousRun <= 1)
+      contiguousRun = segmentedDMARun(gmPtrs, byteWidth);
+    // A vector can contain several contiguous address runs. Checking only the
+    // whole vector makes its bulk branch permanently false at every gap. Use
+    // axis continuity to propose smaller runs, but keep the exact pointer and
+    // predicate checks below for each run; this hint is not a bounds proof.
+    if (contiguousRun > 1 && contiguousRun < gmPtrs.size()) {
+      for (size_t first = 0; first < gmPtrs.size(); first += contiguousRun) {
+        size_t count = std::min<size_t>(contiguousRun, gmPtrs.size() - first);
+        auto mask = predicates.size() == 1 ? predicates
+                                          : predicates.slice(first, count);
+        emitExactMaskedTransfer(rewriter, ctx, loc, gmPtrs.slice(first, count),
+                                lmPtrs.slice(first, count), mask, byteWidth,
+                                toLocal);
+      }
+      return;
+    }
     Value zero = i32_val(0);
     Value bytes = i32_val(byteWidth);
     if (exactUniformDMAPacket(gmPtrs, lmPtrs, predicates, byteWidth)) {
@@ -2916,7 +3000,8 @@ struct XPUGM2LMOpConversion
           llLMPtrs.size() < llGMPtrs.size())
         return rewriter.notifyMatchFailure(op, "DMA predicate/pointer arity mismatch");
       emitExactMaskedTransfer(rewriter, ctx, loc, llGMPtrs, llLMPtrs,
-                              predicates, (elemNbits + 7u) / 8u, true);
+                              predicates, (elemNbits + 7u) / 8u, true,
+                              getContiguity(ptr));
       if (!async)
         createMfenceLMOp(rewriter, loc);
       rewriter.replaceOp(op, {resultStruct});
@@ -2951,6 +3036,24 @@ struct XPUGM2LMOpConversion
 
     OffsetState offsetState = static_cast<OffsetState>(op.getOffsetState());
     int32_t fixedStride = op.getFixedStride();
+    // Unmasked parameter loads can be continuous or have periodic gaps.
+    // Reuse the exact transfer proof rather than one DMA per element.
+    if (!len && offsetState == OffsetState::Unknown && fixedStride == INT32_MIN) {
+      SmallVector<Value> indices;
+      unsigned run = unitDMAIndexSequence(llGMPtrs, (elemNbits + 7u) / 8u, indices)
+                         ? llGMPtrs.size()
+                         : segmentedDMARun(llGMPtrs, (elemNbits + 7u) / 8u);
+      if (run > 1) {
+        Value valid = int_val(1, 1);
+        emitExactMaskedTransfer(rewriter, ctx, loc, llGMPtrs, llLMPtrs,
+                                ArrayRef<Value>(valid), (elemNbits + 7u) / 8u,
+                                true, run);
+        if (!async)
+          createMfenceLMOp(rewriter, loc);
+        rewriter.replaceOp(op, {resultStruct});
+        return success();
+      }
+    }
     if (offsetState == OffsetState::Unknown) {
       /*  Small Col Size Opt Mask(14 < 16)
 
@@ -3287,7 +3390,8 @@ struct XPULM2GMOpConversion
           lmBufPtrs.size() < llPtrs.size())
         return rewriter.notifyMatchFailure(op, "DMA predicate/pointer arity mismatch");
       emitExactMaskedTransfer(rewriter, ctx, loc, llPtrs, lmBufPtrs,
-                              predicates, (elemNbits + 7u) / 8u, false);
+                              predicates, (elemNbits + 7u) / 8u, false,
+                              getContiguity(ptr));
       if (!async)
         createMfenceLMOp(rewriter, loc);
       rewriter.eraseOp(op);
