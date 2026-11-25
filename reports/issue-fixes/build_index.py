@@ -343,6 +343,25 @@ add('M08','矩阵补齐的 GPU 图校准可在冷编译时等待','模型选路�
 benchmark_updates_path = OUT / 'model-benchmark-updates-20261119.json'
 benchmark_updates = json.loads(benchmark_updates_path.read_text())
 by_id = {i['id']: i for i in items}
+# The cumulative local wheel integrates the padded QK fix with the D08 and D10 operators.
+local_fix5 = ROOT / 'work/2026-11-24/xpu-gems-eager/all-local-fixes'
+local_minilm = local_fix5 / 'evidence/43.179.154.78/e9e2c8815f70dad48afc'
+d06 = by_id['D06']
+d06['date'] = '2026-11-25'
+d06['solution'] += ' 累计包 p800fix5 将 QK 分数缓冲区的填充尾列初始化为负无穷，并保留 D08 的一维掩码布局和 D10。'
+d06['evidence'] += ' 在本地累计修复版上，28 项注意力回归全部通过。官方适配器的 MiniLM 端到端输出相对 eager 最大绝对误差为 0.000244，3 次预热、10 次同步前向的 eager / ON 均值为 6.80 / 16.69 毫秒。'
+d06['refs'].extend([ref('累计包与编译器指纹', local_fix5 / 'pins.json'),
+                    ref('FlagGems D06 Issue 与已有方案', OUT / 'FlagGems-D06-Issue.md'),
+                    ref('全量本地包注意力回归', local_minilm / 'operator-regression/local-on/pytest.xml'),
+                    ref('累计包 MiniLM 前向', local_minilm / 'main/local-on/state.json')])
+d09 = by_id['D09']
+d09.update(date='2026-11-25', status='累计包 p800fix5 已通过历史四项数值回归',
+           solution='p800fix5 延用 D08 的一维 mask，将 QK 分数缓冲区的填充尾列初始化为负无穷。11 月 19 日保留的矩形用例在相同 FP64 参考和容差下通过。',
+           baseline='历史 p800fix1 和 p800fix2 可复现。累计本地 FlagTree + FlagGems p800fix5 在 P800 以无图 eager 路径复验。')
+d09['evidence'] += ' 11 月 25 日，两类长度 33/65、65/33 各自的 FP16/FP32 检查均在累计包上得到 XPASS(strict)。第二张通过验卡的 P800 使用 --runxfail 对同函数全部 8 个参数组合独立复验，8 项通过，输出与 LSE 对照 CPU FP64，绝对容差 0.002、相对容差 0.005。'
+d09['refs'].extend([ref('严格预期失败标记下的原始结果', local_minilm / 'operator-regression/local-on/pytest.xml'),
+                    ref('关闭预期失败标记的独立复验', local_minilm / 'fix-verification/local-on/pytest.xml'),
+                    ref('累计包指纹', local_fix5 / 'pins.json')])
 for update in benchmark_updates['updates']:
     item = by_id[update['id']]
     # A verified extension may supersede an incomplete historical fix. Keep

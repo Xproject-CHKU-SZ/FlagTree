@@ -38,6 +38,51 @@ class ArithmeticSearchTests(unittest.TestCase):
         self.assertEqual(choose_domain(rows), 'mixed')
         self.assertEqual([x['arithmetic'] for x in rows], ['fp32', 'fp16'])
 
+    def test_clamp_domain_depends_on_overload_and_bounds(self):
+        from triton.experimental.graph_fusion._operator_precision import preserve_native_compute
+
+        for dtype in (torch.float16, torch.float32):
+            x = torch.tensor([-1., -.0, .5, 2.], dtype=dtype)
+            lo = torch.full_like(x, -.25)
+            hi = torch.full_like(x, 1.)
+            for fn in (lambda x, l, h: torch.clamp(input=x, min=l, max=h),
+                       lambda x, l, h: x.clamp(max=h),
+                       lambda x, l, h: torch.ops.aten.clamp.Tensor(self=x, min=l, max=h)):
+                hi.fill_(1.)
+                gm = graph(fn, x, lo, hi)
+                self.assertEqual(choose_domain(graph_arithmetic(gm, reviewed_sdk=True)), 'unresolved')
+                actions = preserve_native_compute(gm)
+                self.assertEqual(actions[0]['action'], 'native_compute_boundary')
+                hi.fill_(.375)
+                self.assertTrue(torch.equal(gm(x, lo, hi), fn(x, lo, hi)))
+            both = graph(lambda x: torch.clamp(x, min=-1., max=1.), x)
+            self.assertEqual(choose_domain(graph_arithmetic(both, reviewed_sdk=True)),
+                             'mixed' if dtype == torch.float16 else 'fp32_only')
+            for fn in (lambda x: x.clamp(min=-1.), lambda x: torch.clamp(x, max=1.)):
+                gm = graph(fn, x)
+                self.assertEqual(choose_domain(graph_arithmetic(gm, reviewed_sdk=True)),
+                                 'mixed' if dtype == torch.float16 else 'fp32_only')
+                self.assertEqual(preserve_native_compute(gm)[0]['action'], 'native_compute_boundary')
+                self.assertTrue(torch.equal(gm(x), fn(x)))
+
+    def test_positional_inplace_relu_cannot_authorize_promotion(self):
+        from triton.experimental.graph_fusion._operator_precision import preserve_native_compute
+        for inplace in (False, True):
+            g = torch.fx.Graph()
+            x = g.placeholder('x')
+            y = g.call_function(torch.nn.functional.relu, (x, inplace))
+            g.output(y)
+            gm = torch.fx.GraphModule({}, g)
+            x.meta['example_value'] = torch.tensor([-1., 1.], dtype=torch.float16)
+            y.meta['example_value'] = torch.relu(x.meta['example_value'])
+            self.assertEqual(choose_domain(graph_arithmetic(gm, reviewed_sdk=True)),
+                             'unresolved' if inplace else 'mixed')
+            preserve_native_compute(gm)
+            actual = x.meta['example_value'].clone()
+            result = gm(actual)
+            self.assertEqual(torch._C._is_alias_of(actual, result), inplace)
+            self.assertEqual(actual[0].item(), 0. if inplace else -1.)
+
     def test_fp16_matmul_io_configuration_does_not_prove_arithmetic(self):
         class Chain(torch.nn.Module):
             def forward(self, x, w): return torch.mm(x, w)
@@ -56,6 +101,39 @@ class ArithmeticSearchTests(unittest.TestCase):
     def test_unknown_sdk_never_authorizes_fp32(self):
         rows = graph_arithmetic(graph(torch.nn.Sigmoid(), torch.randn(2, 4).half()), reviewed_sdk=False)
         self.assertEqual(choose_domain(rows), 'unresolved')
+
+    def test_scaled_add_preserves_original_dtype_boundary(self):
+        from triton.experimental.graph_fusion._arithmetic_boundaries import (
+            ArithmeticBoundaryError, arithmetic_contract, check_arithmetic_boundaries)
+        from triton.experimental.graph_fusion._fp32_compute_regions import fuse_fp32_compute_regions
+        from triton.experimental.graph_fusion._p800_fp32_region import rewrite
+        from triton.experimental.graph_fusion._p800_shared_fp32 import template_graph
+
+        class Chain(torch.nn.Module):
+            def forward(self, x, y):
+                return torch.add(input=x, other=y, alpha=2) + -2048.
+
+        x, y = torch.tensor([2048.]).half(), torch.tensor([1.5]).half()
+        original = graph(Chain(), x, y)
+        rows = graph_arithmetic(original, reviewed_sdk=True)
+        self.assertEqual([r['arithmetic'] for r in rows], ['unknown', 'fp32'])
+        self.assertEqual(choose_domain(rows), 'unresolved')
+        with self.assertRaises(ArithmeticBoundaryError):
+            check_arithmetic_boundaries(graph(Chain(), x.float(), y.float()),
+                [arithmetic_contract(original, reviewed_sdk=True)], reviewed_sdk=True)
+        self.assertFalse(fuse_fp32_compute_regions(original, [x, y]))
+        rewrite(original.graph)
+        original.recompile()
+        self.assertEqual(original(x, y).item(), 4.)
+        gm = torch.fx.symbolic_trace(lambda a, b: torch.relu(torch.add(a, b, alpha=2)))
+        self.assertFalse(template_graph(gm.graph))
+
+    def test_aten_scalar_alpha_positional_and_unit_scale(self):
+        class Chain(torch.nn.Module):
+            def forward(self, x):
+                return torch.ops.aten.add.Scalar(torch.ops.aten.add.Scalar(x, 2, 1), 1, 2)
+        rows = graph_arithmetic(graph(Chain(), torch.ones(2).half()), reviewed_sdk=True)
+        self.assertEqual([r['arithmetic'] for r in rows], ['fp32', 'unknown'])
 
     def test_unreviewed_operator_blocks_fp32_only(self):
         class Chain(torch.nn.Module):

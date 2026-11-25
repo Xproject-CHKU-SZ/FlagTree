@@ -149,6 +149,10 @@ def _arithmetic(node):
         return False
     if node.kwargs.get('inplace', False) or 'out' in node.kwargs or node.kwargs.get('dtype') not in (None, torch.float32):
         return False
+    from ._fp32_compute_regions import _scaled_add_args
+    # The shared template check can run before propagation has populated node dtypes.
+    if _scaled_add_args(node) is not None and _dtype(node) != torch.bfloat16:
+        return False
     if node.target in ('softmax', torch.softmax, torch.ops.aten.softmax.int) and len(node.args) > 2:
         return node.args[2] in (None, torch.float32)
     if node.target is F.softmax and len(node.args) > 3:

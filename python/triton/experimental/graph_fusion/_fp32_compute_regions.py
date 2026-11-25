@@ -27,6 +27,28 @@ _VIEWS = {'view', 'reshape', 'transpose', 'permute', 'flatten', 'unsqueeze', 'sq
 _CASTS = {'float', 'half', 'to'}
 
 
+def _scaled_add_args(node):
+    """Return the inputs and scale of an add outside the unit-scale contract."""
+    if not (node.op == 'call_function' and node.target in _ADD or
+            node.op == 'call_method' and node.target == 'add'):
+        return None
+    args = node.args
+    if len(args) == 3:
+        # ATen add.Scalar(self, other, alpha) and the legacy Python
+        # add(input, alpha, other) use different positional conventions.
+        if node.target is torch.ops.aten.add.Scalar:
+            left, other, alpha = args
+        else:
+            left, alpha, other = args
+    else:
+        alpha = node.kwargs.get('alpha', 1)
+        left = args[0] if args else node.kwargs.get('input', node.kwargs.get('self'))
+        other = args[1] if len(args) > 1 else node.kwargs.get('other')
+    if type(alpha) in (int, float) and alpha == 1:
+        return None
+    return left, other, alpha
+
+
 def _kind(node):
     value = _value(node)
     if not isinstance(value, torch.Tensor) or value.dtype not in (torch.float16, torch.float32):
@@ -34,6 +56,8 @@ def _kind(node):
     if node.kwargs.get('inplace', False) or 'out' in node.kwargs:
         return None
     if node.kwargs.get('dtype') not in (None, torch.float16, torch.float32):
+        return None
+    if _scaled_add_args(node) is not None:
         return None
     if node.op == 'call_function':
         if node.target in _ADD + _MUL + _SIGMOID + _NORM:

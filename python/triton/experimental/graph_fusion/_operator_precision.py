@@ -74,6 +74,42 @@ def _tensors(tree):
     return [v for n in tree_leaves(tree) for v in tree_leaves(_value(n)) if isinstance(v, torch.Tensor)]
 
 
+def _minmax_call(node):
+    """Resolve pure ReLU and clamp spellings without changing their ATen overload."""
+    target = node.target
+    aten = torch.ops.aten
+    if node.op == 'call_method':
+        if target not in ('clamp', 'relu'):
+            return None
+        clamp = target == 'clamp'
+    elif node.op == 'call_function':
+        if target not in (torch.clamp, aten.clamp.default, aten.clamp.Tensor,
+                          F.relu, torch.relu, aten.relu.default):
+            return None
+        clamp = target in (torch.clamp, aten.clamp.default, aten.clamp.Tensor)
+    else:
+        return None
+    first = 'self' if hasattr(target, '_schema') or node.op == 'call_method' else 'input'
+    names = (first, 'min', 'max') if clamp else ((first, 'inplace') if target is F.relu else (first,))
+    if (len(node.args) > len(names) or set(node.kwargs) - set(names)
+            or set(node.kwargs).intersection(names[:len(node.args)])):
+        return None
+    bound = dict(zip(names, node.args), **node.kwargs)
+    if first not in bound or not isinstance(_value(bound[first]), torch.Tensor):
+        return None
+    if not clamp:
+        return (aten.relu.default, (bound[first],)) if bound.get('inplace', False) is False else None
+    limits = (bound.get('min'), bound.get('max'))
+    supplied = [v for v in limits if v is not None]
+    if not supplied:
+        return None
+    if all(isinstance(_value(v), torch.Tensor) for v in supplied) and target is not aten.clamp.default:
+        return aten.clamp.Tensor, (bound[first], *limits)
+    if all(type(v) in (int, float) for v in supplied) and target is not aten.clamp.Tensor:
+        return aten.clamp.default, (bound[first], *limits)
+    return None
+
+
 def review_precision(gm):
     """Audit every compute node, without inferring arithmetic from its name."""
     records = []
@@ -94,9 +130,16 @@ def review_precision(gm):
                    contains_low_precision=low)
         # These statements refer to the decoded P800 samples, not a claim
         # about every shape, dtype, SDK version or internal accumulator stage.
-        if low and node.target in (torch.relu, F.relu, torch.clamp, torch.ops.aten.relu.default,
-                                   torch.ops.aten.clamp.default):
-            row['evidence'] = 'P800 FP16 ReLU/clamp samples contain vmax.hf/vmin.hf (M06); preserve native for both low dtypes'
+        minmax = _minmax_call(node)
+        if minmax and any(v.dtype == torch.float16 for v in inputs):
+            target, args = minmax
+            if target is torch.ops.aten.relu.default or (
+                    target is torch.ops.aten.clamp.default and None not in args[1:]):
+                row['evidence'] = 'P800 FP16 ReLU and two-scalar clamp samples contain half min/max instructions (M06)'
+            elif target is torch.ops.aten.clamp.default:
+                row['evidence'] = 'P800 one-sided scalar clamp uses half min/max and the missing bound saturates infinity at the half finite limit (M64)'
+            else:
+                row['evidence'] = 'P800 tensor clamp basic has FP32 min/max; omitted bounds still depend on storage dtype (M64)'
         elif low and ('linear' in str(node.target) or node.target in
                       (torch.mm, torch.matmul, torch.bmm, torch.addmm)):
             row['evidence'] = 'P800 sampled Linear modes 37/8 differ; FP16 mm mode 5; accumulator not inferred (M60)'
@@ -197,6 +240,7 @@ No cast is removed here. In-place/out= forms are never replaced with pure
 ops. Unknown arithmetic is not authorized for FP32 promotion by this pass.
 """
     from torch._inductor.lowering import make_fallback
+    from ._fp32_compute_regions import _scaled_add_args
     records = review_precision(gm)
     by_name = {r['node']: r for r in records}
     mm = {torch.mm: 'mm', torch.bmm: 'bmm', torch.matmul: 'matmul', operator.matmul: 'matmul',
@@ -231,8 +275,33 @@ ops. Unknown arithmetic is not authorized for FP32 promotion by this pass.
                 row['action'] = 'native_candidate_required'
             node.meta['f06_precision_contract'] = dict(row)
             continue
-        if not row['contains_low_precision']:
+        minmax = _minmax_call(node)
+        native_clamp = (minmax and (minmax[0] is torch.ops.aten.clamp.Tensor or
+                        minmax[0] is torch.ops.aten.clamp.default and None in minmax[1][1:])
+                        and set(row['input_dtypes']) <= {'torch.float16', 'torch.float32'})
+        if not row['contains_low_precision'] and not native_clamp:
             continue
+        if native_clamp:
+            # Keep tensor bounds live and preserve the Scalar ABI for one-sided
+            # bounds. Both are lowered by the generic native-schema path below.
+            node.op, node.target, node.args, node.kwargs = 'call_function', minmax[0], minmax[1], {}
+            minmax = None
+        if 'torch.float16' in row['input_dtypes'] and (
+                node.op == 'call_function' and node.target is torch.add or
+                node.op == 'call_method' and node.target == 'add'):
+            scaled = _scaled_add_args(node)
+            if scaled is not None:
+                left, right, alpha = scaled
+                if (set(node.kwargs) <= {'input', 'other', 'alpha'}
+                        and isinstance(_value(left), torch.Tensor) and isinstance(_value(right), torch.Tensor)
+                        and type(_value(alpha)) in (int, float)):
+                    # Keep the Tensor overload opaque through AOT, including its scalar argument.
+                    node.op, node.target = 'call_function', torch.ops.aten.add.Tensor
+                    node.args, node.kwargs = (left, right), {'alpha': alpha}
+                else:
+                    row['action'] = 'native_candidate_required'
+                    node.meta['f06_precision_contract'] = dict(row)
+                    continue
         op, args = None, None
         if node.op == 'call_function' and node.target is F.dropout:
             bound = dict(zip(('input', 'p', 'training', 'inplace'), node.args), **node.kwargs)
@@ -288,16 +357,10 @@ ops. Unknown arithmetic is not authorized for FP32 promotion by this pass.
                     op, args = _linear, (bound['input'], bound['weight'], bound.get('bias'))
         elif node.op == 'call_function' and node.target in mm and len(node.args) == 2 and not node.kwargs:
             op, args = _matmul, (*node.args, mm[node.target])
-        elif ((node.op == 'call_function' and node.target in (torch.relu, F.relu, torch.ops.aten.relu.default))
-              or (node.op == 'call_method' and node.target == 'relu')):
-            if len(node.args) == 1 and (not node.kwargs or node.kwargs == {'inplace': False}):
-                op, args = _relu, node.args
-        elif ((node.op == 'call_function' and node.target in (torch.clamp, torch.ops.aten.clamp.default))
-              or (node.op == 'call_method' and node.target == 'clamp')):
-            bound = dict(zip(('input', 'min', 'max'), node.args), **node.kwargs)
-            if (len(node.args) <= 3 and 'input' in bound and not set(bound) - {'input', 'min', 'max'}
-                    and all(bound.get(k) is None or type(bound[k]) in (int, float) for k in ('min', 'max'))):
-                op, args = _clamp, (bound['input'], bound.get('min'), bound.get('max'))
+        elif minmax and minmax[0] is torch.ops.aten.relu.default:
+            op, args = _relu, minmax[1]
+        elif minmax and minmax[0] is torch.ops.aten.clamp.default:
+            op, args = _clamp, minmax[1]
         elif node.op == 'call_function' and node.target is F.conv2d:
             names = ('input', 'weight', 'bias', 'stride', 'padding', 'dilation', 'groups')
             bound = dict(zip(names, node.args), **node.kwargs)

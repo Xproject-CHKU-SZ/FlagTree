@@ -15,15 +15,13 @@ from torch.utils._pytree import tree_flatten, tree_leaves
 
 def graph_arithmetic(gm, *, reviewed_sdk):
     from ._fp32_compute_regions import _kind
-    from ._operator_precision import _tensors
+    from ._operator_precision import _minmax_call, _tensors
     records = []
     views = {'view', 'reshape', 'transpose', 'permute', 'flatten', 'unsqueeze',
              'squeeze', 'expand', 'contiguous', 'clone', 'detach', 't'}
     matrix = {F.linear, torch.mm, torch.bmm, torch.matmul, operator.matmul,
               torch.ops.aten.linear.default, torch.ops.aten.mm.default,
               torch.ops.aten.bmm.default, torch.ops.aten.matmul.default}
-    half_minmax = {torch.relu, F.relu, torch.clamp, torch.ops.aten.relu.default,
-                   torch.ops.aten.clamp.default}
     for node in gm.graph.nodes:
         if not node.op.startswith('call_'):
             continue
@@ -31,6 +29,7 @@ def graph_arithmetic(gm, *, reviewed_sdk):
         dtypes = {v.dtype for v in tensors if v.is_floating_point()}
         arithmetic, evidence = 'unknown', 'no_reviewed_arithmetic_contract'
         kind = _kind(node)
+        minmax = _minmax_call(node) if reviewed_sdk else None
         if (node.op == 'call_method' and node.target in views or kind == 'view'
                 or node.op == 'call_function' and node.target is operator.getitem):
             arithmetic, evidence = 'none', 'view_or_selection'
@@ -43,14 +42,17 @@ def graph_arithmetic(gm, *, reviewed_sdk):
             arithmetic, evidence = 'none', 'tensor_metadata'
         elif reviewed_sdk and kind == 'compute':
             arithmetic, evidence = 'fp32', 'reviewed_P800_region_contract_M06'
-        elif reviewed_sdk and dtypes == {torch.float32} and (
-                node.op == 'call_function' and node.target in half_minmax
-                or node.op == 'call_method' and node.target in ('relu', 'clamp')):
-            arithmetic, evidence = 'fp32', 'reviewed_native_float_minmax_M06'
-        elif reviewed_sdk and dtypes == {torch.float16} and (
-                node.op == 'call_function' and node.target in half_minmax
-                or node.op == 'call_method' and node.target in ('relu', 'clamp')):
-            arithmetic, evidence = 'fp16', 'reviewed_native_half_minmax_M06'
+        elif minmax:
+            target = minmax[0]
+            # Scalar bounds hit the same comparison kernel with either bound
+            # omitted. Its missing-bound sentinel depends on storage dtype.
+            reviewed_comparison = target in (torch.ops.aten.relu.default, torch.ops.aten.clamp.default)
+            if reviewed_comparison and dtypes == {torch.float32}:
+                arithmetic, evidence = 'fp32', 'reviewed_native_float_minmax_M06'
+            elif reviewed_comparison and dtypes == {torch.float16}:
+                arithmetic, evidence = 'fp16', 'reviewed_native_half_minmax_M06'
+            else:
+                evidence = 'minmax_overload_or_dtype_unverified_M64'
         elif reviewed_sdk and dtypes == {torch.float16} and (
                 node.op == 'call_function' and (node.target in matrix
                     or str(node.target) in ('_dynamo_workaround.linear', '_dynamo_workaround.linear.default'))
