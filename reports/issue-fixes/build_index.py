@@ -3,7 +3,10 @@ import collections
 import hashlib
 import html
 import json
+import os
 import re
+import stat
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -374,13 +377,21 @@ for update in benchmark_updates['updates']:
             item['fix_paths'].append(path)
     item['notes'].extend(update.get('notes', []))
     item['refs'].extend(ref(r['label'], r['path']) for r in update.get('refs', []))
-for extra in benchmark_updates['items']:
+sdk_records_path = OUT / 'p800-sdk' / 'records.json'
+sdk_records = json.loads(sdk_records_path.read_text())
+for extra in [*benchmark_updates['items'], *sdk_records]:
     assert extra['id'] not in by_id, extra['id']
     extra = dict(extra)
     extra['refs'] = [ref(r['label'], r['path']) for r in extra['refs']]
     items.append(extra)
     by_id[extra['id']] = extra
-assert len(items)==119+len(benchmark_updates['items']) and len({i['id'] for i in items})==len(items)
+for issue_id, note in {
+    'M75': '正式清单四个模型的 eager 在官方及本地 FlagTree 上生成相同的昆仑芯原生 BMM 模板诊断。逐头二维 mm 的模型级复测和后续阻断点见修复对照。',
+    'M06': 'M2-BERT 三个上下文版本的原生 eager 已定位到复数除以实标量的类型转换。具体算子输入、第二个 FFT 阻断点和调用方规避见 SDK05。',
+}.items():
+    by_id[issue_id]['notes'].append(note)
+    by_id[issue_id]['refs'].append(ref('P800 eager 逐模型修复对照', OUT/'P800-eager-修复对照-20261126.md'))
+assert len(items)==119+len(benchmark_updates['items'])+len(sdk_records) and len({i['id'] for i in items})==len(items)
 assert {i['id'] for i in items[:101]}=={i['id'] for i in source['items']}
 ids={i['id'] for i in items}
 for i in items:
@@ -393,10 +404,11 @@ for i in items:
             if r not in i['refs']:i['refs'].append(r)
 
 groups=['本次 FlagGems 诊断','后续整模型集成','全清单测试与环境兼容','FlagTree 源码','XPU 工具包与预编译链路','本地 F06 与集成','历史线索与未解决项']
-scope=f"保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 {len(benchmark_updates['items'])} 项全清单测试记录，共 {len(items)} 条查询记录；这不是 {len(items)} 个独立且全部已修复的缺陷。"
+scope=f"保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 {len(benchmark_updates['items'])} 项全清单测试记录和 {len(sdk_records)} 项 P800 SDK 接口记录，共 {len(items)} 条查询记录；这不是 {len(items)} 个独立且全部已修复的缺陷。"
+latest = max(i['date'] for i in items)
 intro='''# FlagTree 问题修复索引
 
-更新日期：2026 年 11 月 19 日。覆盖 FlagTree、F06、Inductor 集成、P800 工具链和 FlagGems 相关修复与规避。
+更新日期：{latest}。覆盖 FlagTree、F06、Inductor 集成、P800 工具链和 FlagGems 相关修复与规避。
 
 这份索引把问题症状、处置方式、验证范围、代码及原始证据放在一起。可按原编号（如 F24、U09）、报错（如 invalid device function）、算子（如 LayerNorm）或机制（如缓存、grid、非连续）搜索。旧编号保持不变；D、M 是本地查询编号，不是 GitHub Issue 编号。
 
@@ -456,10 +468,15 @@ M 系列来自另一轮 `f06.compile_model` 安装包与三模型验证，不与
 | Tokenizer、AutoConfig、离线 revision 缓存 | M10、M12 |
 | ModernBERT、Flash Attention、reference_compile | M11；设备断言另查 M04 |
 | 退出后仍 running、下载超时、占用误判、证据缺失 | M13、M14、M15、M16 |
+| kunlun_ops 导入失败、XFA undefined symbol | SDK01 |
+| XFFT、复数 FP16 计划返回 14 | SDK02 |
+| kunlun_ops FP16 GELU 的 exact 误差 | SDK03 |
+| kunlun_ops Add+LayerNorm 权重 dtype 拒绝、双输出精度 | SDK04 |
+| P800 原生 eager 的 BMM 模板缺 OneLoop、复数除实数、FP8 权重 cast、带掩码 SDPA head_dim 512、局部窗口变长 FlashAttention | M75、SDK05、SDK06、SDK07、SDK08 |
 | Core ML、mlpackage、误下载导出权重 | M17 |
 
 ## 条目索引
-'''.format(scope=scope,repair_report=REPAIR/'report.html')
+'''.format(scope=scope,latest=latest,repair_report=REPAIR/'report.html')
 
 md=[intro]
 for group in groups:
@@ -495,18 +512,32 @@ md+=['''\n## 后续维护规则
 
 后续已补做 D02–D04 的源码修复／旧实现复用与实卡回归；没有重跑历史 101 项全套。索引的数据来源和 SHA256 保存在同目录索引数据中；修改生成器里的补充记录后重新生成，可同步更新 Markdown 与可搜索 HTML。
 ''']
-sources=[MINILM_RESIDUAL/'reserved-comparison.json',MINILM_RESIDUAL/'reserved-occupancy-audit.json',MINILM_RESIDUAL/'reserved-package-verification.json',MINILM_RESIDUAL/'README.md',MINILM_RESIDUAL/'source-origin-before.json',MINILM_RESIDUAL/'final-validation.json',MINILM_RESIDUAL/'deployment-final.json',MINILM_RESIDUAL/'residual-only.patch',benchmark_updates_path,ROOT/benchmark_updates['lookup_evidence'],ROOT/benchmark_updates['goal_requirements'],ATTENTION_OPT/'summary.json',ATTENTION_OPT/'optimization.patch',ATTENTION_OPT/'compat-wheel.xml',GEMS_FIXES/'summary.json',GEMS_FIXES/'deployment.json',GEMS_FIXES/'compat-wheel.xml',GEMS_FIXES/'model-on-validation.json',GEMS_FIXES/'patch.diff',OFFICIAL_GEMS/'summary.json',PUBLIC_REVIEW,MAIN_RETEST,REPAIR/'summary.json',REPAIR/'reused-sources.json',REPAIR/'runtime.patch',REPAIR/'grid-after.xml',REPAIR/'operators.json',ARCHIVE/'index.json',OLD/'index.json',DIAG/'summary.json',DIAG/'model-on-fixed-v4.json',
+sources=[sdk_records_path,MINILM_RESIDUAL/'reserved-comparison.json',MINILM_RESIDUAL/'reserved-occupancy-audit.json',MINILM_RESIDUAL/'reserved-package-verification.json',MINILM_RESIDUAL/'README.md',MINILM_RESIDUAL/'source-origin-before.json',MINILM_RESIDUAL/'final-validation.json',MINILM_RESIDUAL/'deployment-final.json',MINILM_RESIDUAL/'residual-only.patch',benchmark_updates_path,ROOT/benchmark_updates['lookup_evidence'],ROOT/benchmark_updates['goal_requirements'],ATTENTION_OPT/'summary.json',ATTENTION_OPT/'optimization.patch',ATTENTION_OPT/'compat-wheel.xml',GEMS_FIXES/'summary.json',GEMS_FIXES/'deployment.json',GEMS_FIXES/'compat-wheel.xml',GEMS_FIXES/'model-on-validation.json',GEMS_FIXES/'patch.diff',OFFICIAL_GEMS/'summary.json',PUBLIC_REVIEW,MAIN_RETEST,REPAIR/'summary.json',REPAIR/'reused-sources.json',REPAIR/'runtime.patch',REPAIR/'grid-after.xml',REPAIR/'operators.json',ARCHIVE/'index.json',OLD/'index.json',DIAG/'summary.json',DIAG/'model-on-fixed-v4.json',
          MODEL/'results.json',MODEL/'verification.json',MODEL/'source-verification.json',
          ROOT/'packaging/f06/README.md',ROOT/'work/2026-11-13/13项源码修复-官方Issue与PR核对.md',
          ROOT/'work/2026-11-14/U09-review/README.md',ROOT/'work/2026-11-14/U07-timeout-diagnosis/README.md',
          ROOT/'review-local/model-usefulness-20261117/x-benchmark/docs/p800_flag_gems_copy_unavailable_reproduction.md']
-inventory={'updated':'2026-11-19','scope':scope,'count':len(items),'group_counts':dict(collections.Counter(i['group'] for i in items)),
+inventory={'updated':latest,'scope':scope,'count':len(items),'group_counts':dict(collections.Counter(i['group'] for i in items)),
            'historical_baseline_counts':source['counts'],'items':items,
            'sources':[{'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sources]}
+def publish_text(path, content):
+    # Benchmark workers may read the index while a new edition is being built.
+    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o644
+    with tempfile.NamedTemporaryFile(dir=path.parent, mode='w', encoding='utf-8', delete=False) as stream:
+        staged = Path(stream.name)
+        try:
+            stream.write(content)
+            stream.flush()
+            os.fchmod(stream.fileno(), mode)
+            staged.replace(path)
+        finally:
+            staged.unlink(missing_ok=True)
+
+
 OUT.mkdir(exist_ok=True,parents=True)
-(OUT/'index.json').write_text(json.dumps(inventory,ensure_ascii=False,indent=2))
+publish_text(OUT/'index.json',json.dumps(inventory,ensure_ascii=False,indent=2))
 md_path=ROOT/'reports/FlagTree问题修复索引.md'
-md_path.write_text('\n'.join(md))
+publish_text(md_path,'\n'.join(md))
 
 def h(x):return html.escape(str(x),quote=True)
 def a(r):return f'<a href="{h(r["path"])}">{h(r["label"])}</a>'
@@ -530,12 +561,12 @@ document.getElementById('collapse').onclick=()=>rows.forEach(r=>r.open=false);
 function reveal(){const id=decodeURIComponent(location.hash.slice(1));const r=document.getElementById(id);if(r&&r.classList.contains('issue')){q.value=g.value=s.value='';filter();r.open=true;r.scrollIntoView();}}
 window.addEventListener('hashchange',reveal);filter();reveal();'''
 page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlagTree 问题修复索引</title><style>'+css+'</style></head><body>'
-page+='<h1>FlagTree 问题修复索引</h1><p>更新于 2026 年 11 月 19 日 · 原始编号保留 · 可按症状、报错、算子、源码路径查询</p>'
+page+=f'<h1>FlagTree 问题修复索引</h1><p>更新于 {latest} · 原始编号保留 · 可按症状、报错、算子、源码路径查询</p>'
 page+='<p><b>持续执行要求：</b>每次遇错及修复前先查本手册，核对已有方案的适用版本与部署范围；新方案验证后登记复现、前后结果、指纹与边界。同一机制补旧条目，未验证方案不标已解决。</p>'
 page+='<div class="intro"><p>'+h(scope)+'</p><p>旧 101 项中：13 项源码修复验证、8 项绕行验证、56 项本地实现或处置、24 项历史／待验。通过测试、安装到某镜像、官方合并是不同状态。</p><p>后续已复用 copy_ 旧过滤（869 项），修复 grid 缓存并复用已有 empty/lift_fresh。6 项缓存回归、27 项算子检查和 6 项模型对照通过；小 grid 异常见 D05。请优先查 <a href="#D01">D01</a>、<a href="#D02">D02</a>、<a href="#D03">D03</a>、<a href="#D04">D04</a>。</p><p class="small">M 系列为另一路 f06.compile_model 包验证；不与 D 系列 FlagGems 全量 ON 的测量混算。历史官方状态以原记录日期为准。</p></div>'
 page+='<p>'+a(ref('Markdown 完整文档',md_path))+' · '+a(ref('结构化索引',OUT/'index.json'))+' · '+a(ref('本次 FlagGems 完整诊断',DIAG/'report.html'))+' · '+a(ref('后续整模型报告',MODEL/'report.html'))+'</p>'
 page+='<p>官方 FlagGems 36a2e186a 的本地 p800fix4 已完成 LayerNorm-384 与矩阵准备路径优化，FlagGems/copy_ 保持开启。187 项检查通过、4 项既有问题 xfail；预留 GPU6 后三方共 9 条模型路径及换输入图重放通过。QKV encode 13.157→10.561 ms，设备 6.360→3.002 ms，仍慢于 OFF 6.568/1.649 ms。mask 优化见 <a href="#D08">D08</a>，正式复测见 <a href="#D10">D10</a>，非方形序列边界见 <a href="#D09">D09</a>。不表示官方已合入；'+a(ref('完整优化报告',MINILM_RESIDUAL/'README.md'))+'。</p>'
 page+='<div class="toolbar"><input id="q" aria-label="搜索问题" placeholder="搜索：copy_、grid、BF16、U09…"><select id="group" aria-label="按归属筛选"><option value="">全部归属</option>'+options(groups)+'</select><select id="status" aria-label="按状态筛选"><option value="">全部状态</option>'+options(sorted({i['status'] for i in items}))+'</select><button id="expand">展开结果</button><button id="collapse">收起</button><span id="count" aria-live="polite"></span></div>'
 page+=''.join(cards)+'<p class="small">更新记录时保留触发条件、版本指纹、修补位置、复现与前后验证、部署范围；不要把过滤规避、诊断或性能测量改写成底层已根修。</p><script>'+javascript+'</script></body></html>'
-(ROOT/'reports/FlagTree问题修复索引.html').write_text(page)
+publish_text(ROOT/'reports/FlagTree问题修复索引.html',page)
 print(json.dumps({'records':len(items),'groups':inventory['group_counts'],'markdown':str(md_path)},ensure_ascii=False,indent=2))

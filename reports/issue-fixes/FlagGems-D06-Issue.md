@@ -17,6 +17,8 @@ D09 单列非方形 Q/K 长度 33/65、65/33 出现 NaN 的四项历史用例。
 
 当前全模型测量使用同一套本地 FlagTree 和 `p800fix5`，在每张卡上分别运行 eager 与 FlagGems ON。已经完成的 MiniLM 测量中，eager 为 6.80 毫秒，ON 为 16.69 毫秒。D09 历史记录中的四个矩形输入在累计包上通过了输出和 LSE 断言，原套件因严格 `xfail` 将它们报告为 `XPASS(strict)`。另一张 P800 上使用 `--runxfail` 重新运行同函数的 8 个参数组合，8 项全部通过。[实测明细](../../work/2026-11-24/xpu-gems-eager/all-local-fixes/model-results.csv) · [独立复验](../../work/2026-11-24/xpu-gems-eager/all-local-fixes/evidence/43.179.154.78/e9e2c8815f70dad48afc/fix-verification/local-on/pytest.xml) · [原始回归记录](../../work/2026-11-24/xpu-gems-eager/all-local-fixes/evidence/43.179.154.78/e9e2c8815f70dad48afc/operator-regression/local-on/pytest.xml)
 
+11 月 26 日逐模型复核了正式清单中 FlagGems ON 未跑通的 544 个模型。以往命中 D06 的 194 个模型均已用累计包测试，原断言复现 0 次。另有 7 个模型在同一文件内触发头维度白名单断言，固定修订配置的每头维度分别为 25、26 或 72。[逐模型 issue 对照与实卡证据](FlagGems-P800-未跑通模型逐项排查-20261126.md)
+
 ## 现象和调用链
 
 同批 10 条文本长度不同，分词器将其补齐到 54 个位置。MiniLM 在 softmax 前用偏置屏蔽 padding。实测传入的偏置形状为 `[10,12,54,54]`，FP16 取值为 `0` 与 `-65504`。没有图编译时，原生实现和 FlagGems 注册的实现仍可走不同的执行路径。
