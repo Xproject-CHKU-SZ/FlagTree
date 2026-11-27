@@ -1,7 +1,7 @@
 {
-  "updated": "2026-11-26",
-  "scope": "保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 108 项全清单测试记录和 8 项 P800 SDK 接口记录，共 235 条查询记录；这不是 235 个独立且全部已修复的缺陷。",
-  "count": 235,
+  "updated": "2026-11-27",
+  "scope": "保留原始 101 项编号，补充 10 项 FlagGems 诊断、8 项整模型接入与 115 项全清单测试记录和 8 项 P800 SDK 接口记录，共 242 条查询记录；这不是 242 个独立且全部已修复的缺陷。",
+  "count": 242,
   "group_counts": {
     "本地 F06 与集成": 60,
     "FlagTree 源码": 17,
@@ -9,7 +9,7 @@
     "XPU 工具包与预编译链路": 15,
     "本次 FlagGems 诊断": 10,
     "后续整模型集成": 8,
-    "全清单测试与环境兼容": 96,
+    "全清单测试与环境兼容": 103,
     "整模型测试环境与协调": 5
   },
   "historical_baseline_counts": {
@@ -6858,6 +6858,18 @@
         {
           "label": "本轮三台主机的健康复查和占用留档",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/native-health-guard-current-p800.json"
+        },
+        {
+          "label": "152.136.33.169 物理 5 号卡的原生算子分段记录与占用凭据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/native-health-operator-stages-152.136.33.169-card5.json"
+        },
+        {
+          "label": "152.136.33.169 物理 7 号卡的原生算子分段记录与占用凭据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/native-health-softmax-stages-152.136.33.169-card7.json"
+        },
+        {
+          "label": "152.136.33.169 物理 5 号卡恢复常规健康检查的原始回执",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/health-history/receipts/152.136.33.169/health-card5-1795766974969858842.json"
         }
       ],
       "related": [
@@ -6925,7 +6937,10 @@
         "2026-11-25 19时前第二台原生健康恢复：第二台个人baseline容器重新可见；物理0、1空闲守卫通过，仅选择0号并在发射前复查。原生FP16/FP32三轮6控制通过，后续24组直接SDK和72次eager完成；因此旧超时不能泛化所有卡或所有容器。未证明之前失效卡已恢复，不修改主机、不重置卡、不终止他人进程。第一台0–3禁用；第三台6/7空闲快照不作为健康证明。",
         "2026-11-25 19:28 复核。第三台物理 7 号卡通过了空闲检查，但已保存的原生健康测试在分配阶段退出 124。第二台没有通过初筛的卡。第一、四台连接关闭；本批没有新增设备测试。SiLU 的 29 组等价性测试尚待执行。",
         "11 月 26 日再次独立检查 152.136.33.169 物理 5 号卡。19 次采样覆盖全程，未见其他用卡进程。8×8 FP32 GEMM 通过，随后进入短 softmax 所在区段，65 秒到期。43.138.5.189 的 1 号卡、43.179.154.78 的 4 号卡在相同监测下通过健康检查。5 号卡仍隔离，现有标记不能进一步区分该区段的填充、softmax 或同步。",
-        "152.136.33.169 物理 7 号卡在距上次健康检查 2.45 小时后复检。19 次采样覆盖全程，未见其他用卡进程。已确认 PCI 身份，设备分配开始后在 65 秒截止。该卡与 5 号卡均继续跳过，未对共享主机或设备实施重置。"
+        "152.136.33.169 物理 7 号卡在距上次健康检查 2.45 小时后复检。19 次采样覆盖全程，未见其他用卡进程。已确认 PCI 身份，设备分配开始后在 65 秒截止。该卡与 5 号卡均继续跳过，未对共享主机或设备实施重置。",
+        "152.136.33.169 的 5 号卡在单卡无外部占用的原生检查中完成加法、8×8 GEMM 及其同步和主机值校验。2×257 张量创建和 torch.softmax 调用返回后，30 秒 Python 栈停在 torch.cuda.synchronize；65 秒退出码 124。19 次占用采样覆盖全程。超时已经细化到 softmax 调用后的主机同步，设备侧指令位置待查。",
+        "同机 7 号卡的细分检查本次只到分配完成，65 秒到期，19 次采样均无外部用卡进程。早一轮常规检查已通过 GEMM；两次停顿位置不同，7 号卡保留隔离。",
+        "11 月 27 日 16:06，152.136.33.169 的物理 5 号卡在再次核对 PCI、占用和资源余量后通过常规健康检查，包括加法、GEMM 及 FP16、BF16 边界。此前 softmax 同步超时的证据保留，后续任务仍逐次检查占用和健康。"
       ],
       "group": "本次 FlagGems 诊断",
       "date": "2026-11-24",
@@ -7964,6 +7979,18 @@
         {
           "label": "google/siglip2-so400m-patch14-384 本次实机归因和编译产物",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/45ff87533741c1101ba8-float32-1795693577672303279/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-so400m14 本次 P800 编译现场与设备目标文件",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795786052046308862/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795792088913033800/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795792088913033800/failure-followup-20261127-verified-boundary-and-projection.json"
         }
       ],
       "related": [
@@ -8008,7 +8035,10 @@
         "google/siglip-base-patch16-256-multilingual 的两种位置加法签名均在 P800 通过逐值校准，已应用 6 次。随后视觉池化在 768 维、12 头、256 个图像位置的跨注意力投影经过 _in_projection_packed 和 hydra_linear，读 FakeTensor 的数据指针失败，原 M01 规则仅覆盖 1152 维、16 头。",
         "google/siglip-base-patch16-256-multilingual 的 768 维、12 头视觉池化跨注意力在 CPU 使用 256 个视觉位置验证。输出向量及平均注意力权重均逐位一致；AOT 保留三次线性投影，整图设备复测已排队。",
         "google/siglip2-base-patch16-512 的 768 维、12 头视觉池化跨注意力在 CPU 使用 1024 个视觉位置验证。输出向量及平均注意力权重均逐位一致；AOT 保留三次线性投影，整图设备复测已排队。",
-        "google/siglip2-so400m-patch14-384。SigLIP2 视觉池化头执行 self.attention(probe, hidden_state, hidden_state)。本次后端捕获经过 Hydrax Linear 的 _should_fallback，对假张量调用 data_ptr() 触发异常，落在 M01。此前该模型记录的 M72 视觉加法步幅断言未出现在这次栈中。本次留存 12 个设备 ET_REL，已核对最后一组 IR、汇编和机器码。报错的 Python 逻辑在假张量分派时触发，尚未为该失败调用生成设备代码。"
+        "google/siglip2-so400m-patch14-384。SigLIP2 视觉池化头执行 self.attention(probe, hidden_state, hidden_state)。本次后端捕获经过 Hydrax Linear 的 _should_fallback，对假张量调用 data_ptr() 触发异常，落在 M01。此前该模型记录的 M72 视觉加法步幅断言未出现在这次栈中。本次留存 12 个设备 ET_REL，已核对最后一组 IR、汇编和机器码。报错的 Python 逻辑在假张量分派时触发，尚未为该失败调用生成设备代码。",
+        "Tipsv2-so400m14 官方图文输入原检查点精度通过两项 Welford 分块校正。新失败位于文本塔多头注意力的打包线性投影：AOT 捕获展开 _in_projection_packed 后调用厂商 hydra_linear，_should_fallback 访问 FakeTensor.data_ptr() 报错。M01 既有视觉池化修正未覆盖这个文本塔。已核验这次运行中 3 个 P800 ET_REL 与 3 份目标 IR。当前失败在元数据跟踪期间，该投影未生成可执行设备内核。",
+        "Tipsv2-B14 在固定检查点和 32 对图文上得到 eager 平均 337.171 ms。两个先前失败的 Welford 源码均采用已验证的 1×1024 分块。新的明确异常发生在文本塔的 768 维、12 头带掩码自注意力：AOT 执行打包 QKV 投影时进入厂商 Hydra Linear，其设备选择读取了 FakeTensor 的 data_ptr()。现有 M01 文本自注意力规则只覆盖 512 维、8 头。归档中有 42 份目标 IR 和 42 个经符号核验的设备 ET_REL，均来自此前编译。本次文本投影在 AOT 图解释时失败，没有该投影的最终机器码。外部包装器记录退出码 124，内部状态已持久化具体 BackendCompilerFailed。",
+        "Tipsv2-B14 的 32 条官方文本使用原始发布权重进入 12 个文本注意力层。768 维、12 头的两个投影在 FakeTensor 中可追踪，458 个节点的完整文本塔得到 32×768 原生逐位相同输出。四台源码一致，整模 P800 复测已入队。"
       ],
       "group": "后续整模型集成",
       "date": "2026-11-19",
@@ -8265,6 +8295,30 @@
         {
           "label": "topk-io/topk-embed-v1-small float32 实机失败及编译产物",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/4374103c58be2eb6baa4-float32-1795681128737376689/failure-diagnosis.json"
+        },
+        {
+          "label": "deepvk/USER2-small 本次 P800 编译现场与设备目标文件",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float32-1795787710941305016/failure-diagnosis.json"
+        },
+        {
+          "label": "deepvk/USER2-small float16 单卡真机原始记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float16-1795789978759523015/failure-diagnosis.json"
+        },
+        {
+          "label": "DeepVK float32 四机部署与复测依据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float32-1795787710941305016/failure-followup-20261127-native-reference.json"
+        },
+        {
+          "label": "DeepVK float16 四机部署与复测依据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float16-1795789978759523015/failure-followup-20261127-native-reference.json"
+        },
+        {
+          "label": "deepvk/USER2-small 原生入口真机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float32-1795787710941305016/failure-followup-20261127-single-card-eager-passed.json"
+        },
+        {
+          "label": "deepvk/USER2-small 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float16-1795793131092170745/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -8284,7 +8338,12 @@
         "Granite 311M 通过 M89 的离线分词器检查。原生参考调用 ModernBERT 内部编译的嵌入和 LayerNorm，两个词表边界断言进入 IR；本次 ET_REL 保留未解析的 __assert_fail 符号及重定位，链接器退出。",
         "ibm-granite/granite-embedding-311m-multilingual-r2的候选修正已校验下发至四台个人容器，待正式整模型复测。",
         "Granite 311M 已通过原生 FP32 参考和十次原生计时。后续旋转乘法输入为 [10,12,39,64]，头和序列交错的输入步幅为 (89856,64,2304,1)。包装器第 99 行要求输出头步幅 64、序列步幅 768，实际返回 2496、64。",
-        "topk-io/topk-embed-v1-small。原生 FP32 参考的内部编译归约在索引处生成两个设备断言。ELF 转换调用链接器时无法解析 __assert_fail。 本次两个 ELF 都是可重定位目标。失败归约源码第 44、46 行的设备断言对应未定义符号和两条重定位。已核对 TTIR、目标 IR、LLVM IR 和汇编，最终可执行设备码未链接成功。"
+        "topk-io/topk-embed-v1-small。原生 FP32 参考的内部编译归约在索引处生成两个设备断言。ELF 转换调用链接器时无法解析 __assert_fail。 本次两个 ELF 都是可重定位目标。失败归约源码第 44、46 行的设备断言对应未定义符号和两条重定位。已核对 TTIR、目标 IR、LLVM IR 和汇编，最终可执行设备码未链接成功。",
+        "deepvk/USER2-small 在原生 FP32 参考阶段使用 ModernBERT 内置的编译嵌入。生成代码为索引边界创建 tl.device_assert，TTIR 的 tt.assert 降到 __assert_fail，设备链接器报告找不到该符号，与 M04 一致。核验 P800 ET_REL 中 __assert_fail 为未定义符号；汇编、LLVM IR 和包装器提供相同诊断。最终设备链接失败，eager 计时及本地 F06 搜索均未开始。",
+        "deepvk/USER2-small 的 FP16 请求在共同的 FP32 参考阶段复现 M04。ModernBERT 编译嵌入的 device_assert 降到目标对象中的 __assert_fail，设备链接失败。经 readelf 确认当前 P800 ET_REL 的 __assert_fail 符号未定义，尚未进入 F06 或计时。",
+        "deepvk/USER2-small 的原生入口已在四台个人容器同步。固定版本的两次独立 CPU 前向对照覆盖 10×384 输出，最大绝对误差为 4.77×10⁻⁷。两种精度进入各自的 P800 复测队列。",
+        "DeepVK USER2-small 的原生链接问题在 P800 修正，FP32 十次 eager 平均 19.44 ms。接下来在整图适配器选择阶段拒绝 SentenceTransformers 4.0.2 的 encode/forward 组合。现场两个方法指纹与固定 wheel 逐一相同，此组合未覆盖在 M106 已核验的入口。",
+        "DeepVK 在 10 条输入上使用 74 个原始 FP16 参数完成整模边界校验、eager（平均 20.404 ms）并通过第一次局部精度试探。整图的原生精度规则缺少 12 个 unbind、24 个 neg、12 个 softmax、12 个 chunk 节点的 lowering；编译器明确终止该候选。"
       ],
       "group": "后续整模型集成",
       "date": "2026-11-19",
@@ -10373,6 +10432,34 @@
         {
           "label": "LateOn 原生修复的正式 P800 重测与新边界故障",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/baa923ce20b141c204f5-float32-1795666636498480924/failure-diagnosis.json"
+        },
+        {
+          "label": "yjoonjang/splade-ko-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/24ffb157a5582acbd566-float32-1795783796458443654/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview float32 单卡真机原始记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795787508304516092/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview float16 单卡真机原始记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float16-1795789505139834168/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview float32 修正与复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795787508304516092/failure-followup-20261127-tips-telepix-deployment.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview float16 修正与复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float16-1795789505139834168/failure-followup-20261127-tips-telepix-deployment.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 原生入口真机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795787508304516092/failure-followup-20261127-single-card-eager-passed.json"
+        },
+        {
+          "label": "Telepix 单卡 FP16 稀疏边界复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float16-1795791029564827178/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -10405,7 +10492,12 @@
         "Granite embedding English r2 的 FP32、FP16 两次历史运行均在共同原生 FP32 参考中报告错误 700。固定版本遗漏于已校验的 eager 列表；未进入 F06 编译。",
         "Ruri v3 310M 在真实 P800 上通过原生 FP32 参考。原闪存注意力错误已解除，后续 M79 的包装器另行复测。",
         "lightonai/LateOn 的原生 FP32 参考选择 Flash Attention 2，在 ModernBERT 的变长旋转位置编码内读取序列偏移时报告设备错误 700。尚未进入 F06；异步报错的位置不能确定最早出错的设备指令。",
-        "LateOn 在修正后的 P800 原生入口已完成十次 FP32 计时，平均 34.62 ms。模型公开输出仍为按输入分组的变长 token 向量。整图捕获前，边界选择器找不到 MultiVectorEmbeddingModel 分支。"
+        "LateOn 在修正后的 P800 原生入口已完成十次 FP32 计时，平均 34.62 ms。模型公开输出仍为按输入分组的变长 token 向量。整图捕获前，边界选择器找不到 MultiVectorEmbeddingModel 分支。",
+        "splade-ko-v1 使用原生 SparseEncoder 进入 FP32 参考推理。异步设备错误 700 在 ModernBERT 未填充旋转位置编码读取 cu_seqlens[b].item() 时上报，首次出错的设备操作尚未确定。与 M11 的 Flash Attention 问题有关联线索，尚未判定同因。本次四个编译缓存均为空，F06 尚未启动。调用栈涉及已有运行库，未取得故障指令。",
+        "Telepix PIXIE-Splade-Preview 使用原始 SparseEncoder 加载固定检查点。对官方 64 条文本做 FP32 参考前向时，ModernBERT 的变长 Flash Attention 在 rotary.py 读取 cu_seqlens 时报告设备错误 700。已知 M11 的按检查点修正尚未覆盖此稀疏加载入口。逐项检查四个独立缓存，均为空。此调用使用已安装的原生实现，异步错误首次报告位置已记录；尚不能定位最早触发错误的机器指令。没有本次 F06 编译产物。",
+        "Telepix 稀疏加载入口已在四台个人容器同步。官方 64 条文本在 CPU 上的完整输出形状为 [64,50000]，稀疏索引一致，最大绝对误差 1.02×10⁻⁵ 以内。",
+        "Telepix 的 Flash Attention 参考错误已在 P800 解除。官方 64 条文本完成 FP32 十次 eager，平均 144.71 ms。现场成功加载发布者规定的 SparseEncoder；整图边界仅列有另外两个固定稀疏模型，没有覆盖该修订，进入通用分支后拒绝自定义编码器。",
+        "Telepix 的 FP16 精度在官方 64 条输入上通过原生 FP32 参考和十次 FP16 eager（平均 120.83 ms）。当前 137 个浮点参数均为 FP16，稀疏输出的整图边界只验证过 FP32，因此在 F06 构图之前停止。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-19",
@@ -10507,6 +10599,10 @@
         {
           "label": "ZeRank small P800 已越过别名解析并进入参考前向",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/zerank-small-alias-p800-retest.json"
+        },
+        {
+          "label": "zeroentropy/zerank-1-small-reranker float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84ea1e4503aab3f2a7ce-float32-1795697941144931473/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -10528,7 +10624,8 @@
         "jinaai/jina-reranker-v1-turbo-en float32 的历史 P800 加载断点与同精度重测 95e4d62d819dfe69b0ca-float32-1795084213633747690 已核对。发布者模型内部再次调用 AutoTokenizer.from_pretrained(config._name_or_path)，遗漏传递 revision。共享缓存查找 config.json 失败。定版私有缓存与显式 revision 的词表 SHA-256 和 token 序列相同，同精度的 P800 重测已完成加载。",
         "jinaai/jina-reranker-v1-turbo-en float16 的历史 P800 加载断点与同精度重测 95e4d62d819dfe69b0ca-float16-1795084131422739008 已核对。发布者模型内部再次调用 AutoTokenizer.from_pretrained(config._name_or_path)，遗漏传递 revision。共享缓存查找 config.json 失败。定版私有缓存与显式 revision 的词表 SHA-256 和 token 序列相同，同精度的 P800 重测已完成加载。",
         "zeroentropy/zerank-1-small-reranker。发布者在第 75 行用旧仓库名调用未指定 revision 的 AutoConfig。官方 Hub API 将旧名解析为本次定版仓库和同一 commit，10 个文件均已对照。原离线视图只有正式名称。在个人运行目录增加固定别名后，CPU 实测配置、分词配置及自定义模块解析到相同文件。四个运行专属缓存均已核验为空，失败发生在产生模型 IR 与机器码前。",
-        "旧入口在解析发布者的模型别名时中断。该固定修订本次已加载 310 个 FP32 参数并完成首次参考前向，随后在独立 FP32 深拷贝参考检查（model_probe.py 第 957 行）退出；断言同时检查是否发现根模块及其参数精度，现有原始日志无法区分。"
+        "旧入口在解析发布者的模型别名时中断。该固定修订本次已加载 310 个 FP32 参数并完成首次参考前向，随后在独立 FP32 深拷贝参考检查（model_probe.py 第 957 行）退出；断言同时检查是否发现根模块及其参数精度，现有原始日志无法区分。",
+        "ZeRank-1-small 修正离线别名后已成功加载嵌套打分模型。后续 FP32 副本断点已定位为发布者在首次打分时延迟创建 BF16 内层模型，见 M117。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-19",
@@ -13160,6 +13257,10 @@
         {
           "label": "本地源码 review-local/f06-all-models-20261119/model_probe.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/model_probe.py"
+        },
+        {
+          "label": "hkunlp/instructor-base float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9d81952fb4ff9b57c69c-float16-1795112279855410052/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -13175,7 +13276,8 @@
         "正式InstructorFP16重测1795117513940014419已通过：6次128分块、1次安全周期堆栈，7680元素全通过FP32标准(maxabs0.001933187)，无外来占用。实际路由为FP32packed融合+原始路径+SDKnorm；eager21.431136ms/F0691.356492ms=0.234588×，正确但仍更慢，不能称为性能优化成功。",
         "2026-11-21 完整图FP32复测揭示旧策略只允许FP16，FP32再次触发同一arith.addi错误。实际生成原核独立编译复现，等价常量索引修正后编译通过；两次完整模型诊断均通过，正式loader范围扩展到相同固定revision的FP16/FP32。正式运行1795192439781467758应用14次折叠，31个普通范围不变，两个融合候选均精度通过且无拒绝；因约77.2ms仍慢于original约14.0ms，实际保留original图。正式端到端eager15.892005ms/最终15.551353ms=1.021905×。不同模型、revision、BF16、缓存越出运行目录四项负范围控制通过。此修复解除编译拒绝，不代表解决Softmax/转置性能瓶颈。",
         "2026-11-21性能诊断CPU对照只把core_num/launch_cores由64配对改1，失败于TritonXPUUnrollControl的expand_dims结果1×1×64/1×1×2不一致；不是既有singleton arange根因，未发射设备内核、未部署、无加速结论。原64核编译xpubin与实测逐字节一致。",
-        "2026-11-21后续性能处理M58：完整图中短行Softmax使用和eager相同的厂商实码，消除当前模型的跨核归约瓶颈；不是本项底层LLVM/三维布局已经通用修好。编译-only强制行布局实验发现尾部掩码风险，未发射也未交付。"
+        "2026-11-21后续性能处理M58：完整图中短行Softmax使用和eager相同的厂商实码，消除当前模型的跨核归约瓶颈；不是本项底层LLVM/三维布局已经通用修好。编译-only强制行布局实验发现尾部掩码风险，未发射也未交付。",
+        "三维 softmax 生成了长度为 1 的索引范围。四条编译路径在 arith.addi 的操作数类型核对处中断。后续同修订 P800 运行记录 22 次等价索引折叠，越过原报错。 已核验 22 个设备对象及对应 IR；同修订、同旧版 F06 的正式 FP16 重测通过，速比 0.235×。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-21",
@@ -13310,6 +13412,14 @@
         {
           "label": "完整模型缓存路线实际布局对照",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/layernorm-fast-paths-20261123/complete-model-cache-layouts.json"
+        },
+        {
+          "label": "hkunlp/instructor-base float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9d81952fb4ff9b57c69c-float16-1795114586193593554/failure-diagnosis.json"
+        },
+        {
+          "label": "hkunlp/instructor-base float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9d81952fb4ff9b57c69c-float16-1795115489862182625/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -13325,7 +13435,9 @@
         "新增限幅残差变体80项P800校验通过，覆盖FP16/FP32及两个限幅选择分支，CPU/厂商逐位一致，85字节输出尾部保持完整，留存13个eager及2个融合二进制。受测函数逐AST接入固定模型策略，保留3项负范围检查；正式整模型重新入队。",
         "受测5指针匹配接回正式入口后，模型1795116634555149557以rc1退出但未写终态；日志没有可定位的新编译异常。按M13标记process_failed，不能把旧running快照里的0次变换计数当作完整编译结论，也不能宣称整模型通过。",
         "正式InstructorFP16重测1795117513940014419已通过：6次128分块、1次安全周期堆栈，7680元素全通过FP32标准(maxabs0.001933187)，无外来占用。实际路由为FP32packed融合+原始路径+SDKnorm；eager21.431136ms/F0691.356492ms=0.234588×，正确但仍更慢，不能称为性能优化成功。",
-        "2026-11-23 v58：扩大设备回归时复现R33中两项非规范bool字节问题，运行时semantic.py仍为0764a221...旧版；仅替换libtriton不足以带上Python转换修复。复用既有07469820...实现到独立个人前缀，未改动共享安装，最终186组设备回归通过。此项是部署组合漏配的修正，不把它误归因为新的LayerNorm编译回归。"
+        "2026-11-23 v58：扩大设备回归时复现R33中两项非规范bool字节问题，运行时semantic.py仍为0764a221...旧版；仅替换libtriton不足以带上Python转换修复。复用既有07469820...实现到独立个人前缀，未改动共享安装，最终186组设备回归通过。此项是部署组合漏配的修正，不把它误归因为新的LayerNorm编译回归。",
+        "原生 isinf.any 布尔归约的循环累加器是块参数。TritonXPUUnrollControl 无法将 1×2048 布尔值缩为 1×128，四条编译路径均中断。 已核验 44 个设备对象及对应 IR；同修订、同旧版 F06 的正式 FP16 重测通过，速比 0.235×。",
+        "旧的 128 分块修正已命中三个生成内核，但带 clamp 选择器的五指针变体仍采用 2048 分块。四条路径在相同布尔累加器降层处中断，补入带 clamp 的发布计算后通过同修订 P800 复测。 已核验 61 个设备对象及对应 IR；同修订、同旧版 F06 的正式 FP16 重测通过，速比 0.235×。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-23",
@@ -13519,6 +13631,10 @@
         {
           "label": "精度候选覆盖边界",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/latency-regression-20261123/candidate-audit.json"
+        },
+        {
+          "label": "hkunlp/instructor-base float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9d81952fb4ff9b57c69c-float16-1795116634555149557/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -13536,7 +13652,8 @@
         "原版ColPaliFP16重测1795117643080418450已写出完整终态，编译期间11次安全堆栈无诊断错误；后续为第4子图FP32精度不通过。该运行40次已有占用观察无外来进程，但协调恢复造成监控缺口而排除，不能给出有效性能结论，也不能把精度问题标为已修复。",
         "2026-11-22 完整模型剪枝复核：正式a100_public_protocol与四轮完整候选选路计时明确停止Python堆栈观察器，受影响的是扩展resource_diagnostics阶段，其phase重新启动60秒观察器，CLIP最终轮有15次快照。未将堆栈输出误判为执行异常；主性能和快路径覆盖采用关闭观察器的正式数据，12轮扩展诊断单独标注可能含观察开销。后续扩展计时也应将resource_diagnostics纳入停用阶段；本轮保留实测脚本和原始证据，不伪称已在该轮关闭。",
         "2026-11-23 候选覆盖与同码计时复核：原始dtype区域精度搜索44组，87次原生试验最终仅给出39组提升FP32的一组方案；近期完整K复测复用该方案，不代表穷尽更细编译混合精度。当前候选内部选路仍保留更快厂商矩阵。个人Docker本轮690次发射的SHA/入口/资源/次数/顺序及8类输出哈希不变，完整6533320元素精度通过；3+10 eager/F06=100.683761/121.135426ms，6轮交替为100.382074/122.066593ms。旧137.951ms高段未重现，不能归为新生成码回退，也未声称根因已修复。CPU前向、预处理、GC及返回后间隔分开记录；返回后间隔不能作为纯设备耗时。保持全部原始计时，诊断结果不覆盖旧正式结果。",
-        "2026-11-25 池化观察器排除：禁用周期原生堆栈后普通max-pool out仍发生主机堆异常；独立无追踪器控制亦失败。M34不是该故障必要条件，不能将所有原生退出归因于观察器。后续返回句柄/回写对照见regular-pool报告。"
+        "2026-11-25 池化观察器排除：禁用周期原生堆栈后普通max-pool out仍发生主机堆异常；独立无追踪器控制亦失败。M34不是该故障必要条件，不能将所有原生退出归因于观察器。后续返回句柄/回写对照见regular-pool报告。",
+        "周期堆栈采样在 60 秒时输出 FX 图捕获线程栈；进程以 rc=1 退出，最后状态仍为 running。相同个人容器的 CPU 对照仅在两种原采样模式复现，改用 Python 线程栈后正式 P800 用例通过。 已核验 50 个设备对象及对应 IR；同修订、同旧版 F06 的正式 FP16 重测通过，速比 0.235×。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-20",
@@ -14147,6 +14264,14 @@
         {
           "label": "FG-CLIP Large 加载修复的实卡复测",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ae38b46b95888e307ad1-float32-1795674206979099534/failure-diagnosis.json"
+        },
+        {
+          "label": "rinna/japanese-cloob-vit-b-16 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/631929a123b05c20fc2b-float32-1795673786259725388/failure-diagnosis.json"
+        },
+        {
+          "label": "microsoft/LLM2CLIP-EVA02-L-14-336 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9c28d460eaa59019b9db-float32-1795775446912060443/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -14171,7 +14296,9 @@
         "rinna/japanese-clip-vit-b-16 在正式 P800 入口核对全部 399 个发布张量，图文公开输出与整图边界逐位相等。连续三次宿主机内存压力采样触发让出，测试以 75 退出。保留该条调试证据，整模型耗时仍待资源空闲后重测。",
         "qihoo360/fg-clip-large 定版配置把 FGCLIPModel 登记在 AutoModelForCausalLM。官方图文适配器请求 AutoModel，Transformers 4.44.2 没有该自定义 FGCLIPConfig 的 AutoModel 映射，在权重模型构造前拒绝该类。",
         "依发布者固定版说明改用其声明的加载工厂、图像处理器和 77 token 短文本位置编码。核对全部 595 个权重与缓冲区，官方十组输入的图像、文本向量各为 [10,768]，均与发布者双塔数值逐位相同。CPU 全图捕获 1941 个节点，反序输入同样匹配。",
-        "FG-CLIP Large 固定权重经发布者工厂在 P800 加载成功，后续原生参考在 BMM 模板实例化失败，见 M75。"
+        "FG-CLIP Large 固定权重经发布者工厂在 P800 加载成功，后续原生参考在 BMM 模板实例化失败，见 M75。",
+        "rinna/japanese-cloob-vit-b-16 FP32 的配置声明 CLOOBModel，发布者映射将该模型指向 CLOOBModel。基准图文入口却调用 AutoProcessor 和 AutoConfig，固定 Transformers 4.44.2 无法识别 cloob。已核验的 rinna 日文 CLIP 接入仅覆盖另一模型修订，该 CLOOB 仍缺发布者入口。加载阶段即退出，正式 eager 与 F06 均未启动。已核验四处当次缓存为零，未生成本模型的编译 IR 或设备代码。",
+        "通用 ImageTextModel 在当前仓库根部调用 AutoProcessor 时失败。发布者只注册 EvaCLIPConfig 和 EvaCLIPModel，固定版文件树没有处理器；发布说明使用 EVA02 工厂的视觉预处理和另一个 LLM2CLIP-Llama-3-8B 检查点，经 LLM2Vec 计算文本特征再送入投影。已有 M38 的双塔修正未覆盖此修订。四处运行缓存为空。原生加载阶段退出，F06 编译、目标 IR 和 P800 机器码均未生成。 11 月 27 日官方 P800 两种模式都在同一加载错误退出。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-20",
@@ -14479,6 +14606,14 @@
         {
           "label": "ColVec1 离线加载断点、固定基础配置、合并权重及只读快照检查",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/55085ab6afc6cfceb261-float32-1795666057495560268/failure-diagnosis.json"
+        },
+        {
+          "label": "microsoft/LLM2CLIP-EVA02-L-14-336 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/9c28d460eaa59019b9db-float32-1795775446912060443/failure-diagnosis.json"
+        },
+        {
+          "label": "LLM2CLIP-EVA336 文本塔固定修订、四个权重校验值及共享目录核对",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/llm2clip-eva336-text-tower-source.json"
         }
       ],
       "related": [
@@ -14502,7 +14637,9 @@
         "8B加载候选继续补齐：旧目录路径匹配遗漏HF逐文件符号链接，改为核对相同固定adapter文件后，父revision误传不再阻断基座加载；随后分词器因extra_special_tokens列表与Transformers4.51映射接口不兼容而失败。按调用参数兼容并核验151669个词表ID后，完整发布者SparseEncoder成功加载，399个基座张量及504个LoRA张量全部与固定原文件提升至FP32后逐位一致（8365323264个元素）。仍未执行完整前向：声明is_causal=False，但实际36层attention对象均为True，掩码兼容仍待补齐；不能标为整模型已修复，也没有部署到正式白名单或新增测速结果。",
         "两机测试的初版复制器只支持无外部依赖模型，不能据第一台ready宣称第二台ready。现将嵌套基模型、auto_map代码、清单内配套权重和已审阅UForm/DINO发布者源码纳入精确复制集合；两端按manifest逐文件验证后才发布就绪记录。13项检查含六类真实依赖/源码、三款PRref固定解析及缺件/错hash/未就绪拒绝，435个当前已准备模型全部可解析完整复制集合。实际Jina、UForm、Trendyol三款共2.845GB在第二台还原验证；仅证明环境/权重/源码复制，模型数值及性能仍分别实测。",
         "2026-11-22单模型跨机回归复用：第一台缺MiniLM检查点就绪记录，入口拒绝启动。按既有manifest复制已验证公开检查点，核对全部文件和固定revision，并复用目标已有且版本一致的环境，完成个人Docker回归。Docker创建的父目录不可由登录用户直接写入时，仅预建本次唯一传输文件并赋予登录用户所有权，未改目录权限或主机环境。",
-        "webAI-ColVec1-4b 的发布加载器在读取已合并权重前，仍请求 Qwen/Qwen3.5-4B。已按固定提交补回基础配置和分片索引。对照实际 Transformers 5.3.0 结构，合并文件的 725 个张量均有对应名称和形状，另一个状态键是已验证的共享词嵌入别名。正式设备加载与输出仍待验证。"
+        "webAI-ColVec1-4b 的发布加载器在读取已合并权重前，仍请求 Qwen/Qwen3.5-4B。已按固定提交补回基础配置和分片索引。对照实际 Transformers 5.3.0 结构，合并文件的 725 个张量均有对应名称和形状，另一个状态键是已验证的共享词嵌入别名。正式设备加载与输出仍待验证。",
+        "LLM2CLIP-EVA02-L-14-336 的发布说明指定独立的 Llama-3-8B 文本塔、分词器以及 LLM2Vec 的 mean pooling。固定版说明和全文件树已留存，整模型需补齐该依赖后复测。",
+        "已追到 Microsoft 发布者文本塔固定版本 97f7d164。四份 safetensors 合计 15,009,881,368 字节，逐分片的官方 SHA-256 已留存。只读检查指定共享目录，未找到这个修订的快照。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-20",
@@ -14544,7 +14681,23 @@
         "8B加载候选继续补齐：旧目录路径匹配遗漏HF逐文件符号链接，改为核对相同固定adapter文件后，父revision误传不再阻断基座加载；随后分词器因extra_special_tokens列表与Transformers4.51映射接口不兼容而失败。按调用参数兼容并核验151669个词表ID后，完整发布者SparseEncoder成功加载，399个基座张量及504个LoRA张量全部与固定原文件提升至FP32后逐位一致（8365323264个元素）。仍未执行完整前向：声明is_causal=False，但实际36层attention对象均为True，掩码兼容仍待补齐；不能标为整模型已修复，也没有部署到正式白名单或新增测速结果。",
         "继续双向注意力缺口：在固定Transformers4.51.0的真实小型Qwen3模型上，26项CPU控制全部通过。原SDPA接口由attention_mask是否为None推断is_causal，单独把36层is_causal标志设False不能修复；候选按完整序列生成只屏蔽padding的广播掩码。eager/SDPA、左右padding、单token、有无空缓存均与独立四维显式掩码参考逐位相同，权重和全局类不变；非空历史缓存明确拒绝。完整8B官方10输入验证正在执行，尚未部署或计入设备成功。",
         "完整8B候选CPU对照已完成：399个基座、504个LoRA张量合计8365323264元素全部与原文件提升FP32后逐位一致。10条官方输入产生[10,151936]FP32输出，双向修复与独立四维显式掩码参考逐位相同；原因果路径有139040元素变化，最大绝对差2.511134386。未初始化加速卡。正式加载代码块正在另行验证，尚未部署，不能计入模型设备结果。",
-        "8B正式加载代码块已在个人Docker真实执行，903个权重张量再次完整匹配，10条官方输入的[10,151936]FP32稀疏输出哈希与独立双向参考一致。实际启动器解包和证据回收26个源码文件全部哈希匹配；代码结构证明其余748个模型分支和计时、精度逻辑不变。六份源码已在空闲协调器锁内部署；两项dtype尚无设备测速，不能把CPU验证当P800加速。"
+        "8B正式加载代码块已在个人Docker真实执行，903个权重张量再次完整匹配，10条官方输入的[10,151936]FP32稀疏输出哈希与独立双向参考一致。实际启动器解包和证据回收26个源码文件全部哈希匹配；代码结构证明其余748个模型分支和计时、精度逻辑不变。六份源码已在空闲协调器锁内部署；两项dtype尚无设备测速，不能把CPU验证当P800加速。",
+        "naver/v-splade-quality FP32 成功通过 P800 发布者 SparseEncoder 加载和原生计时。后续 F06 整模图文入口的类型检查归入 M86。",
+        "naver/efficient-splade-VI-BT-large-doc 的官方 64 条文本已逐条核对，发布者 SparseEncoder 加载与 eager 十次计时通过。EmbeddingModel 的整模型入口对编码器使用精确类型判断，在 SparseEncoder.encode、稀疏输出和排序进入图捕获之前主动结束。M40 的加载修正覆盖了本模型，编译入口和稀疏输出契约仍缺失。已核查 Triton、Inductor、DSA 及临时目录，均为空。编译入口在任何内核生成前退出，现场没有 IR、汇编或设备机器码。",
+        "opensearch-project/opensearch-neural-sparse-encoding-v1 的官方 64 条文本已逐条核对，发布者 SparseEncoder 加载与 eager 十次计时通过。EmbeddingModel 的整模型入口对编码器使用精确类型判断，在 SparseEncoder.encode、稀疏输出和排序进入图捕获之前主动结束。M40 的加载修正覆盖了本模型，编译入口和稀疏输出契约仍缺失。已核查 Triton、Inductor、DSA 及临时目录，均为空。编译入口在任何内核生成前退出，现场没有 IR、汇编或设备机器码。",
+        "opensearch-project/opensearch-neural-sparse-encoding-doc-v2-distill 的官方 64 条文本已逐条核对，发布者 SparseEncoder 加载与 eager 十次计时通过。EmbeddingModel 的整模型入口对编码器使用精确类型判断，在 SparseEncoder.encode、稀疏输出和排序进入图捕获之前主动结束。M40 的加载修正覆盖了本模型，编译入口和稀疏输出契约仍缺失。已核查 Triton、Inductor、DSA 及临时目录，均为空。编译入口在任何内核生成前退出，现场没有 IR、汇编或设备机器码。",
+        "naver/splade_v2_distil 的官方 64 条文本已逐条核对，发布者 SparseEncoder 加载与 eager 十次计时通过。EmbeddingModel 的整模型入口对编码器使用精确类型判断，在 SparseEncoder.encode、稀疏输出和排序进入图捕获之前主动结束。M40 的加载修正覆盖了本模型，编译入口和稀疏输出契约仍缺失。已核查 Triton、Inductor、DSA 及临时目录，均为空。编译入口在任何内核生成前退出，现场没有 IR、汇编或设备机器码。",
+        "opensearch-project/opensearch-neural-sparse-encoding-v1 的完整定版权重已在个人容器 CPU 用官方 64 条文本核对。稀疏 COO 的形状、索引和值均与原生逐位相同，非零计数 9087，另查了倒序重复输入及单条输入。图捕获中传到 SpladePooling 的 MLM 对象为 tuple，读取 logits 时退出。单独稀疏和稠密对照均通过。整图证据来自 CPU，P800 入口修正仍待验证。",
+        "naver/efficient-splade-VI-BT-large-doc 的完整定版权重已在个人容器 CPU 用官方 64 条文本核对。稀疏 COO 的形状、索引和值均与原生逐位相同，非零计数 17674，另查了倒序重复输入及单条输入。F06 最终输出类型检查尝试包装 COO 张量，Dynamo 在这里退出。单独稀疏和稠密对照均通过。整图证据来自 CPU，P800 入口修正仍待验证。",
+        "OpenSearch 稀疏模型的上游 MLMTransformer 先读 .logits，遇 AttributeError 才取元组首项。显式请求元组并取 [0] 后，官方 64 条文本、重复倒序和单条输入的公开 COO 索引和值均未变。该修改通过原捕获错误后才到达最终 dtype 包装器；同时移除包装后，两条输入 CPU 后端完整捕获 506 个节点。",
+        "NAVER 稀疏模型固定权重在相同两条输入上保留原生 COO 输出，移除最终输出 dtype 包装后，CPU 后端完整捕获 273 个节点。保留包装时首次失败在包装器读取稀疏输出。",
+        "naver/efficient-splade-VI-BT-large-doc 已用实际修正入口和完整权重在 CPU 捕获全部 64 条官方文本，图含 498 个节点。64×30522 的 COO 输出保留 17674 个非零项，索引、值及顺序与原生逐位相同；另验证倒序重复输入。P800 同版已在四机部署并登记复测。",
+        "opensearch-project/opensearch-neural-sparse-encoding-v1 已用实际修正入口和完整权重在 CPU 捕获全部 64 条官方文本，图含 866 个节点。64×30522 的 COO 输出保留 9087 个非零项，索引、值及顺序与原生逐位相同；另验证倒序重复输入。P800 同版已在四机部署并登记复测。",
+        "Telepix 的 Flash Attention 参考错误已在 P800 解除。官方 64 条文本完成 FP32 十次 eager，平均 144.71 ms。现场成功加载发布者规定的 SparseEncoder；整图边界仅列有另外两个固定稀疏模型，没有覆盖该修订，进入通用分支后拒绝自定义编码器。四个本次编译缓存均已核查为空。边界选择阶段提前退出，尚未进入 F06 编译，没有该候选的设备机器码。",
+        "该固定版本的完整张量入口已通过 CPU 整图捕获及原生输出核对，模型为 telepix/PIXIE-Splade-Preview，图节点数为 [3211]。四台个人容器已同步，单卡 P800 全程计时待验证。",
+        "Telepix 的完整 SparseEncoder 边界在 P800 验证了官方 64 条输入的 COO 索引和值，十次 eager 平均 145.35 ms。生成包装器用 aten.mul.Tensor 相乘 QKV 的步幅视图与广播张量，输出形状 [32,12,230,64] 正确，但设备的头/序列步幅为 14720、64，FakeTensor 预期为 64、768，包装器断言终止。该固定模型未进入 M79 的乘法布局校正。",
+        "Telepix 的 FP16 精度在官方 64 条输入上通过原生 FP32 参考和十次 FP16 eager（平均 120.83 ms）。当前 137 个浮点参数均为 FP16，稀疏输出的整图边界只验证过 FP32，因此在 F06 构图之前停止。运行的四套编译缓存均为空，本次没有进入 F06 编译，未生成候选的目标 IR 或机器码。",
+        "Telepix 原始 FP16 的稀疏输出已在 CPU 对照。3211 节点的整图在官方 64 条输入上保留原生 COO 的形状、FP16 类型、索引和值。和独立 FP32 参考逐项比较时，3,200,000 个位置中有 4,100 个超出绝对与相对误差阈值 0.003，最大绝对误差为 0.02752。四台 P800 复测继续逐项执行原精度标准。"
       ],
       "refs": [
         {
@@ -14798,6 +14951,70 @@
         {
           "label": "本地源码 review-local/f06-all-models-20261119/sparse_adapter.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/sparse_adapter.py"
+        },
+        {
+          "label": "naver/v-splade-quality float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7f5be735d0dba35803cf-float32-1795769952697754663/failure-diagnosis.json"
+        },
+        {
+          "label": "naver/efficient-splade-VI-BT-large-doc float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/96690f5d9bf91b7a40e7-float32-1795782157212274659/failure-diagnosis.json"
+        },
+        {
+          "label": "opensearch-project/opensearch-neural-sparse-encoding-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1c826c8e4d644b22567d-float32-1795782376050362821/failure-diagnosis.json"
+        },
+        {
+          "label": "opensearch-project/opensearch-neural-sparse-encoding-doc-v2-distill float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/36f1c0c9547c5c12c59b-float32-1795782818475122089/failure-diagnosis.json"
+        },
+        {
+          "label": "naver/splade_v2_distil float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d6aad4a83ff11e9e486-float32-1795783138421975915/failure-diagnosis.json"
+        },
+        {
+          "label": "定版完整权重与原生 COO 对照 · opensearch-project/opensearch-neural-sparse-encoding-v1",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/1c826c8e4d644b22567d-official-sparse-coo-cpu.json"
+        },
+        {
+          "label": "定版完整权重与原生 COO 对照 · naver/efficient-splade-VI-BT-large-doc",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/96690f5d9bf91b7a40e7-official-sparse-coo-cpu.json"
+        },
+        {
+          "label": "opensearch-project/opensearch-neural-sparse-encoding-v1 两项编译变量的对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/1c826c8e4d644b22567d-official-sparse-capture-variants.json"
+        },
+        {
+          "label": "naver/efficient-splade-VI-BT-large-doc 两项编译变量的对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/96690f5d9bf91b7a40e7-official-sparse-capture-variants.json"
+        },
+        {
+          "label": "naver/efficient-splade-VI-BT-large-doc 官方稀疏输出对照和 P800 复测记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/96690f5d9bf91b7a40e7-float32-1795782157212274659/sparse-p800-retest-admission.json"
+        },
+        {
+          "label": "opensearch-project/opensearch-neural-sparse-encoding-v1 官方稀疏输出对照和 P800 复测记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1c826c8e4d644b22567d-float32-1795782376050362821/sparse-p800-retest-admission.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 整图入口复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795790406045545258/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 整图边界修正和复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795790406045545258/failure-followup-20261127-reviewed-boundary.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 上轮修正复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795790406045545258/failure-followup-20261127-next-compiler-stage.json"
+        },
+        {
+          "label": "Telepix 单卡 FP16 稀疏边界复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float16-1795791029564827178/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float16-1795791029564827178/failure-followup-20261127-verified-boundary-and-projection.json"
         }
       ]
     },
@@ -15386,7 +15603,9 @@
         "无可用A100 OFF/ON公开耗时，相关百分比继续为空。",
         "748个其他模型不进入此分支，错误revision拒绝，删除新增分支后正式计时与数值代码AST与原版一致。",
         "已增加限定ConstBERT模型名与missing-forward同时出现的手册查询；实际旧失败命中M44，ConstBERT原缺metadata错误和Italian CLIP初始化错误均未误命中。",
-        "相同显式精度策略已复用于AnswerAI固定ColBERT模型，并通过完整发布者CPU对照，见M46；两者设备数值及性能均未以CPU结果代替。"
+        "相同显式精度策略已复用于AnswerAI固定ColBERT模型，并通过完整发布者CPU对照，见M46；两者设备数值及性能均未以CPU结果代替。",
+        "ConstBERT 已通过 M44 的 250 token 文档分词、32×128 多向量投影、显式精度及 64 条官方文本的 eager 计时。F06 的文本多向量边界只接入了其他发布者类型，未接入本修订的 DocumentEncoder，精确类型检查在构图前退出。",
+        "ConstBERT 的固定权重整图已在 CPU 通过官方 64 条文本及倒序重复输入。每个输入规模均捕获 502 个节点，64×32×128 个输出全部与原生逐位相同。四台个人容器已部署相同修正，P800 完整模型复测已排队。"
       ],
       "refs": [
         {
@@ -15456,6 +15675,10 @@
         {
           "label": "本地源码 review-local/f06-all-models-20261119/issue_handbook.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/issue_handbook.py"
+        },
+        {
+          "label": "pinecone/ConstBERT float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/447c64e807b6dacc4770-float32-1795783738104063602/failure-diagnosis.json"
         }
       ]
     },
@@ -15489,7 +15712,9 @@
         "半精度舍入后的权重恢复FP32计算，三组均通过同一门槛(maxabs0.0015625/0.0017236/0.0013491)；激活中间舍入贡献需进一步在F06设备路径验证。",
         "初版候选误用普通nn.Module不存在的dtype属性，失败保留；改从实际query权重读取后重新验证。此为本地候选缺陷。",
         "加载核对与数值验收分开，完整原生半精度精度失败保留；正式F06对FP32门槛和3次预热/10次计时完全未改。",
-        "所有注册权重和原forward的图计算、MLM/GC/HTC头保留，不作均值池化替代。2048长度仅测试分词截断，未声称长序列前向通过；无新增GPU成功数或加速比。"
+        "所有注册权重和原forward的图计算、MLM/GC/HTC头保留，不作均值池化替代。2048长度仅测试分词截断，未声称长序列前向通过；无新增GPU成功数或加速比。",
+        "sdadas/stella-pl-retrieval FP32 在 Transformers 4.44.2 的 AutoModel.register 重现配置类不一致。既有 G2PTL 修复仅适配其发布类；Stella 的模型声明原生 Qwen2Config，而 auto_map 提供同名自定义类。固定修订的修正保留发布模型与 SentenceTransformer 原加载链。CPU 已核对全部 340 个张量，官方顺序和反序各 10 条，1024 维输出均与独立显式前向逐位一致。四台个人容器已同步，P800 复测已排队。",
+        "Stella PL FP32 已在 P800 通过先前失败的配置注册，完成十次 eager 及张量边界逐位对照。后续中断定位到广播乘法输出步幅 M79。"
       ],
       "refs": [
         {
@@ -15583,6 +15808,22 @@
         {
           "label": "本地源码 review-local/f06-all-models-20261119/issue_handbook.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/issue_handbook.py"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795771909896864268/failure-diagnosis.json"
+        },
+        {
+          "label": "Stella PL 完整权重及两组 CPU 输入对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-pl-loader-full-cpu.json"
+        },
+        {
+          "label": "Stella PL 四台个人容器修正及复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-pl-loader-four-host-deployment.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795771909896864268/p800-after-loader-or-boundary-fix.json"
         }
       ]
     },
@@ -16386,7 +16627,16 @@
         "vidore/colpali-v1.3-hf FP32 在 P800 应用 30 处 M79 广播乘法修正，随后在外部高效注意力返回断言失败。三个 Q/K/V 输入均为连续布局，输出 [10, 8, 53, 256] 的头、序列步幅实测为 (13568, 256)，而包装器要求 (256, 2048)。M51 原范围漏掉这一固定模型修订。另一个已完成数值检查的候选未通过完整输出校验。",
         "Alibaba-NLP/gte-Qwen2-7B-instruct float32。广播乘法校准已启用，包装器第 1847 行准备掩码，第 1849 行调用 SDPA，第 1855 行检查第一个输出。 输出形状 [10,28,40,128]，P800 头轴和序列轴的步幅为 5120、128，编译包装器要求 128、3584。 已核验 40 个本次运行的设备 ELF，以及缓存中一组完整源、TTIR、目标 IR、LLVM IR 和汇编。失败位于宿主包装器对原生高效注意力返回值的检查，现有缓存没有可归属该厂商调用的专属设备码。",
         "perplexity-ai/pplx-embed-v1-0.6b。Perplexity 0.6B FP32 本轮进入高效注意力。生成包装器第 1777 行调用原生算子，1783 行检查其第一个输出 [10,16,39,128]。头轴和序列轴预期步幅为 128、2048，设备输出为 4992、128。早先 M79 的广播乘法已不在本次失败栈中。 已核对 98 个设备 ELF、单次运行最后一组 IR 与汇编。本次断言位于宿主包装器，专有原生注意力的内部设备机器码未在该目录留存。",
-        "BioCLIP 文本塔的掩码注意力向外部 aten 高效 SDPA 传入三个形状 [10,8,77,64]、步幅 [512,64,5120,1] 的 FP32 张量，偏置步幅 [0,0,80,1]。编译包装器第 1088 行预期首输出步幅 [39424,64,512,1]，实机返回 [512,64,5120,1]。M51 原先仅处理连续 QKV。CPU FakeTensor 已复现默认步幅并验证候选只改变首输出，新包在四台个人容器就绪。 十次 eager 均值 50.853 ms。原始归档已核验 24 个设备 ET_REL，保留包装器第 1076 行先行调用的 triton_unk__4 的源、TTIR、目标 IR、汇编和 ELF。失败发生在外部注意力返回后的尺寸与步幅断言，归档没有独立的该厂商函数二进制。"
+        "BioCLIP 文本塔的掩码注意力向外部 aten 高效 SDPA 传入三个形状 [10,8,77,64]、步幅 [512,64,5120,1] 的 FP32 张量，偏置步幅 [0,0,80,1]。编译包装器第 1088 行预期首输出步幅 [39424,64,512,1]，实机返回 [512,64,5120,1]。M51 原先仅处理连续 QKV。CPU FakeTensor 已复现默认步幅并验证候选只改变首输出，新包在四台个人容器就绪。 十次 eager 均值 50.853 ms。原始归档已核验 24 个设备 ET_REL，保留包装器第 1076 行先行调用的 triton_unk__4 的源、TTIR、目标 IR、汇编和 ELF。失败发生在外部注意力返回后的尺寸与步幅断言，归档没有独立的该厂商函数二进制。",
+        "Linq-Embed-Mistral FP32 复测越过 M79 广播乘法校准。包装器第 3820 行执行 aten._scaled_dot_product_efficient_attention，第 3826 行检查首个返回张量。Q/K/V 均为连续 [10,32,59,128]，传入加性掩码。预期头维、序列维步幅 128、4096，实际为 7552、128。现有 M51 校准适用该布局，固定模型修订未进入其注册路径。已核验 43 个设备 ET_REL、43 份目标 IR 和 131 个生成的 Python 文件。实际失败位置为厂商高效注意力返回后的生成包装器断言。关联的包装器与代表性内核留存原始版本。",
+        "stella-pl-retrieval FP32 在未标版本的 10 条输入上通过 M79 的四组旋转乘法真卡数值和布局验证，12 个生成的回退调用已使用校正布局。后续高效注意力的三个 QKV 输入均连续，形状为 [10,12,40,128]，广播偏置步幅 [1600,0,40,1]。输出断言预期中间两维步幅 128/1536，真卡返回 5120/128。M51 的既有模型范围遗漏此固定修订。已核验 46 份 P800 ET_REL 及各自的目标 IR。报错位于生成包装器调用厂商原生高效注意力之后的布局断言；该原生调用没有独立的 Triton 目标文件。",
+        "stella-pl-retrieval 官方 64 条文本经固定分词器分成 32×160 与 32×28 两批。8 组旋转表布局通过 CPU 编译对照；14 项生产入口条件覆盖 Stella、Diver、工作负载、精度与版本。针对 Stella 的旋转校正与已有的连续 QKV 高效注意力修正已在四台个人容器启用，实际 P800 重测另记。",
+        "stella-pl-retrieval FP32 在官方 64 条文本通过八组旋转乘法的真卡布局校验及整模输入逐位对照，M51 连续 QKV 修正被调用三次。第二批 32×28 的生成包装器在 triton_unk__27 的调优阶段收到 KL3 状态 700。固定 F06 在三次异步发射后的第一次设备同步观察到非法访存，未取得具体失败发射、硬件 PC 或候选精度结果。已校验 92 个 P800 ET_REL 和对应目标 IR。与同步位置对应的 49152×28 行归约有四种已生成机器码。按该运行 PID 和 PCI 的内核日志查询未得到故障记录，无法从同步栈唯一确定故障指令或分块。",
+        "Diver-Retriever-4B FP32 的官方 64 条文本经历 no_grad 完整模型边界捕获。8 组旋转乘法和 24 处编译回退通过校正。第一批的连续 QKV 均为 [32,32,159,128]，注意力偏置步幅为 [25440,0,160,1]。厂商高效注意力输出的实际两维步幅为 20352/128，包装器的元数据预期 128/4096，触发 M51 的既有布局断言。回收并校验 111 个 P800 ET_REL 及各自的目标 IR。生成包装器确定失败位置在厂商注意力调用之后的输出步幅断言，原生注意力没有该次新生成的独立 Triton 机器码。",
+        "Diver FP32 的原生高效注意力连续 QKV 布局修正已通过 14 项入口条件对照，已在四台个人容器部署并进入正常整模型复测。",
+        "F2LLM-v2-80M FP32 在 no_grad 修正后完成原生边界对照并生成候选。厂商高效注意力的输入 QKV 均连续、形状 [10,16,40,128]。返回输出中间两维步幅为 5120/128，而包装器断言预期 128/2048，触发 M51。已回收并校验 67 个 P800 ET_REL 与对应目标 IR，包装器确定报错在原生注意力返回后的步幅断言，该原生调用没有独立的 Triton 目标文件。",
+        "F2LLM-v2-80M FP32 的固定修订已加入连续 QKV 原生注意力布局修正，六项生产入口条件验证后已在四台个人容器部署；P800 完整模型复测已登记。",
+        "Diver-Retriever-4B FP32 的 M51 布局修正命中两次，完成边界逐位校验与候选捕获，尚无候选完整精度结果。600 秒冷编译超时，最后的目标 IR 距结束 1.06 秒。"
       ],
       "refs": [
         {
@@ -16552,6 +16802,54 @@
         {
           "label": "imageomics/bioclip float32 实机归因",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3a41283029b8e6c5bbbb-float32-1795703752205431900/failure-diagnosis.json"
+        },
+        {
+          "label": "Linq Mistral P800 高效注意力包装器与机器码",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0a9989de3d8768d99778-float32-1795677539356555905/failure-diagnosis.json"
+        },
+        {
+          "label": "Linq Mistral 固定修订的四机高效注意力校准",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/linq-mistral-m51-deployment.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795778069661242458/failure-diagnosis.json"
+        },
+        {
+          "label": "Stella 官方输入分词和两批长度",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-official-token-batch-shapes.json"
+        },
+        {
+          "label": "Stella v3-64 四机修正与八组对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-v3-attention-four-host-deployment.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795779839255785931/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795780560852632457/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B 入口与定版修正验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-stella-v3-dispatch-control.json"
+        },
+        {
+          "label": "Diver 与 LaBSE 同源四机核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-labse-official-v3-four-host-deployment.json"
+        },
+        {
+          "label": "codefuse-ai/F2LLM-v2-80M float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f5c062be48bf87565d51-float32-1795781325544395351/failure-diagnosis.json"
+        },
+        {
+          "label": "F2LLM-v2-80M 注意力布局修正四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/f2llm-m51-four-host-deployment.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795782222910218511/failure-diagnosis.json"
         }
       ]
     },
@@ -17177,6 +17475,14 @@
         {
           "label": "ApsaraStackMaaS/EvoQwen2.5-VL-Retriever-3B-v1 的中间产物、设备码与失败位置",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ec9f7f93ebafab07c79b-checkpoint-1795679732623457488/failure-diagnosis.json"
+        },
+        {
+          "label": "Alibaba-NLP/gme-Qwen2-VL-2B-Instruct checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/52d9b39da9df5b9467cb-checkpoint-1795783517918581953/failure-diagnosis.json"
+        },
+        {
+          "label": "Alibaba-NLP/gme-Qwen2-VL-7B-Instruct 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/a4fbed5840eda4c5633c-checkpoint-1795790237767520266/failure-diagnosis.json"
         }
       ],
       "related": [
@@ -17192,7 +17498,9 @@
         "Alibaba-NLP/gme-Qwen2-VL-2B-Instruct 的原权重精度用例加载了 729 个 BF16 参数，浮点参数与缓冲还包含 FP32。现有 Tipsv2 全 FP32 参考入口不接受 GmeQwen2VLEmbeddingModel，设备前向尚未运行。",
         "Alibaba-NLP/gme-Qwen2-VL-7B-Instruct 的原权重精度用例使用 GmeQwen2VLEmbeddingModel，载入 729 个 BF16 参数，浮点缓冲和参数合并后含 BF16、FP32。独立参考入口在模型前向及 F06 编译前停止，当前缺少经核验的原精度参考。",
         "Alibaba-NLP/GVE-7B 的原权重精度用例使用 GveEmbeddingModel，载入 729 个 BF16 参数，浮点缓冲和参数合并后含 BF16、FP32。独立参考入口在模型前向及 F06 编译前停止，当前缺少经核验的原精度参考。",
-        "ApsaraStackMaaS/EvoQwen2.5-VL-Retriever-3B-v1 checkpoint。原权重精度用例包含 824 个 BF16 和 2 个 FP32 参数，ColQwenEmbeddingModel 在独立 FP32 参考检查入口被拒绝。 四个编译缓存未产生文件，模型前向、IR 与设备机器码均未生成。"
+        "ApsaraStackMaaS/EvoQwen2.5-VL-Retriever-3B-v1 checkpoint。原权重精度用例包含 824 个 BF16 和 2 个 FP32 参数，ColQwenEmbeddingModel 在独立 FP32 参考检查入口被拒绝。 四个编译缓存未产生文件，模型前向、IR 与设备机器码均未生成。",
+        "GME-Qwen2-VL-2B 在官方 16 对图文上复现 M57。加载了 729 个 BF16 参数；参考入口检查发现同时存在 BF16、FP32 浮点状态，尚无本修订的独立 FP32 参考，未执行前向。四个运行缓存均为空，退出早于 F06 编译，本次未生成 IR 或设备机器码。",
+        "GME-Qwen2-VL-7B 的固定检查点在 P800 保留了 729 个 BF16 参数。官方 16 图、16 文已核对。混合类型检查点尚无此批输入的独立 FP32 参考，入口在原生计时和 F06 构图前停止。旧的 10 项结果无法覆盖新输入。本次四个缓存均为空，未生成 F06 IR 或设备机器码。两次完整 CPU 参考尝试均因共享主机内存压力让出，尚无 16 项输出。"
       ],
       "group": "全清单测试与环境兼容",
       "date": "2026-11-21",
@@ -441630,7 +441938,43 @@
         "cross-encoder/ms-marco-MiniLM-L2-v2 FP32 在 BERT 的 position_ids 索引切片触发 AOT 元数据阶段的推理存储弱引用异常。原运行的修订限定未覆盖该模型。 CPU AOT 在修复前重现相同切片错误，按修订切换 no_grad 后捕获 116 个节点，公开输入和倒序输入的完整输出均与对应原生基线逐位相同。此前节点已产生 1 个可重定位设备 ELF 和 1 份目标 IR，代表核的源、TTIR、目标 IR、汇编与机器码已核验。导致当前失败的切片尚未生成设备机器码。",
         "jinaai/jina-embedding-t-en-v1 FP32 在 BERT 的 position_ids 索引切片触发 AOT 元数据阶段的推理存储弱引用异常。原运行的修订限定未覆盖该模型。 CPU AOT 在修复前重现相同切片错误，按修订切换 no_grad 后捕获 203 个节点，公开输入和倒序输入的完整输出均与对应原生基线逐位相同。此前节点已产生 77 个可重定位设备 ELF 和 77 份目标 IR，代表核的源、TTIR、目标 IR、汇编与机器码已核验。导致当前失败的切片尚未生成设备机器码。",
         "Granite 30M 的 P800 复测越过原 token_type_ids 弱引用故障，完成整图捕获，随后在候选搜索中触及 600 秒上限。复测按 M78 留档。",
-        "MiniLM-L2-v2 的 P800 正式复测使用 no_grad，完整分数通过 FP32 参考校验，十次均值 eager 3.465 ms、F06 2.281 ms，速比 1.519×。"
+        "MiniLM-L2-v2 的 P800 正式复测使用 no_grad，完整分数通过 FP32 参考校验，十次均值 eager 3.465 ms、F06 2.281 ms，速比 1.519×。",
+        "Ettin 17M FP32 在 AOT 元数据传播时对 ModernBERT 的 full_attention_inv_freq 执行 getitem_10，即 inv_freq[None,:,None]，触发 UntypedStorage 弱引用异常。原修正范围遗漏 SentenceTransformers 5.4.1 的这一固定版本。CPU 完整权重与同一输入复现，预处理和前向限用 no_grad 后 493 节点整图通过，官方输入、额外配对和反序输入均与各自原生输出逐位一致。逐一复核 5 个有 .text 节的 P800 ET_REL 和相应 IR、汇编。失败切片停在 AOT 元数据传播阶段，未生成可归属于该切片的机器码。",
+        "Ettin 17M 的 no_grad 修正与固定 CPU 对照已在四台个人容器核验相同源码包 9f04254968ae，FP32 实机复测已按原失败标签排队。",
+        "Ettin 17M 的 P800 复测在 no_grad 模式越过原切片并运行编译后的包装器。后续标量乘法布局失败归入 M79。",
+        "Ettin 17M 的普通张量执行及后续旋转位置编码步幅修正均已通过固定修订的 P800 整模型复测，记录收在 M79。",
+        "jinaai/jina-reranker-v1-tiny-en FP32 在 inference_mode 进入整模型编译。在 AOT 功能化收集前向元数据、执行 FX 节点 operator.getitem 时，读取 token_type_ids[:, :12] 触发 UntypedStorage 弱引用异常。输入边界对原始 eager 输出的逐位校验通过。M71 的现有普通张量执行路径遗漏该固定版本及模型修订。完整权重 CPU 对照在旧入口重现相同节点异常，使用 no_grad 后捕获 234 个节点，完整原生输出与候选输出逐位一致。已校验 6 个已生成的 P800 ET_REL 对象和同目录目标 IR，并保留末段包装器与最近内核的汇编。发生异常的 FX 节点停在功能化阶段，现存机器码来自此前编译工作。",
+        "nvidia/llama-embed-nemotron-8b FP32 在 inference_mode 进入整模型编译。在 AOT 功能化收集前向元数据、执行 FX 节点 operator.getitem 时，读取 inv_freq[None, :, None] 触发 UntypedStorage 弱引用异常。输入边界对原始 eager 输出的逐位校验通过。M71 的现有普通张量执行路径遗漏该固定版本及模型修订。已校验 30 个已生成的 P800 ET_REL 对象和同目录目标 IR，并保留末段包装器与最近内核的汇编。发生异常的 FX 节点停在功能化阶段，现存机器码来自此前编译工作。",
+        "Octen/Octen-Embedding-8B FP32 在 inference_mode 进入整模型编译。在 AOT 功能化收集前向元数据、执行 FX 节点 operator.getitem 时，读取 inv_freq[None, :, None] 触发 UntypedStorage 弱引用异常。输入边界对原始 eager 输出的逐位校验通过。M71 的现有普通张量执行路径遗漏该固定版本及模型修订。已校验 27 个已生成的 P800 ET_REL 对象和同目录目标 IR，并保留末段包装器与最近内核的汇编。发生异常的 FX 节点停在功能化阶段，现存机器码来自此前编译工作。",
+        "jinaai/jina-reranker-v1-tiny-en 的修正已经在四台个人容器逐机核验，同一源码包 15b0e695fc9d 已启用。该模型进入 P800 整模复测队列。",
+        "Octen/Octen-Embedding-8B FP32 的固定权重已在 CPU 重现 inv_freq 的 UntypedStorage 跟踪错误。该修订采用 no_grad 后，AOT 捕获 3412 个节点，完整官方输出和倒序样本输出均与原生逐位一致。四台个人容器已校验相同测试源码，P800 复测已登记。",
+        "nvidia/llama-embed-nemotron-8b FP32 的固定权重已在 CPU 重现 inv_freq 的 UntypedStorage 跟踪错误。该修订采用 no_grad 后，AOT 捕获 2332 个节点，完整官方输出和倒序样本输出均与原生逐位一致。四台个人容器已校验相同测试源码，P800 复测已登记。",
+        "hotchpotch/japanese-bge-reranker-v2-m3-v1 FP32 已逐位验证公开输出和 CrossEncoder 边界。XLM-RoBERTa 的注册缓冲区 token_type_ids[:, :13] 在 inference_mode 下进入 AOT 功能化，执行 operator.getitem 时触发 UntypedStorage 弱引用错误。M71 的按修订启用普通张量的范围遗漏该模型。来自先前候选的 5 个 P800 ET_REL 及对应的 5 份目标 IR 均已逐文件核验。失败的 FX 节点尚未进入设备降级。",
+        "hotchpotch/japanese-bge-reranker-v2-m3-v1 FP32 在 CPU AOT 中复现 token_type_ids 缓冲区切片的存储错误。用 no_grad 保留可追踪张量后，官方顺序及倒序与原前向逐位一致，整图有 1128 个节点。四台个人容器已同步，已排入 P800 复测。",
+        "Jina tiny FP32 在当前 P800 复测中已通过原 AOT 构图故障并捕获 18 个整图候选。此后注意力调优同步超时，14 份机器码及四种候选已核对，后续超时根因单独待查。",
+        "piccolo-base-zh FP32 的 SentenceTransformer 边界与原生对照逐位一致。进入 AOT 后，对 BERT position_ids 缓冲区前 61 位切片触发 UntypedStorage 弱引用错误。此次仍在 inference_mode，现有 M71 已覆盖 piccolo-large-zh，未包括这个 base 固定修订。当次已有 7 组 Triton 目标 IR 和 P800 ET_REL，均按哈希、文件头验证。报错的 position_ids 切片位于 AOT 阶段，没有该失败候选专属的目标 IR 或设备对象。",
+        "piccolo-base-zh FP32 在当前 F06 入口用完整权重复现了 position_ids 的 AOT 异常。将该固定修订的张量边界改为 no_grad 后，506 节点的 CPU AOT 通过，官方输入和反序输入分别与原生输出逐位一致。四台个人容器已启用修正，P800 整模型复测已排队。",
+        "Diver-Retriever-4B FP32 使用相同的官方 v3-64 输入复测。八组原生旋转乘法数值与布局通过，编译器修正了 24 次布局。随后在 inference_mode 的完整张量入口中，Qwen3 对 inv_freq[None, :, None] 取视图，AOT 的功能化追踪触发 UntypedStorage 弱引用异常。M71 的普通张量入口尚未覆盖此固定修订。留存 58 对 P800 ET_REL 和目标 IR，均按哈希及 ELF 头核对。报错发生在另一个候选的 AOT 图分析，尚未为这次 inv_freq 切片生成目标机器码。",
+        "codefuse-ai/F2LLM-v2-80M FP32 在 inference_mode 进入整模型编译。在 AOT 功能化收集前向元数据、执行 FX 节点 operator.getitem 时，读取 attention_mask[:, None, None, :] 触发 UntypedStorage 弱引用异常。输入边界对原始 eager 输出的逐位校验通过。M71 的现有普通张量执行路径遗漏该固定版本及模型修订。已校验 30 个已生成的 P800 ET_REL 对象和同目录目标 IR，并保留末段包装器与最近内核的汇编。发生异常的 FX 节点停在功能化阶段，现存机器码来自此前编译工作。",
+        "AQ-MedAI/Diver-Retriever-4B float32 用完整固定权重和 2 条输入在 CPU 重现原故障。固定修订切换为 no_grad 后，3366 个节点通过 AOT，对原生同精度输出逐位一致，反序输入也已校验。四台个人容器的同一修正已验证部署，真卡正式结果按运行标签验收。",
+        "codefuse-ai/F2LLM-v2-80M float32 用完整固定权重和 10 条输入在 CPU 重现原故障。固定修订切换为 no_grad 后，812 个节点通过 AOT，对原生同精度输出逐位一致，反序输入也已校验。四台个人容器的同一修正已验证部署，真卡正式结果按运行标签验收。",
+        "piccolo-base-zh 的 no_grad 修正已在真卡通过之前失败的存储弱引用阶段。独立后续时限 M78 已记录。",
+        "Diver FP32 的官方 64 条输入已通过修正后的捕获和旋转表阶段，真卡复测在后续高效注意力步幅断言命中 M51。",
+        "piccolo-base-zh FP32 保留 no_grad 修正并将冷编译时限从 600 秒调整为 1800 秒后，在 P800 1387.7 秒内通过。10×768 个 FP32 输出均在容差内。十次 eager 均值 15.036 ms，F06 7.860 ms，本地 1.913 倍。",
+        "F2LLM-v2-80M 的普通张量修正已通过原捕获异常，后续出现 M51。",
+        "jina-embedding-s-en-v1 FP32 已完成 M72 的注意力偏置修正、原生边界逐位校验和 10 次 eager。AOT 收集函数化元数据时处理 T5 的 input_ids.view(-1,45)，推理张量存储弱引用触发 M71。同系列 t-en 的普通张量修正尚未覆盖 s-en。同次运行已保存并逐件核验 21 个 P800 ET_REL 及配对目标 IR。当前失败点在 AOT 元数据阶段，尚无该失败图对应的机器码。",
+        "jina-embedding-s-en-v1 已用完整权重复现 T5 视图的存储异常。普通张量入口在 CPU 完整捕获 379 个节点，10×512 个 FP32 输出与原生逐位一致。四机已同步并排队复测。",
+        "cross-encoder/msmarco-MiniLM-L6-en-de-v1 的 CrossEncoder 完成完整原生结果和张量边界逐位核对。AOT 用推理张量构图时，在 buffered_token_type_ids 切片出现 UntypedStorage 弱引用异常。M71 已有普通张量修正的固定检查点集合未包含此修订。归档并核验了本次其他生成算子的 1 个 P800 ET_REL 和相应目标 IR；失败切片在 AOT 构图退出，现场没有能归因到此切片的目标机器码。",
+        "intfloat/simlm-msmarco-reranker 的 CrossEncoder 完成完整原生结果和张量边界逐位核对。AOT 用推理张量构图时，在 extended_attention_mask 切片出现 UntypedStorage 弱引用异常。M71 已有普通张量修正的固定检查点集合未包含此修订。归档并核验了本次其他生成算子的 5 个 P800 ET_REL 和相应目标 IR；失败切片在 AOT 构图退出，现场没有能归因到此切片的目标机器码。",
+        "cross-encoder/msmarco-MiniLM-L6-en-de-v1 的原始 AOT 弱引用失败已在 CPU 复现，按固定检查点改用普通张量后得到 270 个整图节点，输出和原生参考逐位一致。四台个人容器已部署，P800 稳态计时待核验。",
+        "intfloat/simlm-msmarco-reranker 的原始 AOT 弱引用失败已在 CPU 复现，按固定检查点改用普通张量后得到 580 个整图节点，输出和原生参考逐位一致。四台个人容器已部署，P800 稳态计时待核验。",
+        "Stella-base-en-v2 在本次 10 条文本上完成原生输出与张量边界逐位比对，十次 eager 平均 14.744 ms。编译器在 inference_mode 中处理位置索引切片时触发 UntypedStorage 弱引用异常，固定修订未被现有 M71 的普通张量修复覆盖。归档中 77 个设备对象与目标 IR 已核对。这些对象证明较早内核已生成；故障切片在 AOT 构图时退出，没有证据把此前任一设备对象归为该切片。",
+        "Stella 中文检查点在 10 条文本上通过原生边界与十次 eager（平均 14.530 ms）。推理张量的位置索引切片在 AOT 构图触发 UntypedStorage 弱引用错误。对应普通张量 CPU 对照保留 506 个图节点，完整正序与倒序结果分别和原生参考一致。已核验 77 个 P800 设备对象和同组目标 IR。失败切片仍在 AOT 构图阶段，当前没有可对应到该失败切片的机器指令。",
+        "Stella 英文检查点在原输入上用普通张量通过 CPU 整图对照，506 个节点的 10×768 完整输出与原生逐位一致。四台个人容器已部署，单卡复测已排队。",
+        "infgrad/stella-base-zh-v2 的 float32 固定检查点已复现原异常，修正后在 506 个图节点上完成整模 CPU 对照。正序和倒序输出均逐项对照原生前向，四台个人容器已核对相同源码。",
+        "Stella 英文模型在 P800 用普通张量重新运行，边界输出逐位一致，eager 平均 14.454 ms。选型捕获 42 个候选，未复现先前的存储弱引用错误。复测在 600 秒冷编译上限处结束，尚无候选正确性或最终 F06 计时。",
+        "Stella 中文模型的单卡复测使用普通张量，整模边界和原生输出逐位相同，eager 平均 14.994 ms，捕获 42 个候选。上次位置索引的存储弱引用异常未再出现，选型在 600 秒未结束，尚无候选精度或 F06 稳态计时。",
+        "Stella-base-en-v2 FP32 使用修正的 no_grad 边界在单张 P800 完成 10 条文本、7680 个输出元素的正确性检验，0 个超差。十次 eager 平均 15.024 ms，十次 F06 平均 7.518 ms，加速约 2.00 倍；87 件证据均已核验。"
       ],
       "refs": [
         {
@@ -441954,6 +442298,166 @@
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/minilm-l2-v2-p800-paired-result.json"
         },
         {
+          "label": "cross-encoder/ettin-reranker-17m-v1 float32 P800 编译与产物核查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795712315647128490/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M 固定修订 no_grad 的四台个人容器部署与复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin-17m-ordinary-aot-ordinary-deployment.json"
+        },
+        {
+          "label": "Ettin 17M FP32 旋转标量乘法复测及设备产物",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795713561233862971/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M 四种视图与 P800 整模型实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin17m-p800-paired-result.json"
+        },
+        {
+          "label": "jinaai/jina-reranker-v1-tiny-en float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/4d878f30dd28723fd736-float32-1795767976008090898/failure-diagnosis.json"
+        },
+        {
+          "label": "nvidia/llama-embed-nemotron-8b float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ccdd37ff7dae02d776fa-float32-1795676718919018124/failure-diagnosis.json"
+        },
+        {
+          "label": "Octen/Octen-Embedding-8B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/8216d31e804af44270ff-float32-1795676156317730334/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-reranker-v1-tiny-en 的 CPU 对照与四机部署记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/jina-tiny-reranker-four-host-deployment.json"
+        },
+        {
+          "label": "Octen/Octen-Embedding-8B 固定权重的 CPU 前后对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/octen8b-ordinary-aot-control.json"
+        },
+        {
+          "label": "nvidia/llama-embed-nemotron-8b 固定权重的 CPU 前后对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/nemotron8b-ordinary-aot-control.json"
+        },
+        {
+          "label": "Octen-8B 与 Nemotron-8B 的四台个人容器源码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/two-rotary-buffer-models-four-host-deployment.json"
+        },
+        {
+          "label": "hotchpotch/japanese-bge-reranker-v2-m3-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/4e5ee681cfeed1ea9443-float32-1795676058207762921/failure-diagnosis.json"
+        },
+        {
+          "label": "日文 BGE 重排序完整 CPU AOT 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/hotchpotch-bge-v2-ordinary-aot-control.json"
+        },
+        {
+          "label": "日文 BGE 重排序四台个人容器源码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/hotchpotch-bge-v2-four-host-deployment.json"
+        },
+        {
+          "label": "jinaai/jina-reranker-v1-tiny-en float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/4d878f30dd28723fd736-float32-1795767976008090898/p800-m71-retest.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float32-1795775259842027471/failure-diagnosis.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh FP32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/piccolo-base-ordinary-aot-control.json"
+        },
+        {
+          "label": "四台个人容器部署与 20261127 基准下的复测版本",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/official-v3-layouts-five-models-four-host-deployment.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795777173529899288/failure-diagnosis.json"
+        },
+        {
+          "label": "codefuse-ai/F2LLM-v2-80M float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f5c062be48bf87565d51-float32-1795777671078174835/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-fp32-ordinary-boundary-cpu.json"
+        },
+        {
+          "label": "普通张量修正的四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-f2llm-ordinary-four-host-deployment.json"
+        },
+        {
+          "label": "codefuse-ai/F2LLM-v2-80M float32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/f2llm-fp32-ordinary-boundary-cpu.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float32-1795778780036113655/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795780560852632457/failure-diagnosis.json"
+        },
+        {
+          "label": "piccolo-base-zh FP32 真卡修复后全输出与双路径计时",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/piccolo-base-zh-fp32-p800-pass.json"
+        },
+        {
+          "label": "codefuse-ai/F2LLM-v2-80M float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f5c062be48bf87565d51-float32-1795781325544395351/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784030143166804/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 修复前后证据与复测记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784030143166804/failure-followup-20261127.json"
+        },
+        {
+          "label": "cross-encoder/msmarco-MiniLM-L6-en-de-v1 单卡重测编译现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b2015592da6594b45296-float32-1795789249351727677/failure-diagnosis.json"
+        },
+        {
+          "label": "intfloat/simlm-msmarco-reranker 单卡重测编译现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/bef429dfb85d6bbc2beb-float32-1795789606921972591/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/msmarco-MiniLM-L6-en-de-v1 已验证修正",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b2015592da6594b45296-float32-1795789249351727677/failure-followup-20261127-ordinary-reranker.json"
+        },
+        {
+          "label": "intfloat/simlm-msmarco-reranker 已验证修正",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/bef429dfb85d6bbc2beb-float32-1795789606921972591/failure-followup-20261127-ordinary-reranker.json"
+        },
+        {
+          "label": "infgrad/stella-base-en-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d8db1fd1881b88c25c8-float32-1795790856656937575/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-zh-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/99d4a6352cda5b6288c1-float32-1795791397990346949/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-en-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d8db1fd1881b88c25c8-float32-1795790856656937575/failure-followup-20261127-stella-ordinary.json"
+        },
+        {
+          "label": "infgrad/stella-base-zh-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/99d4a6352cda5b6288c1-float32-1795791397990346949/failure-followup-20261127-scoped-ordinary-sentence.json"
+        },
+        {
+          "label": "infgrad/stella-base-en-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d8db1fd1881b88c25c8-float32-1795792358915325228/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-zh-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/99d4a6352cda5b6288c1-float32-1795792891927214169/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-en-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d8db1fd1881b88c25c8-float32-1795790856656937575/failure-followup-20261127-p800-passed.json"
+        },
+        {
           "label": "本地源码 review-local/f06-all-models-20261119/reranker_boundary.py",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/reranker_boundary.py"
         },
@@ -442008,7 +442512,16 @@
         "google/siglip-base-patch16-384 FP32 第 44 行调用原生 add，第 48 行核对返回形状 [10, 576, 768]，第 1 维实测 768、预期 1，第 2 维实测 1、预期 576。现有 M72 适配缺少此模型固定修订。",
         "google/siglip-so400m-patch16-256-i18n FP32 第 44 行调用原生 add，第 48 行核对返回形状 [10, 256, 1152]，第 1 维实测 1152、预期 1，第 2 维实测 1、预期 256。现有 M72 适配缺少此模型固定修订。",
         "NetraEmbed 的两种位置加法 P800 校准均通过，并在正式图中应用 6 次。下一个异常出现在三维广播乘法。",
-        "google/siglip-base-patch16-256-multilingual 的两种位置加法签名均在 P800 通过逐值校准，已应用 6 次。后续阻塞见 M01。"
+        "google/siglip-base-patch16-256-multilingual 的两种位置加法签名均在 P800 通过逐值校准，已应用 6 次。后续阻塞见 M01。",
+        "sentence-t5-xxl 的扩展掩码标量乘法及输出步幅断言已通过。随后第 51 行调用 aten.add.Tensor，将 [1,128,45,45] 的相对位置偏置与 [10,1,1,45] 掩码广播相加。第 55 行要求 [259200,1,5760,128]，P800 返回 [259200,2025,45,1]。M72 已知原生加法的步幅修正未覆盖两个输入沿不同轴广播的 T5 位置偏置。逐一核验 2 个 P800 ET_REL 对象和同目录目标 IR，保留生成包装器和一组目标 IR、汇编与设备对象。这次异常来自原生算子返回后的宿主步幅断言，缓存中的生成对象不能提供厂商原生算子内部指令。",
+        "sentence-transformers/sentence-t5-xxl 的修正已经在四台个人容器逐机核验，同一源码包 4374635cbec7 已启用。该模型进入 P800 整模复测队列。",
+        "Jina S 英文向量 FP32 在位置偏置与掩码广播相加时重现 M72 的原生加法步幅断言。两输入为 [1,8,45,45] 与 [10,1,1,45]，包装器预期输出步幅 [16200,1,360,8]；设备返回的后三维步幅为 [2025,45,1]。当前已核验的布局适配范围未含此修订和形状。已校验 7 个 P800 ET_REL 和相应目标 IR。生成包装器直接调用厂商 aten.add.Tensor，然后断言返回值布局；该原生加法没有单独生成 Triton 机器码。",
+        "GTR-T5-base FP32 在位置偏置与掩码广播相加时重现 M72 的原生加法步幅断言。两输入为 [1,12,45,45] 与 [10,1,1,45]，包装器预期输出步幅 [24300,1,540,12]；设备返回的后三维步幅为 [2025,45,1]。当前已核验的布局适配范围未含此修订和形状。已校验 2 个 P800 ET_REL 和相应目标 IR。生成包装器直接调用厂商 aten.add.Tensor，然后断言返回值布局；该原生加法没有单独生成 Triton 机器码。",
+        "jina-embedding-s-en-v1 和 gtr-t5-base 的 FP32 注意力偏置分别有 8 和 12 个头。用各自 P800 包装器的实际形状与步幅做 CPU 复现，均得到相同的原始断言。修正后编译输出与原生加法逐位一致。两个固定修订已在四台个人容器启用，完整 P800 复测已排队。",
+        "jina-embedding-s-en-v1 FP32 已完成 M72 的注意力偏置修正、原生边界逐位校验和 10 次 eager。AOT 收集函数化元数据时处理 T5 的 input_ids.view(-1,45)，推理张量存储弱引用触发 M71。同系列 t-en 的普通张量修正尚未覆盖 s-en。",
+        "Jina s-en FP32 在普通张量边界通过 M71，随后到达 T5 相对位置偏置的 aten.add.Tensor。原 M72 修正匹配左右步幅 (8,1,360,8) 和 (45,45,45,1)，本次包装器传入 (0,1,360,8) 和 (45,450,450,1)。数值尺寸一致，大小为一的维度步幅不同，精确匹配遗漏该变体。设备输出非单元素三维为 (2025,45,1)，包装器要求 (1,360,8)。已回收输入掩码上游 triton_poi__4 的目标 IR 和 P800 ET_REL，核验 450 元素和同名函数符号。后续标量缩放与偏置加法走原生 ATen。本次缓存中列出 77 对 ELF 与目标 IR。",
+        "Jina s-en 的两组相对位置偏置输入步幅均完成 CPU 编译对照，覆盖实际包装器中的零步幅和掩码单元素轴步幅。四台个人容器均已核对同一代码包，P800 整模复测已入队。",
+        "Jina 英语小模型的两种位置偏置广播布局均在 P800 完成输出值与步幅核验，已应用三次校正。整图捕获产生 20 个候选，600 秒编译时限耗尽，尚未记录候选精度或 F06 稳态计时。"
       ],
       "refs": [
         {
@@ -442146,6 +442659,50 @@
         {
           "label": "google/siglip-base-patch16-256-multilingual 位置加法实机结果",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/959a9dbf8775bc7713db-float32-1795675131337502779/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/sentence-t5-xxl float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/223d1cab9171b6cd72a5-float32-1795693098362953874/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/sentence-t5-xxl 的 CPU 对照与四机部署记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/mobileclip-t5-pointwise-four-host-deployment.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795775915683833753/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/gtr-t5-base float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f1207059baa6e46dbc36-float32-1795776170602278706/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 FP32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/pointwise-b6cb25881b550ca8386a-fixed-geometry-cpu.json"
+        },
+        {
+          "label": "sentence-transformers/gtr-t5-base FP32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/pointwise-f1207059baa6e46dbc36-fixed-geometry-cpu.json"
+        },
+        {
+          "label": "四台个人容器部署与 20261127 基准下的复测版本",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/official-v3-layouts-five-models-four-host-deployment.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784030143166804/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784869025239026/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784869025239026/failure-followup-20261127-wrapper-layout-deployment.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 布局修正后 P800 复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795784869025239026/failure-followup-20261127-layout-p800.json"
         },
         {
           "label": "本地源码 packaging/f06/src/f06/_vendor/graph_fusion/_operator_precision.py",
@@ -442421,6 +442978,8 @@
         "发布者模型第 227 行在视觉注意力中计算 Q×K 转置。首次原生 FP32 bmm 接收 [320,1025,128] 和 [320,128,1025]，第二个操作数步幅为 (131200,1,128)。厂商编译器报告显式模板实例化缺少 OneLoop 参数。",
         "FG-CLIP Large 的发布者工厂和处理器已在 P800 加载成功。FP32 原生参考前向在 xpu3 编译 bmm_one_loop 时退出：69982 行的五参数实例不匹配 69850 行含第六个 OneLoop 的模板。错误发生于 F06 候选之前。",
         "NV-Embed-v2 在原生参考前向的厂商 XPU3 批量矩阵乘 JIT 中退出。0.xpu 的显式 bmm_one_loop 实例在第 69982 行与第 69850 行候选模板签名不符；同一修订已有 M75 的参考前向及模板诊断记录。本次没有进入 F06 性能测量。JIT 日志保留报错行与候选模板。取回的缓存只有 Python 辅助文件，当次临时 0.xpu 全文未取回。失败实例编译中断，未生成其目标设备代码。",
+        "MobileCLIP-S2 FP32 原生十次计时已完成，F06 已捕获三个候选。实机 XPU JIT 在 0.xpu:69982:41 对 bmm_one_loop 做五参显式实例化，69850:30 的候选定义含第六个 OneLoop 参数。模板 ArgsJL1_6004950223422121091、两行诊断与 M75 原始 NV-Embed-v2 对照完全一致。具体触发的上层子图及形状待定。48 个先前生成的 P800 ET_REL 及同目录目标 IR 均已校验。0.xpu 的报错源行已保存在日志中，完整临时源文件未取回。该 BMM 模板编译失败，未生成此实例的机器码，未完成正式 F06 计时。",
+        "ConstBERT 的定制输入边界修复后，单卡已完成十次 eager（平均 80.815 ms）及 3 个整模候选捕获。厂商 XPU3 JIT 在 bmm_one_loop 的五参显式实例化处报错；候选签名需要第六个 OneLoop 参数，模板标识和诊断行均与 M75 原始复现匹配。取回 65 件编译文件及 4 个较早的 P800 设备对象，函数符号均非失败的 bmm_one_loop。运行日志保留 0.xpu 中的声明及实例化位置，事后读取该临时源码路径时文件已不存在。失败模板的目标对象未生成。",
         "正式清单四个模型的 eager 在官方及本地 FlagTree 上生成相同的昆仑芯原生 BMM 模板诊断。逐头二维 mm 的模型级复测和后续阻断点见修复对照。"
       ],
       "refs": [
@@ -442471,6 +443030,14 @@
         {
           "label": "nvidia/NV-Embed-v2 float16 复测及归档",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/cbef59d2303c7961be52-float16-1795702595399563590/failure-diagnosis.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795770105804637521/failure-diagnosis.json"
+        },
+        {
+          "label": "pinecone/ConstBERT 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/447c64e807b6dacc4770-float32-1795789136745848789/failure-diagnosis.json"
         },
         {
           "label": "P800 eager 逐模型修复对照",
@@ -442567,7 +443134,12 @@
         "LAION CLIP-ViT-bigG-14 的双塔完整输出与原生逐位相同。FP32 原生十次平均 214.12 ms。在 [10,257,1664]、16 头的视觉原生多头注意力上，FakeTensor 维度越界，严格捕获终止。",
         "woweenie/open-clip-vit-h-nsfw-finetune FP32 的原生双塔前向通过。Dynamo 用 [10,257,1280] 的 Q/K/V、16 个头调用原生多头注意力时，FakeTensor 的维度 2 越界。现有 M77 范围未覆盖该固定模型。",
         "LAION OpenCLIP FP16 的图像分支捕获原生多头注意力时复现 M77。Q/K/V 形状均为 [10,50,768]、12 个头，FakeTensor 分派报维度 2 越界。已部署的 M77 校准仅覆盖两个定版 FP32 模型，此修订及 FP16 均未进入该分支。",
-        "Marqo/marqo-fashionSigLIP。FP16 OpenCLIP 捕获原生多头注意力时复现 M77。Q/K/V 均为 [10,64,768]，12 个头，FakeTensor 分派报维度 2 越界；之前同一修订的 FP32 也有此错误。现有按模型及精度启用的校准未覆盖 Marqo FP16。已核对运行专属的四个编译缓存，均为空。本次在生成模型 IR 或设备机器码前退出。"
+        "Marqo/marqo-fashionSigLIP。FP16 OpenCLIP 捕获原生多头注意力时复现 M77。Q/K/V 均为 [10,64,768]，12 个头，FakeTensor 分派报维度 2 越界；之前同一修订的 FP32 也有此错误。现有按模型及精度启用的校准未覆盖 Marqo FP16。已核对运行专属的四个编译缓存，均为空。本次在生成模型 IR 或设备机器码前退出。",
+        "MobileCLIP-S2 FP32 对图文两塔的张量边界逐位验证通过。文本塔进行 8 头自注意力时，FakeTensor 对 [10,77,512] 的原生多头注意力调用在维度 2 越界。已知 M77 的按实测输出布局注册 Meta 的修正限定于另外两个固定模型，未覆盖该修订。四处运行缓存为零。Dynamo 在 FakeTensor 构图阶段退出，此候选未生成目标 IR 或设备机器码。",
+        "MobileCLIP-S2 的完整 CPU 双塔图有 2680 个节点、12 次原生多头注意力调用；官方输入及反序输入的两个输出均与对应的原生结果逐位一致。固定版本的实机布局校准已部署并排队复测。",
+        "MobileCLIP-S2 的原生多头注意力在 P800 执行 12 次，FakeTensor 校准无遗漏，原生双塔输出逐位匹配。完整模型随后在视觉塔广播乘法处失败，已归入 M79。",
+        "MobileCLIP-S2 复测再次记录 12 次原生多头注意力调用，已校准布局均命中，输出逐位一致。随后发生的 JIT 错误见 M75。",
+        "BioCLIP FP16 已通过原生与整图张量边界对照，视觉塔在 10×197×768 输入、12 个头的原生多头注意力调用处重现 FakeTensor 维度越界。当前 M77 的固定目标修正规则未覆盖此 FP16 视觉分支。四处运行缓存均无文件。FakeTensor 在 Dynamo 形成目标图前退出，没有为此运行生成目标 IR、汇编或 P800 机器码。"
       ],
       "refs": [
         {
@@ -442657,6 +443229,26 @@
         {
           "label": "Marqo/marqo-fashionSigLIP float16 正式复测及产物",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/bbba69410ae8834de27d-float16-1795693844440211264/failure-diagnosis.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795765484908649426/failure-diagnosis.json"
+        },
+        {
+          "label": "MobileCLIP 与 NoInstruct 的四台 P800 源码包校验、CPU 对照与复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/mobileclip-noinstruct-four-host-deployment.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795767639355020662/failure-diagnosis.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795770105804637521/failure-diagnosis.json"
+        },
+        {
+          "label": "imageomics/bioclip float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3a41283029b8e6c5bbbb-float16-1795775733057736511/failure-diagnosis.json"
         }
       ]
     },
@@ -442761,7 +443353,52 @@
         "Salesforce/SFR-Embedding-Mistral FP32。1800 秒到期时 18 个整图提议尚无一项完成全输出校验。十次 eager 均值 111.946 ms。个别 Triton 调优选择因 uni_sram 超过容量、memref.alloc 转换失败而被跳过；随后另有选择成功完成调优。最后约 32 秒内的具体内部操作仍待核实。已回收 247 个目标 IR、246 个可重定位设备 ELF、379 个生成的 Python 文件。最后一份目标 IR 距退出 32.00 秒，该内核目录未生成 ELF；上一个已完成内核的 IR、汇编及 ELF 已核验。",
         "ibm-granite/granite-embedding-30m-english FP32 在 600 秒时限退出，候选共 42 个，已记录 0 个完整输出检查，其中 0 个通过。最近一份 target_ir 距退出 6.75 秒，正式 F06 计时尚未完成。校验 84 个设备 ET_REL 和 84 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
         "zer0int/CLIP-GmP-ViT-L-14 float16 在 600 秒时限退出，实现清单共 6 项，已记录 182 个候选变体的完整输出检查，其中 10 个通过。最近一份 device_elf 距退出 0.84 秒，正式 F06 计时尚未完成。 其中块级精度探测 86 次，算子级精度探测 96 次。校验 29 个设备 ET_REL 和 29 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
-        "wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M float32 在 600 秒时限退出，实现清单共 29 项，已记录 12 个候选变体的完整输出检查，其中 12 个通过。最近一份 assembly 距退出 0.32 秒，正式 F06 计时尚未完成。校验 241 个设备 ET_REL 和 242 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。"
+        "wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M float32 在 600 秒时限退出，实现清单共 29 项，已记录 12 个候选变体的完整输出检查，其中 12 个通过。最近一份 assembly 距退出 0.32 秒，正式 F06 计时尚未完成。校验 241 个设备 ET_REL 和 242 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "mlsa-iai-msu-lab/sci-rus-tiny float32 在 600 秒时限退出，实现清单共 44 项，已记录 0 个候选变体的完整输出检查，其中 0 个通过。最近一份 target_ir 距退出 7.89 秒，正式 F06 计时尚未完成。校验 108 个设备 ET_REL 和 109 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "sentence-transformers/msmarco-MiniLM-L6-cos-v5 float32 在 600 秒时限退出，实现清单共 42 项，已记录 0 个候选变体的完整输出检查，其中 0 个通过。最近一份 device_elf 距退出 54.01 秒，正式 F06 计时尚未完成。 最后一份 Inductor AOT 包装器距退出 1.51 秒。校验 149 个设备 ET_REL 和 149 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "ibm-granite/granite-embedding-30m-english float32 在 1800 秒时限退出，实现清单共 42 项，已记录 0 个候选变体的完整输出检查，其中 0 个通过。最近一份 device_elf 距退出 2.55 秒，正式 F06 计时尚未完成。 此前 600 秒与本次 1800 秒均记录 42 个实现、零个完整候选校验；两次各归档 84、194 个设备 ELF。校验 194 个设备 ET_REL 和 194 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "sentence-transformers/paraphrase-albert-small-v2 float32 在 600 秒时限退出，实现清单共 15 项，已记录 18 个候选变体的完整输出检查，其中 9 个通过。最近一份 device_elf 距退出 0.64 秒，正式 F06 计时尚未完成。 未通过严格输出校验的路径与变体数：output (9)。校验 81 个设备 ET_REL 和 81 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "google/siglip2-so400m-patch16-naflex float32 在 1800 秒时限退出，实现清单共 29 项，已记录 36 个候选变体的完整输出检查，其中 0 个通过。最近一份 device_elf 距退出 9.78 秒，正式 F06 计时尚未完成。 未通过严格输出校验的路径与变体数：output['vision_model_output']['last_hidden_state'] (36)、output['text_model_output']['last_hidden_state'] (12)。 600 秒的前次运行归档 46 个设备 ELF，本次 1800 秒归档 151 个，36 个已完成完整输出校验的变体均未通过。数值偏差的首个来源待定位。校验 151 个设备 ET_REL 和 151 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "sci-rus-tiny FP32 从 600 秒超时复测至 1800 秒预算，完成 [10,312] 全部 3120 个输出的 FP32 校验。十次均值 eager 6.284 ms、F06 5.800 ms，速比 1.084×。34 个 eager 与 18 个 F06 机器码文件逐个校验通过。",
+        "msmarco-MiniLM-L6-cos-v5 FP32 从 600 秒超时复测至 1800 秒预算，完成 [10,384] 全部 3840 个输出的 FP32 校验。十次均值 eager 9.000 ms、F06 5.337 ms，速比 1.686×。27 个 eager 与 15 个 F06 机器码文件逐个校验通过。",
+        "sentence-transformers/msmarco-MiniLM-L6-v3 float32 在 600 秒时限退出，实现清单共 42 项，已记录 0 个候选变体的完整输出检查，其中 0 个通过。最近一份 device_elf 距退出 60.06 秒，正式 F06 计时尚未完成。 共 177 个生成的 Python 包装器，最近的包装器包含 Triton 编译调用，生成时间距超时 0.576 秒。校验 140 个设备 ET_REL 和 140 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "avsolatorio/GIST-small-Embedding-v0 float32 在 600 秒时限退出，实现清单共 23 项，已记录 24 个候选变体的完整输出检查，其中 24 个通过。最近一份 device_elf 距退出 13.04 秒，正式 F06 计时尚未完成。校验 80 个设备 ET_REL 和 80 份目标 IR，留存最近完整内核的源、TTIR、目标 IR、汇编与 ELF。",
+        "paraphrase-albert-small-v2 FP32 在 1800 秒时限内留存 44 个候选实现、12 份输出检查，其中 6 份通过。最新生成的 Inductor 包装器距退出 3.301 秒。完整的 F06 十次计时尚未完成。核验 348 个设备 ET_REL，归档 348 份目标 IR 及 465 个生成的 Python 文件。留存末段包装器和最近内核的源、IR、汇编和设备对象。",
+        "GIST-small-Embedding-v0 FP32 在 1800 秒冷编译预算下通过 P800 复测。10×384 全部输出均在容差内，最大绝对误差 1.1e-05。各十次均值 eager 15.774 ms、F06 8.795 ms，速比 1.793×。已校验 25 个 eager 与 14 个 F06 机器码文件。",
+        "msmarco-MiniLM-L6-v3 FP32 在 1800 秒冷编译预算下通过 P800 复测。10×384 全部输出均在容差内，最大绝对误差 8.82e-05。各十次均值 eager 8.965 ms、F06 5.068 ms，速比 1.769×。已校验 26 个 eager 与 14 个 F06 机器码文件。",
+        "avsolatorio/NoInstruct-small-Embedding-v0 FP32 的 600 秒时限到期时，已捕获 23 个候选实现，登记 24 份精度检查，其中 24 份通过。最后一份包装器距退出 3.677 秒，尚未完成十次 F06 计时。已对 62 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "BAAI/bge-multilingual-gemma2 FP32 的 600 秒时限到期时，已捕获 18 个候选实现，登记 0 份精度检查，其中 0 份通过。最后一份包装器距退出 4.050 秒，尚未完成十次 F06 计时。已对 69 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "Salesforce/SFR-Embedding-Mistral FP32 的 3600 秒时限到期时，已捕获 18 个候选实现，登记 0 份精度检查，其中 0 份通过。最后一份包装器距退出 8.308 秒，尚未完成十次 F06 计时。部分调优配置另有 uni_sram 容量和 memref.alloc 转换错误，进程在其后仍生成包装器。已对 305 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "另有 18 次历史超时可定位至 Inductor 调优的设备计时同步。由包装器和完整 Triton 函数匹配到 38 组目标 IR、汇编和设备对象。缺少当时待同步的具体配置及设备健康对照，这些运行保留待查。",
+        "NoInstruct-small FP32 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 9.61125e-05。十次均值 eager 13.642 ms、F06 6.925 ms，速比 1.970×。已校验 21 个 eager 与 13 个 F06 机器码文件。",
+        "nlpai-lab/KURE-v1 float16 的 600 秒时限到期时，已捕获 23 个候选实现，登记 1 份精度检查，其中 1 份通过。最后一份包装器距退出 2.993 秒，尚未完成十次 F06 计时。已对 86 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "avsolatorio/GIST-small-Embedding-v0 float16 的 600 秒时限到期时，已捕获 12 个候选实现，登记 13 份精度检查，其中 13 份通过。最后一份包装器距退出 22.470 秒，最后一份已校验的设备目标文件距退出 2.564 秒，尚未完成十次 F06 计时。已对 67 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "KURE-v1 FP16 延长到 1800 秒的复测中，宿主机资源采样器触发退让（退出码 75）。190 次用卡采样覆盖全程，未观察到其他任务占用此卡。F06 十次计时未完成，待资源允许后重试。",
+        "valurank/MiniLM-L6-Keyword-Extraction float32 的 600 秒时限到期时，已捕获 42 个候选实现，登记 18 份精度检查，其中 18 份通过。最后一份包装器距退出 2.109 秒，尚未完成十次 F06 计时。已对 149 个 P800 ET_REL 和各自同目录的目标 IR 复核校验值，并核对最近生成的包装器、汇编和内核源码。",
+        "GIST-small FP16 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 0.000493705。十次均值 eager 15.815 ms、F06 10.586 ms，速比 1.494×。已校验 27 个 eager 与 29 个 F06 机器码文件。",
+        "msmarco-MiniLM-L6-v3 FP16 在 600 秒时限内捕获 36 个候选实现，完成 7 组精度检查，其中 5 组通过。triton_unk__3 最后一份汇编写于退出前 6.004 秒，正式 F06 计时尚未完成。111 个 P800 ET_REL 的字节与各自的目标 IR 均已校验。另一个 triton_unk__3 缓存目录保留官方源、TTIR、目标 IR、LLVM IR 与汇编，退出后完整扫描未见该目录的设备对象。",
+        "valurank/MiniLM-L6-Keyword-Extraction FP32 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 8.06898e-06。十次均值 eager 9.006 ms、F06 5.142 ms，速比 1.751×。已校验 27 个 eager 与 15 个 F06 机器码文件。",
+        "NoInstruct-small FP16 在 600 秒内完成 17 项候选输出检查，全部通过。最后一份目标 IR 的时间距超时 0.682 秒，F06 十次正式计时尚未完成。46 组 P800 ET_REL 与目标 IR 均经字节和文件头校验，另留有 46 个汇编、70 个生成的 Python 文件。",
+        "msmarco-MiniLM-L6-v3 FP16 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 0.00302219。十次均值 eager 9.039 ms、F06 6.183 ms，速比 1.462×。已校验 28 个 eager 与 30 个 F06 机器码文件。",
+        "paraphrase-albert-small-v2 FP32 在 3600 秒预算内通过 P800 正式复测。完整的 7680 个输出全部在原容差内，最大绝对误差 6.48201e-06。十次均值 eager 9.150 ms、F06 8.623 ms，速比 1.061×。已校验 26 个 eager 与 24 个 F06 机器码文件。",
+        "NoInstruct-small FP16 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 0.00359273。十次均值 eager 13.781 ms、F06 8.625 ms，速比 1.598×。已校验 23 个 eager 与 25 个 F06 机器码文件。",
+        "piccolo-base-zh FP32 在 no_grad 的 P800 整模型复测通过原生输出逐位对照并捕获候选图，已完成 12 份候选精度检查，其中 12 份通过。600 秒期限到达时尚在冷编译，距最后目标 IR 写入 19.1 秒。已逐件校验 62 份 P800 ET_REL 及配对目标 IR。另一内核现场保留了 TTIR、目标 IR、LLVM IR、汇编和源文件，缓存快照中未见该内核的设备目标文件。未取得完整 F06 计时。",
+        "Lihuchen/pearl_small FP32 在 600 秒冷编译预算内通过原生输入/整图输出逐位对照，完成候选捕获和部分设备代码生成。最后一个 P800 目标文件写在截止前 1.82 秒。未出现确定性编译异常，候选精度和完整 F06 计时均未返回。136 个 ET_REL 设备对象及各自目标 IR 已逐件校验，最近一组源、汇编、LLVM IR 和生成包装器均已关联当次运行。",
+        "sentence-transformers/all-MiniLM-L12-v1 FP32 在 600 秒冷编译预算内通过原生输入/整图输出逐位对照，完成候选捕获和部分设备代码生成。最后一个 P800 目标文件写在截止前 3.03 秒。未出现确定性编译异常，候选精度和完整 F06 计时均未返回。136 个 ET_REL 设备对象及各自目标 IR 已逐件校验，最近一组源、汇编、LLVM IR 和生成包装器均已关联当次运行。",
+        "piccolo-base-zh FP32 保留 no_grad 修正并将冷编译时限从 600 秒调整为 1800 秒后，在 P800 1387.7 秒内通过。10×768 个 FP32 输出均在容差内。十次 eager 均值 15.036 ms，F06 7.860 ms，本地 1.913 倍。",
+        "vinid/plip FP32 官方 32 对图文输入已逐项核验，捕获阶段与原生对照通过。600 秒时限到达时仍在为新的候选生成 TTIR，最后写入距结束 0.42 秒。核验 95 个 P800 ET_REL 及对应目标 IR。第 96 个内核分块保存了源与 TTIR，快照未见相应目标 IR 或设备机器码。18 个已校验候选均有相同的文本和视觉隐层、池化输出超差（398、4、1077、45 个元素）。具体误差来源和与哪一项既有修复相关，仍待查；未取得正式 F06 耗时。",
+        "Diver-Retriever-4B FP32 的 M51 布局修正命中两次，完成边界逐位校验与候选捕获，尚无候选完整精度结果。600 秒冷编译超时，最后的目标 IR 距结束 1.06 秒。已核验 132 个 P800 可重定位目标文件及配对的目标 IR。第 133 个内核留下 TTIR 与目标 IR，现场未见对应机器码。",
+        "PLIP 的官方 32 对图文在 1800 秒复测中仍触发 M78。与 600 秒运行逐项输入相同，完整原生边界通过；18 套已评估候选的对比结果重现。文本与图像嵌入以及两种 logits 通过，文本隐藏层、文本池化、视觉隐藏层、视觉池化分别有 398、4、1077、45 个元素超差。具体数值根因待查。该次目录出现 252 个目标 IR、251 个 P800 ELF。最后一项 triton_unk__1 已生成目标 IR、LLVM IR 和汇编，其缓存目录没有同名 ELF。相邻已完成内核 triton_unk__0 的目标 IR 与 ET_REL 函数符号通过核验。编译产物一直更新到离退出约 4 秒。",
+        "NAVER efficient-splade-VI-BT-large-doc FP32 已在官方 64 条文本上逐项校验稀疏 COO 索引和值，完成十次 eager（平均 70.714 ms）和 18 个候选的整图捕获。600 秒时限在选型编译期间到达，当时尚无候选精度或 F06 稳态计时。归档中有 90 份目标 IR 和 89 个已核对符号的 P800 ET_REL。最新内核最后写入于退出前 4.30 秒，已到 LLVM IR，未发现该变体的汇编或设备对象。",
+        "Jina 英语小模型的两种位置偏置广播布局均在 P800 完成输出值与步幅核验，已应用三次校正。整图捕获产生 20 个候选，600 秒编译时限耗尽，尚未记录候选精度或 F06 稳态计时。核验 134 个 P800 ET_REL 和 134 份目标 IR。退出前 1.11 秒仍写入 triton_unk__8 的 LLVM/DMA 元数据，未见原包装器的步幅异常复现。",
+        "Diver-Retriever-4B 的 64 条官方文本形成 32×159 和 32×27 两批；两种标量布局在 P800 的原生值及步幅已核验。张量乘法记录 24 次校正，标量替换计数为零，此次在 1800 秒内没有复现旧断言，也没有完成候选输出核对。已核验本次归档的 290 个 P800 ET_REL、290 份目标 IR，最新生成的 Python 包装器在超时前约 27 秒写入。完整 F06 计时仍缺。",
+        "OpenSearch 稀疏编码器完成官方 64 条输入的原生 COO 索引和值核对、十次 eager（平均 147.242 ms）及 18 个候选捕获。在 600 秒上限处退出，尚无候选正确性或 F06 计时。已取回 723 件文件，65 组目标 IR 和 65 个 P800 ET_REL 的名称与符号逐一相符。末条写入在退出前 2.00 秒，同组设备对象已取回。",
+        "Telepix 在 P800 核对四组原生乘法输出，实际应用 12 次步幅修正，越过了 M79 原断言。官方 64 条的 eager 平均 144.520 ms，18 个候选已捕获，600 秒时限内尚未完成候选正确性及 F06 计时。716 个归档文件中有 56 个已核对符号的 P800 ET_REL 与 56 份目标 IR。最后写入在退出前 0.52 秒，同变体的汇编和设备对象均已取回。",
+        "BERT-base-NLI-mean-tokens 单卡 FP32 在 10 条文本上完成 eager（平均 14.965 ms）。18 个候选各完成 10×768 个输出值的正确性核验，最大绝对误差为 0.0001213。600 秒后退出时仍在生成目标代码，缺少 F06 稳态计时。804 个归档文件包含 71 份目标 IR 和 71 个逐一核对符号的设备 ET_REL；最后一个变体的目标 IR、汇编及对象均已取回，最后写入距时限 0.46 秒。",
+        "Stella 英文模型在 P800 用普通张量重新运行，边界输出逐位一致，eager 平均 14.454 ms。选型捕获 42 个候选，未复现先前的存储弱引用错误。复测在 600 秒冷编译上限处结束，尚无候选正确性或最终 F06 计时。本次 1028 件文件包含 94 份目标 IR 和 93 个经符号核验的 P800 设备对象。最后变体在退出前 8.76 秒写到目标 IR，其汇编或机器码未在该变体目录中发现。",
+        "Stella 中文模型的单卡复测使用普通张量，整模边界和原生输出逐位相同，eager 平均 14.994 ms，捕获 42 个候选。上次位置索引的存储弱引用异常未再出现，选型在 600 秒未结束，尚无候选精度或 F06 稳态计时。取回 1021 份编译文件，93 个 P800 ET_REL 已逐一校验符号并匹配目标 IR。最后生成的变体保留了 TTIR、目标 IR、汇编和设备对象，最后写入距退出 0.33 秒。",
+        "Sakil/sentence_similarity_semantic_search 在单卡完成原生输出与边界核对、十次 eager（平均 8.893 ms）和 18 个候选捕获。600 秒时编译仍在产生文件；退出前没有候选通过记录或正式 F06 耗时。取回 759 件编译文件。逐一核验 69 个 P800 ET_REL 的函数符号与对应目标 IR，最后一个缓存文件写入距退出 0.60 秒。",
+        "naver/efficient-splade-VI-BT-large-doc 在单卡完成原生输出与边界核对、十次 eager（平均 70.683 ms）和 18 个候选捕获。1800 秒时编译仍在产生文件；退出前没有候选通过记录或正式 F06 耗时。取回 1885 件编译文件。逐一核验 173 个 P800 ET_REL 的函数符号与对应目标 IR，最后一个缓存文件写入距退出 2.89 秒。最后一条内核已写出目标 IR、LLVM IR 和 DMA IR，该内核的汇编与设备对象未取回。"
       ],
       "refs": [
         {
@@ -443099,6 +443736,190 @@
         {
           "label": "wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M float32 冷编译实机复测",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/c31c9548e96fcbe86771-float32-1795705865010712877/failure-diagnosis.json"
+        },
+        {
+          "label": "mlsa-iai-msu-lab/sci-rus-tiny float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/e81011dc937ed584bee4-float32-1795706939846962618/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/msmarco-MiniLM-L6-cos-v5 float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f51a2fbffba7b1b98057-float32-1795706480969488402/failure-diagnosis.json"
+        },
+        {
+          "label": "ibm-granite/granite-embedding-30m-english float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0c25a90d93ea5efaeef3-float32-1795707256797886309/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/paraphrase-albert-small-v2 float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b4f43ecfbd8374c42ccd-float32-1795702250862108637/failure-diagnosis.json"
+        },
+        {
+          "label": "google/siglip2-so400m-patch16-naflex float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/50d439da604ebfde91da-float32-1795699238733285455/failure-diagnosis.json"
+        },
+        {
+          "label": "sci-rus-tiny FP32 延长冷编译时限后的正式配对结果",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/sci-rus-tiny-p800-paired-result.json"
+        },
+        {
+          "label": "msmarco-MiniLM-L6-cos-v5 FP32 延长冷编译时限后的正式配对结果",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/msmarco-minilm-l6-cos-v5-p800-paired-result.json"
+        },
+        {
+          "label": "sentence-transformers/msmarco-MiniLM-L6-v3 float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/a5cf7ad1cc8b382392d3-float32-1795712592222174934/failure-diagnosis.json"
+        },
+        {
+          "label": "avsolatorio/GIST-small-Embedding-v0 float32 冷编译实机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ad9640ff734f269b4860-float32-1795712869230730866/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/paraphrase-albert-small-v2 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b4f43ecfbd8374c42ccd-float32-1795713343261168570/failure-diagnosis.json"
+        },
+        {
+          "label": "GIST-small FP32 正式配对结果及设备文件校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/gist-small-p800-paired-result.json"
+        },
+        {
+          "label": "msmarco-MiniLM-L6-v3 FP32 正式配对结果及设备文件校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/msmarco-minilm-l6-v3-p800-paired-result.json"
+        },
+        {
+          "label": "avsolatorio/NoInstruct-small-Embedding-v0 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/88a609f45e853148a9b3-float32-1795767272625200443/failure-diagnosis.json"
+        },
+        {
+          "label": "BAAI/bge-multilingual-gemma2 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/6ee9f539fb4de219a918-float32-1795676511352035319/failure-diagnosis.json"
+        },
+        {
+          "label": "Salesforce/SFR-Embedding-Mistral float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/a17f31746f7afc1240dc-float32-1795698196222582216/failure-diagnosis.json"
+        },
+        {
+          "label": "18 次历史调优等待的调用行、候选内核与 P800 对象索引",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/historical-autotune-p800-inspections.json"
+        },
+        {
+          "label": "NoInstruct-small FP32 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/noinstruct-small-p800-paired-result.json"
+        },
+        {
+          "label": "nlpai-lab/KURE-v1 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ff6aaea2ba91cae7a44d-float16-1795768642171941381/failure-diagnosis.json"
+        },
+        {
+          "label": "avsolatorio/GIST-small-Embedding-v0 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ad9640ff734f269b4860-float16-1795770404287440681/failure-diagnosis.json"
+        },
+        {
+          "label": "KURE-v1 FP16 复测的资源退让与卡占用采样",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/kure-fp16-p800-resource-deferral.json"
+        },
+        {
+          "label": "valurank/MiniLM-L6-Keyword-Extraction float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/d78ff4b72c14ee125931-float32-1795772517585683555/failure-diagnosis.json"
+        },
+        {
+          "label": "GIST-small FP16 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/gist-small-fp16-p800-paired-result.json"
+        },
+        {
+          "label": "sentence-transformers/msmarco-MiniLM-L6-v3 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/a5cf7ad1cc8b382392d3-float16-1795773076763627487/failure-diagnosis.json"
+        },
+        {
+          "label": "11 个相同六层 BERT 配置的 FP32 冷编译时限及 P800 实测依据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/minilm-six-layer-fp32-cold-budgets-20261127.json"
+        },
+        {
+          "label": "valurank/MiniLM-L6-Keyword-Extraction FP32 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/valurank-minilm-fp32-p800-paired-result.json"
+        },
+        {
+          "label": "avsolatorio/NoInstruct-small-Embedding-v0 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/88a609f45e853148a9b3-float16-1795774452319894557/failure-diagnosis.json"
+        },
+        {
+          "label": "msmarco-MiniLM-L6-v3 FP16 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/msmarco-minilm-v3-fp16-p800-paired-result.json"
+        },
+        {
+          "label": "paraphrase-albert-small-v2 FP32 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/paraphrase-albert-small-fp32-p800-paired-result.json"
+        },
+        {
+          "label": "NoInstruct-small FP16 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/noinstruct-small-fp16-p800-paired-result.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float32-1795778780036113655/failure-diagnosis.json"
+        },
+        {
+          "label": "Lihuchen/pearl_small float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b33f9fe14deffdbe01e0-float32-1795778554497371319/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/all-MiniLM-L12-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f422b4e85ffbfcc6ab07-float32-1795778264244807703/failure-diagnosis.json"
+        },
+        {
+          "label": "piccolo-base-zh FP32 真卡修复后全输出与双路径计时",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/piccolo-base-zh-fp32-p800-pass.json"
+        },
+        {
+          "label": "vinid/plip float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/fc515b08ae1d93f3508e-float32-1795781142736080639/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795782222910218511/failure-diagnosis.json"
+        },
+        {
+          "label": "vinid/plip float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/fc515b08ae1d93f3508e-float32-1795782440085954756/failure-diagnosis.json"
+        },
+        {
+          "label": "NAVER sparse 官方 64 输入冷编译现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/96690f5d9bf91b7a40e7-float32-1795787265075290311/failure-diagnosis.json"
+        },
+        {
+          "label": "jinaai/jina-embedding-s-en-v1 单卡重测编译现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b6cb25881b550ca8386a-float32-1795789485042926193/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B 单卡复测新现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795788811783099829/failure-diagnosis.json"
+        },
+        {
+          "label": "opensearch-project/opensearch-neural-sparse-encoding-v1 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1c826c8e4d644b22567d-float32-1795790386970089122/failure-diagnosis.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795791568336322944/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/bert-base-nli-mean-tokens 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/92d5daa3ed2592d8dbef-float32-1795791958538343506/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-en-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/1d8db1fd1881b88c25c8-float32-1795792358915325228/failure-diagnosis.json"
+        },
+        {
+          "label": "infgrad/stella-base-zh-v2 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/99d4a6352cda5b6288c1-float32-1795792891927214169/failure-diagnosis.json"
+        },
+        {
+          "label": "Sakil/sentence_similarity_semantic_search 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/e9adbd586e926360664f-float32-1795788793822119228/failure-diagnosis.json"
+        },
+        {
+          "label": "naver/efficient-splade-VI-BT-large-doc 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/96690f5d9bf91b7a40e7-float32-1795792676675328735/failure-diagnosis.json"
         }
       ]
     },
@@ -443221,7 +444042,35 @@
         "Octen-Embedding-4B、llama-nemotron-rerank-1b-v2 和 tomoro-colqwen3-embed-8b 的 FP32 实机包装器已提取广播乘法形状。三项已进入 P800 复测队列，四台个人容器校验了同一测试源码。复测先校验原生乘法每个元素及输出步幅，再决定是否使用布局修正。",
         "nvidia/NV-EmbedCode-7b-v1 FP32。十次 eager 均值 111.020 ms。Inductor 包装器第 95 行执行 aten.mul.Tensor，输入形状 [10,32,58,128] 与 [1,1,58,128]。第 99 行期望头和序列维步幅为 128、4096，P800 实际返回 7424、128。现有 M79 校准进入点包含固定 Qwen3-Embedding-4B 修订，未覆盖 NV-EmbedCode-7b-v1 此修订。已核验 5 份目标 IR、5 个设备 ET_REL 和 25 个生成的 Python 文件。触发退出的是原生广播乘法后的包装器布局断言；已生成内核所属的 IR、汇编和 ELF 已保留。",
         "Tomoro 8B 的 P800 复测已完成查询头和键头在 49、391 两种序列长度下的 8 组校准。每组原生乘法输出都与 CPU 逐元素一致，修正后的预测步幅与设备返回值相符。整模型耗时和正确性由正式复测单列。",
-        "Tomoro 8B 正式复测实际修正 12 处广播乘法布局，已越过原断言，转至 M90 的视觉位置插值内核。"
+        "Tomoro 8B 正式复测实际修正 12 处广播乘法布局，已越过原断言，转至 M90 的视觉位置插值内核。",
+        "F2LLM-v2-80M FP32 的实际包装器第 95 行执行 aten.mul.Tensor，第 99 行检查 [10,16,40,128] 输出。头维、序列维期望步幅 128、2048，实测 5120、128。与 Octen 0.6B 在 M79 中的算子、形状和步幅一致，现有修订映射遗漏 CodeFuse。核验 14 份目标 IR、14 个设备 ET_REL 和 97 个生成的 Python 文件。退出点为原生乘法返回后的包装器布局断言。",
+        "固定 CodeFuse 修订已加入与 Octen 0.6B 相同的原生乘法校准；按模型配置校验 16 个查询头与 8 个键值头。四机源包一致，设备复测时核对值与输出步幅。",
+        "Linq Mistral 在 P800 完成原生乘法数值和步幅校准，复测越过 M79；下一次布局断言来自高效注意力，已归入 M51。",
+        "cross-encoder/ettin-reranker-17m-v1 FP32。十次 eager 均值 9.789 ms。包装器第 92 行执行原生广播乘法。左侧为打包 QKV 的视图 [1,4,13,64]、步幅 [9984,64,768,1]，右侧旋转表为 [1,1,13,64]。第 96 行期望输出头维、序列维步幅 64、256，P800 返回 832、64。既有 M79 覆盖其他 ModernBERT 打包 QKV 形状，未包含该 4 头、隐藏维 256 的固定修订。已校验 3 份设备目标 IR、3 个 ET_REL 及 14 个生成的 Python 文件。失败位置为原生乘法后的返回布局断言。保留代表性内核源、IR、汇编和 ELF。",
+        "Ettin-17M FP32 的 P800 原生输出布局已在 CPU 模拟中复现，生成包装器报告相同的两处步幅差异。修正后两种旋转表视图均逐位通过，四台个人容器已核验同一源包并进入实机复测队列。",
+        "Ettin 17M 限定形状修正后的 P800 复测记录到了后续 M71 存储弱引用异常。此轮没有正式 F06 结果，原布局修正的整模型验收仍待完成。",
+        "Ettin 17M FP32 的 no_grad 复测越过 M71 的 full_attention_inv_freq 切片并生成运行包装器。已部署的四维张量乘法规则通过原生值和步幅对照。另一处三维旋转余弦表 [1,13,64] 使用 aten.mul.Scalar(buf8, 1.0)，P800 返回序列维与特征维步幅 [64,1]，包装器第 679 行要求 [1,13]。M79 的标量修正规则遗漏该模型的固定版本及形状。已验 25 个 P800 ET_REL 与 25 份目标 IR。通过包装器的内核函数体、独立 Python 内核和源位置串起实际产出 buf8 的正弦/余弦内核与配套 IR、汇编、ELF。断言位于随后执行的原生标量乘法之后。该厂商算子的内部机器指令无逐次追踪记录。 CPU 按实机观察到的步幅复现同一断言，四个输入布局或标量对照通过。",
+        "Ettin 17M 的 FP32 标量乘法修正在 P800 校验了实际步幅 [832,64,1] 并应用到 4 次生成回退。新的包装器第 945 行传给 aten.mul.Tensor 的左侧 QKV 视图为 [1,4,13,64]，步幅 [0,64,768,1]。已校准规则左侧首维步幅为 9984。规则按完整步幅匹配，遗漏首维长度为 1、步幅为 0 的输入。第 947 行期望头、序列维步幅 [64,256]，实测为 [832,64]。校验 28 个 P800 ET_REL 并核对 28 份目标 IR 和 66 个生成的 Python 文件。原生广播乘法返回后，宿主包装器的步幅断言失败。",
+        "Ettin 17M 固定修订的 CPU 编译对照重现原步幅断言，新增左侧首维步幅为零的两种组合后，四种输入视图均通过。源码包 39172086b2b6 已在四台个人容器逐一验证，整模型列入 P800 复测队列。",
+        "Ettin 17M 固定修订在 152.136.33.169 物理 5 号卡 FP32 整模型复测通过。P800 对四种广播乘法输入视图逐值和逐步幅校验，其中两种为左侧首维零步幅。官方样例的重排分数最大绝对误差 4.67e-05。各十次平均 eager 9.778 ms、F06 7.837 ms，速比 1.248×。已验证 eager 28 个、F06 35 个机器码文件。",
+        "MobileCLIP-S2 文本塔 12 次原生多头注意力完成校准，原生完整输出逐位匹配。视觉塔 mul_82 把通道末位布局的 [10,640,8,8] 激活与 [640,1,1] 通道缩放权重相乘。第 93 行的原生乘法返回连续布局，包装器第 97 行仍要求通道末位步幅，第 103 行的残差加法未执行。既有 M79 规则未涵盖三维右操作数和这组视觉激活步幅。逐一核验 33 个 P800 ET_REL 对象和同目录目标 IR，保留生成包装器和一组目标 IR、汇编与设备对象。这次异常来自原生算子返回后的宿主步幅断言，缓存中的生成对象不能提供厂商原生算子内部指令。",
+        "apple/MobileCLIP-S2-OpenCLIP 的修正已经在四台个人容器逐机核验，同一源码包 4374635cbec7 已启用。该模型进入 P800 整模复测队列。",
+        "MobileCLIP-S2 FP32 的 P800 布局复测已核验 409600 个广播乘法结果。实机输出与修正后的假张量步幅均为 [40960,64,8,1]，此次运行采用了 6 处修正的原生回退。后续厂商 BMM 模板错误另见 M75。",
+        "新复测已载入全部权重，原生和输入边界一致。生成的包装器调用原生 aten.mul.Tensor，输入 [10,12,40,128] 与 [1,1,40,128] 广播相乘后复用了真实输出。包装器预期输出中间两维步幅 128/1536，P800 实际为 5120/128。此修订未在 M79 的原生乘法布局修正规则中。六组上游 Triton 目标 IR 与 P800 ET_REL 已逐件校验。出错的乘法直接分派给厂商 ATen，断言在生成的 Python 包装器执行，缓存没有为此原生调用生成独立的 Triton ELF。",
+        "Diver-Retriever-4B 的官方 v3-64 文本输入按 32 条分批。原生参考与张量边界逐位相符，十次 eager 完成。生成包装器对 [32,32,159,128] 的查询与 [1,1,159,128] 的旋转表调用原生乘法，预期输出中间两维步幅 128/4096，实际为 20352/128。已有 M79 修正未包含此模型的固定修订和官方负载。14 个 P800 ET_REL 及其对应目标 IR 已按字节校验。报错的乘法分派至厂商 aten.mul.Tensor，在生成包装器的输出步幅断言处退出，该原生调用没有独立 Triton 机器码。",
+        "stella-pl-retrieval 的旋转乘法在 CPU 编译对照中通过四组布局。Diver-Retriever-4B 在 20261127 官方 64 条文本下的 P800 首批有 32 条、每条填充至 159 个 token。固定分词器重建第二批长度为 27。CPU 对照覆盖这两个长度、查询和键两种头数、旋转表两种步幅，共八组，所有输出逐位吻合。四台个人容器已启用固定修订的修正，P800 复测将独立记录实际批形状及原生输出布局。",
+        "Diver-Retriever-4B FP32 官方 v3-64 整模型复测已在 P800 实际读到 32×159 和 32×27 两批。八种查询/键与旋转表布局的数值均通过原生对照，修正后的 FakeTensor 步幅与设备返回值全部一致。编译器已对产出的包装器应用修正。此记录为编译过程中的现场证据，整模型计时另行验收。",
+        "Diver 同批次真卡复测已越过上次的原生乘法步幅断言，累计修正 24 次。整模型随后在另一候选的 inv_freq AOT 存储追踪处中断，归入 M71。",
+        "stella-pl-retrieval FP32 的四组旋转乘法在 10 条输入的 P800 整模复测中与原生数值及步幅吻合，12 个回退调用已修正。运行随后到达 M51 高效注意力布局断言。",
+        "stella-pl-retrieval 官方 64 条文本经固定分词器分成 32×160 与 32×28 两批。8 组旋转表布局通过 CPU 编译对照；14 项生产入口条件覆盖 Stella、Diver、工作负载、精度与版本。针对 Stella 的旋转校正与已有的连续 QKV 高效注意力修正已在四台个人容器启用，实际 P800 重测另记。",
+        "stella-pl-retrieval FP32 在官方 64 条文本通过八组旋转乘法的真卡布局校验及整模输入逐位对照，M51 连续 QKV 修正被调用三次。第二批 32×28 的生成包装器在 triton_unk__27 的调优阶段收到 KL3 状态 700。固定 F06 在三次异步发射后的第一次设备同步观察到非法访存，未取得具体失败发射、硬件 PC 或候选精度结果。已校验 92 个 P800 ET_REL 和对应目标 IR。与同步位置对应的 49152×28 行归约有四种已生成机器码。按该运行 PID 和 PCI 的内核日志查询未得到故障记录，无法从同步栈唯一确定故障指令或分块。",
+        "Diver FP32 的官方 64 条输入已通过修正后的捕获和旋转表阶段，真卡复测在后续高效注意力步幅断言命中 M51。",
+        "Diver-Retriever-4B FP32 官方 v3-64 的两批长度为 159、27。此前 M51 注意力校正已进入执行，M79 的张量广播乘法也修正了 24 处包装器回退。当前的旋转表标量乘法 aten.mul.Scalar(x, 1.0) 返回连续结果，第一批的包装器仍要求步幅 (20352,1,159)，实际非单元素两维为 (128,1)。同一包装器的第二批也声明了转置步幅。既有 M79 标量修正未覆盖此模型的官方双批输入。已回收产生乘法输入的 triton_poi__3 目标 IR 与 P800 ET_REL，核验 20352 元素和同名函数符号。标量乘法由原生 ATen 执行，失败出现在返回后的主机包装器断言。该次缓存中列出 161 对 ELF 与目标 IR。",
+        "Diver 的官方两个序列长度（159、27）现在一次安装到同一算子上。8 组 CPU 编译对照分别核验数值、浮点与整数标量、连续与转置输入，另有 14 组精度、版本及模型分派检查。四台个人容器均已核对同一代码包，P800 整模复测已入队。",
+        "Telepix 的完整 SparseEncoder 边界在 P800 验证了官方 64 条输入的 COO 索引和值，十次 eager 平均 145.35 ms。生成包装器用 aten.mul.Tensor 相乘 QKV 的步幅视图与广播张量，输出形状 [32,12,230,64] 正确，但设备的头/序列步幅为 14720、64，FakeTensor 预期为 64、768，包装器断言终止。该固定模型未进入 M79 的乘法布局校正。所涉乘法直接调用原生算子，在接下来的步幅检查退出。3 个 P800 ET_REL 和对应目标 IR 已核验，包装器中排在断言之后的生成核未在这次调用执行；归档设备对象不能当作原生乘法实现。",
+        "Diver-Retriever-4B 的 64 条官方文本形成 32×159 和 32×27 两批；两种标量布局在 P800 的原生值及步幅已核验。张量乘法记录 24 次校正，标量替换计数为零，此次在 1800 秒内没有复现旧断言，也没有完成候选输出核对。",
+        "Telepix 原始 FP32 乘法步幅断言的两个实际输入批次（32×230、32×40）已核对，四种输入步幅通过原生数值与 FakeTensor 布局测试。相同修复已部署到四台个人容器；单卡 P800 重跑已完成本地 eager 和原始 COO 核对，F06 结果按该标签另行验收。",
+        "Telepix 在 P800 核对四组原生乘法输出，实际应用 12 次步幅修正，越过了 M79 原断言。官方 64 条的 eager 平均 144.520 ms，18 个候选已捕获，600 秒时限内尚未完成候选正确性及 F06 计时。"
       ],
       "refs": [
         {
@@ -443647,6 +444496,130 @@
         {
           "label": "Tomoro 8B 固定修订的实机复测与设备产物",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tomoro8b-p800-rotary-to-position-retest.json"
+        },
+        {
+          "label": "CodeFuse 80M 的 P800 广播乘法布局断言",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f5c062be48bf87565d51-float32-1795708071964688709/failure-diagnosis.json"
+        },
+        {
+          "label": "CodeFuse 80M 定版步幅校准与四机源包",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/f2llm-v2-80m-layout-deployment.json"
+        },
+        {
+          "label": "Linq Mistral 越过乘法后的后继阶段",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0a9989de3d8768d99778-float32-1795677539356555905/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M P800 打包旋转乘法的包装器与设备产物",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795711713125866850/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M 两种旋转表布局的 CPU 对照与四机复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin-17m-packed-rotary-deployment.json"
+        },
+        {
+          "label": "cross-encoder/ettin-reranker-17m-v1 float32 P800 编译与产物核查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795712315647128490/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M FP32 旋转标量乘法复测及设备产物",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795713561233862971/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/ettin-reranker-17m-v1 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float32-1795765874719226118/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin 17M 四种视图对照、四机源码包和复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin17m-zero-batch-stride-four-host-deployment.json"
+        },
+        {
+          "label": "Ettin 17M 四种视图与 P800 整模型实测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin17m-p800-paired-result.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795767639355020662/failure-diagnosis.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP 的 CPU 对照与四机部署记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/mobileclip-t5-pointwise-four-host-deployment.json"
+        },
+        {
+          "label": "apple/MobileCLIP-S2-OpenCLIP float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304a713f3c44e79ae023-float32-1795770105804637521/failure-diagnosis.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795774019072246028/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795776288454839286/failure-diagnosis.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval FP32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/pointwise-37775afec59af8768269-fixed-geometry-cpu.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B FP32 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/pointwise-00953ede9604495c3ccc-fixed-geometry-cpu.json"
+        },
+        {
+          "label": "四台个人容器部署与 20261127 基准下的复测版本",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/official-v3-layouts-five-models-four-host-deployment.json"
+        },
+        {
+          "label": "Diver 官方 v3-64 八组真卡布局及包装器修正证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-v3-p800-rotary-calibration.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795777173529899288/failure-diagnosis.json"
+        },
+        {
+          "label": "stella-pl 真卡复测与后续 M51 故障",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795778069661242458/failure-diagnosis.json"
+        },
+        {
+          "label": "Stella 官方输入分词和两批长度",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-official-token-batch-shapes.json"
+        },
+        {
+          "label": "Stella v3-64 四机修正与八组对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/stella-v3-attention-four-host-deployment.json"
+        },
+        {
+          "label": "sdadas/stella-pl-retrieval float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/37775afec59af8768269-float32-1795779839255785931/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795780560852632457/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795784231878188573/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795784231878188573/failure-followup-20261127-wrapper-layout-deployment.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 单卡复测新现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795790762680260371/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B 上轮修正复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float32-1795784231878188573/failure-followup-20261127-next-compiler-stage.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795790762680260371/failure-followup-20261127-packed-rotary.json"
+        },
+        {
+          "label": "telepix/PIXIE-Splade-Preview 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/ab2e2d3ffefb2baa9d78-float32-1795791568336322944/failure-diagnosis.json"
         }
       ]
     },
@@ -443769,7 +444742,8 @@
       "historical_status": "",
       "related": [],
       "notes": [
-        "WeMM-2B 已越过发布依赖加载并完成十次原生计时。Transformers 5.2.0 的 Qwen3.5 线性注意力掩码在第 1396 行以缓存起始值和掩码的 all 归约结果选择 None 或输入掩码，Dynamo 拒绝捕获。"
+        "WeMM-2B 已越过发布依赖加载并完成十次原生计时。Transformers 5.2.0 的 Qwen3.5 线性注意力掩码在第 1396 行以缓存起始值和掩码的 all 归约结果选择 None 或输入掩码，Dynamo 拒绝捕获。",
+        "WeMM-Embedding-9B FP32 经正式 eager 和完整输出逐位对照后，在 Transformers 5.2.0 的 Qwen3_5TextModel._update_linear_attn_mask 第 1396 行中断。按 cache_position[0] 和 torch.all(attention_mask == 1) 的实际值选择分支，Dynamo 无法捕获。固定安装包和 M83 的 WeMM-2B 对照使用同一源码 SHA-256，该 9B 修订已实际重现。四处运行缓存均已核验为空，Dynamo 中止时尚未产生目标 IR、汇编或 P800 机器码。"
       ],
       "refs": [
         {
@@ -443783,6 +444757,10 @@
         {
           "label": "WeMM 固定实现、四种 CPU 分支与 P800 捕获日志",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/8d31e806a11c0fdb3436-float32-1795655003960881208/failure-diagnosis.json"
+        },
+        {
+          "label": "tencent/WeMM-Embedding-9B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0c4197dbc5e7073fb1bd-float32-1795674746050613183/failure-diagnosis.json"
         }
       ]
     },
@@ -443871,7 +444849,11 @@
         "Qwen3-VL-Embedding-8B 的五次旧运行均报告 749 个主干参数重新初始化。日志、生成代码和当次模型的编译错误仍可定位；这些运行的原生及 F06 耗时、输出相等与 CPU 同入口对照均不足以证明训练模型正确性。正式模型需重新做全参数核验和公开输出验证。",
         "BAAI/BGE-VL-MLLM-S1 使用 Sentence Transformers 5.4.0。该版本仅对已审核的两个模型开放图文入口，此模型未匹配。",
         "royokong/e5-v 的 FP32 原生图文编码和十次 eager 运行成功。固定 SentenceTransformers 5.4.0 的图文入口只接受列明的 Qwen 和 Nemotron 修订，缺少该 E5-V 修订，tensor_pipeline.py 第 417 行主动终止。",
-        "Jina Reranker M0 FP16 在图文重排入口第 71 行被已审核的 Qwen 模型/修订范围排除。与此前同一模型 FP32 的 M86 入口阻塞相同。 正式十次 eager 均值 99.402 ms。四处运行缓存均已核验为空，入口在编译前终止，未生成 IR 和设备机器码。"
+        "Jina Reranker M0 FP16 在图文重排入口第 71 行被已审核的 Qwen 模型/修订范围排除。与此前同一模型 FP32 的 M86 入口阻塞相同。 正式十次 eager 均值 99.402 ms。四处运行缓存均已核验为空，入口在编译前终止，未生成 IR 和设备机器码。",
+        "qihoo360/fg-clip2-large 在固定修订上已用官方 FgClip2Model 完成双塔 eager 推理。F06 分发器未登记该适配器，选择入口时退出。官方路径包括按图片尺寸设置补丁数、短文本分词、带 walk_type 的文本塔及图像塔，返回两种池化特征。M86 的既有图文入口遗漏此适配器。四处运行缓存在退出后均已核验为空；距编译最近的成功阶段是 eager 基线，未生成此候选的目标 IR 或 P800 机器码。",
+        "官方 MultimodalEmbeddingModel 的 SparseEncoder 已按发布者配置加载并完成十次 eager 图文推理。整模入口在 tensor_pipeline.py 第 427–428 行仅接受类型恰为 SentenceTransformer 的编码器，主动拒绝了这个固定修订的 SparseEncoder。已有 M86 图文入口覆盖不完整，M40 已修正的加载阶段在该次 P800 运行通过。已取回并核对 Triton、Inductor、FlagTree DSA 及临时目录，四处共零文件。入口在 F06 编译前退出，该次未生成目标 IR、汇编或设备对象。",
+        "qihoo360/fg-clip2-large FP32 在完整发布权重的 CPU 对照中，原始顺序和反序的两组官方图文输入均捕获 2144 个节点。每组的 10×1024 图像输出与 10×1024 文本输出均和原始双塔逐位一致。四台个人容器已校验同一份源码，已排入 P800 复测。",
+        "官方 16 对图文逐项匹配，SparseEncoder 按发布配置加载，eager 十次已完成。图融合的 MultimodalEmbeddingModel 整模型入口在识别 SparseEncoder.encode 时主动返回；与同修订旧工作负载的 M86 一致。四个缓存目录均已取回并核查。执行在建图前结束，本次未生成编译 IR 或机器码。"
       ],
       "id": "M86",
       "title": "图文嵌入与重排的 F06 整模型入口覆盖不完整",
@@ -443956,6 +444938,26 @@
         {
           "label": "jinaai/jina-reranker-m0 float16 原始运行与诊断",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/d55c8a05882237277423-float16-1795702166461907269/failure-diagnosis.json"
+        },
+        {
+          "label": "qihoo360/fg-clip2-large float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/818cdbad8b0b36d4954c-float32-1795673163206632969/failure-diagnosis.json"
+        },
+        {
+          "label": "naver/v-splade-quality float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7f5be735d0dba35803cf-float32-1795769952697754663/failure-diagnosis.json"
+        },
+        {
+          "label": "FG-CLIP 2 真实图像网格与完整双塔 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/fgclip2-grid-full-cpu.json"
+        },
+        {
+          "label": "FG-CLIP 2 四台个人容器源码校验及复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/fgclip2-grid-four-host-deployment.json"
+        },
+        {
+          "label": "naver/v-splade-quality float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7f5be735d0dba35803cf-float32-1795780754538208443/failure-diagnosis.json"
         }
       ]
     },
@@ -443982,7 +444984,8 @@
         "TomoroAI/tomoro-colqwen3-embed-4b 的双塔入口候选在原运行个人容器内使用 CPU 复核：官方 10 条文本和 10 张图的预处理一致；短、混合长度和反序三组的逐样本文本及图像 token 特征全部逐位一致。严格捕获在 Qwen3-VL 图像位置插值调用 torch.linspace 时触发 aten._local_scalar_dense，未形成 FX 图。P800 正式运行此前在 M73 入口选择阶段退出。",
         "TomoroAI/tomoro-colqwen3-embed-4b 在原运行环境的 CPU 对照中，按发布模型准备图像网格后，短样本、混合长度和反序三组均严格整图捕获。文本与图像的全部逐样本 token 特征都与原生结果逐位相同。各图节点数为 8025, 8187, 8187。四台个人容器已分别校验统一测试源码，FP32 设备复测已入队。",
         "TomoroAI/tomoro-colqwen3-embed-8b 在原运行环境的 CPU 对照中，按发布模型准备图像网格后，短样本、混合长度和反序三组均严格整图捕获。文本与图像的全部逐样本 token 特征都与原生结果逐位相同。各图节点数为 8226, 8406, 8406。四台个人容器已分别校验统一测试源码，FP32 设备复测已入队。",
-        "Tomoro 8B 已在 P800 完成完整双塔原生和张量入口对照，并实际生成机器码；后续在 M79 的广播乘法布局校验退出。"
+        "Tomoro 8B 已在 P800 完成完整双塔原生和张量入口对照，并实际生成机器码；后续在 M79 的广播乘法布局校验退出。",
+        "FG-CLIP 2 的 CPU 对照在发布者视觉位置插值 resize_positional_embeddings 中读取图像网格标量时中断。每次使用原图像处理器产生的 patch 网格，在张量图内保留原插值后，两种输入顺序的完整双塔图均通过。原 P800 入口错误归入 M86，此项位置插值对照的设备复测待完成。"
       ],
       "id": "M87",
       "title": "Qwen3-VL 与 SigLIP2 NaFlex 视觉位置插值从输入网格取标量，阻断严格整图捕获",
@@ -444093,6 +445096,14 @@
         {
           "label": "Tomoro 8B 实机完整双塔及后续 M79",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tomoro8b-grid-p800-boundary-retest.json"
+        },
+        {
+          "label": "FG-CLIP 2 真实图像网格与完整双塔 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/fgclip2-grid-full-cpu.json"
+        },
+        {
+          "label": "FG-CLIP 2 四台个人容器源码校验及复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/fgclip2-grid-four-host-deployment.json"
         }
       ]
     },
@@ -444373,7 +445384,8 @@
         "两个固定 wheel 放入仅本次验证可见的目录后，实际发布主干、卷积符号、原始适配器和定版权重均成功加载。正式十条输入的原生前向走到发布者 Triton 因果卷积，隐藏设备时无法查询 XPU 属性。P800 数值与耗时待测。",
         "tencent/WeMM-Embedding-2B。独立加载的发布者模型和基准原始入口在十条官方输入的 20480 个 FP32 输出上逐位一致。固定修正已进入四台个人容器的统一测试入口；整模型 P800 结果待复测。",
         "WeMM-2B 已越过发布依赖加载并完成十次原生计时。Transformers 5.2.0 的 Qwen3.5 线性注意力掩码在第 1396 行以缓存起始值和掩码的 all 归约结果选择 None 或输入掩码，Dynamo 拒绝捕获。",
-        "Topk 的官方 FLA 0.5.1 依赖已在四台个人容器的模型专用目录校验。两个固定版本的适配器已验证，CPU 原生加载通过，因果卷积的设备执行进入 P800 复测队列。"
+        "Topk 的官方 FLA 0.5.1 依赖已在四台个人容器的模型专用目录校验。两个固定版本的适配器已验证，CPU 原生加载通过，因果卷积的设备执行进入 P800 复测队列。",
+        "WeMM-4B 的发布者多模态入口导入 qwen_vl_utils.process_vision_info。现有 M93 的 WeMM 隔离依赖仅为 2B 固定修订启用；4B 首测在原生加载静态导入检查失败。当次四处缓存均为空。尚未进入整图编译，目标 IR、汇编与 P800 机器码均未生成。"
       ],
       "related": [
         "M21",
@@ -444413,6 +445425,10 @@
         {
           "label": "四台个人容器核验的固定版本与选用范围",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/topk-naflex-pinned-runtime-deployment.json"
+        },
+        {
+          "label": "tencent/WeMM-Embedding-4B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/d2879be0dce3bb774bad-float32-1795774294572737700/failure-diagnosis.json"
         }
       ]
     },
@@ -444429,7 +445445,8 @@
       "notes": [
         "公开 EmbeddingModel 按仓库根目录加载权重，发布者的权重索引和四个分片实际位于 model/。固定 A100 的 FlagGems 开关两组均在相同位置退出。",
         "与 M35、M39、M91 对照，本次主模型的四个分片已到位，根目录缺权重映射。2B 的定版文档用于查找材料，其实机覆盖按独立标签统计。",
-        "从训练参数所列的模板名追溯到固定上游实现。已保留模板默认指令、特殊 token、代码版本与校验值；训练时软件提交仍未知，完整对照待测。"
+        "从训练参数所列的模板名追溯到固定上游实现。已保留模板默认指令、特殊 token、代码版本与校验值；训练时软件提交仍未知，完整对照待测。",
+        "Ovis 3B 的 root 与 model/ 配置相同，正式首测更早在 Qwen2_5OmniConfig 的 AutoModel 类型分派中断，独立归入 M116。"
       ],
       "related": [
         "M35",
@@ -444450,6 +445467,10 @@
         {
           "label": "定版上游 qwen3_5_emb 模板来源",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ovis9b-upstream-template-evidence.json"
+        },
+        {
+          "label": "ATH-MaaS/Ovis-Omni-Embedding-3B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/61fe2fd8ce10ed4226a9-float32-1795771475736444092/failure-diagnosis.json"
         }
       ]
     },
@@ -444736,7 +445757,10 @@
         "NeuML 的多向量文本原生入口完成十次 eager，均值 5.746 ms。运行源码第 255 行在精确模型与修订检查处退出，M100 的 LateOn 完整 token 输出入口尚未覆盖该修订。四处运行缓存均已取回并核验为空，未生成模型 IR 或设备机器码。",
         "NeuML 固定修订的完整输出已在 CPU 核对。官方、倒序、混合长度和跨两个批次的全部 token 向量与最终公开输出逐位一致，官方输入的完整图捕获了 178 个算子调用。四台个人容器已校验同一候选测试包，P800 整模型已排队复测。",
         "NeuML 的固定修订已通过 P800 FP32 整模型复测。全部 10 个 token 输出张量共 27392 个元素通过校验。十次 eager 均值 5.691 ms，F06 均值 4.052 ms，实测速比 1.405×。",
-        "NeuML/colbert-muvera-femto FP16 经 FP32 参考校验，全部 10 个输出通过。P800 十次平均 eager 5.850 ms，F06 4.591 ms，速比 1.274×。"
+        "NeuML/colbert-muvera-femto FP16 经 FP32 参考校验，全部 10 个输出通过。P800 十次平均 eager 5.850 ms，F06 4.591 ms，速比 1.274×。",
+        "ConstBERT 已通过 M44 的 250 token 文档分词、32×128 多向量投影、显式精度及 64 条官方文本的 eager 计时。F06 的文本多向量边界只接入了其他发布者类型，未接入本修订的 DocumentEncoder，精确类型检查在构图前退出。四个缓存目录均为空，未生成该整模型的 IR 或机器码。",
+        "ConstBERT 的固定权重整图已在 CPU 通过官方 64 条文本及倒序重复输入。每个输入规模均捕获 502 个节点，64×32×128 个输出全部与原生逐位相同。四台个人容器已部署相同修正，P800 完整模型复测已排队。",
+        "ConstBERT 的定制输入边界修复后，单卡已完成十次 eager（平均 80.815 ms）及 3 个整模候选捕获。厂商 XPU3 JIT 在 bmm_one_loop 的五参显式实例化处报错；候选签名需要第六个 OneLoop 参数，模板标识和诊断行均与 M75 原始复现匹配。"
       ],
       "related": [
         "M11",
@@ -444781,6 +445805,18 @@
         {
           "label": "NeuML FP16 实机配对与 FP32 精度对照",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/neuml-p800-fp16-paired-result.json"
+        },
+        {
+          "label": "pinecone/ConstBERT float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/447c64e807b6dacc4770-float32-1795783738104063602/failure-diagnosis.json"
+        },
+        {
+          "label": "pinecone/ConstBERT 修复前后证据与复测记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/447c64e807b6dacc4770-float32-1795783738104063602/failure-followup-20261127.json"
+        },
+        {
+          "label": "pinecone/ConstBERT 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/447c64e807b6dacc4770-float32-1795789136745848789/failure-diagnosis.json"
         }
       ]
     },
@@ -444801,7 +445837,9 @@
         "google/tipsv2-so400m14 的原权重精度用例完成两路公开输出逐位比对，十次 eager 平均 248.825 ms。前两个 P800 区域均已完成 SDNN 校准。第三个区域的输入是 CPU 上的 FP32 向量 [576] 和标量，二者相乘。后端拒绝用 SDNN 校准该区域；现有 M101 保护只对 MPNet FP32 启用。",
         "Tipsv2 原权重精度用例的实际 CPU 区域在同版 F06 上重现设备门槛。启用既有保护后 576 个逐元素结果一致，三个候选策略均保留，未初始化加速卡。",
         "Tipsv2 原权重复测命中同一 CPU 区域签名并越过原失败点，后续独立的归约编译问题见 M103。",
-        "google/tipsv2-b14 原权重精度用例在 P800 完成 eager。前两个设备区域已完成 SDNN 校准。第三个区域是 CPU 上的 FP32 [384] 与标量，auto 和 cluster 各有三项结果，SDNN 在设备门槛退出，当前 M101 的定版保护遗漏 B14。"
+        "google/tipsv2-b14 原权重精度用例在 P800 完成 eager。前两个设备区域已完成 SDNN 校准。第三个区域是 CPU 上的 FP32 [384] 与标量，auto 和 cluster 各有三项结果，SDNN 在设备门槛退出，当前 M101 的定版保护遗漏 B14。",
+        "官方 32 对图文逐项匹配。前两组设备区域完成 SDNN 校准，随后对 CPU 上的 FP32 长度 384 向量与标量乘法选择了仅支持 P800 的 SDNN。该区域与旧输入的图和签名一致，已有 M101 的设备筛选遗漏固定修订 Tipsv2-B14。已校验 7 个 P800 ET_REL 与配对目标 IR。CPU 区域的 auto、cluster 已完成，SDNN 在设备资格检查处返回，当前失败区域未生成设备机器码。",
+        "Tipsv2-B14 同修订的长度 384 CPU 图已用原版 SDNN 后端复现。设备资格修正保留三种策略和原始乘法结果，六项入口条件已核对；四台个人容器部署同一源码，已进入 P800 整模型复测队列。"
       ],
       "related": [
         "M92"
@@ -444832,6 +445870,18 @@
         {
           "label": "Tipsv2 B14 的区域签名、精度和实机证据",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795680246898823763/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795780493995216881/failure-diagnosis.json"
+        },
+        {
+          "label": "Tipsv2-B14 修正四机核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-b14-v3-cpu-region-four-host-deployment.json"
+        },
+        {
+          "label": "Tipsv2-B14 既有 CPU 区域修正前后",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-b14-v3-cpu-region-control.json"
         }
       ]
     },
@@ -444879,7 +445929,9 @@
       "fix_paths": [],
       "notes": [
         "Tipsv2 SO400M14 原权重复测已命中 M101 的 CPU 区域保护。后续残差加法与 LayerNorm 生成 FP32 Welford 归约，处理 10260 行、行宽 1152。16×32 分块在 TritonXPUUnrollControl 生成 TTXIR 时被 arith.constant 的值与结果类型检查拒绝。",
-        "同一份生成内核的 1×2048 配置生成完整 TTXIR、LLVM IR、汇编和设备 ELF，已核对哈希。16×32 配置仅有源和 TTIR，设备码没有生成；另一分块的 ELF 未归为失败配置的机器码。"
+        "同一份生成内核的 1×2048 配置生成完整 TTXIR、LLVM IR、汇编和设备 ELF，已核对哈希。16×32 配置仅有源和 TTIR，设备码没有生成；另一分块的 ELF 未归为失败配置的机器码。",
+        "同一模型在 v3-64 工作负载的 32×64 分块另见 M119。两种错误已用实际 TTIR 分别重放；是否来自同一处变换缺陷仍待查。",
+        "Tipsv2-SO400M14 的两个实测 Welford 内核均用当次生成的包装器和定版 Inductor 重放。对这两个精确源码哈希，仅选取原候选已有的 1×2048 配置（16 warps、1 stage）。该配置在两轮原始 P800 上均有设备目标文件，单处改动的相邻内核仍保留全套原候选。整模型修正已在四机部署并排队复测，精度与性能待该次真卡结果。"
       ],
       "related": [
         "M32",
@@ -444891,6 +445943,18 @@
         {
           "label": "实机运行、失败 TTIR 和成功配置的设备目标",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795677909932982893/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-so400m14 checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795779549044792945/failure-diagnosis.json"
+        },
+        {
+          "label": "真实 Inductor 两组配置的前后对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-row-actual-inductor-configs.json"
+        },
+        {
+          "label": "Tipsv2 Welford 定点配置四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-row-four-host-deployment.json"
         }
       ]
     },
@@ -444900,7 +445964,7 @@
       "group": "全清单测试与环境兼容",
       "component": "F06 局部精度分区与 CrossEncoder 张量入口",
       "date": "2026-11-26",
-      "status": "TinyBERT-L2 与 potion-retrieval-32M 的 FP16 边界通过原始版本计数器和别名检查的 CPU 对照，四机已就绪。其余触发模型及 P800 正式配对结果逐例跟踪。",
+      "status": "TinyBERT-L2 和 potion-retrieval-32M 的 P800 复测均越过原输入版本计数器故障，后续阻塞见 M114。其他已知触发模型仍待复测。",
       "baseline": "F06 0.3.81+v51e.inductor64，XRE 5.41.0.0，显式 FP16。",
       "historical_status": "",
       "fix_paths": [],
@@ -444919,7 +445983,27 @@
         "minishlab/potion-retrieval-32M FP16 在 model.0 前置钩子读取推理张量版本号时触发 M104。四处运行缓存均已核验为空。精度区域收集时退出，未生成对应的编译中间产物或设备机器码。",
         "cross-encoder/ms-marco-TinyBERT-L2 的固定 FP16 修订在未改动的 v64 精度钩子上重现版本计数器错误。改用带版本号的预处理与前向张量后，5 组区域通过检查，零精度提升的完整输出与原生 FP16 逐位一致。两个负对照均按预期阻止了输入的原地修改及浮点输出别名。四台个人容器的同一版本已就绪，实机配对结果待测。",
         "minishlab/potion-retrieval-32M 的固定 FP16 修订在未改动的 v64 精度钩子上重现版本计数器错误。改用带版本号的预处理与前向张量后，1 组区域通过检查，零精度提升的完整输出与原生 FP16 逐位一致。两个负对照均按预期阻止了输入的原地修改及浮点输出别名。四台个人容器的同一版本已就绪，实机配对结果待测。",
-        "aspire/acge_text_embedding FP16 在 model.0.model.embeddings 前置钩子读版本号时重现 M104。原入口使用推理张量，十次 eager 均值 27.164 ms。运行专属四处缓存已核验为空。精度区域输入收集在编译前退出，未生成模型中间产物和设备机器码。"
+        "aspire/acge_text_embedding FP16 在 model.0.model.embeddings 前置钩子读版本号时重现 M104。原入口使用推理张量，十次 eager 均值 27.164 ms。运行专属四处缓存已核验为空。精度区域输入收集在编译前退出，未生成模型中间产物和设备机器码。",
+        "minishlab/potion-retrieval-32M FP16 在 P800 上通过原版本计数器检查，并完成零提升候选校验。后续后端退出已记入 M114。",
+        "cross-encoder/ms-marco-TinyBERT-L2 FP16 在 P800 上通过原版本计数器检查，并完成零提升候选校验。后续后端退出已记入 M114。",
+        "MiniLM-L2-v2 FP16 在 model.0.model.bert.embeddings 的区域输入变更检查退出。原始异常为推理张量缺少版本计数器。入口仍使用 inference_mode，与 TinyBERT-L2 的 M104 栈及钩子一致。已检查本次运行的四处缓存，目录内均无编译文件。异常发生在构造局部精度区域时，尚未生成模型 IR 和设备机器码。",
+        "MiniLM-L2-v2 FP16 的正式入口在 CPU 复现原异常。固定修订改用保留版本计数的输入后，五个精度区域通过检查，四组输入零提升输出逐位等同原生；输入变更与输出别名两个负面对照仍能触发检查。四机同源，P800 复测已排队。",
+        "本次实机使用的 reranker_boundary.py 已包含 TinyBERT-L2 FP16 的版本计数器修正，其限定修订遗漏 MiniLM-L2-v2。",
+        "MiniLM-L2-v2 FP16 的 P800 复测已越过原先缺失局部输入的问题，零提升候选通过后在分数回传 CPU 的精度规则检查停止，详见 M114。",
+        "Ettin-reranker-17m-v1 FP16 的官方输入边界与原生输出逐位一致，随后局部精度检查读取 model.0.model.embeddings 的输入版本计数器。该修订仍以 inference_mode 准备 FP16 输入，v._version 抛出异常。其 FP32 已启用普通张量，M104 的 FP16 名单仅涵盖 TinyBERT 和 MiniLM-L2。当次四处编译缓存均已核验为空。异常发生在区域输入变更检查，未生成该候选的目标 IR、汇编或 P800 机器码。",
+        "Ettin-17M 的固定权重在 CPU 复现 P800 的 FP16 嵌入版本计数错误。仅将准备和前向改为 no_grad 后，官方顺序、反序和两组配对测试均保持原生输出，发布轮子的精度区域检查随后明确拒绝了 Dense 区域 model.2 返回的浮点输入存储别名。该候选保留为诊断对照，待定位具体字段并验证完整区域。",
+        "Ettin-17M 的 CPU 字段级复现定位到 model.2 稠密层原样传递的 token_embeddings。在该次官方输入中，输入和输出是同一 [1,13,256] FP16 张量，版本计数未变，完整模型输出与原生摘要相同。区域校验仍按原规则拒绝此别名。",
+        "Diver-Retriever-4B FP16 在官方 v3-64 的 64 条文本上完成十次 eager 计时。整模型张量边界与原生输出逐位一致。F06 检查 model.0.model.embed_tokens 的输入是否被修改时读取 v._version，当前推理张量没有版本计数器。现有 M104 的普通张量入口尚未覆盖此修订。四处当次编译缓存均为空。异常出现在局部精度探针检查输入变更时，目标 IR、汇编和 P800 机器码尚未生成。",
+        "AQ-MedAI/Diver-Retriever-4B float16 用完整固定权重和 2 条输入在 CPU 重现原故障。固定修订切换为 no_grad 后，3366 个节点通过 AOT，对原生同精度输出逐位一致，反序输入也已校验。原 F06 精度区域的版本计数钩子通过，5120 个输出元素均满足与原 FP32 的精度对照。四台个人容器的同一修正已验证部署，真卡正式结果按运行标签验收。",
+        "LaBSE-en-ru FP16 的 64 条官方文本通过原生边界对照。整模型的 embeddings 精度钩子读取推理张量版本计数器时失败。该固定修订的已有 no_grad 修正限定为 FP32，故 M104 漏盖 FP16。已核查四个目录，编译缓存为空；精度钩子在捕获前报错，未生成 IR、汇编或设备目标。",
+        "LaBSE-en-ru FP16 的完整权重在两条官方文本上重现 M104。改用 no_grad 后原版输入变更钩子通过，502 个图节点经 AOT 捕获，原序与反序结果均与同精度原生对照一致。四机已部署并进入正常整模型复测。",
+        "potion-base-8M FP16 在官方 64 条文本上完成 eager 与原生边界逐位对照。精度区域 model.0 的前置钩子读取推理张量版本计数器时触发 M104。此修订未进入已有的普通张量修正范围。已检查四个编译缓存目录，均为空。失败发生在精度捕获阶段，本次没有生成 IR 或 P800 机器码。",
+        "potion-base-8M 的普通张量修正已用完整权重、官方 64 条文本及倒序输入验证，捕获 76 个图节点且 FP16 输出与原生逐位相同。四机现已部署。官方 off 为 10/30、on 为 8/30，分别等待相同轮数的 P800 结果。",
+        "potion-base-8M 的普通张量修正已由 P800 官方 64 条输入确认，局部精度检查通过。后续两个 embedding_bag 编译拦截详见 M114。",
+        "Piccolo-base-zh FP16 使用原始精度张量，eager 平均 14.615 ms。局部精度检查在嵌入层读取推理张量的版本计数器时退出。现有 Piccolo 普通张量修复仅覆盖 FP32，其他模型的 M104 修复未覆盖本修订。四个缓存目录均已检查，零文件。该版本计数异常在创建精度区域时触发，尚无候选目标 IR 或机器码。",
+        "sensenova/piccolo-base-zh 的 float16 固定检查点已复现原异常，修正后在 506 个图节点上完成整模 CPU 对照。正序和倒序输出均逐项对照原生前向，四台个人容器已核对相同源码。原始 FP16 精度区域的前后钩子也已通过。",
+        "LaBSE-en-ru FP16 单卡在官方 64 条输入上通过整模张量边界与原生输出比对、十次 eager（平均 47.281 ms）。原有版本计数异常消失。在 Dense 区域 model.2 返回特征字典时，F06 拒绝浮点输入存储别名。",
+        "Piccolo-base-zh FP16 经过普通张量边界修复，单卡完成整模原生输出核对、十次 eager（平均 14.734 ms）及第一个局部精度探测。池化层用 token_embeddings 的形状广播整数注意力掩码，原始和保护图均保留相同 expand_as 节点；精度规则将用于形状的 FP16 张量判为低精度计算，拒绝该整数视图。"
       ],
       "related": [
         "M64",
@@ -444987,6 +446071,102 @@
         {
           "label": "ACGE FP16 真实输入版本计数器错误",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/aaeca097a4bca35c177d-float16-1795707537146703931/failure-diagnosis.json"
+        },
+        {
+          "label": "minishlab/potion-retrieval-32M P800 后续编译记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f52048887cd6a4a1863c-float16-1795709460193601966/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/ms-marco-TinyBERT-L2 P800 后续编译记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/11bc3ddbbda7a47f4d92-float16-1795708894398425822/failure-diagnosis.json"
+        },
+        {
+          "label": "MiniLM-L2-v2 FP16 的版本计数器异常",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/2ae586383d4fdd82fe62-float16-1795710230412647476/failure-diagnosis.json"
+        },
+        {
+          "label": "MiniLM-L2-v2 FP16 CPU 对照与四机复测部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/minilm-l2-fp16-region-deployment.json"
+        },
+        {
+          "label": "MiniLM-L2-v2 固定 FP16 复现的独立重跑",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/m104-minilm-l2-fp16-region-replay.json"
+        },
+        {
+          "label": "cross-encoder/ms-marco-MiniLM-L2-v2 float16 P800 编译与产物核查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/2ae586383d4fdd82fe62-float16-1795713036563509444/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/ettin-reranker-17m-v1 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float16-1795771073770922679/failure-diagnosis.json"
+        },
+        {
+          "label": "Ettin-17M FP16 版本计数与后续区域别名的 CPU 复现",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/304107fb85d848e519e6-float16-1795771073770922679/precision-region-cpu-followup.json"
+        },
+        {
+          "label": "Ettin-17M 稠密层浮点别名的字段与形状证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ettin17m-dense-alias-fields.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/00953ede9604495c3ccc-float16-1795777849370378067/failure-diagnosis.json"
+        },
+        {
+          "label": "AQ-MedAI/Diver-Retriever-4B float16 修正前后 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-fp16-ordinary-boundary-cpu.json"
+        },
+        {
+          "label": "普通张量修正的四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-f2llm-ordinary-four-host-deployment.json"
+        },
+        {
+          "label": "cointegrated/LaBSE-en-ru float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/372270b82ac9d5f24504-float16-1795780995734511657/failure-diagnosis.json"
+        },
+        {
+          "label": "cointegrated/LaBSE-en-ru 入口与定版修正验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/labse-fp16-ordinary-boundary-cpu.json"
+        },
+        {
+          "label": "Diver 与 LaBSE 同源四机核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/diver-labse-official-v3-four-host-deployment.json"
+        },
+        {
+          "label": "minishlab/potion-base-8M float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0dde311c249cb39e45df-float16-1795782685715870672/failure-diagnosis.json"
+        },
+        {
+          "label": "potion-base-8M 固定权重 CPU 复现与修复验证",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/potion-base-8m-official-ordinary-boundary-cpu.json"
+        },
+        {
+          "label": "四台个人容器同步复测版本",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/p800-count-replay-four-host-deployment.json"
+        },
+        {
+          "label": "minishlab/potion-base-8M float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0dde311c249cb39e45df-float16-1795784588232467804/failure-diagnosis.json"
+        },
+        {
+          "label": "minishlab/potion-base-8M 修复前后证据与复测记录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0dde311c249cb39e45df-float16-1795782685715870672/failure-followup-20261127.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float16-1795791757653472591/failure-diagnosis.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float16-1795791757653472591/failure-followup-20261127-scoped-ordinary-sentence.json"
+        },
+        {
+          "label": "cointegrated/LaBSE-en-ru 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/372270b82ac9d5f24504-float16-1795789036883283956/failure-diagnosis.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float16-1795794672728355334/failure-diagnosis.json"
         }
       ]
     },
@@ -445029,7 +446209,12 @@
       "fix_paths": [],
       "notes": [
         "原生 FP32 完成十次 eager 计时。F06 在选择 SentenceTransformer 张量入口时拒绝 encode 方法指纹。实机 encode、forward 两个指纹均与固定 5.4.1 wheel 一致。相较已覆盖的 5.4.0，forward 完全相同，encode 仅改变对 NumPy 数组转列表的处理，本次输入为十条文本。",
-        "已核对运行专属缓存和正式机器码目录。此次退出发生在模型编译前，尚未产生该模型的编译 IR 或设备机器码。"
+        "已核对运行专属缓存和正式机器码目录。此次退出发生在模型编译前，尚未产生该模型的编译 IR 或设备机器码。",
+        "履历与职位匹配 MiniLM 在 eager 完成十次计时后，F06 张量入口拒绝固定 SentenceTransformers 4.1.0 的 encode/forward 实现指纹。两个指纹都与该正式 wheel 源码一致，M106 已有的文本入口修正未覆盖这一版本。构建张量入口时退出。四处当次缓存均为空，本次未生成模型目标 IR、汇编或 P800 机器码。",
+        "resume-job-matcher 固定修订的 FP32 完整图在 CPU AOT 捕获了 281 个节点。10×384 的官方输出与原生逐位相同，反序、单条和重复文本也逐位一致。修正已由四台个人容器各自校验，并已排入 P800 正式复测。",
+        "Resume Job Matcher 的 SentenceTransformers 4.1.0 入口已在 P800 通过逐位边界校验，留有十次 eager 样本且捕获 18 个候选。采样中一次检测到外部进程，资源监控要求退让（退出码 75）。此次计时排除，F06 正式耗时仍待取得。",
+        "DeepVK USER2-small 的原生链接问题在 P800 修正，FP32 十次 eager 平均 19.44 ms。接下来在整图适配器选择阶段拒绝 SentenceTransformers 4.0.2 的 encode/forward 组合。现场两个方法指纹与固定 wheel 逐一相同，此组合未覆盖在 M106 已核验的入口。四个本次编译缓存均已核查为空。边界选择阶段提前退出，尚未进入 F06 编译，没有该候选的设备机器码。",
+        "该固定版本的完整张量入口已通过 CPU 整图捕获及原生输出核对，模型为 deepvk/USER2-small，图节点数为 913。四台个人容器已同步，单卡 P800 全程计时待验证。"
       ],
       "related": [
         "M86",
@@ -445041,6 +446226,30 @@
         {
           "label": "原始运行、固定源码和缓存核查",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/90015f319a499381731d-float32-1795679592300503130/failure-diagnosis.json"
+        },
+        {
+          "label": "anass1209/resume-job-matcher-all-MiniLM-L6-v2 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/beb428f403e82e530913-float32-1795772754200524908/failure-diagnosis.json"
+        },
+        {
+          "label": "原始失败与修正后的完整权重 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/resume-matcher-full-weights-cpu.json"
+        },
+        {
+          "label": "四台个人容器源码及复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/zerank-small-resume-matcher-four-host-deployment.json"
+        },
+        {
+          "label": "anass1209/resume-job-matcher-all-MiniLM-L6-v2 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/beb428f403e82e530913-float32-1795772754200524908/p800-after-loader-or-boundary-fix.json"
+        },
+        {
+          "label": "deepvk/USER2-small 整图入口复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float32-1795790104940367139/failure-diagnosis.json"
+        },
+        {
+          "label": "deepvk/USER2-small 整图边界修正和复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float32-1795790104940367139/failure-followup-20261127-reviewed-boundary.json"
         }
       ]
     },
@@ -445238,7 +446447,7 @@
       "component": "图文模型加载与发布者运行时",
       "group": "全清单测试与环境兼容",
       "date": "2026-11-26",
-      "status": "自动加载阻塞已复现。发布者处理器通过 CPU 核对，模型导入与整模型实测待修复。",
+      "status": "固定发布者模型在正式基准入口通过 CPU 完整输出核验。四台个人容器已就绪，P800 FP32 复测已排队。",
       "historical_status": "",
       "baseline": "LanguageBind/LanguageBind_Image 固定修订 d8c2e37b439f4fc47c649dc8b90cdcd3a4e0c80e，Transformers 4.44.2。",
       "solution": "在固定模型修订上接入发布者处理器与模型，验证注意力掩码和图文完整输出，再进行 P800 正确性与计时复测。",
@@ -445248,15 +446457,376 @@
         {
           "label": "LanguageBind Image P800 原始失败与 CPU 复核",
           "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/d24f270dae07d47cfa4c-float32-1795674293328641133/failure-diagnosis.json"
+        },
+        {
+          "label": "发布者完整权重与掩码 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/languagebind-image-full-cpu-control.json"
+        },
+        {
+          "label": "正式基准入口完整输出与单图捕获",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/languagebind-image-benchmark-entry-cpu.json"
+        },
+        {
+          "label": "四台个人容器源包与复测回执",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/languagebind-image-loader-deployment.json"
         }
       ],
       "notes": [
-        "LanguageBind Image FP32 在官方 ImageTextModel 加载处理器时退出。发布权重声明 LanguageBindImage，分词器声明 LanguageBindImageTokenizer，配置未声明 auto_map，仓库不含 Python 文件。相同 4.44.2 环境的 AutoConfig 和 AutoProcessor 离线复现同一错误。发布者的固定源码在 CPU 上正确生成 [1,3,224,224] 图像张量和 [1,77] 文本索引。其模型类还依赖该 Transformers 版本已移除的 _expand_mask；完整权重前向及 P800 复测待完成。四个运行目录均核验为空，处理器加载在 F06 前退出，未生成编译产物或设备机器码。"
+        "LanguageBind Image FP32 在官方 ImageTextModel 加载处理器时退出。发布权重声明 LanguageBindImage，分词器声明 LanguageBindImageTokenizer，配置未声明 auto_map，仓库不含 Python 文件。相同 4.44.2 环境的 AutoConfig 和 AutoProcessor 离线复现同一错误。发布者的固定源码在 CPU 上正确生成 [1,3,224,224] 图像张量和 [1,77] 文本索引。其模型类还依赖该 Transformers 版本已移除的 _expand_mask；完整权重前向及 P800 复测待完成。四个运行目录均核验为空，处理器加载在 F06 前退出，未生成编译产物或设备机器码。",
+        "CPU 使用完整发布权重、官方十对图文和反向重排输入，核对八个浮点输出与独立发布者前向逐位相同。正式入口捕获一个 1869 节点单图。四台个人容器已校验同一加载修正，P800 测试使用原模型和输入。"
       ],
       "related": [
         "M18",
         "M39",
         "M86"
+      ]
+    },
+    {
+      "id": "M114",
+      "title": "FP16 整图候选在原生精度规则未覆盖的节点上终止",
+      "date": "2026-11-27",
+      "component": "F06 整模型原生精度后端",
+      "group": "全清单测试与环境兼容",
+      "status": "TinyBERT-L2 的两个未覆盖操作已在 P800 原始图和保护后的图中定位。Potion 的 embedding_bag 归约已通过 CPU FX 复现。两例仍待正确性和性能复测。",
+      "historical_status": "",
+      "baseline": "v64 固定 wheel 在 FP16 候选上检查逐算子计算精度合同。",
+      "solution": "按算子核实原生计算、舍入和设备搬运语义，补充对应规则并用整模型 FP32 参考复测。",
+      "evidence": "两例 P800 堆栈、原 wheel、缓存内主机 ELF 以及固定修订的 CPU FX 对照。",
+      "notes": [
+        "minishlab/potion-retrieval-32M FP16。P800 后端拒绝 sentence_embedding。固定模型与 wheel 的 CPU FX 对照重现完全相同的未覆盖节点，算子为 F.embedding_bag 的 mean 归约，FP16 权重和 int64 索引、偏移产生 FP16 输出。四处运行缓存已核验，仅包含 x86-64 的 xpu_utils.so 主机工具库。原生精度策略拒绝候选后终止，没有该候选的设备 IR、汇编或设备机器码。",
+        "cross-encoder/ms-marco-TinyBERT-L2 FP16。P800 后端列出 tensor 和 cpu 两个未覆盖节点。CPU FX 同名节点为 FP16 标量构造与 Tensor.cpu()；CPU 另有八个未覆盖节点，P800 两个节点的具体调用以进一步实机图捕获核定。四处运行缓存已核验，仅包含 x86-64 的 xpu_utils.so 主机工具库。原生精度策略拒绝候选后终止，没有该候选的设备 IR、汇编或设备机器码。",
+        "新增异常退出后的 FX 取证。只在固定后端抛出该异常时从实际栈帧保存原始图和保护精度后的图中节点的算子、参数与栈。CPU 控制使用实际 Dynamo 异常包装和固定 wheel 的拒绝条件，成功取回 embedding_bag；TinyBERT、Potion 已使用四台相同的取证源包安排 P800 复测。",
+        "TinyBERT-L2 FP16 在真实 P800 的同一后端异常帧中取回原始图及精度保护后的图。tensor 是 Transformers _expand_mask 构造 FP16 标量 1.0，cpu 是重排器把所选 FP16 输出搬到主机后再 detach、转换 FP32 的步骤。两个操作在两张图中逐一对应，错误发生在 F06 精度规则检查。四处运行缓存已核对，仅生成主机侧 x86-64 ET_DYN 的 xpu_utils.so。该候选尚未生成目标 IR、汇编和 P800 机器码。",
+        "MiniLM-L2-v2 FP16 在原始与保护后的 FX 图中均只有 cpu 节点缺少原生精度规则。它把重排分数从设备复制到主机，输入和输出均为 FP16，之后才 detach、转 FP32。零提升候选精度已通过。四处缓存只取到主机 x86-64 ET_DYN 的 xpu_utils.so。该候选在精度规则检查终止，尚未生成目标 IR、汇编或 P800 ELF。",
+        "sci-rus-tiny FP16 的三个 BERT 注意力概率节点在原始图和保护后的图中均为 torch.nn.functional.softmax(dim=-1)，输入及输出为 FP16。零提升候选的精度探测通过，随后三处 softmax 因缺少经审阅的原生计算规则在编译前停止。四处缓存仅有主机 x86-64 的 xpu_utils.so。该候选尚未生成目标 IR 和 P800 机器码。",
+        "potion-retrieval-32M FP16 的 sentence_embedding 在原始 FX 图和精度保护后的 FX 图中均为 StaticEmbedding 的 embedding_bag(mode=mean)。输入的索引和偏移为 INT64、权重为 FP16、结果为 FP16，编译器对该节点的内部运算及累加精度标记为未确定，要求经审阅的原生规则后停止。检查四处运行缓存，仅有 x86-64 主机共享库 xpu_utils.so。该整图候选在目标 IR 和 P800 机器码生成前终止。",
+        "paraphrase-albert-small-v2 FP16 的 17 个局部与算子精度探测中有 6 个通过。捕获图和保护后的 FX 图均显示 6 个末维 softmax 及 6 个指数为 3 的 torch.pow，输入和输出均为 FP16。这 12 处被精度规则标记为 native_candidate_required，编译器在生成整模候选前终止。M114 已有注意力 softmax 实例，此次增加 ALBERT 前馈三次幂的节点证据。四处当次缓存已检查，唯一二进制 xpu_utils.so 已按哈希、ELF 类型和机器号确认为 x86-64 主机共享库。失败的整图候选没有生成目标 IR、汇编或 P800 机器码。",
+        "potion-base-8M 在官方 64 条文本上通过 M104 修正后的原生 FP16 边界及局部精度检查。两个批次各有一个 mean embedding_bag，原始和受保护 FX 图记录的索引、权重、偏移量类型均为 INT64、FP16、INT64，输出 FP16。M114 的原生精度规则未覆盖这两个节点，后端终止编译。现场仅有 x86-64 共享库 xpu_utils.so；已核对 ELF 头及文件哈希。失败图无目标 IR 或 P800 机器码。",
+        "DeepVK 在 10 条输入上使用 74 个原始 FP16 参数完成整模边界校验、eager（平均 20.404 ms）并通过第一次局部精度试探。整图的原生精度规则缺少 12 个 unbind、24 个 neg、12 个 softmax、12 个 chunk 节点的 lowering；编译器明确终止该候选。四套缓存只取回一份 x86-64 ET_DYN 主机工具 xpu_utils.so，已校验文件摘要和 ELF 头。未生成该精度候选的 P800 目标 IR 或设备对象。",
+        "DeepVK FP16 的原始 P800 拒绝列表中，12 个 unbind、12 个 chunk、24 个 neg 和 12 个显式 FP32 softmax 均已逐节点匹配。固定权重与 10 条输入的 CPU 整模复现纳入 913 个节点，修复后与原生 FP16 输出逐位相同，对独立 FP32 的最大绝对误差为 0.001583。CPU 单独出现的 37 个节点保留原处理。四个个人容器已部署同一源码指纹，P800 稳态结果仍待复测。",
+        "Piccolo-base-zh FP16 经过普通张量边界修复，单卡完成整模原生输出核对、十次 eager（平均 14.734 ms）及第一个局部精度探测。池化层用 token_embeddings 的形状广播整数注意力掩码，原始和保护图均保留相同 expand_as 节点；精度规则将用于形状的 FP16 张量判为低精度计算，拒绝该整数视图。四处缓存只取回一件 x86-64 ET_DYN 主机工具。此整数视图在原生精度审查时被拒绝，该候选没有生成 P800 目标 IR 和机器码。"
+      ],
+      "refs": [
+        {
+          "label": "minishlab/potion-retrieval-32M 精度边界复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f52048887cd6a4a1863c-float16-1795709460193601966/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/ms-marco-TinyBERT-L2 精度边界复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/11bc3ddbbda7a47f4d92-float16-1795708894398425822/failure-diagnosis.json"
+        },
+        {
+          "label": "Dynamo 异常包装与 FX 取证 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/m114-exception-capture-control.json"
+        },
+        {
+          "label": "四台个人容器 M114 取证与重跑清单",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/m114-fx-diagnostics-deployment.json"
+        },
+        {
+          "label": "TinyBERT-L2 的 P800 后端异常帧、实际 FX 算子和二进制核验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/11bc3ddbbda7a47f4d92-float16-1795712120706279544/failure-diagnosis.json"
+        },
+        {
+          "label": "cross-encoder/ms-marco-MiniLM-L2-v2 float16 P800 编译与产物核查",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/2ae586383d4fdd82fe62-float16-1795713036563509444/failure-diagnosis.json"
+        },
+        {
+          "label": "mlsa-iai-msu-lab/sci-rus-tiny float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/e81011dc937ed584bee4-float16-1795765758281915326/failure-diagnosis.json"
+        },
+        {
+          "label": "minishlab/potion-retrieval-32M float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/f52048887cd6a4a1863c-float16-1795766813923120656/failure-diagnosis.json"
+        },
+        {
+          "label": "sentence-transformers/paraphrase-albert-small-v2 float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/b4f43ecfbd8374c42ccd-float16-1795777266197782858/failure-diagnosis.json"
+        },
+        {
+          "label": "minishlab/potion-base-8M float16 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/0dde311c249cb39e45df-float16-1795784588232467804/failure-diagnosis.json"
+        },
+        {
+          "label": "deepvk/USER2-small 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float16-1795793131092170745/failure-diagnosis.json"
+        },
+        {
+          "label": "deepvk/USER2-small 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/3434c68a20b94b7fe745-float16-1795793131092170745/failure-followup-20261127-native-fp16-lowering.json"
+        },
+        {
+          "label": "sensenova/piccolo-base-zh 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/74ce7aba0fb2644fad7c-float16-1795794672728355334/failure-diagnosis.json"
+        }
+      ],
+      "fix_paths": [],
+      "related": [
+        "M67",
+        "M104"
+      ]
+    },
+    {
+      "id": "M115",
+      "title": "NoInstruct 单向量文本模型缺少完整的 F06 编译入口",
+      "date": "2026-11-27",
+      "component": "F06 整模型测试与官方文本向量适配器",
+      "group": "全清单测试与环境兼容",
+      "status": "该固定修订的 FP32 整模型已通过 P800 完整输出对照与正式计时。",
+      "historical_status": "",
+      "baseline": "F06 0.3.81+v51e.inductor64，官方 NoInstructEmbeddingModel FP32。",
+      "solution": "沿用官方分词、填充、截断与每次设备搬运，整图保留完整编码器及首 token 取值。",
+      "evidence": "同一固定修订的 487 个节点通过 CPU AOT 对照。官方输入的 10×384 个输出、反序、单句和重复文本三种输入与各自原生输出逐位一致。",
+      "notes": [
+        "固定版官方适配器用 AutoModel 编码文档，返回最后一层的首 token 向量。eager 完成十次推理，F06 在整图输入边界分派处发现没有 NoInstructEmbeddingModel 的实现。M73、M86、M100 分别覆盖图文或文本多向量适配器，此案为单向量文本适配器。四处当次缓存均为空。失败在构图前，尚未产生目标 IR、汇编或 P800 机器码。",
+        "固定版本的完整前向已部署在四台个人 Docker 并重新排队。",
+        "NoInstruct-small 完整编码器与原始首 token 输出在 P800 完成官方输入逐位对照。24 份候选精度检查均通过，正式 F06 计时前触及 600 秒冷编译时限；后续预算记录在 M78。",
+        "NoInstruct-small FP32 在 1800 秒预算内通过 P800 正式复测。完整的 3840 个输出全部在原容差内，最大绝对误差 9.61125e-05。十次均值 eager 13.642 ms、F06 6.925 ms，速比 1.970×。已校验 21 个 eager 与 13 个 F06 机器码文件。"
+      ],
+      "refs": [
+        {
+          "label": "avsolatorio/NoInstruct-small-Embedding-v0 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/88a609f45e853148a9b3-float32-1795765265090003701/failure-diagnosis.json"
+        },
+        {
+          "label": "MobileCLIP 与 NoInstruct 的四台 P800 源码包校验、CPU 对照与复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/mobileclip-noinstruct-four-host-deployment.json"
+        },
+        {
+          "label": "avsolatorio/NoInstruct-small-Embedding-v0 float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/88a609f45e853148a9b3-float32-1795767272625200443/failure-diagnosis.json"
+        },
+        {
+          "label": "NoInstruct-small FP32 正式对照、计时及机器码校验",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/noinstruct-small-p800-paired-result.json"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/continuation-20261125/noinstruct-cls-tensor-pipeline.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/noinstruct-cls-tensor-pipeline.py"
+        }
+      ],
+      "fix_paths": [
+        "review-local/f06-all-models-20261119/continuation-20261125/noinstruct-cls-tensor-pipeline.py"
+      ],
+      "related": [
+        "M73",
+        "M86",
+        "M100"
+      ]
+    },
+    {
+      "id": "M116",
+      "title": "Ovis 3B 的基准加载器未支持发布者的 Qwen2_5OmniConfig",
+      "date": "2026-11-27",
+      "component": "基准文本嵌入适配器与发布者模型入口",
+      "group": "全清单测试与环境兼容",
+      "status": "P800 加载断点已核实，发布者嵌入前向及正式复测待完成。",
+      "historical_status": "",
+      "baseline": "Transformers 5.3.0，SentenceTransformers 5.7.0，固定修订的 Ovis-Omni-Embedding-3B FP32。",
+      "solution": "待验证发布者的嵌入模板、前向与最终 2048 维输出，再进入原生精度对照和 F06 实测。",
+      "evidence": "个人主机完整清单的 14 个文件逐项核验，包含 3 个权重分片。原始错误、Transformers 两张映射表和发布参数已归档。",
+      "notes": [
+        "Ovis-Omni-Embedding-3B FP32 在正式文本嵌入适配器加载时失败。SentenceTransformer 的通用 AutoModel 在 Transformers 5.3.0 中未登记 Qwen2_5OmniConfig。根目录与 model/ 的配置字节相同，固定版多模态生成入口才映射到发布配置所指的 Qwen2_5OmniForConditionalGeneration。发布的 args 另指定嵌入模板 qwen2_5_omni_emb。仅切换到 model/ 无法改变本次类型分派。三份权重分片、配置与索引已校验。原生参考和 F06 都未开始，退出后的四处运行缓存为空，未生成此次模型的 IR、汇编或设备机器码。",
+        "固定版发布说明确认原生处理器与检索指令、Thinker 最后一个非填充位置取值，以及查询和候选向量的 L2 归一化。发布方 GitHub 项目 cf8859fc 的完整根目录只有 README.md 和 ovis_logo.png，缺少 qwen2_5_omni_emb 模板实现。权重已齐，仍待核实模板和端到端前向。"
+      ],
+      "refs": [
+        {
+          "label": "ATH-MaaS/Ovis-Omni-Embedding-3B float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/61fe2fd8ce10ed4226a9-float32-1795771475736444092/failure-diagnosis.json"
+        },
+        {
+          "label": "Ovis 3B 固定版发布说明",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ovis3b-publisher-readme.md"
+        },
+        {
+          "label": "Ovis 3B 发布者项目完整根目录",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/ovis3b-fixed-publisher-source-list.json"
+        }
+      ],
+      "fix_paths": [],
+      "related": [
+        "M94"
+      ]
+    },
+    {
+      "id": "M117",
+      "title": "ZeRank-1-small 在首次打分时新增 BF16 因果模型，独立 FP32 参考检查失败",
+      "date": "2026-11-27",
+      "component": "公开重排适配器与独立 FP32 参考准备",
+      "group": "全清单测试与环境兼容",
+      "status": "P800 原始断点与完整权重 CPU 对照已核实，P800 复测待完成。",
+      "historical_status": "",
+      "baseline": "ZeRank-1-small 固定修订，Transformers 4.51.3、SentenceTransformers 5.7.0、F06 0.3.81+v51e.inductor64。",
+      "solution": "在参考模型转换精度前，用发布者空输入路径完成嵌套打分模型初始化，再统一转换所有权重并创建独立副本。",
+      "evidence": "复现时新增的 310 个参数张量均为 BF16；完整权重 CPU 对照已验证独立参数存储以及按发布算法得到的三组评分。",
+      "notes": [
+        "ZeRank-1-small 的外层 CrossEncoder 在准备阶段有 310 个 FP32 参数张量；发布者在首次 predict 内才按 torch_dtype=auto 创建实际打分的 Qwen3ForCausalLM。固定检查点声明 BF16。首次原生打分后模型新增 inner_model，独立副本的全 FP32 参数检查失败。四处当次缓存均为空。错误发生在独立原生参考校验阶段，尚未产生 F06 编译 IR、汇编或机器码。",
+        "ZeRank-1-small FP32 在 CPU 已逐项核对 310 个张量。保持发布者加载与评分逻辑后，原始与独立 FP32 副本的三组输出均与显式 Yes token 打分逐位相同。修正已由四台个人容器各自校验，并已排入 P800 正式复测。"
+      ],
+      "refs": [
+        {
+          "label": "zeroentropy/zerank-1-small-reranker float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84ea1e4503aab3f2a7ce-float32-1795697941144931473/failure-diagnosis.json"
+        },
+        {
+          "label": "原始失败与修正后的完整权重 CPU 对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/zerank-small-lazy-full-cpu.json"
+        },
+        {
+          "label": "四台个人容器源码及复测登记",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/zerank-small-resume-matcher-four-host-deployment.json"
+        },
+        {
+          "label": "本地源码 review-local/f06-all-models-20261119/continuation-20261125/zerank-small-initialize.py",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/zerank-small-initialize.py"
+        }
+      ],
+      "fix_paths": [
+        "review-local/f06-all-models-20261119/continuation-20261125/zerank-small-initialize.py"
+      ],
+      "related": [
+        "M12",
+        "M57"
+      ]
+    },
+    {
+      "id": "M118",
+      "title": "Eximius 融合连接器被官方通用文本适配器当作完整分词模型加载",
+      "date": "2026-11-27",
+      "component": "x-benchmark 文本适配器及发布者模型入口",
+      "group": "全清单测试与环境兼容",
+      "status": "官方 P800 eager 与本地均已复现，发布者入口待整模验证。",
+      "historical_status": "",
+      "baseline": "20261127 官方 P800，Transformers 4.57.1、Sentence Transformers 5.7.0。",
+      "solution": "按发布者固定修订解析连接器、基座、处理器和音频塔，验证 embed_text 的完整输出。",
+      "evidence": "检查当次四处缓存均为空。中断位于模型加载阶段，尚未执行原生前向与 F06 编译，没有目标 IR 或 P800 机器码。",
+      "notes": [
+        "官方 EmbeddingModel 使用 SentenceTransformer 从连接器仓库建立 AutoProcessor，固定修订中没有分词器或预处理器。发布者仅提供约 1640 万个训练参数的连接器，文本入口为 embed_text，基座和处理器来自独立的 Qwen3-VL-Embedding-2B，运行时还加载 Qwen2.5-Omni-7B 的音频塔。20261127 官方 P800 eager 在相同软件包版本下报出逐字一致的异常。检查当次四处缓存均为空。中断位于模型加载阶段，尚未执行原生前向与 F06 编译，没有目标 IR 或 P800 机器码。"
+      ],
+      "refs": [
+        {
+          "label": "EximiusLabs/fusion-embedding-1-2b-preview float32 P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/243ca1b48836168c05e2-float32-1795777473537933702/failure-diagnosis.json"
+        }
+      ],
+      "fix_paths": [],
+      "related": [
+        "M84",
+        "M94",
+        "M113"
+      ]
+    },
+    {
+      "id": "M119",
+      "title": "Tipsv2 官方图文输入的 32×64 Welford 归约在 XPU 展开后违反 SSA 支配关系",
+      "date": "2026-11-27",
+      "component": "TritonXPUUnrollControl / Welford 循环归约",
+      "group": "全清单测试与环境兼容",
+      "status": "P800 整模型与固定编译器离线复现，修复待验证。",
+      "historical_status": "",
+      "baseline": "20261127 官方 P800 v3-64，32 组图文，checkpoint FP32，F06 0.3.81+v51e.inductor64 与 XRE 5.41.0.0。",
+      "solution": "定位展开后跨区域的值映射并回放两组 TTIR；整模型修复须按同一输入复测。",
+      "evidence": "失败分块留下源与 TTIR，未生成目标 IR 或设备机器码。同次 1×2048 分块通过，已核验对应 TTXIR、LLVM IR、汇编和一个 P800 ET_REL。相同固定版编译器在离线重放中再次区分两个输入规模：旧 16×32 报常量类型错误，新 32×64 报 SSA 支配错误，两个 1×2048 都通过降层。",
+      "notes": [
+        "google/tipsv2-so400m14 按原权重 FP32、官方 32 对图文输入执行。残差与 LayerNorm 的 Welford 归约处理 32832 行、行宽 1152。32×64 分块进入 TritonXPUUnrollControl，生成的 SSA 使用引用了子区域内定义的操作数；MLIR 在 tmp4_mean 的选择处拒绝该模块。失败分块留下源与 TTIR，未生成目标 IR 或设备机器码。同次 1×2048 分块通过，已核验对应 TTXIR、LLVM IR、汇编和一个 P800 ET_REL。相同固定版编译器在离线重放中再次区分两个输入规模：旧 16×32 报常量类型错误，新 32×64 报 SSA 支配错误，两个 1×2048 都通过降层。",
+        "Tipsv2-SO400M14 的两个实测 Welford 内核均用当次生成的包装器和定版 Inductor 重放。对这两个精确源码哈希，仅选取原候选已有的 1×2048 配置（16 warps、1 stage）。该配置在两轮原始 P800 上均有设备目标文件，单处改动的相邻内核仍保留全套原候选。整模型修正已在四机部署并排队复测，精度与性能待该次真卡结果。",
+        "Tipsv2-SO400M14 复测确认首个 Welford 内核已选 1×2048 并生成设备目标文件。后续内核的行宽仍为 1152，但会重新读取残差输入，源码不同，未命中已有修正。该内核的 32×64 分块再次在 TritonXPUUnrollControl 报 SSA 支配关系错误。两个内核的 1×2048 分块均有对应目标 IR、汇编与已校验的 P800 ET_REL。后续内核失败的 32×64 分块只留下源与 TTIR，未生成机器码。",
+        "Tipsv2 的第三个 Welford 源码指纹已纳入配置选择。三组真实包装器在原版 Inductor 上均只保留原有的 1×2048 选项，修改常量的对照仍保留完整配置。七组真实 TTIR 已用定版编译器逐一降层重放，四台个人容器已部署，等待 P800 整模验收。",
+        "Tipsv2-so400m14 官方图文输入原检查点精度通过两项 Welford 分块校正。新失败位于文本塔多头注意力的打包线性投影：AOT 捕获展开 _in_projection_packed 后调用厂商 hydra_linear，_should_fallback 访问 FakeTensor.data_ptr() 报错。M01 既有视觉池化修正未覆盖这个文本塔。",
+        "Tipsv2-B14 的官方 32 对图文完成原精度 FP32 参考、十次 eager 和整图输入对照。Welford 输入是 32832 行、每行 768 个元素；64×64 分块进入 TritonXPUUnrollControl 后出现 operand #2 does not dominate this use。SO400M14 的固定源码与 2048 列提示未覆盖 B14 的 1024 列提示及新源码。同一生成包装器的 1×1024 与 32×32 都有目标 IR、汇编和经 ELF 函数符号核验的 P800 ET_REL。失败的 64×64 目录仅有源码与 TTIR，未生成目标机器码。",
+        "Tipsv2-B14 已限定该源码和 65536×1024 规模提示，使用有真机设备对象的 1×1024、8 warps 分块。四套原始装饰器配置及邻近负例在 CPU 验证通过，已部署四台 P800。",
+        "Tipsv2-B14 的第一个 Welford 核已实际选中 1×1024 配置。相同 32832×768 数据的第二个核有独立源码 a7544489，64×64 分块在 TritonXPUUnrollControl 复现 SSA 支配关系失败。第二个核的 1×1024 和 32×32 分块都有目标 IR、汇编和 P800 ET_REL，64×64 仅到 TTIR；连同第一个核共核验 3 个设备对象。",
+        "Tipsv2-B14 的第一个 Welford 核已实际选中 1×1024 配置。相同 32832×768 数据的第二个核有独立源码 a7544489，64×64 分块在 TritonXPUUnrollControl 复现 SSA 支配关系失败。",
+        "Tipsv2-B14 的第二个 Welford 核已通过正式 Inductor 装饰器与五项原始源码对照，保留 8 warps 的 1×1024 分块。四台 P800 个人容器同步后重新入队。",
+        "Tipsv2-B14 在固定检查点和 32 对图文上得到 eager 平均 337.171 ms。两个先前失败的 Welford 源码均采用已验证的 1×1024 分块。新的明确异常发生在文本塔的 768 维、12 头带掩码自注意力：AOT 执行打包 QKV 投影时进入厂商 Hydra Linear，其设备选择读取了 FakeTensor 的 data_ptr()。现有 M01 文本自注意力规则只覆盖 512 维、8 头。"
+      ],
+      "refs": [
+        {
+          "label": "google/tipsv2-so400m14 checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795779549044792945/failure-diagnosis.json"
+        },
+        {
+          "label": "真实 Inductor 两组配置的前后对照",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-row-actual-inductor-configs.json"
+        },
+        {
+          "label": "Tipsv2 Welford 定点配置四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-row-four-host-deployment.json"
+        },
+        {
+          "label": "google/tipsv2-so400m14 checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795783239685510776/failure-diagnosis.json"
+        },
+        {
+          "label": "三组原始 Inductor 包装器",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-second-inductor-configs.json"
+        },
+        {
+          "label": "七组归约 TTIR 重放",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-v3-second-welford-lowering.json"
+        },
+        {
+          "label": "第二个官方负载内核的四机部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/continuation-20261125/tips-welford-second-four-host-deployment.json"
+        },
+        {
+          "label": "google/tipsv2-so400m14 本次 P800 编译现场与设备目标文件",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/84f72d337fcd31c0d671-checkpoint-1795786052046308862/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 checkpoint P800 归因与编译证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795787942943257065/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 checkpoint 修正与复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795787942943257065/failure-followup-20261127-tips-telepix-deployment.json"
+        },
+        {
+          "label": "google/tipsv2-b14 单卡复测新现场",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795790742832959432/failure-diagnosis.json"
+        },
+        {
+          "label": "google/tipsv2-b14 上轮修正复测",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795787942943257065/failure-followup-20261127-next-compiler-stage.json"
+        },
+        {
+          "label": "Tipsv2-B14 第二个 Welford 核修正与部署",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795790742832959432/failure-followup-20261127-second-row-reduction.json"
+        },
+        {
+          "label": "google/tipsv2-b14 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/7910ae16dbdaa1e7ac40-checkpoint-1795792088913033800/failure-diagnosis.json"
+        }
+      ],
+      "fix_paths": [],
+      "related": [
+        "M103",
+        "U09"
+      ]
+    },
+    {
+      "id": "M120",
+      "title": "LaBSE Dense 特征字典原样传出 token_embeddings，FP16 精度区域拒绝输入存储别名",
+      "date": "2026-11-27",
+      "component": "F06 LocalPrecisionSpace / SentenceTransformers Dense",
+      "group": "全清单测试与环境兼容",
+      "status": "P800 触发点及原始张量的 CPU 别名关系已核实，修复待验证。",
+      "historical_status": "",
+      "baseline": "LaBSE-en-ru FP16 单卡在官方 64 条输入上通过整模张量边界与原生输出比对、十次 eager（平均 47.281 ms）。原有版本计数异常消失。在 Dense 区域 model.2 返回特征字典时，F06 拒绝浮点输入存储别名。",
+      "solution": "将该固定 Dense 的精度区域收窄至实际处理 sentence_embedding 的计算路径，保留其他特征及存储关系，复核完整输出并在 P800 复测。",
+      "evidence": "固定模型、相同 FP16 和两个官方输入的 CPU 复现表明原始 token_embeddings 通过字典按同一对象原样返回，所有输入张量版本计数不变。Dense 计算的 sentence_embedding 使用新的存储，公开输出与原生前向逐位相同。原始日志定位到固定 wheel 的 _local_precision.py，第 134 行。在创建精度区域的前向钩子中提前退出；四处编译缓存均已检查为空，本次候选没有生成设备 IR 或机器码。",
+      "notes": [
+        "LaBSE-en-ru FP16 单卡在官方 64 条输入上通过整模张量边界与原生输出比对、十次 eager（平均 47.281 ms）。原有版本计数异常消失。在 Dense 区域 model.2 返回特征字典时，F06 拒绝浮点输入存储别名。固定模型、相同 FP16 和两个官方输入的 CPU 复现表明原始 token_embeddings 通过字典按同一对象原样返回，所有输入张量版本计数不变。Dense 计算的 sentence_embedding 使用新的存储，公开输出与原生前向逐位相同。原始日志定位到固定 wheel 的 _local_precision.py，第 134 行。在创建精度区域的前向钩子中提前退出；四处编译缓存均已检查为空，本次候选没有生成设备 IR 或机器码。"
+      ],
+      "refs": [
+        {
+          "label": "cointegrated/LaBSE-en-ru 单卡复测及证据",
+          "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/results/372270b82ac9d5f24504-float16-1795789036883283956/failure-diagnosis.json"
+        }
+      ],
+      "fix_paths": [],
+      "related": [
+        "M104"
       ]
     },
     {
@@ -445705,7 +447275,7 @@
     },
     {
       "path": "/home/f/Documents/FlagTree/reports/issue-fixes/model-benchmark-updates-20261119.json",
-      "sha256": "1ad175fee53514320721e0f69068c433f2b601f93803962c85e7e2f127cde3b5"
+      "sha256": "dd25fc17153cebcff8080a4953375b47ccec011e8ee2265765f8044195028ea9"
     },
     {
       "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/issue-handbook-lookups.json",
@@ -445713,7 +447283,7 @@
     },
     {
       "path": "/home/f/Documents/FlagTree/review-local/f06-all-models-20261119/goal-requirements.json",
-      "sha256": "0fda3f861d42fe576561b147d71b8596d408302cca6afe817a21ba72e2a1c594"
+      "sha256": "a5dd2748cd612ce8a57140c9b46616ce6e2f1f515cde995e3bd6d2dea340e9a9"
     },
     {
       "path": "/home/f/Documents/FlagTree/work/2026-11-19/flaggems-attention-opt/summary.json",
