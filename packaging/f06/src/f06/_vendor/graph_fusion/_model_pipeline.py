@@ -142,6 +142,7 @@ def compile_pipeline(tensor_model, *, prepare, output_template=None, source_prec
 
         tensor_model = FinalOutputCast(tensor_model).eval()
     result = _CompiledPipeline(prepare, compile_model(tensor_model, fullgraph=True, **kwargs), source_precision)
+    result._f06_execution_plans = kwargs.get('_execution_plans')
     if kwargs.get('resource_policy','auto') == 'auto':
         def resource_variants():
             import torch

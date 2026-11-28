@@ -92,6 +92,9 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
                         reviewed_sdk=fine.arithmetic_reviewed_sdk)
         record['fp32_reference_role'] = 'external_validator; explicit_unrounded_values_for_local_regions_only'
 
+    from ._execution_plan import ExecutionPlans
+    plans = {prefix: ExecutionPlans() for prefix in profile_models}
+
     def create(precision, linear, policy, prefix=''):
         name = 'captured_'+prefix+precision+'_'+linear+'_'+policy
         if name not in routes:
@@ -106,7 +109,7 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
                 source_precision='float32' if fp32_only else None,
                 precision_policy=precision, precision_options=options,
                 resource_policy=resource_policy, tolerance=tolerance,
-                environment_key='f06-original-dtype-'+name, audit=audit)
+                environment_key='f06-original-dtype-'+name, audit=audit, _execution_plans=plans[prefix])
             routes[name] = ModelRoute(call)
             audit_options = dict(options)
             if 'arithmetic_boundaries' in audit_options:

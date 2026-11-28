@@ -192,7 +192,7 @@ def compile_model(model, *, tolerance=None, environment_key='f06-model-v1',
                   audit=None, fullgraph=True, dynamic=False, vendor_capture=True,
                   precision_policy='fp32_reference', precision_options=None,
                   resource_policy='auto', graph_choice=None,
-                  _cost_graph_observer=None, _capture_cost_graph=False):
+                  _cost_graph_observer=None, _capture_cost_graph=False, _execution_plans=None):
     """Compile an inference model through Inductor and select its full-graph route."""
     if model.training:
         raise ValueError('F06 whole-model compilation requires model.eval()')
@@ -231,7 +231,8 @@ def compile_model(model, *, tolerance=None, environment_key='f06-model-v1',
     compiled = torch.compile(model, backend=inductor_backend(tolerance=tolerance,
         environment_key=environment_key, audit=records, precision_policy=precision_policy,
         precision_options=precision_options, resource_policy=resource_policy, graph_choice=graph_choice,
-        _cost_graph_observer=_cost_graph_observer, _capture_cost_graph=_capture_cost_graph),
+        _cost_graph_observer=_cost_graph_observer, _capture_cost_graph=_capture_cost_graph,
+        _execution_plans=_execution_plans),
         fullgraph=fullgraph, dynamic=dynamic)
     compiled._f06_audit = records
     compiled._f06_capture = capture

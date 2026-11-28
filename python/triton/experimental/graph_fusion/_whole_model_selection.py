@@ -16,11 +16,13 @@ class ModelRoute:
 
 def select_whole_model(routes, *, validation_inputs, validate, measure,
                        record, rounds=4, preferred=None, minimum_gain=0.01,
-                       max_remeasurements=1, expanded_routes=None):
+                       max_remeasurements=1, expanded_routes=None, measure_on_validation_inputs=False):
     """Validate all supplied examples, then compare complete-route means.
 
     ``measure(call)`` must include input preparation, output conversion and
     completion synchronization, and return positive finite raw seconds.
+    When the timer uses exactly the validation workloads, set
+    measure_on_validation_inputs=True to share samples for identical guarded plans.
     Explicit calibration keeps candidate compilation outside steady timing.
     No candidate is accepted on a subgraph-only correctness result.
     Prepared pipelines may supply resource variants; these undergo the same
@@ -82,18 +84,44 @@ def select_whole_model(routes, *, validation_inputs, validate, measure,
                                '_f06_gemm_variants': 'matrix'}[factory_name])
     if expanded_routes is not None:
         expanded_routes.update(all_routes)
+    from ._model_pipeline import _CompiledPipeline
+    for cache in {r.call._f06_execution_plans for r in all_routes.values()
+                  if type(r.call) is _CompiledPipeline and r.call._f06_execution_plans is not None}:
+        cache.finish_search()
     if not valid:
         record['state'] = 'no_valid_route'
         raise RuntimeError('No complete model route passed the output contract')
+    # Validate each named public route, including aliases. Only share measurements
+    # for identical prepared full-graph executions with the same activation hook.
+    plans = {}
+    timing_source = {}
+    for name, route in valid.items():
+        call = route.call
+        if (not measure_on_validation_inputs or type(call) is not _CompiledPipeline
+                or call._f06_execution_plans is None or len(call._f06_audit) != 1):
+            continue
+        graph = call._f06_audit[0]
+        if 'execution_plan_id' not in graph or graph.get('route') == 'original':
+            continue
+        key = (call._f06_execution_plans, graph['execution_plan_id'], id(call.prepare),
+               call._f06_source_precision, id(route.activate))
+        source = plans.setdefault(key, name)
+        if name != source:
+            timing_source[name] = source
+    record['timing_aliases'] = timing_source
     record['state'] = 'measuring'
     names = list(valid)
     for attempt in range(max_remeasurements + 1):
         for number in range(rounds):
             order = names if number % 2 == 0 else names[::-1]
+            samples_by_source = {}
             for name in order:
-                route = valid[name]
-                route.activate()
-                samples = list(measure(route.call))
+                source = timing_source.get(name, name)
+                if source not in samples_by_source:
+                    route = valid[source]
+                    route.activate()
+                    samples_by_source[source] = list(measure(route.call))
+                samples = samples_by_source[source]
                 if not samples or any(not math.isfinite(x) or x <= 0 for x in samples):
                     # A retry must never turn invalid timestamps into a winner.
                     record['state'] = 'invalid_timing'

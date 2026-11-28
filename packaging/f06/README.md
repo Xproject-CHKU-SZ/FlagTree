@@ -217,6 +217,20 @@ so an exhaustive comparison remains necessary to establish fast-path coverage
 for a given workload. The `record['pruning']` audit contains regional costs,
 resource shortlists, precision recovery and calibration times.
 
+Before Inductor lowering, F06 removes unused pure expressions and merges
+repeated value-only temporaries when their storage cannot escape. The
+per-graph `graph_cleanup` record counts removed and merged nodes. During one
+candidate search, matching static graph operations, input bindings and layouts,
+packing and device schedules can share a compiled implementation. Each named
+route still goes through full public-output validation.
+
+If your `measure` callback times exactly the validation workloads, pass
+`measure_on_validation_inputs=True` to `f06.select_model_routes`. The
+selector times each proven equivalent plan once per round and records the
+representative name in `record['timing_aliases']`. A timer that uses other
+inputs retains independent measurements. The compiled-plan cache lives
+within one search.
+
 A native FP32 candidate should preserve the original FP32 model before applying
 FP16 to the comparison model. Run the original adapter entirely in FP32 and use
 `output_cast_like` at its public output boundary. Converting already rounded

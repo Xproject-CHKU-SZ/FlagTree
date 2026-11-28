@@ -64,6 +64,9 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
                 profile_models['operator_'+str(index)+'_'] = (fine.build(profile['selected']), source_prepare)
         record['fp32_reference_role'] = 'external_validator; explicit_unrounded_values_for_local_regions_only'
 
+    from ._execution_plan import ExecutionPlans
+    plans = {prefix: ExecutionPlans() for prefix in profile_models}
+
     def create(precision, linear, policy, prefix=''):
         name = 'captured_'+prefix+precision+'_'+linear+'_'+policy
         if name not in routes:
@@ -73,7 +76,7 @@ def captured_model_candidate_routes(model, *, prepare, output_template, validati
             call = compile_pipeline(candidate_model, prepare=candidate_prepare, output_template=output_template,
                 precision_policy=precision, precision_options=options,
                 resource_policy=resource_policy, tolerance=tolerance,
-                environment_key='f06-original-dtype-'+name, audit=audit)
+                environment_key='f06-original-dtype-'+name, audit=audit, _execution_plans=plans[prefix])
             routes[name] = ModelRoute(call)
             record['implementations'][name] = dict(precision_policy=precision, options=options,
                 audit=audit, requires_complete_compiled_validation=True,

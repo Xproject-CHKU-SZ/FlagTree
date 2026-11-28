@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import threading
 
-__version__ = '0.3.81+v51e.inductor64'
+__version__ = '0.3.81+v51e.inductor64.graphprune2'
 _LOCK = threading.RLock()
 _ROOT = Path(__file__).resolve().parent
 

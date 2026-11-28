@@ -250,6 +250,40 @@ class WholeGraphTests(unittest.TestCase):
         self.assertEqual(audit[0]['state'],'awaiting_complete_model_validation')
         self.assertTrue(audit[0]['requires_original_fp32_model_validation'])
 
+    def test_default_search_prunes_only_standalone_2k_schedules(self):
+        from unittest.mock import patch
+        from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
+        from triton.experimental.graph_fusion._model_inductor import inductor_backend
+
+        class Model(torch.nn.Module):
+            def forward(self, x):
+                return F.layer_norm(x + x, (64,))
+
+        x = FakeTensor(FakeTensorMode(), torch.empty(2, 64, device="meta"), torch.device("cuda", 0))
+        graph = fx.symbolic_trace(Model())
+        next(iter(graph.graph.nodes)).meta["example_value"] = x
+        audit = []
+
+        def packed(graph, inputs):
+            return copy.deepcopy(graph), inputs, [], [dict(kind='packed_test')]
+
+        with patch('torch._inductor.compile_fx.compile_fx', side_effect=lambda graph, *a, **kw: graph.forward), \
+             patch('triton.experimental.graph_fusion._p800_inductor_gelu._on_p800', return_value=True), \
+             patch('triton.experimental.graph_fusion._p800_model_layernorm._on_p800', return_value=True), \
+             patch('triton.experimental.graph_fusion._p800_model_layernorm.toolchain_available', return_value=True), \
+             patch('triton.experimental.graph_fusion._p800_model_gemm.packed_weight_candidate', side_effect=packed), \
+             patch('triton.experimental.graph_fusion._model_inductor._SelectGraph',
+                   side_effect=lambda candidates, *args: candidates):
+            candidates = inductor_backend(tolerance=dict(atol=.0003, rtol=.0003),
+                                          environment_key='prune-2k', audit=audit)(graph, (x,))
+        for base in ('inductor_p800_lm', 'inductor_p800_lm_sdk_norm'):
+            self.assertIn(base, candidates)
+            self.assertNotIn(base + '2048', candidates)
+            self.assertNotIn(base + '2048', audit[0]['graph_cleanup'])
+            self.assertNotIn(base + '2048', audit[0]['candidate_regions'])
+            self.assertIn(base + '_packed_gemm2048', candidates)
+            self.assertEqual(audit[0]['candidate_regions'][base + '_packed_gemm2048'][-1]['kind'], 'packed_test')
+
     def test_sdnn_resource_eligibility_keeps_extent_masks_and_memory_layout(self):
         from triton.experimental.graph_fusion._p800_model_schedule import sdnn_pointwise_eligibility
         source='''

@@ -322,6 +322,8 @@ def model_candidate_routes(model, *, prepare, output_template, validation_inputs
     record['compiled_refinement'] = []
     refine_started = time.perf_counter()
     refined = [profiles[0]]
+    from ._execution_plan import ExecutionPlans
+    plans = ExecutionPlans()
     prepared = {}
     for profile in profiles[1:]:
         groups = _profile_groups(profile['fp16_modules'], record['precision_groups'])
@@ -337,7 +339,7 @@ def model_candidate_routes(model, *, prepare, output_template, validation_inputs
             return compile_pipeline(model, prepare=prepare, output_template=output_template,
                 source_precision='float32', precision_policy='source_fp32_mixed',
                 precision_options=options, resource_policy=resource_policy,
-                tolerance=tolerance, environment_key='f06-' + name, audit=[])
+                tolerance=tolerance, environment_key='f06-' + name, audit=[], _execution_plans=plans)
 
         paths, call = _refine_compiled_partition(groups, build,
             validation_inputs=validation_inputs, validate=validate,
@@ -400,7 +402,7 @@ def model_candidate_routes(model, *, prepare, output_template, validation_inputs
                     route = compile_pipeline(model, prepare=prepare, output_template=output_template,
                         source_precision='float32', precision_policy='source_fp32_mixed',
                         precision_options=options, resource_policy=resource_policy,
-                        tolerance=tolerance, environment_key='f06-model-candidates-' + name, audit=audit)
+                        tolerance=tolerance, environment_key='f06-model-candidates-' + name, audit=audit, _execution_plans=plans)
                 if resource_choices is not None and resource_policy == 'auto':
                     # Keep the auto parent for the existing full-model resource
                     # gain gate. Expand only the resource/policy pairs retained
@@ -461,7 +463,7 @@ def model_candidate_routes(model, *, prepare, output_template, validation_inputs
                         parent = compile_pipeline(model, prepare=prepare, output_template=output_template,
                             source_precision='float32', precision_policy='source_fp32_mixed',
                             precision_options=options, resource_policy=resource_policy,
-                            tolerance=tolerance, environment_key='f06-model-candidates-'+name, audit=audit)
+                            tolerance=tolerance, environment_key='f06-model-candidates-'+name, audit=audit, _execution_plans=plans)
                         if resource_policy == 'auto':
                             parent._f06_resource_allowlist = tuple(r for r in ('cluster','sdnn')
                                 if pointwise in family['kept_by_resource'][r])

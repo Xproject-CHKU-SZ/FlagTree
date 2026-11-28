@@ -263,7 +263,8 @@
       "SDK02"
     ],
     "notes": [
-      "M06 记录了 32k 的原始组合表达式和 CPU 参考。SDK02 的绕行针对 FP16 复数 FFT 计划返回 14，本例已成功取得 FP32 输入的 RFFT 结果。两项均未修复本例标量除法。"
+      "M06 记录了 32k 的原始组合表达式和 CPU 参考。SDK02 的绕行针对 FP16 复数 FFT 计划返回 14，本例已成功取得 FP32 输入的 RFFT 结果。两项均未修复本例标量除法。",
+      "M2-BERT 32k 的历史单卡 F06 测试在 FP32 eager 参考阶段复现 complex64 到 float32 的 XDNN cast.cpp:163 错误。相同 revision 的独立 P800 重放逐算子确认 RFFT 已返回，除以整数 108 时 XMLIR copy_kernel.cpp:407 报错。四个运行缓存均为空。"
     ],
     "refs": [
       {
@@ -273,6 +274,10 @@
       {
         "label": "逐模型复测",
         "path": "reports/issue-fixes/P800-eager-修复对照-20261126.md"
+      },
+      {
+        "label": "32k 历史 F06 运行与同修订独立 P800 分步复现",
+        "path": "review-local/f06-all-models-20261119/results/c264566c5b0f2208f847-float32-1795110965341812947/failure-diagnosis.json"
       }
     ]
   },
@@ -325,7 +330,8 @@
       "M51"
     ],
     "notes": [
-      "D06、D08、D09 修补 FlagGems ON 的 bias、掩码构造及非方形边界。M51 记录 Meta 与真实输出步幅差异。本例关闭 FlagGems 和图优化。同一输入强制 math 已在算子层通过，无须移除掩码。"
+      "D06、D08、D09 修补 FlagGems ON 的 bias、掩码构造及非方形边界。M51 记录 Meta 与真实输出步幅差异。本例关闭 FlagGems 和图优化。同一输入强制 math 已在算子层通过，无须移除掩码。",
+      "EmbeddingGemma-2 两个历史精度请求均在 FP32 参考阶段退出。相同修订的独立原生重放在第六次 FP16、头宽 512 的布尔掩码 SDPA 重现 XMLIR:340，保持掩码的 math 路径返回完整形状。历史 F06 日志未记录失败调用的操作数精度。SDK07 保留为线索，等待当前环境实际 Q/K/V、掩码、调用序号和全输出对照。"
     ],
     "refs": [
       {
@@ -335,6 +341,14 @@
       {
         "label": "逐模型复测",
         "path": "reports/issue-fixes/P800-eager-修复对照-20261126.md"
+      },
+      {
+        "label": "float16 正式参考与原生 FP16 注意力分步重放的适用范围",
+        "path": "review-local/f06-all-models-20261119/results/39b44716f6fa2e5010de-float16-1795182704937354430/failure-followup-20261128-sdk07-compare-native-dtype.json"
+      },
+      {
+        "label": "float32 正式参考与原生 FP16 注意力分步重放的适用范围",
+        "path": "review-local/f06-all-models-20261119/results/39b44716f6fa2e5010de-float32-1795182728254715247/failure-followup-20261128-sdk07-compare-native-dtype.json"
       }
     ]
   },
